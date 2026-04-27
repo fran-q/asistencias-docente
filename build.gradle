@@ -35,9 +35,16 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testRuntimeOnly 'com.h2database:h2'                     // BD en memoria para tests/CI
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+// Al correr ./gradlew bootRun activa automaticamente el perfil "local"
+// para cargar application-local.properties con las credenciales de XAMPP.
+bootRun {
+	args = ['--spring.profiles.active=local']
 }
