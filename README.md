@@ -43,9 +43,9 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 2. Crear la base de datos en MariaDB/MySQL:
    ```sql
-   CREATE DATABASE asistencias_docente CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE asistenciautomatica CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    CREATE USER 'asistencias'@'localhost' IDENTIFIED BY 'CAMBIAR_EN_LOCAL';
-   GRANT ALL PRIVILEGES ON asistencias_docente.* TO 'asistencias'@'localhost';
+   GRANT ALL PRIVILEGES ON asistenciautomatica.* TO 'asistencias'@'localhost';
    FLUSH PRIVILEGES;
    ```
 
