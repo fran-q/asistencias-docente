@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Inicio - Asistencias</title>
+</head>
+<body>
+    <section class="home">
+        <h1>Bienvenido, <span th:text="${username}">Usuario</span></h1>
+        <p class="home__subtitle">
+            Has iniciado sesion correctamente. El sistema esta en Sprint 0 (setup inicial).
+        </p>
+
+        <div class="card">
+            <h2>Estado del proyecto</h2>
+            <ul class="checklist">
+                <li class="checklist__item checklist__item--done">Spring Boot + Java 21 corriendo</li>
+                <li class="checklist__item checklist__item--done">Conexion a MariaDB establecida</li>
+                <li class="checklist__item checklist__item--done">Esquema de BD creado por Flyway (15 tablas)</li>
+                <li class="checklist__item checklist__item--done">Spring Security con login funcional</li>
+                <li class="checklist__item checklist__item--done">Layout Thymeleaf base + modo oscuro</li>
+                <li class="checklist__item checklist__item--pending">Sprint 1: Multi-tenancy + autenticacion real</li>
+                <li class="checklist__item checklist__item--pending">Sprint 2 a 6: Modulos academico, docentes, reconocimiento, MVP</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Detalle de la sesion</h2>
+            <dl class="kv">
+                <dt>Usuario</dt><dd th:text="${username}">-</dd>
+                <dt>Roles</dt><dd th:text="${authorities}">-</dd>
+            </dl>
+        </div>
+    </section>
+</body>
+</html>

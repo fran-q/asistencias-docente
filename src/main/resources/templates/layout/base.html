@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html th:fragment="layout(title, content)"
+      lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:replace="${title}">Sistema de Asistencias</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+    <!-- ============ NAVBAR ============ -->
+    <header class="navbar">
+        <div class="navbar__brand">
+            <a th:href="@{/}">
+                <span class="navbar__logo">A</span>
+                <span class="navbar__title">Asistencias</span>
+            </a>
+        </div>
+
+        <nav class="navbar__menu" sec:authorize="isAuthenticated()">
+            <a th:href="@{/}" class="navbar__link">Inicio</a>
+            <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
+        </nav>
+
+        <div class="navbar__user" sec:authorize="isAuthenticated()">
+            <span class="navbar__username" sec:authentication="name"></span>
+            <form th:action="@{/logout}" method="post" class="navbar__logout-form">
+                <button type="submit" class="btn btn--ghost">Salir</button>
+            </form>
+        </div>
+    </header>
+
+    <!-- ============ CONTENIDO ============ -->
+    <main class="container">
+        <div th:replace="${content}">
+            <p>Contenido por defecto</p>
+        </div>
+    </main>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="footer">
+        <p>
+            Sistema de Asistencias Digital con Reconocimiento Facial
+            &nbsp;&middot;&nbsp;
+            Practicas Profesionalizantes III - CENT35
+            &nbsp;&middot;&nbsp;
+            v0.0.1-SNAPSHOT
+        </p>
+    </footer>
+</body>
+</html>
