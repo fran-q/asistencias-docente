@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -41,6 +42,7 @@ import java.time.LocalDateTime;
         @UniqueConstraint(name = "uq_usuarios_inst_email",    columnNames = {"institucion_id", "email"})
     }
 )
+@Filter(name = "tenant")
 @Getter
 @Setter
 @NoArgsConstructor
