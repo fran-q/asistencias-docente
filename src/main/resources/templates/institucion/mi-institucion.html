@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Mi Institucion - Asistencias</title>
+</head>
+<body>
+    <section class="mi-institucion">
+
+        <header class="page-header">
+            <h1>Mi Institucion</h1>
+            <p class="page-header__subtitle">
+                Editas los datos de la institucion a la que pertenece tu cuenta.
+                Cambios afectan a todos los usuarios de la institucion.
+            </p>
+        </header>
+
+        <!-- Mensaje flash de exito -->
+        <div th:if="${flashMensaje}" class="alert alert--success" role="alert">
+            <span th:text="${flashMensaje}">OK</span>
+        </div>
+
+        <div class="card">
+            <form th:action="@{/mi-institucion}" th:object="${form}" method="post" novalidate>
+
+                <!-- Errores globales (ej: nombre duplicado) - dentro del form para que #fields aplique -->
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error global</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre de la institucion <span class="required">*</span></label>
+                    <input type="text" id="nombre" th:field="*{nombre}"
+                           required maxlength="150"
+                           th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('nombre')}"
+                          th:errors="*{nombre}">Error nombre</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="cuit">CUIT</label>
+                    <input type="text" id="cuit" th:field="*{cuit}"
+                           placeholder="30-12345678-9" maxlength="13"
+                           th:classappend="${#fields.hasErrors('cuit')} ? 'is-invalid'">
+                    <small class="form-hint">Formato: dos digitos, guion, ocho digitos, guion, un digito.</small>
+                    <span class="form-error" th:if="${#fields.hasErrors('cuit')}"
+                          th:errors="*{cuit}">Error CUIT</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="direccion">Direccion</label>
+                    <input type="text" id="direccion" th:field="*{direccion}" maxlength="200"
+                           th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('direccion')}"
+                          th:errors="*{direccion}">Error direccion</span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emailContacto">Email de contacto</label>
+                        <input type="email" id="emailContacto" th:field="*{emailContacto}" maxlength="120"
+                               th:classappend="${#fields.hasErrors('emailContacto')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('emailContacto')}"
+                              th:errors="*{emailContacto}">Error email</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefonoContacto">Telefono de contacto</label>
+                        <input type="text" id="telefonoContacto" th:field="*{telefonoContacto}" maxlength="30"
+                               th:classappend="${#fields.hasErrors('telefonoContacto')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('telefonoContacto')}"
+                              th:errors="*{telefonoContacto}">Error telefono</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Guardar cambios</button>
+                    <a th:href="@{/}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="card card--readonly">
+            <h2>Datos del sistema (no editables)</h2>
+            <dl class="kv">
+                <dt>ID interno</dt>          <dd th:text="${institucion.id}">-</dd>
+                <dt>Estado</dt>              <dd>
+                    <span th:if="${institucion.activo}"  class="badge badge--success">Activa</span>
+                    <span th:unless="${institucion.activo}" class="badge badge--danger">Inactiva</span>
+                </dd>
+                <dt>Alta</dt>                <dd th:text="${#temporals.format(institucion.creadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
+                <dt>Ultima actualizacion</dt><dd th:text="${#temporals.format(institucion.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
+            </dl>
+        </div>
+
+    </section>
+</body>
+</html>

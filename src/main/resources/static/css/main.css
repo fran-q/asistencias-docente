@@ -363,3 +363,90 @@ code {
     margin: 0;
     color: var(--text);
 }
+
+/* ========== Page header ========== */
+.page-header {
+    margin-bottom: var(--space-lg);
+}
+.page-header h1 {
+    margin-bottom: var(--space-xs);
+}
+.page-header__subtitle {
+    color: var(--text-muted);
+    margin: 0;
+    max-width: 70ch;
+}
+
+/* ========== Form extras ========== */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space);
+}
+@media (max-width: 600px) {
+    .form-row { grid-template-columns: 1fr; }
+}
+
+.form-hint {
+    display: block;
+    margin-top: var(--space-xs);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.form-error {
+    display: block;
+    margin-top: var(--space-xs);
+    color: var(--danger);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.form-group input.is-invalid,
+.form-group select.is-invalid,
+.form-group textarea.is-invalid {
+    border-color: var(--danger);
+}
+
+.form-actions {
+    display: flex;
+    gap: var(--space);
+    margin-top: var(--space-lg);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border);
+}
+
+.required {
+    color: var(--danger);
+    margin-left: 2px;
+}
+
+/* ========== Card variants ========== */
+.card--readonly {
+    background-color: var(--bg-elev-2);
+    opacity: 0.85;
+}
+.card--readonly h2 {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-bottom: var(--space);
+}
+
+/* ========== Badges ========== */
+.badge {
+    display: inline-block;
+    padding: 2px var(--space-sm);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.badge--success {
+    background-color: rgba(46, 139, 87, 0.2);
+    color: #6cdfa6;
+}
+.badge--danger {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #ff8a7a;
+}
