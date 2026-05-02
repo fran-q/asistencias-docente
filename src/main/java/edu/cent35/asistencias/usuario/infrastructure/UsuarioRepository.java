@@ -45,4 +45,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     /** Lista los usuarios activos de una institucion. */
     List<Usuario> findByInstitucionIdAndActivoTrueOrderByApellidoAscNombreAsc(Long institucionId);
+
+    /** Lista todos los usuarios de una institucion (activos e inactivos). */
+    List<Usuario> findByInstitucionIdOrderByActivoDescApellidoAscNombreAsc(Long institucionId);
+
+    /**
+     * Cuenta cuantos SUPERADMIN_INSTITUCION activos hay en una institucion.
+     * Se usa para evitar que la institucion se quede sin superadmin
+     * (ej: el ultimo superadmin no puede desactivarse a si mismo).
+     */
+    long countByInstitucionIdAndRolCodigoAndActivoTrue(Long institucionId, String rolCodigo);
 }

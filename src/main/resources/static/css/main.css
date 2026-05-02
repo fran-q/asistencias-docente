@@ -450,3 +450,77 @@ code {
     background-color: rgba(231, 76, 60, 0.2);
     color: #ff8a7a;
 }
+.badge--accent {
+    background-color: rgba(232, 119, 34, 0.2);
+    color: #ffb37a;
+}
+.badge--neutral {
+    background-color: rgba(160, 164, 171, 0.18);
+    color: var(--text-muted);
+}
+
+/* ========== Tablas ========== */
+.card--no-padding { padding: 0; overflow: hidden; }
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.table thead th {
+    text-align: left;
+    padding: var(--space-sm) var(--space);
+    background-color: var(--bg-elev-2);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+}
+.table tbody td {
+    padding: var(--space-sm) var(--space);
+    border-bottom: 1px solid var(--border);
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background-color: var(--bg-elev-2); }
+.table .row--inactive { opacity: 0.6; }
+.table .row--inactive code { text-decoration: line-through; }
+.table__actions { text-align: right; white-space: nowrap; }
+.table__actions .btn--sm { margin-left: var(--space-xs); }
+.table__empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: var(--space-xl);
+}
+
+.btn--sm {
+    padding: 4px 10px;
+    font-size: 0.85rem;
+}
+
+/* ========== Header con accion ========== */
+.page-header--with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space);
+    flex-wrap: wrap;
+}
+
+/* ========== Checkbox ========== */
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+    color: var(--text);
+}
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+
+.text-muted { color: var(--text-muted); }

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Nuevo usuario - Asistencias</title>
+</head>
+<body>
+    <section class="usuarios-form">
+        <header class="page-header">
+            <h1>Nuevo usuario</h1>
+            <p class="page-header__subtitle">
+                Crea un superadmin o admin para tu institucion. La contrasena
+                inicial la elegis vos y el usuario debe cambiarla en su primer
+                login (TODO: forzar cambio en Sprint 2).
+            </p>
+        </header>
+
+        <div class="card">
+            <form th:action="@{/usuarios/nuevo}" th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Username <span class="required">*</span></label>
+                        <input type="text" id="username" th:field="*{username}" required
+                               minlength="3" maxlength="60" autocomplete="off"
+                               th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+                        <small class="form-hint">Letras, numeros, puntos, guiones y guion bajo. Inmutable despues.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" required maxlength="120"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellido <span class="required">*</span></label>
+                        <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Contrasena inicial <span class="required">*</span></label>
+                        <input type="password" id="password" th:field="*{password}" required
+                               minlength="6" maxlength="60" autocomplete="new-password"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                        <small class="form-hint">Minimo 6 caracteres.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="rol">Rol <span class="required">*</span></label>
+                        <select id="rol" th:field="*{rol}" required
+                                th:classappend="${#fields.hasErrors('rol')} ? 'is-invalid'">
+                            <option value="">-- Elegir rol --</option>
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROL</option>
+                        </select>
+                        <small class="form-hint">SUPERADMIN_INSTITUCION puede gestionar usuarios; ADMIN no.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Crear usuario</button>
+                    <a th:href="@{/usuarios}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Usuarios - Asistencias</title>
+</head>
+<body>
+    <section class="usuarios-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Usuarios de la institucion</h1>
+                <p class="page-header__subtitle">
+                    Gestion de admins y superadmins de tu institucion. Solo vos como
+                    superadmin podes administrar estos usuarios.
+                </p>
+            </div>
+            <a th:href="@{/usuarios/nuevo}" class="btn btn--primary">+ Nuevo usuario</a>
+        </header>
+
+        <div th:if="${flashMensaje}" class="alert alert--success" role="alert">
+            <span th:text="${flashMensaje}">OK</span>
+        </div>
+        <div th:if="${flashError}" class="alert alert--error" role="alert">
+            <span th:text="${flashError}">Error</span>
+        </div>
+
+        <div class="card card--no-padding">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Nombre completo</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Ultimo login</th>
+                        <th class="table__actions">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${usuarios}" th:classappend="${!u.activo} ? 'row--inactive'">
+                        <td>
+                            <code th:text="${u.username}">user</code>
+                        </td>
+                        <td th:text="${u.nombreCompleto}">Nombre Apellido</td>
+                        <td th:text="${u.email}">email</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${u.rolCodigo == 'SUPERADMIN_INSTITUCION'} ? 'badge--accent' : 'badge--neutral'"
+                                  th:text="${u.rolCodigo}">ROL</span>
+                        </td>
+                        <td>
+                            <span th:if="${u.activo}"   class="badge badge--success">Activo</span>
+                            <span th:unless="${u.activo}" class="badge badge--danger">Inactivo</span>
+                        </td>
+                        <td>
+                            <span th:if="${u.ultimoLogin}"
+                                  th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yy HH:mm')}">-</span>
+                            <span th:unless="${u.ultimoLogin}" class="text-muted">-</span>
+                        </td>
+                        <td class="table__actions">
+                            <a th:href="@{/usuarios/{id}/editar(id=${u.id})}" class="btn btn--ghost btn--sm">Editar</a>
+                            <a th:href="@{/usuarios/{id}/password(id=${u.id})}" class="btn btn--ghost btn--sm">Cambiar pass</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(usuarios)}">
+                        <td colspan="7" class="table__empty">No hay usuarios cargados todavia.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</body>
+</html>

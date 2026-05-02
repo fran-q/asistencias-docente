@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Editar usuario - Asistencias</title>
+</head>
+<body>
+    <section class="usuarios-form">
+        <header class="page-header">
+            <h1>Editar usuario</h1>
+            <p class="page-header__subtitle">
+                Cambia datos basicos. El username no se puede modificar.
+                Para cambiar la contrasena usa el boton "Cambiar pass".
+            </p>
+        </header>
+
+        <div class="card">
+            <form th:action="@{/usuarios/{id}/editar(id=${usuario.id})}" th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Username (no editable)</label>
+                        <input type="text" th:value="${usuario.username}" disabled>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email <span class="required">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" required maxlength="120"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nombre">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="apellido">Apellido <span class="required">*</span></label>
+                        <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="rol">Rol</label>
+                        <select id="rol" th:field="*{rol}">
+                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" th:field="*{activo}">
+                            <span>Usuario activo</span>
+                        </label>
+                        <small class="form-hint">Si lo desactivas, no podra iniciar sesion.</small>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Guardar cambios</button>
+                    <a th:href="@{/usuarios}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

@@ -23,6 +23,8 @@
             <a th:href="@{/}" class="navbar__link">Inicio</a>
             <a th:href="@{/mi-institucion}" class="navbar__link"
                sec:authorize="hasRole('SUPERADMIN_INSTITUCION')">Mi Institucion</a>
+            <a th:href="@{/usuarios}" class="navbar__link"
+               sec:authorize="hasRole('SUPERADMIN_INSTITUCION')">Usuarios</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 
