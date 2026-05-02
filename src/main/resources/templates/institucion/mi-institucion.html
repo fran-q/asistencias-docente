@@ -3,23 +3,18 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Mi Institucion - Asistencias</title>
+    <title>Mi Institución - Asistencias</title>
 </head>
 <body>
     <section class="mi-institucion">
 
         <header class="page-header">
-            <h1>Mi Institucion</h1>
+            <h1>Mi Institución</h1>
             <p class="page-header__subtitle">
                 Editas los datos de la institucion a la que pertenece tu cuenta.
                 Cambios afectan a todos los usuarios de la institucion.
             </p>
         </header>
-
-        <!-- Mensaje flash de exito -->
-        <div th:if="${flashMensaje}" class="alert alert--success" role="alert">
-            <span th:text="${flashMensaje}">OK</span>
-        </div>
 
         <div class="card">
             <form th:action="@{/mi-institucion}" th:object="${form}" method="post" novalidate>

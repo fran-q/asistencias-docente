@@ -22,9 +22,9 @@
         <nav class="navbar__menu" sec:authorize="isAuthenticated()">
             <a th:href="@{/}" class="navbar__link">Inicio</a>
             <a th:href="@{/mi-institucion}" class="navbar__link"
-               sec:authorize="hasRole('SUPERADMIN_INSTITUCION')">Mi Institucion</a>
+               sec:authorize="hasRole('INSTITUCION')">Mi Institución</a>
             <a th:href="@{/usuarios}" class="navbar__link"
-               sec:authorize="hasRole('SUPERADMIN_INSTITUCION')">Usuarios</a>
+               sec:authorize="hasRole('INSTITUCION')">Usuarios</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 
@@ -48,10 +48,21 @@
         <p>
             Sistema de Asistencias Digital con Reconocimiento Facial
             &nbsp;&middot;&nbsp;
-            Practicas Profesionalizantes III - CENT35
+            Prácticas Profesionalizantes III - CENT35
             &nbsp;&middot;&nbsp;
             v0.0.1-SNAPSHOT
         </p>
     </footer>
+
+    <!-- ============ FLASH DATA + SCRIPTS ============ -->
+    <div id="flash-data"
+         th:attr="data-success=${flashMensaje},
+                  data-warning=${flashWarning},
+                  data-error=${flashError}"
+         hidden></div>
+
+    <script th:src="@{/js/toast.js}" defer></script>
+    <script th:src="@{/js/password-ui.js}" defer></script>
+    <script th:src="@{/js/table-scroll.js}" defer></script>
 </body>
 </html>

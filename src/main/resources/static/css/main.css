@@ -524,3 +524,131 @@ code {
 }
 
 .text-muted { color: var(--text-muted); }
+
+/* ========== Wrap para tablas anchas (scroll horizontal) ========== */
+.table-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+.table-wrap::-webkit-scrollbar          { height: 8px; }
+.table-wrap::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 4px; }
+.table-wrap::-webkit-scrollbar-track    { background: transparent; }
+.table-wrap .table { min-width: 720px; }
+
+/* ========== Password input con boton ojo ========== */
+.password-input {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+.password-input input {
+    flex: 1;
+    padding-right: 44px !important;
+}
+.password-toggle {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+}
+.password-toggle:hover {
+    color: var(--text);
+    background: var(--bg-elev-2);
+}
+.password-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ========== Toasts ========== */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: calc(100vw - 48px);
+    pointer-events: none;
+}
+.toast {
+    pointer-events: auto;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: 12px 14px 12px 14px;
+    background: var(--bg-elev);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--text-muted);
+    border-radius: var(--radius);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    min-width: 280px;
+    max-width: 420px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+}
+.toast--in  { opacity: 1; transform: translateX(0); }
+.toast--out { opacity: 0; transform: translateX(20px); }
+
+.toast__icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border-radius: 50%;
+    font-size: 0.85rem;
+}
+.toast__msg {
+    flex: 1;
+    word-break: break-word;
+}
+.toast__close {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.85rem;
+}
+.toast__close:hover { color: var(--text); background: var(--bg-elev-2); }
+
+.toast--success { border-left-color: var(--success); }
+.toast--success .toast__icon { background: rgba(46, 139, 87, 0.2); color: #6cdfa6; }
+
+.toast--warning { border-left-color: var(--warning); }
+.toast--warning .toast__icon { background: rgba(243, 156, 18, 0.2); color: #ffd089; }
+
+.toast--error   { border-left-color: var(--danger); }
+.toast--error   .toast__icon { background: rgba(231, 76, 60, 0.2); color: #ff8a7a; }
+
+.toast--info    { border-left-color: var(--primary); }
+.toast--info    .toast__icon { background: rgba(74, 158, 255, 0.2); color: #9ec5ff; }

@@ -44,20 +44,20 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         if (matches.isEmpty()) {
             log.debug("Login fallido: username '{}' no existe en la BD", username);
-            throw new UsernameNotFoundException("Usuario o contrasena incorrectos");
+            throw new UsernameNotFoundException("Usuario o contraseña incorrectos");
         }
 
         if (matches.size() > 1) {
             log.warn("Username '{}' encontrado en {} instituciones distintas - " +
                      "ambiguedad. Se requiere selector de tenant.", username, matches.size());
-            throw new UsernameNotFoundException("Usuario o contrasena incorrectos");
+            throw new UsernameNotFoundException("Usuario o contraseña incorrectos");
         }
 
         Usuario usuario = matches.get(0);
 
         if (!Boolean.TRUE.equals(usuario.getActivo())) {
             log.debug("Login fallido: usuario '{}' esta inactivo", username);
-            throw new UsernameNotFoundException("Usuario o contrasena incorrectos");
+            throw new UsernameNotFoundException("Usuario o contraseña incorrectos");
         }
 
         log.debug("Usuario encontrado: id={}, institucion_id={}, rol={}",

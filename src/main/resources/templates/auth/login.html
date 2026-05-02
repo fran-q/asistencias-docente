@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar sesion - Asistencias</title>
+    <title>Iniciar sesión - Asistencias</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body class="login-body">
@@ -11,16 +11,8 @@
         <header class="login-card__header">
             <div class="login-card__logo">A</div>
             <h1>Sistema de Asistencias</h1>
-            <p class="login-card__subtitle">Iniciar sesion</p>
+            <p class="login-card__subtitle">Iniciar sesión</p>
         </header>
-
-        <!-- Mensajes de feedback -->
-        <div th:if="${param.error}" class="alert alert--error" role="alert">
-            Usuario o contrasena incorrectos.
-        </div>
-        <div th:if="${param.logout}" class="alert alert--success" role="alert">
-            Sesion cerrada correctamente.
-        </div>
 
         <form th:action="@{/login}" method="post" class="login-form">
             <div class="form-group">
@@ -30,17 +22,30 @@
             </div>
 
             <div class="form-group">
-                <label for="password">Contrasena</label>
-                <input type="password" id="password" name="password" required
-                       autocomplete="current-password">
+                <label for="password">Contraseña</label>
+                <div class="password-input">
+                    <input type="password" id="password" name="password" required
+                           autocomplete="current-password">
+                    <button type="button" class="password-toggle"
+                            aria-label="Mostrar contraseña">&#x1F441;</button>
+                </div>
             </div>
 
             <button type="submit" class="btn btn--primary btn--full">Ingresar</button>
         </form>
 
         <p class="login-card__hint">
-            <small>Sprint 0 - Login provisorio: <code>admin</code> / <code>admin</code></small>
+            <small>Sprint 1 — usar usuarios reales (ver <code>credenciales_proyecto.txt</code>).</small>
         </p>
     </main>
+
+    <!-- Flash data: convierte ?error y ?logout en toasts -->
+    <div th:if="${param.error}"  id="flash-data"
+         data-error="Usuario o contraseña incorrectos." hidden></div>
+    <div th:if="${param.logout}" id="flash-data"
+         data-success="Sesión cerrada correctamente." hidden></div>
+
+    <script th:src="@{/js/toast.js}" defer></script>
+    <script th:src="@{/js/password-ui.js}" defer></script>
 </body>
 </html>

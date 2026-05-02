@@ -34,8 +34,8 @@ public class UsuarioCreateFormDto {
     @Size(max = 120)
     private String email;
 
-    @NotBlank(message = "La contrasena es obligatoria al crear")
-    @Size(min = 6, max = 60, message = "La contrasena debe tener entre 6 y 60 caracteres")
+    @NotBlank(message = "La contraseña es obligatoria al crear")
+    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
     private String password;
 
     @NotBlank(message = "El nombre es obligatorio")

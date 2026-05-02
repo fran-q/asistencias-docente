@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PasswordResetDto {
 
-    @NotBlank(message = "La nueva contrasena es obligatoria")
-    @Size(min = 6, max = 60, message = "La contrasena debe tener entre 6 y 60 caracteres")
+    @NotBlank(message = "La nueva contraseña es obligatoria")
+    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
     private String nuevaPassword;
 
-    @NotBlank(message = "Repeti la contrasena")
+    @NotBlank(message = "Repetí la contraseña")
     private String confirmacion;
 
     public boolean coincide() {
