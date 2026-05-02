@@ -17,7 +17,7 @@ import lombok.ToString;
  * <p>
  * Codigos definidos en {@link RolCodigo}:
  * <ul>
- *   <li>SUPERADMIN_INSTITUCION: cuenta raiz de la institucion.</li>
+ *   <li>INSTITUCION: cuenta raiz de la institucion.</li>
  *   <li>ADMIN: operador del dia a dia.</li>
  * </ul>
  */

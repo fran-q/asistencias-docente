@@ -114,21 +114,21 @@ public class UsuarioService {
                 "No podes desactivarte a vos mismo. Pedile a otro superadmin que lo haga.");
         }
         if (id.equals(usuarioActualId)
-                && RolCodigo.SUPERADMIN_INSTITUCION.name().equals(u.getRol().getCodigo())
-                && rolCodigo != RolCodigo.SUPERADMIN_INSTITUCION) {
+                && RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo())
+                && rolCodigo != RolCodigo.INSTITUCION) {
             throw new IllegalArgumentException(
                 "No podes degradarte a vos mismo. Pedile a otro superadmin que lo haga.");
         }
 
         // Antes de cambiar a un usuario que es el ultimo superadmin activo
         boolean estaDesactivandoUltimoSuper =
-            RolCodigo.SUPERADMIN_INSTITUCION.name().equals(u.getRol().getCodigo())
+            RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo())
             && Boolean.TRUE.equals(u.getActivo())
-            && (!activo || rolCodigo != RolCodigo.SUPERADMIN_INSTITUCION);
+            && (!activo || rolCodigo != RolCodigo.INSTITUCION);
 
         if (estaDesactivandoUltimoSuper) {
             long superActivos = usuarioRepository.countByInstitucionIdAndRolCodigoAndActivoTrue(
-                u.getInstitucionId(), RolCodigo.SUPERADMIN_INSTITUCION.name());
+                u.getInstitucionId(), RolCodigo.INSTITUCION.name());
             if (superActivos <= 1) {
                 throw new IllegalArgumentException(
                     "La institucion debe tener al menos un superadmin activo. " +

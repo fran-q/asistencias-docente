@@ -9,9 +9,9 @@
         <header class="page-header">
             <h1>Nuevo usuario</h1>
             <p class="page-header__subtitle">
-                Crea un superadmin o admin para tu institucion. La contrasena
-                inicial la elegis vos y el usuario debe cambiarla en su primer
-                login (TODO: forzar cambio en Sprint 2).
+                Crea un usuario INSTITUCION o ADMIN para tu institución. La
+                contraseña inicial la elegís vos y el usuario debería cambiarla
+                en su primer login (TODO: forzar cambio en Sprint 2).
             </p>
         </header>
 
@@ -56,11 +56,15 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="password">Contrasena inicial <span class="required">*</span></label>
-                        <input type="password" id="password" th:field="*{password}" required
-                               minlength="6" maxlength="60" autocomplete="new-password"
-                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
-                        <small class="form-hint">Minimo 6 caracteres.</small>
+                        <label for="password">Contraseña inicial <span class="required">*</span></label>
+                        <div class="password-input">
+                            <input type="password" id="password" th:field="*{password}" required
+                                   minlength="6" maxlength="60" autocomplete="new-password"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                            <button type="button" class="password-toggle"
+                                    aria-label="Mostrar contraseña">&#x1F441;</button>
+                        </div>
+                        <small class="form-hint">Mínimo 6 caracteres.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</span>
                     </div>
                     <div class="form-group">
@@ -70,7 +74,7 @@
                             <option value="">-- Elegir rol --</option>
                             <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROL</option>
                         </select>
-                        <small class="form-hint">SUPERADMIN_INSTITUCION puede gestionar usuarios; ADMIN no.</small>
+                        <small class="form-hint">INSTITUCION puede gestionar usuarios; ADMIN no.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}">err</span>
                     </div>
                 </div>

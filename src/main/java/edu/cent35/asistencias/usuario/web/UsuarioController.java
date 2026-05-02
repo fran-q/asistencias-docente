@@ -27,7 +27,7 @@ import java.util.List;
  */
 @Controller
 @RequestMapping("/usuarios")
-@PreAuthorize("hasRole('SUPERADMIN_INSTITUCION')")
+@PreAuthorize("hasRole('INSTITUCION')")
 @RequiredArgsConstructor
 @Slf4j
 public class UsuarioController {
@@ -159,14 +159,14 @@ public class UsuarioController {
 
         if (binding.hasErrors() || !form.coincide()) {
             if (!form.coincide()) {
-                binding.rejectValue("confirmacion", "error.match", "Las contrasenas no coinciden");
+                binding.rejectValue("confirmacion", "error.match", "Las contraseñas no coinciden");
             }
             model.addAttribute("usuario", usuarioService.buscarPorId(id));
             return "usuario/form-password";
         }
 
         usuarioService.resetearPassword(id, form.getNuevaPassword());
-        redirect.addFlashAttribute("flashMensaje", "Contrasena reseteada correctamente.");
+        redirect.addFlashAttribute("flashMensaje", "Contraseña reseteada correctamente.");
         return "redirect:/usuarios";
     }
 

@@ -14,12 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * Operaciones sobre la institucion del usuario logueado ("mi institucion").
  * <p>
- * El SUPERADMIN_INSTITUCION puede ver y editar los datos de SU
+ * El usuario con rol INSTITUCION puede ver y editar los datos de SU
  * institucion - jamas la de otra. La proteccion es doble:
  * <ol>
  *   <li>{@link TenantContext#getRequired()} provee el id que se usa
  *       para fetch (no aceptamos id externo, evita IDOR).</li>
- *   <li>El controlador exige rol SUPERADMIN_INSTITUCION via
+ *   <li>El controlador exige rol INSTITUCION via
  *       {@code @PreAuthorize}.</li>
  * </ol>
  */

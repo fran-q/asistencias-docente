@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 /**
  * DTO para el formulario de edicion de la institucion propia.
  * <p>
- * Solo expone los campos que el SUPERADMIN_INSTITUCION puede editar.
+ * Solo expone los campos que el usuario INSTITUCION puede editar.
  * No incluye {@code id}, {@code activo}, ni timestamps - esos los
  * mantiene el sistema.
  */

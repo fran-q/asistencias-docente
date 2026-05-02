@@ -2,7 +2,7 @@ package edu.cent35.asistencias.usuario.domain;
 
 /**
  * Codigos de rol que entiende el sistema. Coincide con la columna
- * {@code codigo} de la tabla {@code roles} (seed en V001__init.sql).
+ * {@code codigo} de la tabla {@code roles} (seed en V001 + rename en V003).
  * <p>
  * Se mantiene como enum aparte de la entidad {@link Rol} para tener
  * type-safety en las comprobaciones de Spring Security
@@ -10,8 +10,8 @@ package edu.cent35.asistencias.usuario.domain;
  */
 public enum RolCodigo {
 
-    /** Cuenta raiz de la institucion - gestiona los administradores. */
-    SUPERADMIN_INSTITUCION,
+    /** Cuenta institucional - gestiona los administradores. */
+    INSTITUCION,
 
     /** Personal administrativo - opera el sistema dia a dia. */
     ADMIN

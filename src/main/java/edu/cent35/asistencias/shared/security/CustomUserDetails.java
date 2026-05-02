@@ -20,7 +20,7 @@ import java.util.List;
  * <p>
  * El rol del usuario se mapea a una autoridad de Spring Security con el
  * prefijo {@code ROLE_} (convencion estandar): {@code ROLE_ADMIN},
- * {@code ROLE_SUPERADMIN_INSTITUCION}.
+ * {@code ROLE_INSTITUCION}.
  */
 @Getter
 public class CustomUserDetails implements UserDetails {

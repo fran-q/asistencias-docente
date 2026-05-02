@@ -16,15 +16,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Vista y edicion de "mi institucion" (la del SUPERADMIN_INSTITUCION
- * logueado).
+ * Vista y edicion de "mi institucion" (la del usuario con rol
+ * INSTITUCION logueado).
  * <p>
- * Restringido a rol SUPERADMIN_INSTITUCION. El ADMIN comun no accede
+ * Restringido a rol INSTITUCION. El ADMIN comun no accede
  * a esta pantalla.
  */
 @Controller
 @RequestMapping("/mi-institucion")
-@PreAuthorize("hasRole('SUPERADMIN_INSTITUCION')")
+@PreAuthorize("hasRole('INSTITUCION')")
 @RequiredArgsConstructor
 @Slf4j
 public class MiInstitucionController {
