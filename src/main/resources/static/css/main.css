@@ -555,15 +555,21 @@ code {
     transform: translateY(-50%);
     width: 36px;
     height: 36px;
+    padding: 0;
     border: none;
     background: transparent;
     color: var(--text-muted);
-    font-size: 1.1rem;
     cursor: pointer;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
+    transition: color 0.15s, background-color 0.15s;
+}
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 .password-toggle:hover {
     color: var(--text);

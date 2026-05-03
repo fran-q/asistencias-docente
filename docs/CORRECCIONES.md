@@ -18,8 +18,9 @@ Convención de estados:
 **Notas**: Spring Boot maneja UTF-8 por default; los archivos `.html` y los mensajes de Bean Validation (`@Size`, `@NotBlank`) se rescribieron con ñ.
 
 ### C-002 · Mostrar/ocultar contraseña con ojo 🟢
-**Pedido**: en todo input de tipo `password`, agregar un botón al costado con un ícono de ojo que toggle la visibilidad del texto (👁 cuando oculto, 🙈 cuando visible).
-**Resuelto en**: el mismo commit. Implementado con un único componente `password-input` en CSS + un script chico en `static/js/password-ui.js`.
+**Pedido**: en todo input de tipo `password`, agregar un botón al costado con un ícono de ojo que toggle la visibilidad del texto.
+**Resuelto en**: dos commits: primero con emojis (👁 / 🙈), después corregido a SVG inline (estilo Feather: ojo abierto / ojo tachado) tras feedback del cliente — el emoji 🙈 mostraba un mono, queriase un ojo cerrado.
+**Detalle**: `password-ui.js` define los SVG como constantes y los inyecta como `innerHTML` del botón en init y en cada toggle. Sin emoji, vectorial, escala bien.
 
 ### C-003 · Bloquear copiar / pegar / cortar en password 🟢
 **Pedido**: por seguridad, los inputs de password no deben permitir copiar, pegar ni cortar texto.

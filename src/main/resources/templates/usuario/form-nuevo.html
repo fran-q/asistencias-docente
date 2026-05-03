@@ -62,7 +62,7 @@
                                    minlength="6" maxlength="60" autocomplete="new-password"
                                    th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
                             <button type="button" class="password-toggle"
-                                    aria-label="Mostrar contraseña">&#x1F441;</button>
+                                    aria-label="Mostrar contraseña"></button>
                         </div>
                         <small class="form-hint">Mínimo 6 caracteres.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</span>
