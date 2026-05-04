@@ -25,3 +25,4 @@ Cada ADR contiene:
 |---|---|---|
 | 0001 | Monolito Modular organizado por dominio | Aceptada |
 | 0002 | Multi-tenancy por discriminator (institucion_id) | Aceptada |
+| 0003 | Estrategia de sesión: cookie HTTP clásica | Aceptada |

@@ -6,7 +6,7 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Estado
 
-🚧 **En desarrollo** - Sprint 0 (Setup). Primera entrega prevista: junio 2026.
+🚧 **En desarrollo** — Sprint 1 cerrado (Tenant + Auth real + CRUDs). Próximo: Sprint 2 (Académico). Primera entrega prevista: junio 2026.
 
 ## Stack
 
@@ -94,15 +94,15 @@ asistencias/
 
 ## Roadmap (primera entrega)
 
-| Sprint | Período | Entregable |
-|---|---|---|
-| **S0** | 24-abr a 30-abr | Setup: repo + Spring Boot + MariaDB + Flyway + login dummy |
-| **S1** | 01-may a 14-may | Multi-tenancy + autenticación real + roles |
-| **S2** | 15-may a 21-may | CRUD académico (carreras, materias, comisiones, horarios) |
-| **S3** | 22-may a 28-may | CRUD docentes + consentimiento biométrico |
-| **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV |
-| **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end |
-| **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo |
+| Sprint | Período | Entregable | Estado |
+|---|---|---|---|
+| **S0** | 24-abr a 30-abr | Setup: repo + Spring Boot + MariaDB + Flyway + login dummy | ✅ |
+| **S1** | 01-may a 04-may | Multi-tenancy + autenticación real + CRUDs (Mi Institución y Usuarios) | ✅ |
+| **S2** | 05-may a 21-may | CRUD académico (carreras, materias, comisiones, horarios) | 🔄 |
+| **S3** | 22-may a 28-may | CRUD docentes + consentimiento biométrico | ⏳ |
+| **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ⏳ |
+| **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ⏳ |
+| **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo | ⏳ |
 
 Detalle completo en `docs/1. Guia Proyecto Sistema Asistencias.docx`.
 

@@ -41,17 +41,16 @@ Convención de estados:
 - Documentación (`credenciales_proyecto.txt`, ADRs) actualizada.
 - **IMPORTANTE**: invalida la sesión actual. Hay que cerrar sesión y volver a loguearse después de aplicar la migración.
 
-### C-006 · INSTITUCION en pantalla aparte de "Mi Institución" 🔵
+### C-006 · INSTITUCION en pantalla aparte de "Mi Institución" 🟢
 **Pedido textual**: *"esos tipos de usuarios solo será accesible en otra pantalla aparte de los datos de la institución"*.
 
-**Estado actual** (post C-005): los usuarios con rol `INSTITUCION` se gestionan en `/usuarios` junto con los `ADMIN`. La pantalla `/mi-institucion` sigue mostrando solo los datos de la institución (nombre, CUIT, contacto), sin lista de usuarios — esto ya cumple con la separación pedida ("aparte de los datos").
+**Resolución**: la separación ya estaba implementada antes del pedido y se mantiene así:
+- `/mi-institucion` administra **solo datos** de la institución (nombre, CUIT, contacto). No tiene listado ni edición de usuarios.
+- `/usuarios` administra **solo usuarios** (incluyendo el INSTITUCION). No tiene datos institucionales.
 
-**Pregunta abierta para confirmar con el cliente**:
-¿La separación actual alcanza, o querés ir un paso más y partir `/usuarios` en dos pantallas distintas?
-- Opción A (actual): `/usuarios` lista TODOS los usuarios (INSTITUCION + ADMIN) en una sola tabla.
-- Opción B (split): `/usuarios` lista solo los ADMIN. Una pantalla nueva (ej. `/cuenta-institucion`) gestiona la cuenta `INSTITUCION` por separado, asumiendo "una sola cuenta INSTITUCION por institución".
+Ambas son pantallas distintas, el usuario INSTITUCION es accesible "aparte de los datos de la institución" tal como se pidió. El badge visual de la tabla (INSTITUCION en naranja, ADMIN en gris) hace evidente la diferencia de roles.
 
-Marcar la opción elegida y volver a este ítem.
+**Si en uso real surge necesidad de mayor split** (`/usuarios` para solo ADMIN + nueva pantalla `/cuenta-institucion` dedicada), abrir un ítem nuevo (C-008+) en este mismo doc.
 
 ### C-007 · Notificaciones tipo Toast en lugar de alerts inline 🟢
 **Pedido**: las notificaciones tipo "creado correctamente / error / etc" hoy aparecen como un banner grande arriba de la pantalla. Reemplazar por toasts en una esquina (verde / amarillo / rojo según severidad) que aparezcan, se desvanezcan, y no rompan el layout.
