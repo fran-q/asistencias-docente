@@ -690,3 +690,88 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 .toast--info    { border-left-color: var(--primary); }
 .toast--info    .toast__icon { background: rgba(74, 158, 255, 0.2); color: #9ec5ff; }
+
+/* ========== Modal de confirmación ========== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: var(--space-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out;
+}
+.modal-overlay--in {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    max-width: 440px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+    transform: scale(0.94);
+    transition: transform 0.2s ease-out;
+}
+.modal-overlay--in .modal {
+    transform: scale(1);
+}
+
+.modal__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(74, 158, 255, 0.18);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space);
+}
+.modal__icon svg { display: block; }
+
+.modal--danger .modal__icon {
+    background: rgba(231, 76, 60, 0.18);
+    color: var(--danger);
+}
+
+.modal__title {
+    text-align: center;
+    font-size: 1.15rem;
+    margin: 0 0 var(--space-sm);
+    color: var(--text);
+}
+
+.modal__detail {
+    text-align: center;
+    color: var(--text-muted);
+    margin: 0 0 var(--space-lg);
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.modal__actions {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: flex-end;
+}
+.modal__actions .btn { min-width: 110px; }
+
+/* Variant del boton primary en modo destructivo */
+.btn--danger-solid {
+    background-color: var(--danger);
+    color: #fff;
+}
+.btn--danger-solid:hover {
+    background-color: #c0392b;
+}

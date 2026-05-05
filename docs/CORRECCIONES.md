@@ -83,6 +83,21 @@ input[type="password"]::-webkit-strong-password-auto-fill-button { display: none
 ```
 La primera silencia el reveal de Edge; la segunda silencia los íconos de autofill/strong-password de Safari/Chrome (cuando aplica). En Brave/Chrome/Firefox no había duplicado, pero las reglas no molestan.
 
+### C-009 · Modal de confirmación propio del sistema 🟢
+**Pedido**: las confirmaciones de baja (de carreras y de cualquier otra entidad futura) usaban el `confirm()` nativo del navegador (popup feo, fuera del estilo dark). Reemplazar por un modal del sistema.
+**Resuelto en**: commit `feat(ux): modal de confirmación reusable (data-confirm)`.
+
+**Detalle**:
+- `static/js/confirm-modal.js` con API `Confirm.ask({title, detail, action, style})` (Promise) + interceptor declarativo: cualquier `<form data-confirm="...">` muestra el modal antes de enviarse.
+- Atributos soportados:
+  - `data-confirm` (obligatorio) — título / pregunta
+  - `data-confirm-detail` — texto secundario más chico
+  - `data-confirm-action` — texto del botón OK (default "Confirmar")
+  - `data-confirm-style="danger"` — paleta roja con ícono de warning
+- CSS en `main.css`: overlay con backdrop blur, panel centrado, animaciones de entrada/salida, íconos SVG (pregunta default / warning para `danger`).
+- Accesibilidad: `role="dialog"`, foco inicial en OK, Esc cancela, Tab cicla entre Cancelar/Confirmar, click en backdrop cancela.
+- Aplicado a la baja de carreras. Cuando agreguemos baja de Materias, Comisiones, Horarios, etc., basta sumar los atributos `data-confirm-*` al `<form>` — sin JS extra por entidad.
+
 ---
 
 ## Cómo agregar nuevos pedidos

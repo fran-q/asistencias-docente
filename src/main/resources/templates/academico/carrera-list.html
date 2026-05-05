@@ -48,11 +48,14 @@
                                 <a th:href="@{/carreras/{id}/editar(id=${c.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
-                                <!-- Form para baja: usa POST con CSRF -->
+                                <!-- Baja con modal del sistema (data-confirm intercepta el submit) -->
                                 <form th:if="${c.activo}"
                                       th:action="@{/carreras/{id}/baja(id=${c.id})}" method="post"
                                       class="inline-form"
-                                      onsubmit="return confirm('¿Dar de baja esta carrera? (Si tiene materias activas no se va a poder.)');">
+                                      th:data-confirm="|¿Dar de baja la carrera ${c.codigo}?|"
+                                      data-confirm-detail="Si tiene materias activas no se va a poder dar de baja. Podés reactivarla después."
+                                      data-confirm-action="Dar de baja"
+                                      data-confirm-style="danger">
                                     <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
                                 </form>
 
