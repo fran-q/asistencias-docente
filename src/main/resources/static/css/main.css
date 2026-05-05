@@ -561,6 +561,25 @@ code {
     flex: 1;
     padding-right: 44px !important;
 }
+
+/* Oculta los botones nativos que el navegador agrega encima de los inputs
+ * type=password (revelar contrasena, autofill, "ver caracter ultimo"). En
+ * Edge / IE es ::-ms-reveal y ::-ms-clear; en WebKit existe el contextual-info
+ * para autofill. Como tenemos nuestro propio boton ojo, los duplicados confunden. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+    width: 0;
+    height: 0;
+}
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button {
+    display: none !important;
+    visibility: hidden;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+}
 .password-toggle {
     position: absolute;
     right: 4px;

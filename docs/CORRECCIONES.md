@@ -66,6 +66,25 @@ Ambas son pantallas distintas, el usuario INSTITUCION es accesible "aparte de lo
 
 ---
 
+---
+
+## Lote 2026-05-05 — Sprint 2, durante Fase B
+
+### C-008 · Doble ícono de ojo en password (Edge/IE) 🟢
+**Síntoma**: al tipear algo en el input de contraseña y refrescar la página (autofill o restauración de form), aparecía un ojito gris pequeño *al lado* del ojo blanco SVG nuestro.
+**Causa**: Microsoft Edge agrega automáticamente un botón nativo `::-ms-reveal` para "revelar contraseña" cuando el campo `type=password` tiene valor. Nuestro botón custom convivía con ese, dando dos ojos.
+**Resuelto en**: commit `fix(ux): ocultar botones nativos de password reveal en Edge`.
+**Detalle**: agregadas reglas CSS para ocultar:
+```css
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; }
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button { display: none !important; }
+```
+La primera silencia el reveal de Edge; la segunda silencia los íconos de autofill/strong-password de Safari/Chrome (cuando aplica). En Brave/Chrome/Firefox no había duplicado, pero las reglas no molestan.
+
+---
+
 ## Cómo agregar nuevos pedidos
 
 Al final de cada lote (sprint, sub-fase o sesión de revisión), abrir un nuevo bloque:
