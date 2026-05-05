@@ -195,7 +195,20 @@ code {
 }
 .btn--ghost:hover { color: var(--text); border-color: var(--text-muted); }
 
+.btn--ghost.btn--danger {
+    color: var(--danger);
+    border-color: rgba(231, 76, 60, 0.4);
+}
+.btn--ghost.btn--danger:hover {
+    color: #ff8a7a;
+    border-color: var(--danger);
+    background-color: rgba(231, 76, 60, 0.08);
+}
+
 .btn--full { width: 100%; }
+
+/* Forms inline (acciones en tabla) */
+.inline-form { display: inline; margin: 0; }
 
 /* ========== Forms ========== */
 .form-group {

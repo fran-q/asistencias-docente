@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${modo == 'crear'} ? 'Nueva carrera - Asistencias' : 'Editar carrera - Asistencias'">Carrera</title>
+</head>
+<body>
+    <section class="carreras-form">
+        <header class="page-header">
+            <h1 th:text="${modo == 'crear'} ? 'Nueva carrera' : 'Editar carrera'">Carrera</h1>
+            <p class="page-header__subtitle">
+                <span th:if="${modo == 'crear'}">
+                    Cargá una nueva carrera. El código tiene que ser único en tu institución.
+                </span>
+                <span th:if="${modo == 'editar'}">
+                    Editá los datos de la carrera. El código sigue siendo único.
+                </span>
+            </p>
+        </header>
+
+        <div class="card" style="max-width: 640px;">
+            <form th:action="${modo == 'crear'}
+                              ? @{/carreras/nueva}
+                              : @{/carreras/{id}/editar(id=${carrera.id})}"
+                  th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="codigo">Código <span class="required">*</span></label>
+                    <input type="text" id="codigo" th:field="*{codigo}" required
+                           maxlength="30" autocomplete="off"
+                           th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
+                    <small class="form-hint">Ej: <code>ECO-2024</code>, <code>SIST.INF</code>. Sin espacios.</small>
+                    <span class="form-error" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}">err</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre <span class="required">*</span></label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required maxlength="150"
+                           th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary"
+                            th:text="${modo == 'crear'} ? 'Crear carrera' : 'Guardar cambios'">Guardar</button>
+                    <a th:href="@{/carreras}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info adicional solo en edicion -->
+        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 640px;">
+            <h2>Datos del sistema</h2>
+            <dl class="kv">
+                <dt>ID</dt>      <dd th:text="${carrera.id}">-</dd>
+                <dt>Estado</dt>  <dd>
+                    <span th:if="${carrera.activo}"   class="badge badge--success">Activa</span>
+                    <span th:unless="${carrera.activo}" class="badge badge--danger">Inactiva</span>
+                </dd>
+                <dt>Alta</dt>    <dd th:text="${#temporals.format(carrera.creadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
+                <dt>Última actualización</dt>
+                                 <dd th:text="${#temporals.format(carrera.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
+            </dl>
+        </div>
+    </section>
+</body>
+</html>

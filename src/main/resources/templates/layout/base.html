@@ -25,6 +25,8 @@
                sec:authorize="hasRole('INSTITUCION')">Mi Institución</a>
             <a th:href="@{/usuarios}" class="navbar__link"
                sec:authorize="hasRole('INSTITUCION')">Usuarios</a>
+            <a th:href="@{/carreras}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Carreras</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 

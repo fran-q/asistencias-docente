@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Carreras - Asistencias</title>
+</head>
+<body>
+    <section class="carreras-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Carreras</h1>
+                <p class="page-header__subtitle">
+                    Programas académicos de tu institución. De acá cuelgan las
+                    materias, comisiones y horarios.
+                </p>
+            </div>
+            <a th:href="@{/carreras/nueva}" class="btn btn--primary">+ Nueva carrera</a>
+        </header>
+
+        <div class="card card--no-padding">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Estado</th>
+                            <th>Última actualización</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${carreras}" th:classappend="${!c.activo} ? 'row--inactive'">
+                            <td>
+                                <code th:text="${c.codigo}">COD</code>
+                            </td>
+                            <td th:text="${c.nombre}">Nombre carrera</td>
+                            <td>
+                                <span th:if="${c.activo}"   class="badge badge--success">Activa</span>
+                                <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>
+                            </td>
+                            <td>
+                                <span th:if="${c.actualizadoEn}"
+                                      th:text="${#temporals.format(c.actualizadoEn, 'dd/MM/yy HH:mm')}">-</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/carreras/{id}/editar(id=${c.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+
+                                <!-- Form para baja: usa POST con CSRF -->
+                                <form th:if="${c.activo}"
+                                      th:action="@{/carreras/{id}/baja(id=${c.id})}" method="post"
+                                      class="inline-form"
+                                      onsubmit="return confirm('¿Dar de baja esta carrera? (Si tiene materias activas no se va a poder.)');">
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                </form>
+
+                                <form th:unless="${c.activo}"
+                                      th:action="@{/carreras/{id}/alta(id=${c.id})}" method="post"
+                                      class="inline-form">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(carreras)}">
+                            <td colspan="5" class="table__empty">
+                                Todavía no cargaste ninguna carrera.
+                                <a th:href="@{/carreras/nueva}">Creá la primera</a>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
