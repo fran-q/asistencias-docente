@@ -18,4 +18,7 @@ public interface CarreraRepository extends JpaRepository<Carrera, Long> {
     boolean existsByCodigo(String codigo);
 
     long countByActivoTrue();
+
+    /** Solo carreras activas, ordenadas por nombre. Para selectores de UI. */
+    List<Carrera> findByActivoTrueOrderByNombreAsc();
 }

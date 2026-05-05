@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Materias - Asistencias</title>
+</head>
+<body>
+    <section class="materias-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Materias</h1>
+                <p class="page-header__subtitle">
+                    Materias de las carreras de tu institución. Cada materia
+                    puede tener varias comisiones (Sprint 2, Fase D).
+                </p>
+            </div>
+            <a th:href="@{/materias/nueva}" class="btn btn--primary">+ Nueva materia</a>
+        </header>
+
+        <div class="card card--no-padding">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Carrera</th>
+                            <th>Estado</th>
+                            <th>Última actualización</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m : ${materias}" th:classappend="${!m.activo} ? 'row--inactive'">
+                            <td><code th:text="${m.codigo}">COD</code></td>
+                            <td th:text="${m.nombre}">Nombre materia</td>
+                            <td>
+                                <code th:text="${m.carreraCodigo}">CARR</code>
+                                <small class="text-muted" th:text="${m.carreraNombre}">Nombre</small>
+                                <span th:unless="${m.carreraActiva}" class="badge badge--danger" style="margin-left:6px;">Carrera inactiva</span>
+                            </td>
+                            <td>
+                                <span th:if="${m.activo}"   class="badge badge--success">Activa</span>
+                                <span th:unless="${m.activo}" class="badge badge--danger">Inactiva</span>
+                            </td>
+                            <td>
+                                <span th:if="${m.actualizadoEn}"
+                                      th:text="${#temporals.format(m.actualizadoEn, 'dd/MM/yy HH:mm')}">-</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/materias/{id}/editar(id=${m.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+
+                                <form th:if="${m.activo}"
+                                      th:action="@{/materias/{id}/baja(id=${m.id})}" method="post"
+                                      class="inline-form"
+                                      th:data-confirm="|¿Dar de baja la materia ${m.codigo}?|"
+                                      data-confirm-detail="Si tiene comisiones activas no se va a poder dar de baja. Podés reactivarla después."
+                                      data-confirm-action="Dar de baja"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                </form>
+
+                                <form th:unless="${m.activo}"
+                                      th:action="@{/materias/{id}/alta(id=${m.id})}" method="post"
+                                      class="inline-form">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(materias)}">
+                            <td colspan="6" class="table__empty">
+                                Todavía no cargaste ninguna materia.
+                                <a th:href="@{/materias/nueva}">Creá la primera</a>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
