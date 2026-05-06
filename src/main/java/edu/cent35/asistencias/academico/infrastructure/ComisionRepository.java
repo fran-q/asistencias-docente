@@ -21,10 +21,18 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
 
     /**
      * Lista todas las comisiones del tenant actual via JOIN con materia.
-     * Util para listados globales (ej: "todas las comisiones de la institucion").
+     * <p>
+     * <b>IMPORTANTE</b>: el filtro Hibernate {@code "tenant"} NO se propaga
+     * automaticamente a entidades JOINeadas en JPQL - hay que filtrar
+     * explicitamente por {@code institucionId}. Por eso el parametro.
      */
-    @Query("SELECT c FROM Comision c JOIN c.materia m ORDER BY c.activo DESC, m.nombre, c.codigo")
-    List<Comision> findAllDelTenant();
+    @Query("""
+        SELECT c FROM Comision c
+        JOIN c.materia m
+        WHERE m.institucionId = :tenantId
+        ORDER BY c.activo DESC, m.nombre, c.codigo
+        """)
+    List<Comision> findAllDelTenant(@Param("tenantId") Long tenantId);
 
     Optional<Comision> findByMateriaIdAndCodigo(Long materiaId, String codigo);
 

@@ -21,4 +21,7 @@ public interface MateriaRepository extends JpaRepository<Materia, Long> {
     boolean existsByCodigo(String codigo);
 
     long countByCarreraIdAndActivoTrue(Long carreraId);
+
+    /** Solo materias activas, ordenadas por nombre. Para selectores de UI. */
+    List<Materia> findByActivoTrueOrderByNombreAsc();
 }

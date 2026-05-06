@@ -29,6 +29,8 @@
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Carreras</a>
             <a th:href="@{/materias}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Materias</a>
+            <a th:href="@{/comisiones}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Comisiones</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 

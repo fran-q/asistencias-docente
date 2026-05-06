@@ -16,19 +16,29 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
     /** Horarios de una comision, ordenados por dia y hora. */
     List<Horario> findByComisionIdOrderByDiaSemanaAscHoraInicioAsc(Long comisionId);
 
-    /** Horarios activos de una carrera, para la grilla semanal. */
+    /** Cuenta horarios activos de una comision (para validar baja). */
+    long countByComisionIdAndActivoTrue(Long comisionId);
+
+    /**
+     * Horarios activos de una carrera, para la grilla semanal.
+     * <p>
+     * Filtra explicitamente por {@code institucionId} - el filtro Hibernate
+     * sobre Materia/Carrera no se propaga al JOIN en JPQL.
+     */
     @Query("""
         SELECT h
           FROM Horario h
           JOIN h.comision c
           JOIN c.materia m
-         WHERE m.carrera.id = :carreraId
+         WHERE m.carrera.id    = :carreraId
+           AND m.institucionId = :tenantId
            AND h.activo = true
            AND c.activo = true
            AND m.activo = true
         ORDER BY h.diaSemana, h.horaInicio
         """)
-    List<Horario> findActivosPorCarrera(@Param("carreraId") Long carreraId);
+    List<Horario> findActivosPorCarrera(@Param("carreraId") Long carreraId,
+                                        @Param("tenantId")  Long tenantId);
 
     /**
      * Detecta superposicion de horarios para una misma comision.

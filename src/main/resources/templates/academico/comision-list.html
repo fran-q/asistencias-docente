@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Comisiones - Asistencias</title>
+</head>
+<body>
+    <section class="comisiones-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Comisiones</h1>
+                <p class="page-header__subtitle">
+                    Cada materia puede tener varias comisiones (turnos / divisiones).
+                    El docente asignado se carga en Sprint 3.
+                </p>
+            </div>
+            <a th:href="@{/comisiones/nueva}" class="btn btn--primary">+ Nueva comisión</a>
+        </header>
+
+        <div class="card card--no-padding">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Materia</th>
+                            <th>Carrera</th>
+                            <th>Cupo</th>
+                            <th>Docente</th>
+                            <th>Estado</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${comisiones}" th:classappend="${!c.activo} ? 'row--inactive'">
+                            <td><code th:text="${c.codigo}">A</code></td>
+                            <td>
+                                <code th:text="${c.materiaCodigo}">MAT</code>
+                                <small class="text-muted" th:text="${c.materiaNombre}">Nombre</small>
+                                <span th:unless="${c.materiaActiva}" class="badge badge--danger" style="margin-left:6px;">Materia inactiva</span>
+                            </td>
+                            <td>
+                                <code th:if="${c.carreraCodigo}" th:text="${c.carreraCodigo}">CARR</code>
+                                <span th:unless="${c.carreraCodigo}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${c.cupo}" th:text="${c.cupo}">30</span>
+                                <span th:unless="${c.cupo}" class="text-muted">sin límite</span>
+                            </td>
+                            <td>
+                                <span class="text-muted"><small>— Sprint 3 —</small></span>
+                            </td>
+                            <td>
+                                <span th:if="${c.activo}"   class="badge badge--success">Activa</span>
+                                <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/comisiones/{id}/editar(id=${c.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+
+                                <form th:if="${c.activo}"
+                                      th:action="@{/comisiones/{id}/baja(id=${c.id})}" method="post"
+                                      class="inline-form"
+                                      th:data-confirm="|¿Dar de baja la comisión ${c.codigo}?|"
+                                      data-confirm-detail="Si tiene horarios activos no se va a poder dar de baja. Podés reactivarla después."
+                                      data-confirm-action="Dar de baja"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                </form>
+
+                                <form th:unless="${c.activo}"
+                                      th:action="@{/comisiones/{id}/alta(id=${c.id})}" method="post"
+                                      class="inline-form">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(comisiones)}">
+                            <td colspan="7" class="table__empty">
+                                Todavía no cargaste ninguna comisión.
+                                <a th:href="@{/comisiones/nueva}">Creá la primera</a>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>
