@@ -12,6 +12,21 @@
 <body>
     <!-- ============ NAVBAR ============ -->
     <header class="navbar">
+        <!-- Hamburguesa: visible en pantallas chicas (<=900px), oculta en desktop -->
+        <button type="button" class="navbar__toggle"
+                aria-label="Abrir menú"
+                aria-controls="navbar-menu"
+                aria-expanded="false"
+                sec:authorize="isAuthenticated()">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6"  x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+
         <div class="navbar__brand">
             <a th:href="@{/}">
                 <span class="navbar__logo">A</span>
@@ -19,7 +34,7 @@
             </a>
         </div>
 
-        <nav class="navbar__menu" sec:authorize="isAuthenticated()">
+        <nav class="navbar__menu" id="navbar-menu" sec:authorize="isAuthenticated()">
             <a th:href="@{/}" class="navbar__link">Inicio</a>
             <a th:href="@{/mi-institucion}" class="navbar__link"
                sec:authorize="hasRole('INSTITUCION')">Mi Institución</a>
@@ -41,6 +56,9 @@
             </form>
         </div>
     </header>
+
+    <!-- Backdrop oscuro detras del drawer en pantallas chicas -->
+    <div class="navbar__backdrop" aria-hidden="true"></div>
 
     <!-- ============ CONTENIDO ============ -->
     <main class="container">
@@ -71,5 +89,6 @@
     <script th:src="@{/js/password-ui.js}" defer></script>
     <script th:src="@{/js/table-scroll.js}" defer></script>
     <script th:src="@{/js/confirm-modal.js}" defer></script>
+    <script th:src="@{/js/navbar.js}" defer></script>
 </body>
 </html>

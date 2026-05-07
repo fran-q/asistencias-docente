@@ -100,6 +100,30 @@ La primera silencia el reveal de Edge; la segunda silencia los íconos de autofi
 
 ---
 
+## Lote 2026-05-06 — Sprint 2, durante Fase D
+
+### C-010 · Input de cupo con look default del navegador 🟢
+**Pedido**: el input numérico del campo "Cupo" en el form de comisión tenía el estilo nativo del navegador (borde blanco fino, alto distinto, flechitas spinner) — desentonaba con los otros inputs del sistema.
+**Resuelto en**: commit `fix(ux): input number con estilo del sistema + menu hamburguesa responsive`.
+**Detalle**:
+- En `main.css` agregado `input[type="number"]`, `time`, `date`, `datetime-local`, `tel`, `url` al selector `.form-group input...` para que hereden el padding/borde/color del sistema.
+- Sumadas reglas para inputs `:disabled` (atenuados con `cursor: not-allowed`).
+- Spinners (flechitas) de los inputs `number` ocultados con vendor prefixes (Chrome/Safari y Firefox).
+
+### C-011 · Menú hamburguesa para pantallas chicas 🟢
+**Pedido**: cuando la ventana se achica y el navbar se corta, los links dejan de ser accesibles. Crear un menú hamburguesa lateral izquierdo que se abra con el click del botón.
+**Resuelto en**: mismo commit.
+**Detalle**:
+- Breakpoint: **`max-width: 900px`** (debajo se activa el modo mobile).
+- Botón `.navbar__toggle` con icono SVG (3 líneas) a la izquierda del logo. Oculto en desktop (`display: none`), visible en mobile (`display: inline-flex`).
+- En mobile: `.navbar__menu` se transforma en un drawer fijo lateral (280px, `transform: translateX(-100%)` por default). Al abrirse (`body.nav-open`), `translateX(0)` con transición suave.
+- `.navbar__backdrop` es un overlay oscuro con backdrop-blur que cubre el contenido mientras el drawer está abierto.
+- En desktop: el backdrop tiene `display: none`. El menú vuelve a su layout flex inline tradicional.
+- El username se oculta en mobile para ahorrar espacio (queda solo logo, brand, hamburguesa, botón Salir). El nombre completo es accesible desde Mi Institución / Usuarios igual.
+- `static/js/navbar.js` maneja el toggle (click hamburguesa, click backdrop, Esc, click en link interno, resize a desktop). Atributos ARIA correctos (`aria-expanded`, `aria-controls`, `aria-hidden`).
+
+---
+
 ## Cómo agregar nuevos pedidos
 
 Al final de cada lote (sprint, sub-fase o sesión de revisión), abrir un nuevo bloque:

@@ -225,6 +225,12 @@ code {
 .form-group input[type="text"],
 .form-group input[type="password"],
 .form-group input[type="email"],
+.form-group input[type="number"],
+.form-group input[type="time"],
+.form-group input[type="date"],
+.form-group input[type="datetime-local"],
+.form-group input[type="tel"],
+.form-group input[type="url"],
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -244,6 +250,24 @@ code {
     outline: none;
     border-color: var(--primary);
 }
+
+/* Inputs disabled — atenuados, no editables */
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background-color: var(--bg-elev);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Esconder los spinners de los inputs number — el dato es opcional, no necesitan flechas */
+.form-group input[type="number"]::-webkit-outer-spin-button,
+.form-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.form-group input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
 /* ========== Alerts ========== */
 .alert {
@@ -774,4 +798,103 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .btn--danger-solid:hover {
     background-color: #c0392b;
+}
+
+/* ========== Boton hamburguesa + drawer responsive ========== */
+
+/* Boton hamburguesa: oculto por default (desktop) */
+.navbar__toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    margin-right: var(--space-sm);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+.navbar__toggle:hover {
+    background: var(--bg-elev-2);
+    border-color: var(--border);
+}
+.navbar__toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+.navbar__toggle svg { display: block; }
+
+/* Backdrop del drawer (fixed overlay) */
+.navbar__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-out;
+}
+
+/* En desktop, el menu se ve normal (flex row inline) y el backdrop nunca aparece */
+@media (min-width: 901px) {
+    .navbar__backdrop { display: none; }
+}
+
+/* En pantallas chicas: el menu se transforma en drawer lateral */
+@media (max-width: 900px) {
+    .navbar__toggle { display: inline-flex; }
+
+    /* Oculto el username en navbar para ahorrar espacio (lo movemos al drawer) */
+    .navbar__username { display: none; }
+
+    /* El menu ahora es un drawer fijo a la izquierda, fuera de pantalla */
+    .navbar__menu {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 280px;
+        max-width: 82vw;
+        margin: 0;
+        padding: var(--space-lg) var(--space);
+        flex: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        background-color: var(--bg-elev);
+        border-right: 1px solid var(--border);
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+        transform: translateX(-100%);
+        transition: transform 0.25s ease-out;
+        z-index: 999;
+        overflow-y: auto;
+    }
+
+    /* Cuando el body tiene .nav-open, se desliza al frente */
+    body.nav-open .navbar__menu        { transform: translateX(0); }
+    body.nav-open .navbar__backdrop    { opacity: 1; pointer-events: auto; }
+    body.nav-open                      { overflow: hidden; }   /* bloquea scroll del fondo */
+
+    /* Estilo de los links dentro del drawer (ya no son inline, son un menu vertical) */
+    .navbar__link {
+        display: block;
+        padding: 12px 14px;
+        margin: 0;
+        border-radius: var(--radius);
+        border-bottom: none !important;
+        color: var(--text);
+        font-size: 0.95rem;
+    }
+    .navbar__link:hover {
+        background-color: var(--bg-elev-2);
+        color: var(--primary);
+        text-decoration: none;
+        border-bottom-color: transparent;
+    }
 }
