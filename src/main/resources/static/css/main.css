@@ -128,6 +128,7 @@ code {
     padding: var(--space-xs) 0;
     border-bottom: 2px solid transparent;
     transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;            /* nunca wrappear el texto del link en 2 lineas */
 }
 .navbar__link:hover {
     color: var(--text);
@@ -828,7 +829,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .navbar__toggle svg { display: block; }
 
-/* Backdrop del drawer (fixed overlay) */
+/* Backdrop del drawer (fixed overlay) - oculto por default, lo activa nav-compact */
 .navbar__backdrop {
     position: fixed;
     inset: 0;
@@ -839,62 +840,62 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease-out;
+    display: none;                 /* Default: oculto */
 }
 
-/* En desktop, el menu se ve normal (flex row inline) y el backdrop nunca aparece */
-@media (min-width: 901px) {
-    .navbar__backdrop { display: none; }
+/* ============================================================================
+ *  NAV COMPACT MODE
+ *  Activado por JS (navbar.js) cuando los links del navbar no entran en
+ *  el ancho disponible. NO usa media queries con breakpoints fijos:
+ *  se mide overflow real (scrollWidth > clientWidth) y se aplica/quita la
+ *  clase body.nav-compact dinamicamente en resize.
+ * ============================================================================ */
+
+body.nav-compact .navbar__toggle    { display: inline-flex; }
+body.nav-compact .navbar__backdrop  { display: block; }
+body.nav-compact .navbar__username  { display: none; }   /* ahorrar espacio */
+
+/* El menu se transforma en drawer fijo a la izquierda, fuera de pantalla */
+body.nav-compact .navbar__menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 82vw;
+    margin: 0;
+    padding: var(--space-lg) var(--space);
+    flex: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    background-color: var(--bg-elev);
+    border-right: 1px solid var(--border);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-out;
+    z-index: 999;
+    overflow-y: auto;
 }
 
-/* En pantallas chicas: el menu se transforma en drawer lateral */
-@media (max-width: 900px) {
-    .navbar__toggle { display: inline-flex; }
-
-    /* Oculto el username en navbar para ahorrar espacio (lo movemos al drawer) */
-    .navbar__username { display: none; }
-
-    /* El menu ahora es un drawer fijo a la izquierda, fuera de pantalla */
-    .navbar__menu {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 280px;
-        max-width: 82vw;
-        margin: 0;
-        padding: var(--space-lg) var(--space);
-        flex: none;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 4px;
-        background-color: var(--bg-elev);
-        border-right: 1px solid var(--border);
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
-        transform: translateX(-100%);
-        transition: transform 0.25s ease-out;
-        z-index: 999;
-        overflow-y: auto;
-    }
-
-    /* Cuando el body tiene .nav-open, se desliza al frente */
-    body.nav-open .navbar__menu        { transform: translateX(0); }
-    body.nav-open .navbar__backdrop    { opacity: 1; pointer-events: auto; }
-    body.nav-open                      { overflow: hidden; }   /* bloquea scroll del fondo */
-
-    /* Estilo de los links dentro del drawer (ya no son inline, son un menu vertical) */
-    .navbar__link {
-        display: block;
-        padding: 12px 14px;
-        margin: 0;
-        border-radius: var(--radius);
-        border-bottom: none !important;
-        color: var(--text);
-        font-size: 0.95rem;
-    }
-    .navbar__link:hover {
-        background-color: var(--bg-elev-2);
-        color: var(--primary);
-        text-decoration: none;
-        border-bottom-color: transparent;
-    }
+/* Estilo de los links dentro del drawer (vertical, no inline) */
+body.nav-compact .navbar__link {
+    display: block;
+    padding: 12px 14px;
+    margin: 0;
+    border-radius: var(--radius);
+    border-bottom: none !important;
+    color: var(--text);
+    font-size: 0.95rem;
 }
+body.nav-compact .navbar__link:hover {
+    background-color: var(--bg-elev-2);
+    color: var(--primary);
+    text-decoration: none;
+    border-bottom-color: transparent;
+}
+
+/* Cuando el drawer esta abierto */
+body.nav-compact.nav-open .navbar__menu     { transform: translateX(0); }
+body.nav-compact.nav-open .navbar__backdrop { opacity: 1; pointer-events: auto; }
+body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea scroll del fondo */

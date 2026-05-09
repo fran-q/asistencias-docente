@@ -112,15 +112,20 @@ La primera silencia el reveal de Edge; la segunda silencia los íconos de autofi
 
 ### C-011 · Menú hamburguesa para pantallas chicas 🟢
 **Pedido**: cuando la ventana se achica y el navbar se corta, los links dejan de ser accesibles. Crear un menú hamburguesa lateral izquierdo que se abra con el click del botón.
-**Resuelto en**: mismo commit.
-**Detalle**:
-- Breakpoint: **`max-width: 900px`** (debajo se activa el modo mobile).
-- Botón `.navbar__toggle` con icono SVG (3 líneas) a la izquierda del logo. Oculto en desktop (`display: none`), visible en mobile (`display: inline-flex`).
-- En mobile: `.navbar__menu` se transforma en un drawer fijo lateral (280px, `transform: translateX(-100%)` por default). Al abrirse (`body.nav-open`), `translateX(0)` con transición suave.
-- `.navbar__backdrop` es un overlay oscuro con backdrop-blur que cubre el contenido mientras el drawer está abierto.
-- En desktop: el backdrop tiene `display: none`. El menú vuelve a su layout flex inline tradicional.
-- El username se oculta en mobile para ahorrar espacio (queda solo logo, brand, hamburguesa, botón Salir). El nombre completo es accesible desde Mi Institución / Usuarios igual.
-- `static/js/navbar.js` maneja el toggle (click hamburguesa, click backdrop, Esc, click en link interno, resize a desktop). Atributos ARIA correctos (`aria-expanded`, `aria-controls`, `aria-hidden`).
+**Resuelto en**: dos commits — primero con breakpoint fijo a 900px; luego ajustado a **detección dinámica de overflow** tras feedback del cliente (a ~1100px los 7 links seguían sin entrar y se rompían en dos líneas).
+
+**Implementación final** (sin breakpoint hardcodeado):
+- `.navbar__link` tiene `white-space: nowrap` para que ningún link se rompa en 2 líneas.
+- Las reglas del modo compacto (drawer + hamburguesa + backdrop) se aplican vía clase `body.nav-compact` — **no por media query**.
+- `static/js/navbar.js` ejecuta `evaluateLayout()` que:
+  1. Quita `body.nav-compact` para medir el layout natural.
+  2. Compara `navbar.scrollWidth > navbar.clientWidth`.
+  3. Si hay overflow → agrega `body.nav-compact` (drawer mode).
+  4. Si no → queda en desktop mode.
+- Se ejecuta en `DOMContentLoaded`, en cada `resize` (debounced 80ms) y vía `ResizeObserver` sobre `.navbar`.
+- A medida que se agreguen módulos al navbar (Sprint 3+: Docentes, Asistencias, Reportes), no hace falta recalibrar ningún breakpoint — el modo compacto se activa solo cuando el contenido no entra.
+
+**Comportamiento drawer**: hamburguesa toggle, click en backdrop / Esc / click en link cierran. ARIA correcto (`aria-expanded`, `aria-controls`, `aria-hidden`). El username se oculta en compact para ahorrar espacio.
 
 ---
 
