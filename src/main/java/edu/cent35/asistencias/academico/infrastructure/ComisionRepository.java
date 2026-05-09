@@ -43,4 +43,20 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
     /** Cuenta comisiones del tenant - chequea pertenencia via materia. */
     @Query("SELECT COUNT(c) FROM Comision c JOIN c.materia m WHERE c.id = :id")
     long countByIdEnTenant(@Param("id") Long id);
+
+    /**
+     * Comisiones activas del tenant con materia activa, para selectores de UI.
+     * <p>
+     * Filtra explicitamente por institucionId (TD-003: el filtro Hibernate
+     * sobre Materia no se propaga al JOIN en JPQL).
+     */
+    @Query("""
+        SELECT c FROM Comision c
+        JOIN c.materia m
+        WHERE m.institucionId = :tenantId
+          AND c.activo = true
+          AND m.activo = true
+        ORDER BY m.nombre, c.codigo
+        """)
+    List<Comision> findActivasDelTenant(@Param("tenantId") Long tenantId);
 }

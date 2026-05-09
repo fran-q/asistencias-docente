@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Horarios - Asistencias</title>
+</head>
+<body>
+    <section class="horarios-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Horarios</h1>
+                <p class="page-header__subtitle">
+                    Franjas horarias semanales de cada comisión. La tolerancia se usa
+                    para clasificar Presente vs Tarde en la asistencia automática (RF-19).
+                </p>
+            </div>
+            <a th:href="@{/horarios/nuevo}" class="btn btn--primary">+ Nuevo horario</a>
+        </header>
+
+        <div class="card card--no-padding">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Horario</th>
+                            <th>Tol.</th>
+                            <th>Comisión</th>
+                            <th>Materia</th>
+                            <th>Vigencia</th>
+                            <th>Estado</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="h : ${horarios}" th:classappend="${!h.activo} ? 'row--inactive'">
+                            <td><strong th:text="${h.diaEtiqueta}">Día</strong></td>
+                            <td>
+                                <span th:text="${#temporals.format(h.horaInicio, 'HH:mm')}">08:00</span>
+                                —
+                                <span th:text="${#temporals.format(h.horaFin, 'HH:mm')}">10:00</span>
+                            </td>
+                            <td>
+                                <small th:text="|${h.toleranciaMin} min|">15 min</small>
+                            </td>
+                            <td>
+                                <code th:text="${h.comisionCodigo}">A</code>
+                                <span th:unless="${h.comisionActiva}" class="badge badge--danger" style="margin-left:6px;">Comisión inactiva</span>
+                            </td>
+                            <td>
+                                <code th:text="${h.materiaCodigo}">MAT</code>
+                                <small class="text-muted" th:text="${h.materiaNombre}">Nombre</small>
+                            </td>
+                            <td>
+                                <small>
+                                    <span th:text="${#temporals.format(h.vigenteDesde, 'dd/MM/yy')}">01/01/26</span>
+                                    →
+                                    <span th:if="${h.vigenteHasta}"
+                                          th:text="${#temporals.format(h.vigenteHasta, 'dd/MM/yy')}">31/12/26</span>
+                                    <span th:unless="${h.vigenteHasta}" class="text-muted">∞</span>
+                                </small>
+                            </td>
+                            <td>
+                                <span th:if="${h.activo}"   class="badge badge--success">Activo</span>
+                                <span th:unless="${h.activo}" class="badge badge--danger">Inactivo</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/horarios/{id}/editar(id=${h.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+
+                                <form th:if="${h.activo}"
+                                      th:action="@{/horarios/{id}/baja(id=${h.id})}" method="post"
+                                      class="inline-form"
+                                      th:data-confirm="|¿Dar de baja este horario del ${h.diaEtiqueta}?|"
+                                      data-confirm-detail="No se eliminan los datos de asistencia que ya tenían este horario asociado."
+                                      data-confirm-action="Dar de baja"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                </form>
+
+                                <form th:unless="${h.activo}"
+                                      th:action="@{/horarios/{id}/alta(id=${h.id})}" method="post"
+                                      class="inline-form">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(horarios)}">
+                            <td colspan="8" class="table__empty">
+                                Todavía no cargaste ningún horario.
+                                <a th:href="@{/horarios/nuevo}">Creá el primero</a>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

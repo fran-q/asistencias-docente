@@ -67,6 +67,23 @@ public class ComisionService {
         return c;
     }
 
+    /**
+     * Comisiones activas del tenant para popular selectores de UI
+     * (ej: el form de creacion de horarios).
+     */
+    @Transactional(readOnly = true)
+    public List<Comision> comisionesActivasParaSelector() {
+        Long tenantId = TenantContext.getRequired();
+        List<Comision> cs = comisionRepository.findActivasDelTenant(tenantId);
+        cs.forEach(c -> {
+            if (c.getMateria() != null) {
+                c.getMateria().getCodigo();
+                if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
+            }
+        });
+        return cs;
+    }
+
     @Transactional(readOnly = true)
     public List<Materia> materiasActivasParaSelector() {
         List<Materia> ms = materiaRepository.findByActivoTrueOrderByNombreAsc();
