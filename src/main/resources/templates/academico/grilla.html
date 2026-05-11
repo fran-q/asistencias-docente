@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Grilla horaria - Asistencias</title>
+</head>
+<body>
+    <section class="grilla-view">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Grilla horaria semanal</h1>
+                <p class="page-header__subtitle">
+                    Vista calendario de los horarios activos por carrera. Cada bloque
+                    representa una franja de una comisión.
+                </p>
+            </div>
+            <a th:href="@{/horarios/nuevo}" class="btn btn--primary">+ Nuevo horario</a>
+        </header>
+
+        <!-- Selector de carrera -->
+        <div class="card" style="padding: var(--space); margin-bottom: var(--space-lg);"
+             th:unless="${#lists.isEmpty(carreras)}">
+            <form method="get" th:action="@{/grilla}" class="grilla-selector">
+                <label for="carreraId">Carrera:</label>
+                <select id="carreraId" name="carreraId" onchange="this.form.submit()">
+                    <option th:each="c : ${carreras}"
+                            th:value="${c.id}"
+                            th:selected="${c.id == carreraIdSeleccionada}"
+                            th:text="|${c.codigo} — ${c.nombre}|">CARR — Nombre</option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Si no hay carreras activas -->
+        <div th:if="${#lists.isEmpty(carreras)}" class="card">
+            <p class="text-muted">No hay carreras activas en tu institución.</p>
+            <p><a th:href="@{/carreras/nueva}">Creá una carrera</a> para empezar.</p>
+        </div>
+
+        <!-- Si hay carrera seleccionada pero NO tiene horarios -->
+        <div th:if="${grilla != null and grilla.totalHorarios == 0}" class="card">
+            <p class="text-muted">
+                La carrera <strong th:text="${grilla.carreraCodigo}">COD</strong> no tiene
+                horarios activos cargados todavía.
+            </p>
+            <p><a th:href="@{/horarios/nuevo}">Creá el primer horario</a>.</p>
+        </div>
+
+        <!-- Grilla propiamente dicha -->
+        <div th:if="${grilla != null and grilla.totalHorarios > 0}"
+             class="grilla">
+
+            <!-- Esquina superior izquierda (vacia) -->
+            <div class="grilla__corner"></div>
+
+            <!-- Header: dias de la semana, columnas 2-8 -->
+            <div th:each="d : ${dias}"
+                 class="grilla__day-header"
+                 th:style="|grid-column: ${d.numero + 1}; grid-row: 1|"
+                 th:text="${d.etiqueta}">Lunes</div>
+
+            <!-- Etiquetas de hora a la izquierda -->
+            <div th:each="lbl : ${grilla.labels}"
+                 class="grilla__hour-label"
+                 th:style="|grid-column: 1; grid-row: ${lbl.gridRowStart}|"
+                 th:text="${lbl.texto}">07:00</div>
+
+            <!-- Items posicionados -->
+            <a th:each="item : ${grilla.items}"
+               th:href="@{/horarios/{id}/editar(id=${item.horarioId})}"
+               class="grilla__item"
+               th:style="|grid-column: ${item.gridColumn}; grid-row: ${item.gridRowStart} / ${item.gridRowEnd}|"
+               th:title="|${item.materiaNombre} · Tol. ${item.toleranciaMin} min · click para editar|">
+                <strong th:text="${item.materiaCodigo}">MAT</strong>
+                <small th:text="|${item.comisionCodigo} · ${#temporals.format(item.horaInicio, 'HH:mm')}-${#temporals.format(item.horaFin, 'HH:mm')}|">A · 08:00-10:00</small>
+            </a>
+        </div>
+
+        <p th:if="${grilla != null and grilla.totalHorarios > 0}" class="grilla__footer">
+            <small class="text-muted">
+                Mostrando <strong th:text="${grilla.totalHorarios}">N</strong> horario(s)
+                de <strong th:text="${grilla.carreraCodigo}">CARR</strong>.
+                Click en un bloque para editarlo.
+            </small>
+        </p>
+    </section>
+</body>
+</html>

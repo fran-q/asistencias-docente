@@ -899,3 +899,119 @@ body.nav-compact .navbar__link:hover {
 body.nav-compact.nav-open .navbar__menu     { transform: translateX(0); }
 body.nav-compact.nav-open .navbar__backdrop { opacity: 1; pointer-events: auto; }
 body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea scroll del fondo */
+
+/* ========== Grilla horaria semanal ========== */
+
+.grilla-selector {
+    display: flex;
+    align-items: center;
+    gap: var(--space);
+}
+.grilla-selector label {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+.grilla-selector select {
+    flex: 1;
+    max-width: 480px;
+    padding: var(--space-sm) var(--space);
+    background-color: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.grilla {
+    display: grid;
+    grid-template-columns: 64px repeat(7, minmax(80px, 1fr));
+    grid-template-rows: 38px repeat(32, 18px);   /* header + 32 slots de 30 min */
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: auto;
+    max-width: 100%;
+}
+
+.grilla__corner {
+    grid-row: 1;
+    grid-column: 1;
+    background: var(--bg-elev-2);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.grilla__day-header {
+    grid-row: 1;
+    background: var(--bg-elev-2);
+    padding: 8px 4px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.grilla__day-header:last-child { border-right: none; }
+
+.grilla__hour-label {
+    grid-column: 1;
+    /* Cada label cubre 2 slots = 1 hora completa */
+    grid-row-end: span 2;
+    padding: 2px 8px 0 0;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    text-align: right;
+    border-right: 1px solid var(--border);
+    border-top: 1px solid var(--bg-elev-2);
+}
+
+.grilla__item {
+    margin: 1px 2px;
+    padding: 4px 6px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    font-size: 0.72rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    text-decoration: none;
+    line-height: 1.25;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+.grilla__item:hover {
+    opacity: 0.92;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #fff;
+}
+.grilla__item strong {
+    display: block;
+    font-size: 0.78rem;
+    margin-bottom: 1px;
+}
+.grilla__item small {
+    display: block;
+    opacity: 0.88;
+    font-size: 0.66rem;
+}
+
+/* Variar el color de los items por dia para que sea mas legible */
+.grilla__item[style*="grid-column: 2"] { background: #4a9eff; }   /* Lun */
+.grilla__item[style*="grid-column: 3"] { background: #2e8b57; }   /* Mar */
+.grilla__item[style*="grid-column: 4"] { background: #e87722; }   /* Mie */
+.grilla__item[style*="grid-column: 5"] { background: #b86fdc; }   /* Jue */
+.grilla__item[style*="grid-column: 6"] { background: #d63864; }   /* Vie */
+.grilla__item[style*="grid-column: 7"] { background: #6c757d; }   /* Sab */
+.grilla__item[style*="grid-column: 8"] { background: #4d4d6b; }   /* Dom */
+
+.grilla__footer {
+    margin-top: var(--space);
+}

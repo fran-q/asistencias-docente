@@ -48,6 +48,8 @@
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Comisiones</a>
             <a th:href="@{/horarios}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Horarios</a>
+            <a th:href="@{/grilla}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Grilla</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 
