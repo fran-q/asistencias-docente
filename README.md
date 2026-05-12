@@ -6,7 +6,7 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Estado
 
-🚧 **En desarrollo** — Sprint 1 cerrado (Tenant + Auth real + CRUDs). Próximo: Sprint 2 (Académico). Primera entrega prevista: junio 2026.
+🚧 **En desarrollo** — Sprint 2 cerrado (Académico: Carreras, Materias, Comisiones, Horarios + Grilla semanal). Próximo: Sprint 3 (Docentes + Consentimiento biométrico). Primera entrega prevista: junio 2026.
 
 ## Stack
 
@@ -98,8 +98,8 @@ asistencias/
 |---|---|---|---|
 | **S0** | 24-abr a 30-abr | Setup: repo + Spring Boot + MariaDB + Flyway + login dummy | ✅ |
 | **S1** | 01-may a 04-may | Multi-tenancy + autenticación real + CRUDs (Mi Institución y Usuarios) | ✅ |
-| **S2** | 05-may a 21-may | CRUD académico (carreras, materias, comisiones, horarios) | 🔄 |
-| **S3** | 22-may a 28-may | CRUD docentes + consentimiento biométrico | ⏳ |
+| **S2** | 05-may a 06-may | CRUD académico (carreras, materias, comisiones, horarios) + grilla semanal | ✅ |
+| **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | 🔄 |
 | **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ⏳ |
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ⏳ |
 | **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo | ⏳ |
