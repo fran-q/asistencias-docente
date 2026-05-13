@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Docentes - Asistencias</title>
+</head>
+<body>
+    <section class="docentes-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Docentes</h1>
+                <p class="page-header__subtitle">
+                    Personal docente de la institución. Estos perfiles se vinculan a las
+                    materias (como titular) y a las comisiones (como asignado). En Sprint 4
+                    cada uno tendrá su modelo facial para el reconocimiento automático.
+                </p>
+            </div>
+            <a th:href="@{/docentes/nuevo}" class="btn btn--primary">+ Nuevo docente</a>
+        </header>
+
+        <div class="card card--no-padding">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>DNI</th>
+                            <th>Legajo</th>
+                            <th>Apellido, Nombre</th>
+                            <th>Email</th>
+                            <th>Teléfono</th>
+                            <th>Alta</th>
+                            <th>Estado</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="d : ${docentes}" th:classappend="${!d.activo} ? 'row--inactive'">
+                            <td><code th:text="${d.dni}">DNI</code></td>
+                            <td>
+                                <code th:if="${d.legajo}" th:text="${d.legajo}">L</code>
+                                <span th:unless="${d.legajo}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${d.nombreCompleto}">Apellido, Nombre</td>
+                            <td>
+                                <span th:if="${d.email}" th:text="${d.email}">e@x</span>
+                                <span th:unless="${d.email}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${d.telefono}" th:text="${d.telefono}">tel</span>
+                                <span th:unless="${d.telefono}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${#temporals.format(d.fechaAlta, 'dd/MM/yyyy')}">01/01/2026</td>
+                            <td>
+                                <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
+                                <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+
+                                <form th:if="${d.activo}"
+                                      th:action="@{/docentes/{id}/baja(id=${d.id})}" method="post"
+                                      class="inline-form"
+                                      th:data-confirm="|¿Dar de baja a ${d.nombreCompleto}?|"
+                                      data-confirm-detail="Si es titular de materias o está asignado a comisiones activas, no se va a poder. Reasignalas primero."
+                                      data-confirm-action="Dar de baja"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                </form>
+
+                                <form th:unless="${d.activo}"
+                                      th:action="@{/docentes/{id}/alta(id=${d.id})}" method="post"
+                                      class="inline-form">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(docentes)}">
+                            <td colspan="8" class="table__empty">
+                                Todavía no cargaste ningún docente.
+                                <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

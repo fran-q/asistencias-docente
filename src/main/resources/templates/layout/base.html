@@ -40,6 +40,8 @@
                sec:authorize="hasRole('INSTITUCION')">Mi Institución</a>
             <a th:href="@{/usuarios}" class="navbar__link"
                sec:authorize="hasRole('INSTITUCION')">Usuarios</a>
+            <a th:href="@{/docentes}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Docentes</a>
             <a th:href="@{/carreras}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Carreras</a>
             <a th:href="@{/materias}" class="navbar__link"

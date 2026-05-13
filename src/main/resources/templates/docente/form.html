@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${modo == 'crear'} ? 'Nuevo docente - Asistencias' : 'Editar docente - Asistencias'">Docente</title>
+</head>
+<body>
+    <section class="docentes-form">
+        <header class="page-header">
+            <h1 th:text="${modo == 'crear'} ? 'Nuevo docente' : 'Editar docente'">Docente</h1>
+            <p class="page-header__subtitle">
+                Datos personales y de contacto. El consentimiento para el
+                tratamiento biométrico (Ley 25.326) se carga después desde el
+                listado de docentes (Sprint 3 Fase D).
+            </p>
+        </header>
+
+        <div class="card" style="max-width: 760px;">
+            <form th:action="${modo == 'crear'}
+                              ? @{/docentes/nuevo}
+                              : @{/docentes/{id}/editar(id=${docente.id})}"
+                  th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dni">DNI <span class="required">*</span></label>
+                        <input type="text" id="dni" th:field="*{dni}" required
+                               inputmode="numeric" maxlength="15"
+                               th:classappend="${#fields.hasErrors('dni')} ? 'is-invalid'">
+                        <small class="form-hint">Solo dígitos. Único por institución.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('dni')}" th:errors="*{dni}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="legajo">Legajo (opcional)</label>
+                        <input type="text" id="legajo" th:field="*{legajo}" maxlength="30"
+                               th:classappend="${#fields.hasErrors('legajo')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('legajo')}" th:errors="*{legajo}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="apellido">Apellido <span class="required">*</span></label>
+                        <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="nombre">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" th:field="*{email}" maxlength="120"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="tel" id="telefono" th:field="*{telefono}" maxlength="30"
+                               th:classappend="${#fields.hasErrors('telefono')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('telefono')}" th:errors="*{telefono}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-group" style="max-width: 280px;">
+                    <label for="fechaAlta">Fecha de alta <span class="required">*</span></label>
+                    <input type="date" id="fechaAlta" th:field="*{fechaAlta}" required
+                           th:classappend="${#fields.hasErrors('fechaAlta')} ? 'is-invalid'">
+                    <small class="form-hint">No puede ser futura.</small>
+                    <span class="form-error" th:if="${#fields.hasErrors('fechaAlta')}" th:errors="*{fechaAlta}">err</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary"
+                            th:text="${modo == 'crear'} ? 'Crear docente' : 'Guardar cambios'">Guardar</button>
+                    <a th:href="@{/docentes}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+
+        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 760px;">
+            <h2>Datos del sistema</h2>
+            <dl class="kv">
+                <dt>ID</dt>      <dd th:text="${docente.id}">-</dd>
+                <dt>Estado</dt>  <dd>
+                    <span th:if="${docente.activo}"   class="badge badge--success">Activo</span>
+                    <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>
+                </dd>
+                <dt>Última actualización</dt>
+                                 <dd th:text="${#temporals.format(docente.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
+            </dl>
+        </div>
+    </section>
+</body>
+</html>

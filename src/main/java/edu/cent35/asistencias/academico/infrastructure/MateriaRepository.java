@@ -24,4 +24,7 @@ public interface MateriaRepository extends JpaRepository<Materia, Long> {
 
     /** Solo materias activas, ordenadas por nombre. Para selectores de UI. */
     List<Materia> findByActivoTrueOrderByNombreAsc();
+
+    /** Cuenta materias activas donde un docente es titular - para bloquear su baja. */
+    long countByDocenteTitularIdAndActivoTrue(Long docenteId);
 }
