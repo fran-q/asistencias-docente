@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.academico.domain;
 
+import edu.cent35.asistencias.docente.domain.Docente;
 import edu.cent35.asistencias.shared.multitenant.BaseTenantEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,8 +61,9 @@ public class Materia extends BaseTenantEntity {
     @Column(nullable = false, length = 150)
     private String nombre;
 
-    @Column(name = "docente_titular_id")
-    private Long docenteTitularId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "docente_titular_id")
+    private Docente docenteTitular;
 
     @Column(nullable = false)
     @Builder.Default

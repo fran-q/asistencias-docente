@@ -25,6 +25,7 @@
                             <th>Código</th>
                             <th>Nombre</th>
                             <th>Carrera</th>
+                            <th>Titular</th>
                             <th>Estado</th>
                             <th>Última actualización</th>
                             <th class="table__actions">Acciones</th>
@@ -38,6 +39,11 @@
                                 <code th:text="${m.carreraCodigo}">CARR</code>
                                 <small class="text-muted" th:text="${m.carreraNombre}">Nombre</small>
                                 <span th:unless="${m.carreraActiva}" class="badge badge--danger" style="margin-left:6px;">Carrera inactiva</span>
+                            </td>
+                            <td>
+                                <span th:if="${m.titularNombre}" th:text="${m.titularNombre}">Apellido, Nombre</span>
+                                <span th:unless="${m.titularNombre}" class="text-muted">— Sin asignar —</span>
+                                <span th:if="${m.titularNombre and !m.titularActivo}" class="badge badge--danger" style="margin-left:6px;">Titular inactivo</span>
                             </td>
                             <td>
                                 <span th:if="${m.activo}"   class="badge badge--success">Activa</span>
@@ -69,7 +75,7 @@
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(materias)}">
-                            <td colspan="6" class="table__empty">
+                            <td colspan="7" class="table__empty">
                                 Todavía no cargaste ninguna materia.
                                 <a th:href="@{/materias/nueva}">Creá la primera</a>.
                             </td>

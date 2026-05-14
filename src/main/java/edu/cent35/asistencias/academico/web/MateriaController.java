@@ -1,7 +1,9 @@
 package edu.cent35.asistencias.academico.web;
 
 import edu.cent35.asistencias.academico.application.MateriaService;
+import edu.cent35.asistencias.academico.domain.Carrera;
 import edu.cent35.asistencias.academico.domain.Materia;
+import edu.cent35.asistencias.docente.domain.Docente;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +20,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CRUD de Materias (RF-12).
- * Accesible para roles INSTITUCION y ADMIN.
+ * CRUD de Materias (RF-12). Roles INSTITUCION y ADMIN.
  */
 @Controller
 @RequestMapping("/materias")
@@ -47,7 +49,7 @@ public class MateriaController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new MateriaFormDto());
         }
-        model.addAttribute("carreras", service.carrerasActivasParaSelector());
+        prepararDatosForm(model, null);
         model.addAttribute("modo", "crear");
         return "academico/materia-form";
     }
@@ -59,19 +61,20 @@ public class MateriaController {
                         RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("carreras", service.carrerasActivasParaSelector());
+            prepararDatosForm(model, null);
             model.addAttribute("modo", "crear");
             return "academico/materia-form";
         }
 
         try {
-            Materia m = service.crear(form.getCodigo(), form.getNombre(), form.getCarreraId());
+            Materia m = service.crear(form.getCodigo(), form.getNombre(),
+                form.getCarreraId(), form.getDocenteTitularId());
             redirect.addFlashAttribute("flashMensaje",
                 "Materia '" + m.getCodigo() + "' creada correctamente.");
             return "redirect:/materias";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("carreras", service.carrerasActivasParaSelector());
+            prepararDatosForm(model, null);
             model.addAttribute("modo", "crear");
             return "academico/materia-form";
         }
@@ -84,15 +87,7 @@ public class MateriaController {
             model.addAttribute("form", MateriaFormDto.from(m));
         }
         model.addAttribute("materia", m);
-        // En edicion incluimos la carrera actual aunque este inactiva
-        // (asi el select muestra el valor seleccionado)
-        List<edu.cent35.asistencias.academico.domain.Carrera> opciones =
-            new java.util.ArrayList<>(service.carrerasActivasParaSelector());
-        if (m.getCarrera() != null && Boolean.FALSE.equals(m.getCarrera().getActivo())
-                && opciones.stream().noneMatch(c -> c.getId().equals(m.getCarrera().getId()))) {
-            opciones.add(m.getCarrera());
-        }
-        model.addAttribute("carreras", opciones);
+        prepararDatosForm(model, m);
         model.addAttribute("modo", "editar");
         return "academico/materia-form";
     }
@@ -105,20 +100,23 @@ public class MateriaController {
                              RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("materia", service.buscarPorId(id));
-            model.addAttribute("carreras", service.carrerasActivasParaSelector());
+            Materia m = service.buscarPorId(id);
+            model.addAttribute("materia", m);
+            prepararDatosForm(model, m);
             model.addAttribute("modo", "editar");
             return "academico/materia-form";
         }
 
         try {
-            service.actualizar(id, form.getCodigo(), form.getNombre(), form.getCarreraId());
+            service.actualizar(id, form.getCodigo(), form.getNombre(),
+                form.getCarreraId(), form.getDocenteTitularId());
             redirect.addFlashAttribute("flashMensaje", "Materia actualizada correctamente.");
             return "redirect:/materias";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("materia", service.buscarPorId(id));
-            model.addAttribute("carreras", service.carrerasActivasParaSelector());
+            Materia m = service.buscarPorId(id);
+            model.addAttribute("materia", m);
+            prepararDatosForm(model, m);
             model.addAttribute("modo", "editar");
             return "academico/materia-form";
         }
@@ -150,5 +148,28 @@ public class MateriaController {
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La materia solicitada no existe.");
         return "redirect:/materias";
+    }
+
+    /**
+     * Carga al modelo las carreras y docentes disponibles para el form.
+     * Si se está editando una materia con carrera/docente inactivos, los
+     * sumamos a sus listas para que el select los muestre.
+     */
+    private void prepararDatosForm(Model model, Materia materiaActual) {
+        List<Carrera> carreras = new ArrayList<>(service.carrerasActivasParaSelector());
+        if (materiaActual != null && materiaActual.getCarrera() != null
+                && Boolean.FALSE.equals(materiaActual.getCarrera().getActivo())
+                && carreras.stream().noneMatch(c -> c.getId().equals(materiaActual.getCarrera().getId()))) {
+            carreras.add(materiaActual.getCarrera());
+        }
+        model.addAttribute("carreras", carreras);
+
+        List<Docente> docentes = new ArrayList<>(service.docentesActivosParaSelector());
+        if (materiaActual != null && materiaActual.getDocenteTitular() != null
+                && Boolean.FALSE.equals(materiaActual.getDocenteTitular().getActivo())
+                && docentes.stream().noneMatch(d -> d.getId().equals(materiaActual.getDocenteTitular().getId()))) {
+            docentes.add(materiaActual.getDocenteTitular());
+        }
+        model.addAttribute("docentes", docentes);
     }
 }

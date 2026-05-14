@@ -31,11 +31,15 @@ public class MateriaFormDto {
     @NotNull(message = "Hay que elegir una carrera")
     private Long carreraId;
 
+    /** Opcional: id del docente titular (puede ser null). */
+    private Long docenteTitularId;
+
     public static MateriaFormDto from(Materia m) {
         return MateriaFormDto.builder()
             .codigo(m.getCodigo())
             .nombre(m.getNombre())
             .carreraId(m.getCarrera().getId())
+            .docenteTitularId(m.getDocenteTitular() != null ? m.getDocenteTitular().getId() : null)
             .build();
     }
 }

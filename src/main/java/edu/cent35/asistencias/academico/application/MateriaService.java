@@ -5,6 +5,8 @@ import edu.cent35.asistencias.academico.domain.Materia;
 import edu.cent35.asistencias.academico.infrastructure.CarreraRepository;
 import edu.cent35.asistencias.academico.infrastructure.ComisionRepository;
 import edu.cent35.asistencias.academico.infrastructure.MateriaRepository;
+import edu.cent35.asistencias.docente.domain.Docente;
+import edu.cent35.asistencias.docente.infrastructure.DocenteRepository;
 import edu.cent35.asistencias.shared.multitenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +37,15 @@ public class MateriaService {
     private final MateriaRepository materiaRepository;
     private final CarreraRepository carreraRepository;
     private final ComisionRepository comisionRepository;
+    private final DocenteRepository docenteRepository;
 
     @Transactional(readOnly = true)
     public List<Materia> listar() {
         List<Materia> materias = materiaRepository.findAllByOrderByActivoDescNombreAsc();
-        // Forzar inicializacion de la carrera (lazy) dentro del scope transaccional
+        // Forzar inicializacion de carrera + docente titular (lazy)
         materias.forEach(m -> {
             if (m.getCarrera() != null) m.getCarrera().getCodigo();
+            if (m.getDocenteTitular() != null) m.getDocenteTitular().getDni();
         });
         return materias;
     }
@@ -56,9 +60,16 @@ public class MateriaService {
                      tenantId, id, m.getInstitucionId());
             throw new EntityNotFoundException("Materia no encontrada");
         }
-        // touch para inicializar la carrera lazy
+        // touch para inicializar carrera + docente titular lazy
         if (m.getCarrera() != null) m.getCarrera().getCodigo();
+        if (m.getDocenteTitular() != null) m.getDocenteTitular().getDni();
         return m;
+    }
+
+    /** Docentes activos del tenant para el selector de "Titular". */
+    @Transactional(readOnly = true)
+    public List<Docente> docentesActivosParaSelector() {
+        return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
     }
 
     /** Lista las carreras activas del tenant para selectores de UI. */
@@ -68,7 +79,7 @@ public class MateriaService {
     }
 
     @Transactional
-    public Materia crear(String codigo, String nombre, Long carreraId) {
+    public Materia crear(String codigo, String nombre, Long carreraId, Long docenteTitularId) {
         Long tenantId = TenantContext.getRequired();
         Carrera carrera = obtenerCarreraValidada(carreraId, tenantId);
 
@@ -83,22 +94,26 @@ public class MateriaService {
                 "Ya existe una materia con código '" + codigoNorm + "' en esta institución.");
         }
 
+        Docente titular = obtenerDocenteValidadoOrNull(docenteTitularId, tenantId, /*requireActivo*/ true);
+
         Materia m = Materia.builder()
             .codigo(codigoNorm)
             .nombre(nombre.trim())
             .carrera(carrera)
+            .docenteTitular(titular)
             .activo(true)
             .build();
         m.setInstitucionId(tenantId);
 
         Materia saved = materiaRepository.save(m);
-        log.info("Materia creada: id={}, codigo={}, carrera_id={}, institucion_id={}",
-                 saved.getId(), saved.getCodigo(), carreraId, tenantId);
+        log.info("Materia creada: id={}, codigo={}, carrera_id={}, titular_id={}",
+                 saved.getId(), saved.getCodigo(), carreraId, docenteTitularId);
         return saved;
     }
 
     @Transactional
-    public Materia actualizar(Long id, String codigo, String nombre, Long carreraId) {
+    public Materia actualizar(Long id, String codigo, String nombre, Long carreraId,
+                              Long docenteTitularId) {
         Materia m = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
         Carrera carrera = obtenerCarreraValidada(carreraId, tenantId);
@@ -116,11 +131,19 @@ public class MateriaService {
                 "Ya existe otra materia con código '" + codigoNuevo + "' en esta institución.");
         }
 
+        // Si NO cambia de titular, permitir mantenerlo aunque ahora este inactivo (legacy).
+        // Si cambia, el nuevo titular debe estar activo.
+        Long titularActualId = m.getDocenteTitular() != null ? m.getDocenteTitular().getId() : null;
+        boolean cambiaTitular = !java.util.Objects.equals(titularActualId, docenteTitularId);
+        Docente titular = obtenerDocenteValidadoOrNull(docenteTitularId, tenantId, cambiaTitular);
+
         m.setCodigo(codigoNuevo);
         m.setNombre(nombre.trim());
         m.setCarrera(carrera);
+        m.setDocenteTitular(titular);
         Materia saved = materiaRepository.save(m);
-        log.info("Materia actualizada: id={}, codigo={}", saved.getId(), saved.getCodigo());
+        log.info("Materia actualizada: id={}, codigo={}, titular_id={}",
+                 saved.getId(), saved.getCodigo(), docenteTitularId);
         return saved;
     }
 
@@ -154,6 +177,27 @@ public class MateriaService {
         m.setActivo(true);
         materiaRepository.save(m);
         log.info("Materia reactivada: id={}", id);
+    }
+
+    /**
+     * Obtiene el docente validando que pertenezca al tenant.
+     * Devuelve null si {@code docenteId} es null (titular es opcional).
+     * Si {@code requireActivo}, ademas se valida que este activo.
+     */
+    private Docente obtenerDocenteValidadoOrNull(Long docenteId, Long tenantId, boolean requireActivo) {
+        if (docenteId == null) return null;
+        Docente d = docenteRepository.findById(docenteId)
+            .orElseThrow(() -> new IllegalArgumentException("El docente seleccionado no existe."));
+        if (!tenantId.equals(d.getInstitucionId())) {
+            log.warn("Cross-tenant blocked: tenant {} intento asignar docente id={} (tenant {})",
+                     tenantId, docenteId, d.getInstitucionId());
+            throw new IllegalArgumentException("El docente seleccionado no existe.");
+        }
+        if (requireActivo && Boolean.FALSE.equals(d.getActivo())) {
+            throw new IllegalArgumentException(
+                "El docente '" + d.getNombreCompleto() + "' está inactivo. Elegí uno activo.");
+        }
+        return d;
     }
 
     /** Obtiene la carrera validando que pertenezca al tenant actual. */

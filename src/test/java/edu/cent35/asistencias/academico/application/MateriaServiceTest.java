@@ -5,6 +5,7 @@ import edu.cent35.asistencias.academico.domain.Materia;
 import edu.cent35.asistencias.academico.infrastructure.CarreraRepository;
 import edu.cent35.asistencias.academico.infrastructure.ComisionRepository;
 import edu.cent35.asistencias.academico.infrastructure.MateriaRepository;
+import edu.cent35.asistencias.docente.infrastructure.DocenteRepository;
 import edu.cent35.asistencias.shared.multitenant.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,7 @@ class MateriaServiceTest {
     @Mock private MateriaRepository materiaRepository;
     @Mock private CarreraRepository carreraRepository;
     @Mock private ComisionRepository comisionRepository;
+    @Mock private DocenteRepository docenteRepository;
     @InjectMocks private MateriaService service;
 
     @BeforeEach void setUp() { TenantContext.set(TENANT_A); }
@@ -46,7 +48,7 @@ class MateriaServiceTest {
         ajena.setInstitucionId(TENANT_B);
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(ajena));
 
-        assertThatThrownBy(() -> service.crear("MAT", "Matematica", CARRERA_ID))
+        assertThatThrownBy(() -> service.crear("MAT", "Matematica", CARRERA_ID, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("La carrera seleccionada no existe");
         verify(materiaRepository, never()).save(any());
@@ -59,7 +61,7 @@ class MateriaServiceTest {
         c.setInstitucionId(TENANT_A);
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
 
-        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID))
+        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("inactiva");
     }
@@ -72,7 +74,7 @@ class MateriaServiceTest {
         when(materiaRepository.existsByCodigo("MAT")).thenReturn(false);
         when(materiaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Materia m = service.crear("MAT", "Matematica", CARRERA_ID);
+        Materia m = service.crear("MAT", "Matematica", CARRERA_ID, null);
 
         assertThat(m.getCarrera()).isSameAs(c);
         assertThat(m.getInstitucionId()).isEqualTo(TENANT_A);
@@ -86,7 +88,7 @@ class MateriaServiceTest {
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
         when(materiaRepository.existsByCodigo("MAT")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID))
+        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
     }

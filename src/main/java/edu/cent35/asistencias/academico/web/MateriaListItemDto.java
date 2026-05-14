@@ -15,6 +15,8 @@ public class MateriaListItemDto {
     Long carreraId;
     String carreraCodigo;
     String carreraNombre;
+    String titularNombre;     // null si no tiene titular asignado
+    boolean titularActivo;
     boolean activo;
     boolean carreraActiva;
     LocalDateTime actualizadoEn;
@@ -27,6 +29,8 @@ public class MateriaListItemDto {
             .carreraId(m.getCarrera().getId())
             .carreraCodigo(m.getCarrera().getCodigo())
             .carreraNombre(m.getCarrera().getNombre())
+            .titularNombre(m.getDocenteTitular() != null ? m.getDocenteTitular().getNombreCompleto() : null)
+            .titularActivo(m.getDocenteTitular() == null || Boolean.TRUE.equals(m.getDocenteTitular().getActivo()))
             .activo(Boolean.TRUE.equals(m.getActivo()))
             .carreraActiva(Boolean.TRUE.equals(m.getCarrera().getActivo()))
             .actualizadoEn(m.getActualizadoEn())
