@@ -129,6 +129,25 @@ La primera silencia el reveal de Edge; la segunda silencia los íconos de autofi
 
 ---
 
+## Lote 2026-05-14 — Sprint 3, durante Fase B
+
+### C-012 · Bug + pantallas de error amigables 🟢
+**Síntomas**:
+1. `/materias` tiraba un `Whitelabel Error Page` (500) con stacktrace crudo.
+2. El cliente pidió pantallas de error propias del sistema, no la Whitelabel default.
+
+**Causa del bug**: en `materia-list.html` la expresión `${m.titularNombre and !m.titularActivo}` usaba un `String` (`titularNombre`) directamente como operando de `and` booleano — SpringEL no lo permite.
+
+**Resuelto en**: commit `fix(ux): bug en materia-list + pantallas de error custom`.
+
+**Detalle**:
+- Bug: cambiada la expresión a `${m.titularNombre != null and !m.titularActivo}`. Revisados todos los templates por patrones similares — no había otros.
+- `templates/error.html`: pantalla única que Spring Boot usa automáticamente para cualquier código de error HTTP (404, 403, 500, 400, ...). Usa `th:switch` sobre `${status}` para mostrar título y mensaje contextual. Standalone (no extiende `layout/base`) para que renderice incluso si el problema está en el layout o la sesión.
+- Incluye: código de error grande, título y mensaje amigable en español, botones "Volver al inicio" / "Volver atrás", y un `<details>` colapsable con el detalle técnico (status, error, ruta, mensaje, timestamp) — útil en desarrollo, discreto para el usuario.
+- CSS `.error-*` en `main.css`.
+
+---
+
 ## Cómo agregar nuevos pedidos
 
 Al final de cada lote (sprint, sub-fase o sesión de revisión), abrir un nuevo bloque:

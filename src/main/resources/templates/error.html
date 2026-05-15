@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--
+  Pagina de error generica del sistema.
+  Spring Boot la usa automaticamente para CUALQUIER codigo de error HTTP
+  (404, 403, 500, etc.) cuando no hay un template mas especifico en
+  templates/error/{status}.html.
+
+  Es standalone (no extiende layout/base) para que renderice incluso si
+  el problema esta en el layout o en la sesion.
+
+  Atributos que Spring inyecta: status, error, message, path, timestamp.
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="|Error ${status} - Asistencias|">Error - Asistencias</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="error-body">
+    <main class="error-card">
+
+        <div class="error-card__code" th:switch="${status}">
+            <span th:case="403">403</span>
+            <span th:case="404">404</span>
+            <span th:case="500">500</span>
+            <span th:case="*" th:text="${status} ?: '!'">!</span>
+        </div>
+
+        <h1 class="error-card__title" th:switch="${status}">
+            <span th:case="403">Acceso denegado</span>
+            <span th:case="404">Página no encontrada</span>
+            <span th:case="500">Error interno del servidor</span>
+            <span th:case="400">Solicitud inválida</span>
+            <span th:case="*">Algo salió mal</span>
+        </h1>
+
+        <p class="error-card__msg" th:switch="${status}">
+            <span th:case="403">
+                No tenés permisos para acceder a esta sección.
+                Si creés que es un error, contactá al administrador de tu institución.
+            </span>
+            <span th:case="404">
+                La página que buscás no existe o fue movida.
+                Verificá la dirección o volvé al inicio.
+            </span>
+            <span th:case="500">
+                Ocurrió un error inesperado en el servidor. Ya quedó registrado.
+                Probá de nuevo en unos minutos.
+            </span>
+            <span th:case="400">
+                La solicitud no se pudo procesar. Revisá los datos e intentá otra vez.
+            </span>
+            <span th:case="*">
+                Ocurrió un problema procesando tu solicitud. Volvé al inicio e intentá de nuevo.
+            </span>
+        </p>
+
+        <div class="error-card__actions">
+            <a th:href="@{/}" class="btn btn--primary">Volver al inicio</a>
+            <a href="javascript:history.back()" class="btn btn--ghost">Volver atrás</a>
+        </div>
+
+        <!-- Detalle tecnico: util en desarrollo, discreto para el usuario -->
+        <details class="error-card__detail" th:if="${path != null or message != null}">
+            <summary>Detalle técnico</summary>
+            <dl class="kv">
+                <dt th:if="${status}">Código</dt>      <dd th:if="${status}" th:text="${status}">-</dd>
+                <dt th:if="${error}">Error</dt>        <dd th:if="${error}" th:text="${error}">-</dd>
+                <dt th:if="${path}">Ruta</dt>          <dd th:if="${path}" th:text="${path}">-</dd>
+                <dt th:if="${message}">Mensaje</dt>    <dd th:if="${message}" th:text="${message}">-</dd>
+                <dt th:if="${timestamp}">Fecha/hora</dt><dd th:if="${timestamp}" th:text="${timestamp}">-</dd>
+            </dl>
+        </details>
+
+    </main>
+</body>
+</html>
