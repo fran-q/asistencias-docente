@@ -3,6 +3,7 @@ package edu.cent35.asistencias.academico.web;
 import edu.cent35.asistencias.academico.application.ComisionService;
 import edu.cent35.asistencias.academico.domain.Comision;
 import edu.cent35.asistencias.academico.domain.Materia;
+import edu.cent35.asistencias.docente.domain.Docente;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,7 @@ public class ComisionController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new ComisionFormDto());
         }
-        model.addAttribute("materias", service.materiasActivasParaSelector());
+        prepararDatosForm(model, null);
         model.addAttribute("modo", "crear");
         return "academico/comision-form";
     }
@@ -60,19 +61,20 @@ public class ComisionController {
                         RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("materias", service.materiasActivasParaSelector());
+            prepararDatosForm(model, null);
             model.addAttribute("modo", "crear");
             return "academico/comision-form";
         }
 
         try {
-            Comision c = service.crear(form.getCodigo(), form.getMateriaId(), form.getCupo());
+            Comision c = service.crear(form.getCodigo(), form.getMateriaId(),
+                form.getCupo(), form.getDocenteAsignadoId());
             redirect.addFlashAttribute("flashMensaje",
                 "Comisión '" + c.getCodigo() + "' creada correctamente.");
             return "redirect:/comisiones";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("materias", service.materiasActivasParaSelector());
+            prepararDatosForm(model, null);
             model.addAttribute("modo", "crear");
             return "academico/comision-form";
         }
@@ -85,14 +87,7 @@ public class ComisionController {
             model.addAttribute("form", ComisionFormDto.from(c));
         }
         model.addAttribute("comision", c);
-
-        // En edicion: incluir la materia actual aunque este inactiva
-        List<Materia> opciones = new ArrayList<>(service.materiasActivasParaSelector());
-        if (c.getMateria() != null && Boolean.FALSE.equals(c.getMateria().getActivo())
-                && opciones.stream().noneMatch(m -> m.getId().equals(c.getMateria().getId()))) {
-            opciones.add(c.getMateria());
-        }
-        model.addAttribute("materias", opciones);
+        prepararDatosForm(model, c);
         model.addAttribute("modo", "editar");
         return "academico/comision-form";
     }
@@ -105,20 +100,23 @@ public class ComisionController {
                              RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("comision", service.buscarPorId(id));
-            model.addAttribute("materias", service.materiasActivasParaSelector());
+            Comision c = service.buscarPorId(id);
+            model.addAttribute("comision", c);
+            prepararDatosForm(model, c);
             model.addAttribute("modo", "editar");
             return "academico/comision-form";
         }
 
         try {
-            service.actualizar(id, form.getCodigo(), form.getMateriaId(), form.getCupo());
+            service.actualizar(id, form.getCodigo(), form.getMateriaId(),
+                form.getCupo(), form.getDocenteAsignadoId());
             redirect.addFlashAttribute("flashMensaje", "Comisión actualizada correctamente.");
             return "redirect:/comisiones";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("comision", service.buscarPorId(id));
-            model.addAttribute("materias", service.materiasActivasParaSelector());
+            Comision c = service.buscarPorId(id);
+            model.addAttribute("comision", c);
+            prepararDatosForm(model, c);
             model.addAttribute("modo", "editar");
             return "academico/comision-form";
         }
@@ -150,5 +148,28 @@ public class ComisionController {
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La comisión solicitada no existe.");
         return "redirect:/comisiones";
+    }
+
+    /**
+     * Carga al modelo las materias y docentes disponibles para el form.
+     * Si se está editando una comisión cuya materia/docente quedaron inactivos,
+     * los sumamos a sus listas para que el select los muestre.
+     */
+    private void prepararDatosForm(Model model, Comision comisionActual) {
+        List<Materia> materias = new ArrayList<>(service.materiasActivasParaSelector());
+        if (comisionActual != null && comisionActual.getMateria() != null
+                && Boolean.FALSE.equals(comisionActual.getMateria().getActivo())
+                && materias.stream().noneMatch(m -> m.getId().equals(comisionActual.getMateria().getId()))) {
+            materias.add(comisionActual.getMateria());
+        }
+        model.addAttribute("materias", materias);
+
+        List<Docente> docentes = new ArrayList<>(service.docentesActivosParaSelector());
+        if (comisionActual != null && comisionActual.getDocenteAsignado() != null
+                && Boolean.FALSE.equals(comisionActual.getDocenteAsignado().getActivo())
+                && docentes.stream().noneMatch(d -> d.getId().equals(comisionActual.getDocenteAsignado().getId()))) {
+            docentes.add(comisionActual.getDocenteAsignado());
+        }
+        model.addAttribute("docentes", docentes);
     }
 }

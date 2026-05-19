@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.academico.domain;
 
+import edu.cent35.asistencias.docente.domain.Docente;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -57,11 +58,12 @@ public class Comision {
     @JoinColumn(name = "materia_id", nullable = false)
     private Materia materia;
 
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 8)
     private String codigo;
 
-    @Column(name = "docente_asignado_id")
-    private Long docenteAsignadoId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "docente_asignado_id")
+    private Docente docenteAsignado;
 
     @Column
     private Integer cupo;

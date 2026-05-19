@@ -18,9 +18,13 @@ import lombok.NoArgsConstructor;
 public class ComisionFormDto {
 
     @NotBlank(message = "El código de la comisión es obligatorio")
-    @Size(min = 1, max = 30, message = "El código debe tener entre 1 y 30 caracteres")
+    @Size(min = 1, max = 8, message = "El código debe tener entre 1 y 8 caracteres")
     @Pattern(
-        regexp = "^[a-zA-Z0-9 ._-]+$",
+        // A diferencia de los codigos de Carrera/Materia (identificadores tipo "MAT-101"),
+        // el codigo de comision suele ser texto: "Mañana", "Noche", "Atención". Por eso
+        // aceptamos letras acentuadas, ñ/Ñ y diéresis (ü/Ü). Si en el futuro se quiere
+        // unificar con Unicode general, evaluar @Pattern.Flag.UNICODE_CHARACTER_CLASS.
+        regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9 ._-]+$",
         message = "El código solo puede contener letras, números, espacios, puntos, guiones y guion bajo"
     )
     private String codigo;
@@ -31,11 +35,15 @@ public class ComisionFormDto {
     @Min(value = 1, message = "El cupo debe ser un número positivo")
     private Integer cupo;
 
+    /** Opcional: docente asignado a la comisión. Null = sin asignar. */
+    private Long docenteAsignadoId;
+
     public static ComisionFormDto from(Comision c) {
         return ComisionFormDto.builder()
             .codigo(c.getCodigo())
             .materiaId(c.getMateria().getId())
             .cupo(c.getCupo())
+            .docenteAsignadoId(c.getDocenteAsignado() != null ? c.getDocenteAsignado().getId() : null)
             .build();
     }
 }

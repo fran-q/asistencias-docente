@@ -16,6 +16,8 @@ public class ComisionListItemDto {
     String materiaNombre;
     String carreraCodigo;
     Integer cupo;
+    String docenteNombre;       // null si no tiene docente asignado
+    boolean docenteActivo;      // true si no hay docente o si está activo
     boolean activo;
     boolean materiaActiva;
     LocalDateTime actualizadoEn;
@@ -29,6 +31,8 @@ public class ComisionListItemDto {
             .materiaNombre(c.getMateria().getNombre())
             .carreraCodigo(c.getMateria().getCarrera() != null ? c.getMateria().getCarrera().getCodigo() : null)
             .cupo(c.getCupo())
+            .docenteNombre(c.getDocenteAsignado() != null ? c.getDocenteAsignado().getNombreCompleto() : null)
+            .docenteActivo(c.getDocenteAsignado() == null || Boolean.TRUE.equals(c.getDocenteAsignado().getActivo()))
             .activo(Boolean.TRUE.equals(c.getActivo()))
             .materiaActiva(Boolean.TRUE.equals(c.getMateria().getActivo()))
             .actualizadoEn(c.getActualizadoEn())

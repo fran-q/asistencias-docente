@@ -11,7 +11,7 @@
                 <h1>Comisiones</h1>
                 <p class="page-header__subtitle">
                     Cada materia puede tener varias comisiones (turnos / divisiones).
-                    El docente asignado se carga en Sprint 3.
+                    Cada comisión puede tener un docente asignado.
                 </p>
             </div>
             <a th:href="@{/comisiones/nueva}" class="btn btn--primary">+ Nueva comisión</a>
@@ -48,7 +48,10 @@
                                 <span th:unless="${c.cupo}" class="text-muted">sin límite</span>
                             </td>
                             <td>
-                                <span class="text-muted"><small>— Sprint 3 —</small></span>
+                                <span th:if="${c.docenteNombre}" th:text="${c.docenteNombre}">Apellido, Nombre</span>
+                                <span th:unless="${c.docenteNombre}" class="text-muted">Sin asignar</span>
+                                <span th:if="${c.docenteNombre != null and !c.docenteActivo}"
+                                      class="badge badge--danger" style="margin-left:6px;">Docente inactivo</span>
                             </td>
                             <td>
                                 <span th:if="${c.activo}"   class="badge badge--success">Activa</span>

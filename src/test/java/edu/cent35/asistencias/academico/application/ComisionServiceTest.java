@@ -6,6 +6,7 @@ import edu.cent35.asistencias.academico.domain.Materia;
 import edu.cent35.asistencias.academico.infrastructure.ComisionRepository;
 import edu.cent35.asistencias.academico.infrastructure.HorarioRepository;
 import edu.cent35.asistencias.academico.infrastructure.MateriaRepository;
+import edu.cent35.asistencias.docente.infrastructure.DocenteRepository;
 import edu.cent35.asistencias.shared.multitenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
@@ -36,6 +37,7 @@ class ComisionServiceTest {
     @Mock private ComisionRepository comisionRepository;
     @Mock private MateriaRepository materiaRepository;
     @Mock private HorarioRepository horarioRepository;
+    @Mock private DocenteRepository docenteRepository;
     @InjectMocks private ComisionService service;
 
     @BeforeEach void setUp() { TenantContext.set(TENANT_A); }
@@ -47,26 +49,27 @@ class ComisionServiceTest {
         Materia ajena = materiaConTenant(TENANT_B);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(ajena));
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 30))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 30, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("La materia seleccionada no existe");
         verify(comisionRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("crear: ok con materia del tenant + activa")
+    @DisplayName("crear: ok con materia del tenant + activa (sin docente)")
     void crear_ok() {
         Materia m = materiaConTenant(TENANT_A);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
         when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(false);
         when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Comision c = service.crear("A", MATERIA_ID, 30);
+        Comision c = service.crear("A", MATERIA_ID, 30, null);
 
         assertThat(c.getCodigo()).isEqualTo("A");
         assertThat(c.getMateria()).isSameAs(m);
         assertThat(c.getCupo()).isEqualTo(30);
         assertThat(c.getActivo()).isTrue();
+        assertThat(c.getDocenteAsignado()).isNull();
     }
 
     @Test
@@ -76,7 +79,7 @@ class ComisionServiceTest {
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
         when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
     }
@@ -88,7 +91,7 @@ class ComisionServiceTest {
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
         when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 0))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 0, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("positivo");
     }

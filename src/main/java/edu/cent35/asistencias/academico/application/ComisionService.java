@@ -5,6 +5,8 @@ import edu.cent35.asistencias.academico.domain.Materia;
 import edu.cent35.asistencias.academico.infrastructure.ComisionRepository;
 import edu.cent35.asistencias.academico.infrastructure.HorarioRepository;
 import edu.cent35.asistencias.academico.infrastructure.MateriaRepository;
+import edu.cent35.asistencias.docente.domain.Docente;
+import edu.cent35.asistencias.docente.infrastructure.DocenteRepository;
 import edu.cent35.asistencias.shared.multitenant.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -34,12 +36,13 @@ public class ComisionService {
     private final ComisionRepository comisionRepository;
     private final MateriaRepository materiaRepository;
     private final HorarioRepository horarioRepository;
+    private final DocenteRepository docenteRepository;
 
     @Transactional(readOnly = true)
     public List<Comision> listar() {
         Long tenantId = TenantContext.getRequired();
         List<Comision> comisiones = comisionRepository.findAllDelTenant(tenantId);
-        // Touch lazy: materia + carrera (necesarias para el listado)
+        // Touch lazy: materia + carrera + docente asignado (necesarios para el listado)
         comisiones.forEach(c -> {
             if (c.getMateria() != null) {
                 c.getMateria().getCodigo();
@@ -47,6 +50,7 @@ public class ComisionService {
                     c.getMateria().getCarrera().getCodigo();
                 }
             }
+            if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getDni();
         });
         return comisiones;
     }
@@ -64,7 +68,14 @@ public class ComisionService {
         // Touch para inicializar lazy
         c.getMateria().getCodigo();
         if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
+        if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getDni();
         return c;
+    }
+
+    /** Docentes activos del tenant - para el selector del form. */
+    @Transactional(readOnly = true)
+    public List<Docente> docentesActivosParaSelector() {
+        return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
     }
 
     /**
@@ -92,7 +103,7 @@ public class ComisionService {
     }
 
     @Transactional
-    public Comision crear(String codigo, Long materiaId, Integer cupo) {
+    public Comision crear(String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
 
@@ -111,20 +122,24 @@ public class ComisionService {
             throw new IllegalArgumentException("El cupo debe ser un número positivo.");
         }
 
+        Docente asignado = obtenerDocenteValidadoOrNull(docenteAsignadoId, tenantId, /*requireActivo*/ true);
+
         Comision c = Comision.builder()
             .codigo(codigoNorm)
             .materia(materia)
             .cupo(cupo)
+            .docenteAsignado(asignado)
             .activo(true)
             .build();
 
         Comision saved = comisionRepository.save(c);
-        log.info("Comision creada: id={}, codigo={}, materia_id={}", saved.getId(), saved.getCodigo(), materiaId);
+        log.info("Comision creada: id={}, codigo={}, materia_id={}, docente_asignado_id={}",
+                 saved.getId(), saved.getCodigo(), materiaId, docenteAsignadoId);
         return saved;
     }
 
     @Transactional
-    public Comision actualizar(Long id, String codigo, Long materiaId, Integer cupo) {
+    public Comision actualizar(Long id, String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
         Comision c = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
@@ -150,11 +165,19 @@ public class ComisionService {
             throw new IllegalArgumentException("El cupo debe ser un número positivo.");
         }
 
+        // Si NO cambia el docente asignado, permitir mantenerlo aunque ahora este inactivo (legacy).
+        // Si cambia, el nuevo asignado debe estar activo.
+        Long asignadoActualId = c.getDocenteAsignado() != null ? c.getDocenteAsignado().getId() : null;
+        boolean cambiaAsignado = !java.util.Objects.equals(asignadoActualId, docenteAsignadoId);
+        Docente asignado = obtenerDocenteValidadoOrNull(docenteAsignadoId, tenantId, cambiaAsignado);
+
         c.setCodigo(codigoNuevo);
         c.setMateria(materia);
         c.setCupo(cupo);
+        c.setDocenteAsignado(asignado);
         Comision saved = comisionRepository.save(c);
-        log.info("Comision actualizada: id={}, codigo={}", saved.getId(), saved.getCodigo());
+        log.info("Comision actualizada: id={}, codigo={}, docente_asignado_id={}",
+                 saved.getId(), saved.getCodigo(), docenteAsignadoId);
         return saved;
     }
 
@@ -201,5 +224,26 @@ public class ComisionService {
         // touch carrera para que se inicialice (lazy)
         if (m.getCarrera() != null) m.getCarrera().getCodigo();
         return m;
+    }
+
+    /**
+     * Obtiene el docente validando que pertenezca al tenant.
+     * Devuelve null si {@code docenteId} es null (el asignado es opcional).
+     * Si {@code requireActivo}, ademas se valida que este activo.
+     */
+    private Docente obtenerDocenteValidadoOrNull(Long docenteId, Long tenantId, boolean requireActivo) {
+        if (docenteId == null) return null;
+        Docente d = docenteRepository.findById(docenteId)
+            .orElseThrow(() -> new IllegalArgumentException("El docente seleccionado no existe."));
+        if (!tenantId.equals(d.getInstitucionId())) {
+            log.warn("Cross-tenant blocked: tenant {} intento asignar docente id={} (tenant {})",
+                     tenantId, docenteId, d.getInstitucionId());
+            throw new IllegalArgumentException("El docente seleccionado no existe.");
+        }
+        if (requireActivo && Boolean.FALSE.equals(d.getActivo())) {
+            throw new IllegalArgumentException(
+                "El docente '" + d.getNombreCompleto() + "' está inactivo. Elegí uno activo.");
+        }
+        return d;
     }
 }
