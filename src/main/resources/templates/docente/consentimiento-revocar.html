@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Revocar consentimiento biométrico - Asistencias</title>
+</head>
+<body>
+    <section class="consentimiento-revocar">
+        <header class="page-header">
+            <h1>Revocar consentimiento biométrico</h1>
+            <p class="page-header__subtitle">
+                Vas a revocar el consentimiento vigente de
+                <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
+                (DNI <span th:text="${docente.dni}">12345678</span>).
+                Esta acción queda registrada con tu usuario, fecha, IP y navegador
+                con fines de auditoría.
+            </p>
+        </header>
+
+        <div class="alert alert--error" role="alert" style="max-width: 760px;">
+            <p>
+                <strong>Atención:</strong> al revocar el consentimiento, el
+                docente deja de poder usar el sistema de reconocimiento facial.
+                Sus datos biométricos quedan marcados para eliminación. La
+                revocación es <em>inmediata</em> y <em>no se puede deshacer</em>:
+                si el docente quiere volver a aceptar, se cargará un
+                consentimiento nuevo (no se restaura el anterior).
+            </p>
+        </div>
+
+        <div class="card card--readonly" style="max-width: 760px;">
+            <h2>Consentimiento que se va a revocar</h2>
+            <dl class="kv">
+                <dt>Versión firmada</dt>
+                <dd><code th:text="${consentimientoVigente.versionTerminos}">2026-05-v1</code></dd>
+
+                <dt>Método</dt>
+                <dd th:text="${consentimientoVigente.metodo}">ESCRITO</dd>
+
+                <dt>Fecha de firma</dt>
+                <dd th:text="${#temporals.format(consentimientoVigente.fechaConsentimiento, 'dd/MM/yyyy HH:mm')}">-</dd>
+
+                <dt>Registrado por</dt>
+                <dd th:text="${consentimientoVigente.registradoPor != null ? consentimientoVigente.registradoPor.username : '-'}">-</dd>
+
+                <th:block th:if="${consentimientoVigente.documentoUrl != null}">
+                    <dt>Documento</dt>
+                    <dd>
+                        <a th:href="${consentimientoVigente.documentoUrl}"
+                           th:text="${consentimientoVigente.documentoUrl}"
+                           target="_blank" rel="noopener">PDF firmado</a>
+                    </dd>
+                </th:block>
+            </dl>
+        </div>
+
+        <div class="card" style="max-width: 760px;">
+            <h2>Confirmación</h2>
+
+            <form th:action="@{/docentes/{id}/consentimiento/revocar(id=${docente.id})}"
+                  th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="motivo">Motivo (opcional)</label>
+                    <textarea id="motivo" th:field="*{motivo}" rows="3" maxlength="500"
+                              placeholder="Ej.: el docente solicitó dar de baja sus datos biométricos."
+                              th:classappend="${#fields.hasErrors('motivo')} ? 'is-invalid'"></textarea>
+                    <small class="form-hint">
+                        Quedará registrado para auditoría. Si el docente no
+                        explicó motivo, dejalo en blanco.
+                    </small>
+                    <span class="form-error" th:if="${#fields.hasErrors('motivo')}" th:errors="*{motivo}">err</span>
+                </div>
+
+                <div class="form-group form-group--checkbox" style="margin-top: 1.5rem;">
+                    <label style="display:flex; gap:0.6rem; align-items:flex-start; cursor:pointer;">
+                        <input type="checkbox" th:field="*{confirmaRevocacion}" style="margin-top:0.25rem;">
+                        <span>
+                            Confirmo que quiero revocar el consentimiento de
+                            <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>.
+                            Entiendo que la acción es inmediata e irreversible.
+                        </span>
+                    </label>
+                    <span class="form-error" th:if="${#fields.hasErrors('confirmaRevocacion')}" th:errors="*{confirmaRevocacion}">err</span>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn--primary btn--danger">Revocar consentimiento</button>
+                    <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

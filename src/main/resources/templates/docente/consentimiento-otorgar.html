@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Otorgar consentimiento biométrico - Asistencias</title>
+</head>
+<body>
+    <section class="consentimiento-otorgar">
+        <header class="page-header">
+            <h1>Otorgar consentimiento biométrico</h1>
+            <p class="page-header__subtitle">
+                Estás registrando el consentimiento de
+                <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
+                (DNI <span th:text="${docente.dni}">12345678</span>)
+                en representación del docente que firmó el documento físicamente.
+                <br>
+                Versión vigente del texto: <code th:text="${versionTexto}">2026-05-v1</code>.
+            </p>
+        </header>
+
+        <div class="alert alert--info" role="note" style="max-width: 860px;">
+            <p>
+                <strong>Importante:</strong> según la Ley 25.326 y la Resolución
+                AAIP 255/2022, el consentimiento debe ser <em>libre, expreso,
+                informado</em> y <em>revocable</em>. Asegurate de que el docente
+                haya leído el texto completo antes de firmar.
+            </p>
+        </div>
+
+        <div class="card" style="max-width: 860px;">
+            <h2>Texto del consentimiento</h2>
+            <pre class="consentimiento__texto" th:text="${textoCuerpo}"
+                 style="white-space: pre-wrap; max-height: 360px; overflow-y: auto;
+                        padding: 1rem; border: 1px solid var(--color-border, #444);
+                        border-radius: 6px; font-family: inherit; font-size: 0.9rem;
+                        line-height: 1.5;">
+                ...texto...
+            </pre>
+        </div>
+
+        <div class="card" style="max-width: 860px;">
+            <h2>Confirmación</h2>
+            <p class="text-muted" style="margin-top:-0.5rem;">
+                Para registrar el consentimiento alcanza con tildar la casilla
+                y enviar. El método se registra como
+                <strong>ESCRITO</strong> y la fecha de firma como
+                <strong>la fecha y hora actual</strong>. La auditoría
+                (usuario, IP, navegador) se captura automáticamente.
+            </p>
+
+            <form th:action="@{/docentes/{id}/consentimiento/otorgar(id=${docente.id})}"
+                  th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-group form-group--checkbox" style="margin-top: 1rem;">
+                    <label style="display:flex; gap:0.6rem; align-items:flex-start; cursor:pointer;">
+                        <input type="checkbox" th:field="*{aceptaTexto}" style="margin-top:0.25rem;">
+                        <span>
+                            Confirmo que el docente leyó la versión
+                            <code th:text="${versionTexto}">2026-05-v1</code> del
+                            texto de consentimiento y la firmó voluntariamente.
+                        </span>
+                    </label>
+                    <span class="form-error" th:if="${#fields.hasErrors('aceptaTexto')}" th:errors="*{aceptaTexto}">err</span>
+                </div>
+
+                <div class="form-actions" style="margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn--primary">Registrar consentimiento</button>
+                    <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

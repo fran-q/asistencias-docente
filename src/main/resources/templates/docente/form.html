@@ -9,9 +9,11 @@
         <header class="page-header">
             <h1 th:text="${modo == 'crear'} ? 'Nuevo docente' : 'Editar docente'">Docente</h1>
             <p class="page-header__subtitle">
-                Datos personales y de contacto. El consentimiento para el
-                tratamiento biométrico (Ley 25.326) se carga después desde el
-                listado de docentes (Sprint 3 Fase D).
+                Datos personales y de contacto.
+                <span th:if="${modo == 'editar'}">
+                    El consentimiento para el tratamiento biométrico
+                    (Ley 25.326) se gestiona en la sección de abajo.
+                </span>
             </p>
         </header>
 
@@ -99,6 +101,68 @@
                 <dt>Última actualización</dt>
                                  <dd th:text="${#temporals.format(docente.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
             </dl>
+        </div>
+
+        <!-- Consentimiento biométrico (Sprint 3 Fase D) -->
+        <div th:if="${modo == 'editar'}" class="card" style="max-width: 760px;">
+            <h2>Consentimiento biométrico</h2>
+            <p class="text-muted" style="margin-top:-0.5rem;">
+                Ley 25.326 + Resolución AAIP 255/2022.
+                Sin consentimiento vigente no se puede registrar al docente
+                en el sistema de reconocimiento facial.
+            </p>
+
+            <dl class="kv" style="margin-top:1rem;">
+                <dt>Estado</dt>
+                <dd>
+                    <span th:if="${estadoConsentimiento.name() == 'ACTIVO'}"
+                          class="badge badge--success">Vigente</span>
+                    <span th:if="${estadoConsentimiento.name() == 'REVOCADO'}"
+                          class="badge badge--danger">Revocado</span>
+                    <span th:if="${estadoConsentimiento.name() == 'NUNCA_OTORGADO'}"
+                          class="badge badge--warning">Nunca otorgado</span>
+                </dd>
+
+                <th:block th:if="${consentimientoVigente != null}">
+                    <dt>Versión firmada</dt>
+                    <dd><code th:text="${consentimientoVigente.versionTerminos}">2026-05-v1</code></dd>
+
+                    <dt>Método</dt>
+                    <dd th:text="${consentimientoVigente.metodo}">ESCRITO</dd>
+
+                    <dt>Fecha de firma</dt>
+                    <dd th:text="${#temporals.format(consentimientoVigente.fechaConsentimiento, 'dd/MM/yyyy')}">-</dd>
+
+                    <dt>Registrado por</dt>
+                    <dd th:text="${consentimientoVigente.registradoPor != null ? consentimientoVigente.registradoPor.username : '-'}">-</dd>
+
+                    <th:block th:if="${consentimientoVigente.documentoUrl != null}">
+                        <dt>Documento</dt>
+                        <dd>
+                            <a th:href="${consentimientoVigente.documentoUrl}"
+                               th:text="${consentimientoVigente.documentoUrl}"
+                               target="_blank" rel="noopener">PDF firmado</a>
+                        </dd>
+                    </th:block>
+                </th:block>
+            </dl>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <a th:if="${estadoConsentimiento.name() != 'ACTIVO' and docente.activo}"
+                   th:href="@{/docentes/{id}/consentimiento/otorgar(id=${docente.id})}"
+                   class="btn btn--primary">
+                    Otorgar consentimiento
+                </a>
+                <span th:if="${estadoConsentimiento.name() != 'ACTIVO' and !docente.activo}"
+                      class="text-muted">
+                    Reactivá al docente para poder cargar su consentimiento.
+                </span>
+                <a th:if="${estadoConsentimiento.name() == 'ACTIVO'}"
+                   th:href="@{/docentes/{id}/consentimiento/revocar(id=${docente.id})}"
+                   class="btn btn--ghost btn--danger">
+                    Revocar consentimiento
+                </a>
+            </div>
         </div>
     </section>
 </body>

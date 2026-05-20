@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.docente.web;
 
+import edu.cent35.asistencias.docente.consentimiento.domain.EstadoConsentimiento;
 import edu.cent35.asistencias.docente.domain.Docente;
 import lombok.Builder;
 import lombok.Value;
@@ -17,8 +18,10 @@ public class DocenteListItemDto {
     String telefono;
     LocalDate fechaAlta;
     boolean activo;
+    /** Estado del consentimiento biometrico (Sprint 3 Fase D). */
+    EstadoConsentimiento estadoConsentimiento;
 
-    public static DocenteListItemDto from(Docente d) {
+    public static DocenteListItemDto from(Docente d, EstadoConsentimiento estadoConsentimiento) {
         return DocenteListItemDto.builder()
             .id(d.getId())
             .dni(d.getDni())
@@ -28,6 +31,7 @@ public class DocenteListItemDto {
             .telefono(d.getTelefono())
             .fechaAlta(d.getFechaAlta())
             .activo(Boolean.TRUE.equals(d.getActivo()))
+            .estadoConsentimiento(estadoConsentimiento)
             .build();
     }
 }

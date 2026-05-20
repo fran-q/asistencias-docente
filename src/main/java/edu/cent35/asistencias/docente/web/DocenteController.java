@@ -1,6 +1,8 @@
 package edu.cent35.asistencias.docente.web;
 
 import edu.cent35.asistencias.docente.application.DocenteService;
+import edu.cent35.asistencias.docente.consentimiento.application.ConsentimientoBiometricoService;
+import edu.cent35.asistencias.docente.consentimiento.domain.EstadoConsentimiento;
 import edu.cent35.asistencias.docente.domain.Docente;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -32,11 +34,15 @@ import java.util.List;
 public class DocenteController {
 
     private final DocenteService service;
+    private final ConsentimientoBiometricoService consentimientoService;
 
     @GetMapping
     public String listar(Model model) {
+        var estados = consentimientoService.estadosPorDocenteEnTenant();
         List<DocenteListItemDto> items = service.listar().stream()
-            .map(DocenteListItemDto::from)
+            .map(d -> DocenteListItemDto.from(
+                d,
+                estados.getOrDefault(d.getId(), EstadoConsentimiento.NUNCA_OTORGADO)))
             .toList();
         model.addAttribute("docentes", items);
         return "docente/list";
@@ -84,6 +90,11 @@ public class DocenteController {
         }
         model.addAttribute("docente", d);
         model.addAttribute("modo", "editar");
+        // Estado del consentimiento biometrico (Sprint 3 Fase D)
+        EstadoConsentimiento estado = consentimientoService.estadoActual(id);
+        model.addAttribute("estadoConsentimiento", estado);
+        consentimientoService.vigenteDe(id)
+            .ifPresent(c -> model.addAttribute("consentimientoVigente", c));
         return "docente/form";
     }
 
@@ -95,8 +106,7 @@ public class DocenteController {
                              RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("docente", service.buscarPorId(id));
-            model.addAttribute("modo", "editar");
+            agregarDatosEdicion(id, model);
             return "docente/form";
         }
         try {
@@ -106,10 +116,21 @@ public class DocenteController {
             return "redirect:/docentes";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("docente", service.buscarPorId(id));
-            model.addAttribute("modo", "editar");
+            agregarDatosEdicion(id, model);
             return "docente/form";
         }
+    }
+
+    /**
+     * Pobla los atributos de modelo necesarios para re-renderizar
+     * {@code docente/form} en modo editar (cuando hay errores).
+     */
+    private void agregarDatosEdicion(Long id, Model model) {
+        model.addAttribute("docente", service.buscarPorId(id));
+        model.addAttribute("modo", "editar");
+        model.addAttribute("estadoConsentimiento", consentimientoService.estadoActual(id));
+        consentimientoService.vigenteDe(id)
+            .ifPresent(c -> model.addAttribute("consentimientoVigente", c));
     }
 
     @PostMapping("/{id}/baja")

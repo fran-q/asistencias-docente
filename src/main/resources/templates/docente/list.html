@@ -30,6 +30,7 @@
                             <th>Teléfono</th>
                             <th>Alta</th>
                             <th>Estado</th>
+                            <th>Consentimiento</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
@@ -54,6 +55,14 @@
                                 <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
                                 <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
                             </td>
+                            <td>
+                                <span th:if="${d.estadoConsentimiento.name() == 'ACTIVO'}"
+                                      class="badge badge--success" title="Consentimiento vigente">Vigente</span>
+                                <span th:if="${d.estadoConsentimiento.name() == 'REVOCADO'}"
+                                      class="badge badge--danger" title="Consentimiento revocado por el docente o el admin">Revocado</span>
+                                <span th:if="${d.estadoConsentimiento.name() == 'NUNCA_OTORGADO'}"
+                                      class="badge badge--warning" title="Sin consentimiento - no puede usar reconocimiento facial">Sin firmar</span>
+                            </td>
                             <td class="table__actions">
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
@@ -76,7 +85,7 @@
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(docentes)}">
-                            <td colspan="8" class="table__empty">
+                            <td colspan="9" class="table__empty">
                                 Todavía no cargaste ningún docente.
                                 <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
                             </td>
