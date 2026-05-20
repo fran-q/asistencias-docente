@@ -28,6 +28,8 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Estructura del proyecto
 
+Organización **package-by-layer** (ver [ADR-0006](docs/adr/0006-organizacion-por-capas.md)).
+
 ```
 asistencias/
 ├── docs/                              ← documentación versionada
@@ -37,16 +39,13 @@ asistencias/
 ├── src/
 │   ├── main/
 │   │   ├── java/edu/cent35/asistencias/
-│   │   │   ├── shared/                (config, security, multitenant, audit)
-│   │   │   ├── institucion/           (tenant root)
-│   │   │   ├── usuario/               (login)
-│   │   │   ├── docente/
-│   │   │   ├── biometria/             (consentimiento + modelo facial cifrado)
-│   │   │   ├── academico/             (carreras, materias, comisiones, horarios)
-│   │   │   ├── reconocimiento/        (OpenCV + JavaCV)
-│   │   │   ├── asistencia/            (automática + manual + justificación)
-│   │   │   ├── reporte/
-│   │   │   └── auditoria/
+│   │   │   ├── AsistenciasApplication.java
+│   │   │   ├── controller/            (Spring @Controller)
+│   │   │   ├── service/               (lógica de negocio @Service)
+│   │   │   ├── repository/            (Spring Data JPA)
+│   │   │   ├── model/                 (@Entity, enums, BaseTenantEntity)
+│   │   │   ├── dto/                   (objetos de transporte UI ↔ controller)
+│   │   │   └── config/                (security, multi-tenancy, web/JPA config)
 │   │   └── resources/
 │   │       ├── db/migration/          (scripts Flyway V001__init.sql, ...)
 │   │       ├── static/                (CSS / JS)

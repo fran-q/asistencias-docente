@@ -1,8 +1,14 @@
 # ADR-0001: Monolito Modular organizado por dominio
 
-**Estado**: Aceptada
+**Estado**: Reemplazada por [ADR-0006](./0006-organizacion-por-capas.md) (2026-05-19)
 **Fecha**: 2026-04-26
 **Decisor**: Francisco Quiroga (fran-q)
+
+> **Aviso**: esta decisión fue **revertida** durante Sprint 3.5 (post Sprint 3) tras un pedido explícito del docente de Prácticas Profesionalizantes III. La organización del código pasó a *package-by-layer* (controller/service/repository/model/dto/config). Ver ADR-0006 para el detalle de la migración.
+>
+> El contenido original se conserva como histórico.
+
+---
 
 ## Contexto
 
