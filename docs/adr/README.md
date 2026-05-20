@@ -27,3 +27,4 @@ Cada ADR contiene:
 | 0002 | Multi-tenancy por discriminator (institucion_id) | Aceptada |
 | 0003 | Estrategia de sesión: cookie HTTP clásica | Aceptada |
 | 0004 | Defensa en profundidad multi-tenant en queries con JOIN | Aceptada |
+| 0005 | Diseño del consentimiento biométrico | Aceptada |

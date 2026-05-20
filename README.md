@@ -6,7 +6,7 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Estado
 
-🚧 **En desarrollo** — Sprint 2 cerrado (Académico: Carreras, Materias, Comisiones, Horarios + Grilla semanal). Próximo: Sprint 3 (Docentes + Consentimiento biométrico). Primera entrega prevista: junio 2026.
+**En desarrollo** — Sprint 3 cerrado (Docentes + asignación a Materias/Comisiones + Consentimiento biométrico con auditoría forense). Próximo: Sprint 4 (reconocimiento facial). Primera entrega prevista: junio 2026.
 
 ## Stack
 
@@ -25,42 +25,6 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 - Carga manual de asistencia como fallback.
 - Auditoría completa de acciones administrativas.
 - Cumplimiento de la Ley 25.326 y Resolución AAIP 255/2022 sobre datos biométricos.
-
-## Cómo correr en local
-
-### Requisitos
-- JDK 21 instalado (`java -version`).
-- XAMPP con MariaDB / MySQL corriendo en `localhost:3306`.
-- IntelliJ IDEA Community (recomendado) o cualquier IDE con soporte Java.
-
-### Pasos
-
-1. Clonar el repositorio:
-   ```powershell
-   git clone https://github.com/fran-q/asistencias-docente.git
-   cd asistencias-docente
-   ```
-
-2. Crear la base de datos en MariaDB/MySQL:
-   ```sql
-   CREATE DATABASE asistenciautomatica CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   CREATE USER 'asistencias'@'localhost' IDENTIFIED BY 'CAMBIAR_EN_LOCAL';
-   GRANT ALL PRIVILEGES ON asistenciautomatica.* TO 'asistencias'@'localhost';
-   FLUSH PRIVILEGES;
-   ```
-
-3. Crear el archivo de configuración local:
-   ```
-   src/main/resources/application-local.properties
-   ```
-   con tus credenciales reales (este archivo NO se versiona).
-
-4. Levantar la aplicación:
-   ```powershell
-   .\gradlew bootRun
-   ```
-
-5. Abrir el navegador en http://localhost:8080.
 
 ## Estructura del proyecto
 
@@ -99,7 +63,7 @@ asistencias/
 | **S0** | 24-abr a 30-abr | Setup: repo + Spring Boot + MariaDB + Flyway + login dummy | ✅ |
 | **S1** | 01-may a 04-may | Multi-tenancy + autenticación real + CRUDs (Mi Institución y Usuarios) | ✅ |
 | **S2** | 05-may a 06-may | CRUD académico (carreras, materias, comisiones, horarios) + grilla semanal | ✅ |
-| **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | 🔄 |
+| **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | ✅ |
 | **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ⏳ |
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ⏳ |
 | **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo | ⏳ |
@@ -118,10 +82,6 @@ Detalle completo en `docs/1. Guia Proyecto Sistema Asistencias.docx`.
 El sistema procesa datos biométricos sensibles. Cumple con:
 - **Ley Nacional N° 25.326** de Protección de Datos Personales.
 - **Resolución AAIP N° 255/2022** sobre datos biométricos.
-
-## Licencia
-
-Por definir (proyecto académico).
 
 ## Autor
 
