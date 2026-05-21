@@ -28,6 +28,14 @@ dependencies {
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+
+	// === Reconocimiento facial - Sprint 4 ===
+	// JavaCV: wrapper Java de OpenCV. opencv-platform incluye el modulo
+	// opencv_face (contrib) necesario para LBPHFaceRecognizer.
+	// La descarga de binarios nativos se restringe a Windows via gradle.properties
+	// (javacpp.platform). Ver ADR-0007.
+	implementation 'org.bytedeco:javacv:1.5.11'
+	implementation 'org.bytedeco:opencv-platform:4.10.0-1.5.11'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'      // Driver nativo MariaDB

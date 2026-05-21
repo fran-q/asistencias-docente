@@ -29,3 +29,4 @@ Cada ADR contiene:
 | 0004 | Defensa en profundidad multi-tenant en queries con JOIN | Aceptada |
 | 0005 | Diseño del consentimiento biométrico | Aceptada |
 | 0006 | Reorganización a package-by-layer | Aceptada |
+| 0007 | Reconocimiento facial con JavaCV + LBPH | Aceptada |
