@@ -6,6 +6,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Token CSRF: lo leen los scripts que hacen fetch POST (ej. reconocimiento) -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <title th:replace="${title}">Sistema de Asistencias</title>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
@@ -52,6 +55,8 @@
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Horarios</a>
             <a th:href="@{/grilla}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Grilla</a>
+            <a th:href="@{/reconocimiento/prueba}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Reconocimiento</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 

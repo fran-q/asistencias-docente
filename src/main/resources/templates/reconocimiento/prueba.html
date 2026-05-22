@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Reconocimiento facial - Prueba - Asistencias</title>
+</head>
+<body>
+    <section class="reconocimiento-prueba">
+        <header class="page-header">
+            <h1>Prueba de detección de rostro</h1>
+            <p class="page-header__subtitle">
+                Esta pantalla enciende la cámara y verifica que el sistema
+                pueda <strong>detectar</strong> un rostro. Todavía no identifica
+                de quién es ni guarda nada — eso llega en las próximas etapas.
+            </p>
+        </header>
+
+        <div class="alert alert--info" role="note" style="max-width: 720px;">
+            <p>
+                El navegador te va a pedir permiso para usar la cámara.
+                La imagen se procesa en el servidor y <strong>no se guarda</strong>.
+            </p>
+        </div>
+
+        <div class="card" style="max-width: 720px;">
+            <div class="reconocimiento__camara">
+                <!-- El video muestra el stream en vivo de la webcam -->
+                <video id="rec-video" autoplay playsinline muted
+                       style="width:100%; max-width:480px; border-radius:8px;
+                              background:#000; display:block;"></video>
+                <!-- Canvas oculto: se usa para capturar el frame actual -->
+                <canvas id="rec-canvas" hidden></canvas>
+            </div>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <button type="button" id="rec-btn-encender" class="btn btn--primary">
+                    Encender cámara
+                </button>
+                <button type="button" id="rec-btn-detectar" class="btn btn--primary" disabled>
+                    Detectar rostro
+                </button>
+                <button type="button" id="rec-btn-apagar" class="btn btn--ghost" disabled>
+                    Apagar cámara
+                </button>
+            </div>
+
+            <!-- Resultado de la última detección -->
+            <div id="rec-resultado" class="reconocimiento__resultado"
+                 style="margin-top:1rem;" hidden>
+                <p id="rec-resultado-mensaje"></p>
+                <dl class="kv" id="rec-resultado-detalle" hidden>
+                    <dt>Rostros detectados</dt> <dd id="rec-cantidad">-</dd>
+                    <dt>Posición (x, y)</dt>    <dd id="rec-posicion">-</dd>
+                    <dt>Tamaño (ancho × alto)</dt> <dd id="rec-tamano">-</dd>
+                </dl>
+            </div>
+        </div>
+
+        <script th:src="@{/js/reconocimiento.js}" defer></script>
+    </section>
+</body>
+</html>
