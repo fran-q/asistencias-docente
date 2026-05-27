@@ -67,10 +67,34 @@ El modelo LBPH serializado se cifra con **Spring Security Crypto** (AES) antes d
 
 Las imágenes captadas viven en memoria el tiempo necesario para entrenar/verificar y se descartan. Nunca se persisten a disco ni a BD. La única huella biométrica persistida es el modelo LBPH cifrado.
 
-## Estado de validación (Fase A)
+## Estado de validación
 
-- Dependencia agregada, `./gradlew build` correcto.
-- `OpenCvSmokeTest` verde: los binarios nativos de OpenCV cargan en Windows y `LBPHFaceRecognizer.create()` funciona (módulo contrib presente).
+- Dependencia JavaCV agregada, `./gradlew build` correcto.
+- `OpenCvSmokeTest` verde: los binarios nativos de OpenCV cargan en Windows y `LBPHFaceRecognizer.create()` funciona.
+- Pipeline completo testeado manualmente en Sprint 4:
+    1. Registro: grabación de 30 s → 20 frames → ~17 rostros válidos → LBPH entrenado → cifrado → persistido (~250 KB de BLOB cifrado típico).
+    2. Identificación en vivo: pantalla `/reconocimiento/prueba` con loop continuo cada 700 ms reconoce el docente registrado con recuadro verde + nombre. Sin internet, falla con elegancia (no rompe la UI).
+- Tests unitarios de `CifradoBiometricoServiceTest`, `ModeloFacialServiceTest`, `IdentificacionFacialServiceTest`.
+
+## Aprendizajes durante la implementación
+
+Cosas no obvias que surgieron y se documentan acá para que no se repitan:
+
+1. **Hibernate 6 + `@Lob byte[]` mapea a `BLOB`/`TINYBLOB`, no a `LONGBLOB`** como hacía Hibernate 5. Para que `ddl-auto=validate` coincida con `LONGBLOB` (necesario para el modelo LBPH cifrado) hubo que anotar el campo con `@JdbcTypeCode(SqlTypes.LONGVARBINARY)` en vez de `@Lob`.
+
+2. **El YAML serializado de OpenCV es enorme y altamente repetitivo**. Sin compresión, el INSERT con el modelo cifrado superaba el `max_allowed_packet` default de MariaDB y MariaDB cerraba la conexión sucia, corrompiendo tablas del sistema (`mysql.global_priv`). Mitigación: **gzip antes de cifrar** (5-10× menos bytes) + subir `max_allowed_packet` a 64 MB en `my.ini`.
+
+3. **El tipo `dimensiones` de la columna es `SMALLINT`** (heredado de V001, pensado para vectores embedding chicos). La entidad lo mapea como `Short` para que Hibernate `validate` no se queje.
+
+4. **`spring.jpa.open-in-view=false`** del proyecto exige tocar las asociaciones LAZY dentro de la transacción. El service hace `touchLazy` y la query `findActivosDelTenant` usa `JOIN FETCH` para que el `Docente` viaje cargado.
+
+5. **Memoria nativa de OpenCV**: cada `Mat`, `RectVector`, `LBPHFaceRecognizer` reserva memoria nativa fuera del heap de la JVM. Hay que cerrarlos explícitamente (try-with-resources o `.close()` en `finally`). Los recognizers cacheados en `IdentificacionFacialService` se cierran al ser evictados.
+
+6. **POSTs grandes**: el body con 20 frames base64 puede pesar 2-3 MB. Hubo que subir `server.tomcat.max-http-form-post-size=20MB` y `max-swallow-size=20MB`.
+
+7. **Cache de recognizers**: descifrar + descomprimir + deserializar un LBPH por cada llamada hace inviable el loop continuo. `IdentificacionFacialService` mantiene un `ConcurrentHashMap` de recognizers cargados, sincronizado por cada llamada (el `JOIN FETCH` ya trae los activos del tenant; los desaparecidos se evictan).
+
+8. **Calibración del umbral**: LBPH devuelve "distancia" (menor = más parecido). Por default usamos `app.biometria.umbral-confianza=100.0`. Suele dar match decente para una persona registrada con 10-15 capturas y reconocida en condiciones de iluminación similares. Se puede subir/bajar según calibración.
 
 ## Consecuencias
 

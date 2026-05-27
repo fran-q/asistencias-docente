@@ -6,7 +6,7 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Estado
 
-**En desarrollo** — Sprint 3 cerrado (Docentes + asignación a Materias/Comisiones + Consentimiento biométrico con auditoría forense). Próximo: Sprint 4 (reconocimiento facial). Primera entrega prevista: junio 2026.
+**En desarrollo** — Sprint 4 cerrado (reconocimiento facial con OpenCV/LBPH: registro vía webcam, identificación en vivo, cifrado del modelo biométrico). Próximo: Sprint 5 (asistencia automática end-to-end). Primera entrega prevista: junio 2026.
 
 ## Stack
 
@@ -63,7 +63,7 @@ asistencias/
 | **S1** | 01-may a 04-may | Multi-tenancy + autenticación real + CRUDs (Mi Institución y Usuarios) | ✅ |
 | **S2** | 05-may a 06-may | CRUD académico (carreras, materias, comisiones, horarios) + grilla semanal | ✅ |
 | **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | ✅ |
-| **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ⏳ |
+| **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ✅ |
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ⏳ |
 | **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo | ⏳ |
 
