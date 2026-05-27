@@ -3,6 +3,7 @@ package edu.cent35.asistencias.controller;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.service.DeteccionRostroService;
+import edu.cent35.asistencias.service.IdentificacionFacialService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,6 +32,7 @@ import java.util.Base64;
 public class ReconocimientoController {
 
     private final DeteccionRostroService deteccionRostroService;
+    private final IdentificacionFacialService identificacionService;
 
     /** Pantalla de prueba: webcam + botón para detectar rostro. */
     @GetMapping("/prueba")
@@ -54,6 +56,23 @@ public class ReconocimientoController {
                 "La imagen capturada no es válida. Intentá de nuevo.");
         }
         return deteccionRostroService.detectar(imagen);
+    }
+
+    /**
+     * Recibe un frame y responde si reconoce a algún docente de la institución.
+     * Pensado para el loop continuo de la pantalla de prueba.
+     */
+    @PostMapping("/identificar")
+    @ResponseBody
+    public IdentificacionResultadoDto identificar(@RequestBody CapturaImagenDto captura) {
+        byte[] imagen;
+        try {
+            imagen = decodificarDataUrl(captura.imagen());
+        } catch (IllegalArgumentException ex) {
+            log.warn("Captura inválida en /reconocimiento/identificar: {}", ex.getMessage());
+            return IdentificacionResultadoDto.sinRostro();
+        }
+        return identificacionService.identificar(imagen);
     }
 
     /**

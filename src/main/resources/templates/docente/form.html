@@ -164,6 +164,57 @@
                 </a>
             </div>
         </div>
+
+        <!-- Modelo facial (Sprint 4 Fase C) -->
+        <div th:if="${modo == 'editar'}" class="card" style="max-width: 760px;">
+            <h2>Modelo facial</h2>
+            <p class="text-muted" style="margin-top:-0.5rem;">
+                Huella biométrica para el reconocimiento facial automático.
+                Requiere consentimiento vigente. Las fotos no se guardan: solo
+                el modelo entrenado y cifrado.
+            </p>
+
+            <dl class="kv" style="margin-top:1rem;">
+                <dt>Estado</dt>
+                <dd>
+                    <span th:if="${tieneModeloFacial}"
+                          class="badge badge--success">Registrado</span>
+                    <span th:unless="${tieneModeloFacial}"
+                          class="badge badge--warning">Sin registrar</span>
+                </dd>
+
+                <th:block th:if="${modeloFacial != null}">
+                    <dt>Algoritmo</dt>
+                    <dd>
+                        <span th:text="${modeloFacial.algoritmo}">LBPH</span>
+                        <span class="text-muted"
+                              th:text="|(OpenCV ${modeloFacial.versionAlgoritmo})|">(OpenCV 4.10.0)</span>
+                    </dd>
+
+                    <dt>Fecha de registro</dt>
+                    <dd th:text="${#temporals.format(modeloFacial.fechaRegistro, 'dd/MM/yyyy HH:mm')}">-</dd>
+
+                    <dt>Registrado por</dt>
+                    <dd th:text="${modeloFacial.registradoPor != null ? modeloFacial.registradoPor.username : '-'}">-</dd>
+                </th:block>
+            </dl>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <a th:if="${estadoConsentimiento.name() == 'ACTIVO' and docente.activo}"
+                   th:href="@{/docentes/{id}/rostro/registrar(id=${docente.id})}"
+                   class="btn btn--primary"
+                   th:text="${tieneModeloFacial} ? 'Actualizar rostro' : 'Registrar rostro'">
+                    Registrar rostro
+                </a>
+                <span th:if="${estadoConsentimiento.name() != 'ACTIVO'}" class="text-muted">
+                    Necesitás un consentimiento vigente para registrar el rostro.
+                </span>
+                <span th:if="${estadoConsentimiento.name() == 'ACTIVO' and !docente.activo}"
+                      class="text-muted">
+                    Reactivá al docente para poder registrar su rostro.
+                </span>
+            </div>
+        </div>
     </section>
 </body>
 </html>

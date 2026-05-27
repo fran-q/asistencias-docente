@@ -4,6 +4,7 @@ import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
+import edu.cent35.asistencias.service.ModeloFacialService;
 import edu.cent35.asistencias.model.EstadoConsentimiento;
 import edu.cent35.asistencias.model.Docente;
 import jakarta.persistence.EntityNotFoundException;
@@ -37,6 +38,7 @@ public class DocenteController {
 
     private final DocenteService service;
     private final ConsentimientoBiometricoService consentimientoService;
+    private final ModeloFacialService modeloFacialService;
 
     @GetMapping
     public String listar(Model model) {
@@ -90,13 +92,7 @@ public class DocenteController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", DocenteFormDto.from(d));
         }
-        model.addAttribute("docente", d);
-        model.addAttribute("modo", "editar");
-        // Estado del consentimiento biometrico (Sprint 3 Fase D)
-        EstadoConsentimiento estado = consentimientoService.estadoActual(id);
-        model.addAttribute("estadoConsentimiento", estado);
-        consentimientoService.vigenteDe(id)
-            .ifPresent(c -> model.addAttribute("consentimientoVigente", c));
+        agregarDatosEdicion(id, model);
         return "docente/form";
     }
 
@@ -124,15 +120,21 @@ public class DocenteController {
     }
 
     /**
-     * Pobla los atributos de modelo necesarios para re-renderizar
-     * {@code docente/form} en modo editar (cuando hay errores).
+     * Pobla los atributos de modelo necesarios para renderizar
+     * {@code docente/form} en modo editar: datos del docente, estado del
+     * consentimiento biométrico (Sprint 3) y del modelo facial (Sprint 4).
      */
     private void agregarDatosEdicion(Long id, Model model) {
         model.addAttribute("docente", service.buscarPorId(id));
         model.addAttribute("modo", "editar");
+        // Consentimiento biometrico (Sprint 3 Fase D)
         model.addAttribute("estadoConsentimiento", consentimientoService.estadoActual(id));
         consentimientoService.vigenteDe(id)
             .ifPresent(c -> model.addAttribute("consentimientoVigente", c));
+        // Modelo facial (Sprint 4 Fase C)
+        model.addAttribute("tieneModeloFacial", modeloFacialService.tieneModeloActivo(id));
+        modeloFacialService.modeloActivoDe(id)
+            .ifPresent(m -> model.addAttribute("modeloFacial", m));
     }
 
     @PostMapping("/{id}/baja")

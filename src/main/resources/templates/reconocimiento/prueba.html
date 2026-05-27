@@ -2,57 +2,53 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Reconocimiento facial - Prueba - Asistencias</title>
+    <title>Reconocimiento facial - Asistencias</title>
 </head>
 <body>
-    <section class="reconocimiento-prueba">
-        <header class="page-header">
-            <h1>Prueba de detección de rostro</h1>
+    <section class="reconocimiento-prueba" style="text-align:center; max-width: 720px; margin: 0 auto;">
+        <header class="page-header" style="text-align:center;">
+            <h1>Reconocimiento facial</h1>
             <p class="page-header__subtitle">
-                Esta pantalla enciende la cámara y verifica que el sistema
-                pueda <strong>detectar</strong> un rostro. Todavía no identifica
-                de quién es ni guarda nada — eso llega en las próximas etapas.
+                Identifica en vivo al docente frente a la cámara.
+                La imagen se procesa en el servidor y no se guarda.
             </p>
         </header>
 
-        <div class="alert alert--info" role="note" style="max-width: 720px;">
-            <p>
-                El navegador te va a pedir permiso para usar la cámara.
-                La imagen se procesa en el servidor y <strong>no se guarda</strong>.
-            </p>
-        </div>
-
-        <div class="card" style="max-width: 720px;">
-            <div class="reconocimiento__camara">
-                <!-- El video muestra el stream en vivo de la webcam -->
+        <div class="card" style="max-width: 560px; margin: 0 auto;">
+            <!-- Contenedor relativo para superponer overlay sobre el video -->
+            <div class="reconocimiento__camara"
+                 style="position:relative; display:inline-block; max-width:480px; margin:0 auto;">
                 <video id="rec-video" autoplay playsinline muted
                        style="width:100%; max-width:480px; border-radius:8px;
                               background:#000; display:block;"></video>
-                <!-- Canvas oculto: se usa para capturar el frame actual -->
+
+                <!-- Canvas superpuesto: dibuja el recuadro sobre el rostro -->
+                <canvas id="rec-overlay"
+                        style="position:absolute; top:0; left:0;
+                               width:100%; height:100%;
+                               pointer-events:none;"></canvas>
+
+                <!-- Canvas oculto para capturar frames -->
                 <canvas id="rec-canvas" hidden></canvas>
             </div>
 
-            <div class="form-actions" style="margin-top:1rem;">
-                <button type="button" id="rec-btn-encender" class="btn btn--primary">
-                    Encender cámara
-                </button>
-                <button type="button" id="rec-btn-detectar" class="btn btn--primary" disabled>
-                    Detectar rostro
-                </button>
-                <button type="button" id="rec-btn-apagar" class="btn btn--ghost" disabled>
-                    Apagar cámara
-                </button>
+            <!-- Estado + nombre del docente identificado -->
+            <div id="rec-estado-box" style="margin-top:1rem; min-height: 3rem;">
+                <p id="rec-estado-mensaje" style="margin:0; font-size:1.05rem;">
+                    Cámara apagada
+                </p>
+                <p id="rec-distancia" style="margin:0.25rem 0 0; font-size:0.85rem; opacity:0.7;"></p>
             </div>
 
-            <!-- Resultado de la última detección -->
-            <div id="rec-resultado" class="reconocimiento__resultado"
-                 style="margin-top:1rem;" hidden>
-                <p id="rec-resultado-mensaje"></p>
-                <dl class="kv" id="rec-resultado-detalle" hidden>
-                    <dt>Rostros detectados</dt> <dd id="rec-cantidad">-</dd>
-                    <dt>Posición (x, y)</dt>    <dd id="rec-posicion">-</dd>
-                    <dt>Tamaño (ancho × alto)</dt> <dd id="rec-tamano">-</dd>
-                </dl>
+            <!-- Botones toggle -->
+            <div class="form-actions"
+                 style="margin-top:1rem; justify-content:center; display:flex; gap:0.6rem; flex-wrap:wrap;">
+                <button type="button" id="rec-btn-camara" class="btn btn--primary">
+                    Encender cámara
+                </button>
+                <button type="button" id="rec-btn-reconocer" class="btn btn--primary" disabled>
+                    Reconocer rostros
+                </button>
             </div>
         </div>
 

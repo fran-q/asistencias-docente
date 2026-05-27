@@ -23,6 +23,7 @@ import static org.bytedeco.opencv.global.opencv_imgcodecs.imdecode;
 import static org.bytedeco.opencv.global.opencv_imgproc.COLOR_BGR2GRAY;
 import static org.bytedeco.opencv.global.opencv_imgproc.cvtColor;
 import static org.bytedeco.opencv.global.opencv_imgproc.equalizeHist;
+import static org.bytedeco.opencv.global.opencv_imgproc.resize;
 
 /**
  * Detección de rostros en imágenes usando OpenCV (Haar Cascade).
@@ -123,6 +124,61 @@ public class DeteccionRostroService {
                     ? "Rostro detectado correctamente."
                     : "Se detectaron " + cantidad + " rostros. Debe haber solo una persona en cuadro."
             );
+        } finally {
+            if (gris != null)       gris.close();
+            if (imagen != null)     imagen.close();
+            if (codificada != null) codificada.close();
+        }
+    }
+
+    /**
+     * Resultado de extraer el rostro de una imagen: el rostro ya normalizado
+     * (gris, lado fijo) y las coordenadas del bounding box dentro de la
+     * imagen original.
+     */
+    public record RostroExtraido(Mat rostro, int x, int y, int ancho, int alto) {}
+
+    /**
+     * Detecta el rostro de una imagen y devuelve ese rostro normalizado
+     * (gris, redimensionado a {@code tamano}×{@code tamano} px) junto con
+     * sus coordenadas en la imagen original.
+     * <p>
+     * Exige exactamente <b>un</b> rostro: si hay cero o más de uno devuelve
+     * {@code null}. El caller debe cerrar el Mat resultante.
+     */
+    public RostroExtraido extraerRostroNormalizado(byte[] imagenBytes, int tamano) {
+        if (imagenBytes == null || imagenBytes.length == 0) {
+            return null;
+        }
+        Mat codificada = null;
+        Mat imagen = null;
+        Mat gris = null;
+        try (RectVector rostros = new RectVector()) {
+            codificada = new Mat(new BytePointer(imagenBytes));
+            imagen = imdecode(codificada, IMREAD_COLOR);
+            if (imagen == null || imagen.empty()) {
+                return null;
+            }
+            gris = new Mat();
+            cvtColor(imagen, gris, COLOR_BGR2GRAY);
+            equalizeHist(gris, gris);
+
+            clasificadorRostro.detectMultiScale(
+                gris, rostros,
+                1.1, 5, 0,
+                new Size(LADO_MINIMO_ROSTRO, LADO_MINIMO_ROSTRO),
+                new Size()
+            );
+            if (rostros.size() != 1) {
+                return null;
+            }
+
+            Rect r = rostros.get(0);
+            Mat rostroNormalizado = new Mat();
+            try (Mat roi = new Mat(gris, r)) {
+                resize(roi, rostroNormalizado, new Size(tamano, tamano));
+            }
+            return new RostroExtraido(rostroNormalizado, r.x(), r.y(), r.width(), r.height());
         } finally {
             if (gris != null)       gris.close();
             if (imagen != null)     imagen.close();

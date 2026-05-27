@@ -1,39 +1,50 @@
 /*
- * reconocimiento.js — Sprint 4 Fase B
+ * reconocimiento.js — Sprint 4 Fase D
  *
- * Maneja la pantalla de prueba de detección de rostro:
- *  - enciende / apaga la cámara del navegador (getUserMedia),
- *  - captura un frame y lo envía al servidor (/reconocimiento/detectar),
- *  - muestra si se detectó un rostro.
+ * Pantalla de reconocimiento facial en vivo:
+ *  - botón único Encender/Apagar cámara (toggle, cambia de texto),
+ *  - botón único Reconocer/Detener (toggle): cuando está activo, manda
+ *    frames al servidor cada ~700 ms y muestra quién es el docente
+ *    identificado en el cuadro.
  *
- * La imagen no se guarda en ningún lado: se captura, se manda y se descarta.
+ * El recuadro sobre el rostro se pinta:
+ *   - verde si reconoció a un docente,
+ *   - amarillo si detectó un rostro pero no lo reconoce,
+ *   - nada si no hay rostro.
+ *
+ * Las imágenes no se persisten en ningún lado.
  */
 (function () {
     'use strict';
 
     const video        = document.getElementById('rec-video');
     const canvas       = document.getElementById('rec-canvas');
-    const btnEncender  = document.getElementById('rec-btn-encender');
-    const btnDetectar  = document.getElementById('rec-btn-detectar');
-    const btnApagar    = document.getElementById('rec-btn-apagar');
-    const resultado    = document.getElementById('rec-resultado');
-    const mensajeEl    = document.getElementById('rec-resultado-mensaje');
-    const detalleEl    = document.getElementById('rec-resultado-detalle');
-    const cantidadEl   = document.getElementById('rec-cantidad');
-    const posicionEl   = document.getElementById('rec-posicion');
-    const tamanoEl     = document.getElementById('rec-tamano');
+    const overlay      = document.getElementById('rec-overlay');
+    const btnCamara    = document.getElementById('rec-btn-camara');
+    const btnReconocer = document.getElementById('rec-btn-reconocer');
+    const mensajeEl    = document.getElementById('rec-estado-mensaje');
+    const distanciaEl  = document.getElementById('rec-distancia');
 
-    // Si faltan elementos, no estamos en la pantalla de reconocimiento.
-    if (!video || !btnEncender || !btnDetectar || !btnApagar) {
-        return;
-    }
+    if (!video || !btnCamara) return;
+
+    const INTERVALO_MS = 700;
 
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
     let stream = null;
+    let loopId = null;
+    let enVuelo = false;
 
-    // ---- Cámara -----------------------------------------------------------
+    // ---- Cámara: toggle ---------------------------------------------------
+
+    async function toggleCamara() {
+        if (stream) {
+            apagarCamara();
+        } else {
+            await encenderCamara();
+        }
+    }
 
     async function encenderCamara() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -46,86 +57,156 @@
                 audio: false
             });
             video.srcObject = stream;
-            btnEncender.disabled = true;
-            btnDetectar.disabled = false;
-            btnApagar.disabled   = false;
-            ocultarResultado();
+            await video.play().catch(function () {});
+            ajustarOverlay();
+            btnCamara.textContent  = 'Apagar cámara';
+            btnReconocer.disabled  = false;
+            mostrarMensaje('Cámara encendida. Apretá "Reconocer rostros" para empezar.', 'info');
+            distanciaEl.textContent = '';
         } catch (err) {
             mostrarMensaje('No se pudo acceder a la cámara: ' + traducirError(err), 'error');
         }
     }
 
     function apagarCamara() {
+        detenerLoop();
+        limpiarOverlay();
         if (stream) {
             stream.getTracks().forEach(function (t) { t.stop(); });
             stream = null;
         }
         video.srcObject = null;
-        btnEncender.disabled = false;
-        btnDetectar.disabled = true;
-        btnApagar.disabled   = true;
+        btnCamara.textContent     = 'Encender cámara';
+        btnReconocer.textContent  = 'Reconocer rostros';
+        btnReconocer.disabled     = true;
+        mostrarMensaje('Cámara apagada', 'info');
+        distanciaEl.textContent = '';
     }
 
-    // ---- Detección --------------------------------------------------------
+    // ---- Reconocimiento continuo: toggle ----------------------------------
 
-    async function detectarRostro() {
-        if (!stream) {
-            return;
+    function toggleReconocimiento() {
+        if (loopId) {
+            detenerLoop();
+            mostrarMensaje('Reconocimiento detenido.', 'info');
+            distanciaEl.textContent = '';
+            limpiarOverlay();
+        } else {
+            arrancarLoop();
         }
-        // Capturar el frame actual del video en el canvas.
+    }
+
+    function arrancarLoop() {
+        if (!stream || loopId) return;
+        btnReconocer.textContent = 'Detener reconocimiento';
+        mostrarMensaje('Buscando rostros…', 'info');
+        // Una llamada inmediata + loop
+        identificarFrame();
+        loopId = setInterval(identificarFrame, INTERVALO_MS);
+    }
+
+    function detenerLoop() {
+        if (loopId) {
+            clearInterval(loopId);
+            loopId = null;
+        }
+        btnReconocer.textContent = 'Reconocer rostros';
+    }
+
+    async function identificarFrame() {
+        if (!stream || enVuelo) return;
+        ajustarOverlay();
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
-        btnDetectar.disabled = true;
-        mostrarMensaje('Procesando…', 'info');
-
+        enVuelo = true;
         try {
             const headers = { 'Content-Type': 'application/json' };
-            if (csrfToken && csrfHeader) {
-                headers[csrfHeader] = csrfToken;
-            }
-            const resp = await fetch('/reconocimiento/detectar', {
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+            const resp = await fetch('/reconocimiento/identificar', {
                 method: 'POST',
                 headers: headers,
                 body: JSON.stringify({ imagen: dataUrl })
             });
-            if (!resp.ok) {
-                throw new Error('El servidor respondió ' + resp.status);
-            }
-            mostrarResultado(await resp.json());
+            if (!resp.ok) return;
+            const data = await resp.json();
+            renderizar(data);
         } catch (err) {
-            mostrarMensaje('No se pudo procesar la imagen: ' + err.message, 'error');
+            // Sin internet o error transitorio: no dibujamos, no molestamos.
         } finally {
-            btnDetectar.disabled = (stream === null);
+            enVuelo = false;
         }
     }
 
-    // ---- Render del resultado --------------------------------------------
-
-    function mostrarResultado(data) {
-        if (data.rostroDetectado) {
-            mostrarMensaje(data.mensaje, data.cantidadRostros === 1 ? 'success' : 'error');
-            cantidadEl.textContent = data.cantidadRostros;
-            posicionEl.textContent = data.x + ', ' + data.y;
-            tamanoEl.textContent   = data.ancho + ' × ' + data.alto + ' px';
-            detalleEl.hidden = false;
+    function renderizar(data) {
+        if (!data.rostroDetectado) {
+            limpiarOverlay();
+            mostrarMensaje('No se detecta ningún rostro.', 'info');
+            distanciaEl.textContent = '';
+            return;
+        }
+        if (data.reconocido) {
+            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#2e7d32', data.docenteNombre);
+            mostrarMensaje('Rostro presente: ' + data.docenteNombre, 'success');
+            distanciaEl.textContent = 'Distancia: ' + data.distancia.toFixed(1)
+                + ' (menor = más parecido)';
         } else {
+            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#ffc107', null);
             mostrarMensaje(data.mensaje, 'error');
-            detalleEl.hidden = true;
+            distanciaEl.textContent = data.distancia
+                ? 'Distancia más cercana: ' + data.distancia.toFixed(1)
+                : '';
         }
     }
+
+    // ---- Overlay ----------------------------------------------------------
+
+    function ajustarOverlay() {
+        if (video.videoWidth > 0 && video.videoHeight > 0) {
+            overlay.width  = video.videoWidth;
+            overlay.height = video.videoHeight;
+        }
+    }
+
+    function dibujarRecuadro(x, y, ancho, alto, color, label) {
+        const ctx = overlay.getContext('2d');
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+        ctx.strokeStyle = color;
+        ctx.lineWidth   = Math.max(3, Math.round(overlay.width / 160));
+        ctx.strokeRect(x, y, ancho, alto);
+        if (label) {
+            // Etiqueta arriba del recuadro con el nombre
+            const fontSize = Math.max(14, Math.round(overlay.width / 35));
+            ctx.font = '600 ' + fontSize + 'px sans-serif';
+            const padX = 6, padY = 4;
+            const textW = ctx.measureText(label).width;
+            const labelY = Math.max(fontSize + padY * 2, y);
+            ctx.fillStyle = color;
+            ctx.fillRect(x, labelY - fontSize - padY * 2, textW + padX * 2, fontSize + padY * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(label, x + padX, labelY - padY);
+        }
+    }
+
+    function limpiarOverlay() {
+        if (overlay.getContext) {
+            overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
+        }
+    }
+
+    // ---- UI helpers -------------------------------------------------------
 
     function mostrarMensaje(texto, tipo) {
         mensajeEl.textContent = texto;
-        resultado.className = 'reconocimiento__resultado alert alert--' + tipo;
-        resultado.hidden = false;
-    }
-
-    function ocultarResultado() {
-        resultado.hidden = true;
-        detalleEl.hidden = true;
+        mensajeEl.style.color = (
+            tipo === 'success' ? '#4caf50' :
+            tipo === 'error'   ? '#e57373' :
+            tipo === 'info'    ? '' :
+                                 ''
+        );
+        mensajeEl.style.fontWeight = (tipo === 'success') ? '600' : '400';
     }
 
     function traducirError(err) {
@@ -146,10 +227,7 @@
 
     // ---- Eventos ----------------------------------------------------------
 
-    btnEncender.addEventListener('click', encenderCamara);
-    btnDetectar.addEventListener('click', detectarRostro);
-    btnApagar.addEventListener('click', apagarCamara);
-
-    // Liberar la cámara si el usuario navega a otra página.
+    btnCamara.addEventListener('click', toggleCamara);
+    btnReconocer.addEventListener('click', toggleReconocimiento);
     window.addEventListener('pagehide', apagarCamara);
 })();
