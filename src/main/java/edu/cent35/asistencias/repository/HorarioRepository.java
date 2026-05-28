@@ -42,6 +42,27 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
                                         @Param("tenantId")  Long tenantId);
 
     /**
+     * Horarios activos del tenant en un día puntual, con docente asignado.
+     * Sirve para calcular los AUSENTE del listado: cada uno de estos
+     * horarios deberia tener una marca para la fecha; los que no la tengan
+     * y cuya hora_fin ya pasó cuentan como AUSENTE.
+     */
+    @Query("""
+        SELECT h FROM Horario h
+        JOIN FETCH h.comision c
+        JOIN FETCH c.materia m
+        JOIN FETCH c.docenteAsignado d
+        WHERE h.diaSemana = :dia
+          AND h.activo    = true
+          AND c.activo    = true
+          AND m.institucionId = :tenantId
+        ORDER BY h.horaInicio, c.codigo
+        """)
+    List<Horario> findActivosDelDiaConDocente(
+        @Param("dia") Byte diaSemana,
+        @Param("tenantId") Long tenantId);
+
+    /**
      * Horarios de hoy en los que el docente está asignado a la comisión.
      * <p>
      * El filtro fino de "está corriendo ahora" (ventana

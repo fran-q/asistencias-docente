@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Asistencias - Asistencias</title>
+</head>
+<body>
+    <section class="asistencias-list">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Asistencias</h1>
+                <p class="page-header__subtitle">
+                    Marcas del día seleccionado. Las filas en gris (AUSENTE) son
+                    horarios cuya hora de fin ya pasó y no tienen marca.
+                </p>
+            </div>
+        </header>
+
+        <!-- Filtros -->
+        <form method="get" th:action="@{/asistencias}" class="card"
+              style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+                <label for="fecha">Fecha</label>
+                <input type="date" id="fecha" name="fecha"
+                       th:value="${fecha}">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option th:each="e : ${estadosPosibles}"
+                            th:value="${e}"
+                            th:text="${e}"
+                            th:selected="${e == estadoFiltro}">PRESENTE</option>
+                </select>
+            </div>
+            <div class="form-actions" style="margin:0;">
+                <button type="submit" class="btn btn--primary">Aplicar</button>
+                <a th:href="@{/asistencias}" class="btn btn--ghost">Limpiar</a>
+            </div>
+        </form>
+
+        <div class="card card--no-padding" style="margin-top:1rem;">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Docente</th>
+                            <th>Materia</th>
+                            <th>Comisión</th>
+                            <th>Horario</th>
+                            <th>Estado</th>
+                            <th>Método</th>
+                            <th>Confianza</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a : ${asistencias}"
+                            th:classappend="${a.calculada} ? 'row--inactive'">
+                            <td>
+                                <span th:if="${a.horaRegistrada != null}"
+                                      th:text="${#temporals.format(a.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
+                                <span th:unless="${a.horaRegistrada != null}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${a.docenteNombre}">Apellido, Nombre</td>
+                            <td th:text="${a.materiaNombre}">Matemática</td>
+                            <td><code th:text="${a.comisionCodigo}">A</code></td>
+                            <td>
+                                <span th:text="${a.diaLabel}">Lunes</span>
+                                <small class="text-muted"
+                                       th:text="|${#temporals.format(a.horaInicio,'HH:mm')}–${#temporals.format(a.horaFin,'HH:mm')}|">
+                                    18:00–20:00
+                                </small>
+                            </td>
+                            <td>
+                                <span th:if="${a.estado.name() == 'PRESENTE'}"
+                                      class="badge badge--success">Presente</span>
+                                <span th:if="${a.estado.name() == 'TARDE'}"
+                                      class="badge badge--warning">Tarde</span>
+                                <span th:if="${a.estado.name() == 'AUSENTE'}"
+                                      class="badge badge--danger">Ausente</span>
+                            </td>
+                            <td>
+                                <span th:if="${a.metodo != null}"
+                                      th:text="${a.metodo}">AUTOMATICO</span>
+                                <span th:unless="${a.metodo != null}"
+                                      class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${a.confianza != null}"
+                                      th:text="${#numbers.formatDecimal(a.confianza, 1, 4)}">0.8521</span>
+                                <span th:unless="${a.confianza != null}"
+                                      class="text-muted">—</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(asistencias)}">
+                            <td colspan="8" class="table__empty">
+                                Sin asistencias para esta fecha con los filtros seleccionados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

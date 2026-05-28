@@ -18,14 +18,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edu.cent35.asistencias.dto.AsistenciaListItemDto;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Marca de asistencia automática (RF-17 a RF-21).
@@ -167,6 +173,55 @@ public class AsistenciaService {
         log.info("Asistencia AUTO marcada: id={}, docente={}, horario={}, fecha={}, estado={}",
                  guardada.getId(), docenteId, horario.getId(), fecha, estado);
         return ResultadoMarca.creada(guardada);
+    }
+
+    /**
+     * Lista las asistencias de un día concreto, incluyendo las marcas
+     * <b>AUSENTE calculadas</b>: para cada horario activo del día que ya
+     * terminó (o si la fecha es anterior a hoy) y no tiene fila para
+     * el docente asignado, se agrega una fila virtual.
+     */
+    @Transactional(readOnly = true)
+    public List<AsistenciaListItemDto> listarDelDia(LocalDate fecha) {
+        Long tenantId = TenantContext.getRequired();
+        byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
+        boolean esHoy = fecha.equals(LocalDate.now());
+        LocalTime ahora = LocalTime.now();
+
+        // 1) Asistencias realmente persistidas para esa fecha.
+        List<AsistenciaListItemDto> resultado = new ArrayList<>();
+        List<Asistencia> persistidas = asistenciaRepository.findDelDia(fecha);
+        for (Asistencia a : persistidas) {
+            resultado.add(AsistenciaListItemDto.from(a));
+        }
+
+        // Set de claves (docenteId, horarioId) ya cubiertas por marcas reales.
+        Set<String> cubiertas = new HashSet<>();
+        for (Asistencia a : persistidas) {
+            cubiertas.add(a.getDocente().getId() + ":" + a.getHorario().getId());
+        }
+
+        // 2) Horarios del día sin marca → AUSENTE calculada (si ya terminaron).
+        List<Horario> horariosDia =
+            horarioRepository.findActivosDelDiaConDocente(diaSemana, tenantId);
+        for (Horario h : horariosDia) {
+            Long docenteId = h.getComision().getDocenteAsignado().getId();
+            String key = docenteId + ":" + h.getId();
+            if (cubiertas.contains(key)) continue;
+
+            boolean horarioYaTermino = !esHoy || ahora.isAfter(h.getHoraFin());
+            if (horarioYaTermino) {
+                resultado.add(AsistenciaListItemDto.ausenteCalculada(h, fecha));
+            }
+        }
+
+        // 3) Orden: primero por horaInicio, después por nombre de docente.
+        resultado.sort(Comparator
+            .comparing(AsistenciaListItemDto::getHoraInicio,
+                       Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(AsistenciaListItemDto::getDocenteNombre,
+                           Comparator.nullsLast(Comparator.naturalOrder())));
+        return resultado;
     }
 
     // ------------------------------------------------------------------------
