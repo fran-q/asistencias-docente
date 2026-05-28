@@ -1,0 +1,227 @@
+package edu.cent35.asistencias.service;
+
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoAsistencia;
+import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.MetodoAsistencia;
+import edu.cent35.asistencias.model.ModeloFacial;
+import edu.cent35.asistencias.repository.AsistenciaRepository;
+import edu.cent35.asistencias.repository.DocenteRepository;
+import edu.cent35.asistencias.repository.HorarioRepository;
+import edu.cent35.asistencias.repository.ModeloFacialRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Marca de asistencia automática (RF-17 a RF-21).
+ * <p>
+ * Una marca automática es válida cuando, en el instante de la identificación,
+ * el docente tiene un horario corriendo en una de sus comisiones. La ventana
+ * es {@code [hora_inicio - tolerancia, hora_fin]}:
+ * <ul>
+ *   <li>Antes del {@code hora_inicio} (dentro de la tolerancia) → PRESENTE.</li>
+ *   <li>A partir del {@code hora_inicio} → TARDE (se guarda la hora exacta).</li>
+ *   <li>Fuera de la ventana → no se marca (no hay clase ahora).</li>
+ * </ul>
+ * <p>
+ * La tolerancia es propia de cada {@code Horario} (sprint 2). El estado
+ * AUSENTE no se persiste por este service: se calcula al listar (los
+ * horarios cuya {@code hora_fin} ya pasó y no tienen fila para esa fecha).
+ * <p>
+ * <b>Idempotencia</b>: si ya hay marca para (docente, horario, fecha) la
+ * devolvemos sin volver a insertar — el UNIQUE de la BD ya lo garantiza,
+ * pero también lo respetamos a nivel aplicación.
+ * <p>
+ * <b>Multi-tenant</b>: el docente se valida contra el tenant actual. La
+ * entidad {@code Asistencia} es tenant-scoped (institucion_id denormalizado).
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class AsistenciaService {
+
+    private final AsistenciaRepository asistenciaRepository;
+    private final HorarioRepository horarioRepository;
+    private final DocenteRepository docenteRepository;
+    private final ModeloFacialRepository modeloFacialRepository;
+
+    /**
+     * Distancia LBPH máxima esperada. Se usa para mapear la distancia bruta
+     * del recognizer a un score 0-1 (1 = perfecto, 0 = límite del umbral).
+     * Reusa el mismo valor configurado para el umbral de identificación.
+     */
+    @Value("${app.biometria.umbral-confianza}")
+    private double umbralDistancia;
+
+    /**
+     * Resultado de un intento de marcado.
+     *
+     * @param marcada         true si quedó una marca persistida (nueva o ya existente)
+     * @param asistencia      la marca, null si no se pudo marcar
+     * @param yaEstaba        true cuando {@code marcada=true} y la marca ya existía (idempotente)
+     * @param motivoNoMarca   mensaje explicando por qué no se marcó (null si se marcó)
+     */
+    public record ResultadoMarca(
+        boolean marcada,
+        Asistencia asistencia,
+        boolean yaEstaba,
+        String motivoNoMarca
+    ) {
+        public static ResultadoMarca creada(Asistencia a) {
+            return new ResultadoMarca(true, a, false, null);
+        }
+        public static ResultadoMarca yaEstaba(Asistencia a) {
+            return new ResultadoMarca(true, a, true, null);
+        }
+        public static ResultadoMarca sinClase(String motivo) {
+            return new ResultadoMarca(false, null, false, motivo);
+        }
+    }
+
+    /**
+     * Marca asistencia automática. Si no hay clase corriendo o ya existe
+     * marca para esta clase, no falla — devuelve un {@link ResultadoMarca}
+     * indicando el caso.
+     *
+     * @param docenteId        a quién corresponde la marca
+     * @param modeloFacialId   modelo con el que se identificó (puede ser null si se quiere desacoplar)
+     * @param distanciaLbph    distancia que devolvió el recognizer (menor = mejor)
+     */
+    @Transactional
+    public ResultadoMarca marcarAutomatica(Long docenteId,
+                                           Long modeloFacialId,
+                                           Double distanciaLbph) {
+        return marcarAutomatica(docenteId, modeloFacialId, distanciaLbph, LocalDateTime.now());
+    }
+
+    /**
+     * Variante con instante explícito — pensada para tests.
+     */
+    @Transactional
+    public ResultadoMarca marcarAutomatica(Long docenteId,
+                                           Long modeloFacialId,
+                                           Double distanciaLbph,
+                                           LocalDateTime instante) {
+        Long tenantId = TenantContext.getRequired();
+        Docente docente = obtenerDocenteValidado(docenteId, tenantId);
+
+        LocalDate fecha = instante.toLocalDate();
+        LocalTime ahora = instante.toLocalTime();
+        byte diaSemana = (byte) instante.getDayOfWeek().getValue(); // 1..7 ISO
+
+        List<Horario> horariosHoy = horarioRepository
+            .findHoyParaDocente(docenteId, diaSemana, tenantId);
+
+        Optional<Horario> enCurso = elegirHorarioEnCurso(horariosHoy, ahora);
+        if (enCurso.isEmpty()) {
+            log.info("Marca rechazada: docente {} no tiene clase ahora (ningún horario en ventana)",
+                     docenteId);
+            return ResultadoMarca.sinClase(
+                "No hay clase en este momento para " + docente.getNombreCompleto() + ".");
+        }
+        Horario horario = enCurso.get();
+
+        // Idempotencia: si ya marcó esa clase hoy, devolvemos la marca existente.
+        Optional<Asistencia> existente = asistenciaRepository
+            .findByDocenteIdAndHorarioIdAndFecha(docenteId, horario.getId(), fecha);
+        if (existente.isPresent()) {
+            log.info("Marca duplicada ignorada: docente {} ya tenía marca para horario {} fecha {}",
+                     docenteId, horario.getId(), fecha);
+            return ResultadoMarca.yaEstaba(existente.get());
+        }
+
+        EstadoAsistencia estado = calcularEstado(horario, ahora);
+
+        ModeloFacial modelo = (modeloFacialId == null) ? null
+            : modeloFacialRepository.findById(modeloFacialId).orElse(null);
+
+        Asistencia asistencia = Asistencia.builder()
+            .docente(docente)
+            .comision(horario.getComision())
+            .horario(horario)
+            .fecha(fecha)
+            .horaRegistrada(ahora.withNano(0))
+            .estado(estado)
+            .metodo(MetodoAsistencia.AUTOMATICO)
+            .modeloFacial(modelo)
+            .confianza(distanciaLbph == null ? null : distanciaToConfianza(distanciaLbph))
+            .build();
+        asistencia.setInstitucionId(tenantId);
+
+        Asistencia guardada = asistenciaRepository.save(asistencia);
+        log.info("Asistencia AUTO marcada: id={}, docente={}, horario={}, fecha={}, estado={}",
+                 guardada.getId(), docenteId, horario.getId(), fecha, estado);
+        return ResultadoMarca.creada(guardada);
+    }
+
+    // ------------------------------------------------------------------------
+
+    /**
+     * Devuelve el horario en curso (ventana
+     * {@code [hora_inicio - tolerancia, hora_fin]}). Si hay varios, devuelve
+     * el primero — eso ocurre sólo con horarios solapados (que no deberían
+     * existir por la validación de superposición en HorarioService).
+     */
+    private Optional<Horario> elegirHorarioEnCurso(List<Horario> horariosHoy, LocalTime ahora) {
+        return horariosHoy.stream()
+            .filter(h -> estaEnCurso(h, ahora))
+            .findFirst();
+    }
+
+    private boolean estaEnCurso(Horario h, LocalTime ahora) {
+        short tol = h.getToleranciaMin() == null ? 0 : h.getToleranciaMin();
+        LocalTime ventanaInicio = h.getHoraInicio().minusMinutes(tol);
+        // dentro de [ventanaInicio, horaFin]
+        return !ahora.isBefore(ventanaInicio) && !ahora.isAfter(h.getHoraFin());
+    }
+
+    private EstadoAsistencia calcularEstado(Horario h, LocalTime ahora) {
+        // PRESENTE si llegó hasta hora_inicio inclusive (puede ser antes con la tolerancia).
+        // TARDE si llegó después del hora_inicio.
+        return ahora.isAfter(h.getHoraInicio())
+            ? EstadoAsistencia.TARDE
+            : EstadoAsistencia.PRESENTE;
+    }
+
+    /**
+     * Convierte la distancia LBPH (donde menor = mejor) a un score 0-1
+     * (donde 1 = mejor). Se usa el umbral configurado como referencia:
+     * {@code score = max(0, 1 - distancia/umbral)}.
+     */
+    private BigDecimal distanciaToConfianza(double distancia) {
+        if (umbralDistancia <= 0) return BigDecimal.ZERO;
+        double score = Math.max(0.0, 1.0 - (distancia / umbralDistancia));
+        score = Math.min(1.0, score);
+        return BigDecimal.valueOf(score).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private Docente obtenerDocenteValidado(Long docenteId, Long tenantId) {
+        Docente d = docenteRepository.findById(docenteId)
+            .orElseThrow(() -> new EntityNotFoundException("Docente no encontrado: " + docenteId));
+        if (!tenantId.equals(d.getInstitucionId())) {
+            log.warn("Cross-tenant blocked: tenant {} intento marcar asistencia para docente id={} (tenant {})",
+                     tenantId, docenteId, d.getInstitucionId());
+            throw new EntityNotFoundException("Docente no encontrado");
+        }
+        return d;
+    }
+
+    /** Reloj inyectable para futuros tests (Clock.systemDefaultZone() por default). */
+    @SuppressWarnings("unused")
+    private Clock clock = Clock.systemDefaultZone();
+}

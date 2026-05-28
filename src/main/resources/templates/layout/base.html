@@ -55,8 +55,8 @@
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Horarios</a>
             <a th:href="@{/grilla}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Grilla</a>
-            <a th:href="@{/reconocimiento/prueba}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Reconocimiento</a>
+            <a th:href="@{/asistencia/pase}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Pase de asistencia</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 

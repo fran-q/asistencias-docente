@@ -8,14 +8,20 @@ package edu.cent35.asistencias.dto;
  * @param reconocido      true si además se identificó a un docente bajo el umbral
  * @param docenteId       id del docente identificado, o null
  * @param docenteNombre   "Apellido, Nombre" del docente, o null
+ * @param modeloFacialId  id del modelo LBPH que produjo el mejor match (sprint 5: lo usa el pase de asistencia)
  * @param distancia       distancia LBPH del mejor match (menor = más parecido), o null
- * @param mensaje         texto descriptivo para mostrar al usuario
+ * @param x               coord. X del bounding box del rostro detectado
+ * @param y               coord. Y
+ * @param ancho           ancho del bounding box
+ * @param alto            alto del bounding box
+ * @param mensaje         texto descriptivo
  */
 public record IdentificacionResultadoDto(
     boolean rostroDetectado,
     boolean reconocido,
     Long docenteId,
     String docenteNombre,
+    Long modeloFacialId,
     Double distancia,
     Integer x,
     Integer y,
@@ -25,24 +31,26 @@ public record IdentificacionResultadoDto(
 ) {
 
     public static IdentificacionResultadoDto sinRostro() {
-        return new IdentificacionResultadoDto(false, false, null, null, null,
+        return new IdentificacionResultadoDto(false, false, null, null, null, null,
             null, null, null, null, "No se detectó ningún rostro.");
     }
 
     public static IdentificacionResultadoDto noHayModelos(int x, int y, int ancho, int alto) {
-        return new IdentificacionResultadoDto(true, false, null, null, null,
+        return new IdentificacionResultadoDto(true, false, null, null, null, null,
             x, y, ancho, alto, "Ningún docente tiene modelo facial registrado.");
     }
 
-    public static IdentificacionResultadoDto match(Long docenteId, String nombre, double distancia,
+    public static IdentificacionResultadoDto match(Long docenteId, String nombre,
+                                                   Long modeloFacialId, double distancia,
                                                    int x, int y, int ancho, int alto) {
-        return new IdentificacionResultadoDto(true, true, docenteId, nombre, distancia,
+        return new IdentificacionResultadoDto(true, true, docenteId, nombre,
+            modeloFacialId, distancia,
             x, y, ancho, alto, "Rostro presente: " + nombre);
     }
 
     public static IdentificacionResultadoDto noReconocido(double mejorDistancia,
                                                           int x, int y, int ancho, int alto) {
-        return new IdentificacionResultadoDto(true, false, null, null, mejorDistancia,
+        return new IdentificacionResultadoDto(true, false, null, null, null, mejorDistancia,
             x, y, ancho, alto, "Rostro no reconocido.");
     }
 }

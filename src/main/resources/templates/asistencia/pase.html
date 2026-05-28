@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Pase de asistencia - Asistencias</title>
+</head>
+<body>
+    <section class="pase-asistencia" style="text-align:center; max-width: 720px; margin: 0 auto;">
+        <header class="page-header" style="text-align:center;">
+            <h1>Pase de asistencia</h1>
+            <p class="page-header__subtitle">
+                Identifica al docente frente a la cámara y marca su asistencia
+                a la clase que está en curso.
+            </p>
+        </header>
+
+        <div class="card" style="max-width: 560px; margin: 0 auto;">
+            <div class="reconocimiento__camara"
+                 style="position:relative; display:inline-block; max-width:480px; margin:0 auto;">
+                <video id="pa-video" autoplay playsinline muted
+                       style="width:100%; max-width:480px; border-radius:8px;
+                              background:#000; display:block;"></video>
+                <canvas id="pa-overlay"
+                        style="position:absolute; top:0; left:0;
+                               width:100%; height:100%;
+                               pointer-events:none;"></canvas>
+                <canvas id="pa-canvas" hidden></canvas>
+            </div>
+
+            <!-- Resultado -->
+            <div id="pa-estado-box" style="margin-top:1rem; min-height: 4rem;">
+                <p id="pa-estado-mensaje" style="margin:0; font-size:1.05rem;">
+                    Cámara apagada
+                </p>
+                <p id="pa-clase" style="margin:0.25rem 0 0; font-size:0.9rem; opacity:0.85;"></p>
+                <p id="pa-distancia" style="margin:0.25rem 0 0; font-size:0.8rem; opacity:0.6;"></p>
+            </div>
+
+            <!-- Botones toggle -->
+            <div class="form-actions"
+                 style="margin-top:1rem; justify-content:center; display:flex; gap:0.6rem; flex-wrap:wrap;">
+                <button type="button" id="pa-btn-camara" class="btn btn--primary">
+                    Encender cámara
+                </button>
+                <button type="button" id="pa-btn-pase" class="btn btn--primary" disabled>
+                    Iniciar pase
+                </button>
+            </div>
+        </div>
+
+        <script th:src="@{/js/pase-asistencia.js}" defer></script>
+    </section>
+</body>
+</html>

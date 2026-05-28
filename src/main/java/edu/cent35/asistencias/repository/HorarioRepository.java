@@ -42,6 +42,28 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
                                         @Param("tenantId")  Long tenantId);
 
     /**
+     * Horarios de hoy en los que el docente está asignado a la comisión.
+     * <p>
+     * El filtro fino de "está corriendo ahora" (ventana
+     * {@code [hora_inicio - tolerancia, hora_fin]}) se hace en Java —
+     * la tolerancia depende de cada Horario, no de un valor global.
+     */
+    @Query("""
+        SELECT h FROM Horario h
+        JOIN FETCH h.comision c
+        JOIN FETCH c.materia m
+        WHERE c.docenteAsignado.id = :docenteId
+          AND h.diaSemana = :dia
+          AND h.activo    = true
+          AND c.activo    = true
+          AND m.institucionId = :tenantId
+        """)
+    List<Horario> findHoyParaDocente(
+        @Param("docenteId") Long docenteId,
+        @Param("dia") Byte diaSemana,
+        @Param("tenantId") Long tenantId);
+
+    /**
      * Detecta superposicion de horarios para una misma comision.
      * Devuelve los horarios existentes que solapan con la franja propuesta
      * (excluyendo el id pasado en {@code excludeId} si se esta editando).

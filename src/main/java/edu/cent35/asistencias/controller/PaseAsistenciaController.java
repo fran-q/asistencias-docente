@@ -2,11 +2,12 @@ package edu.cent35.asistencias.controller;
 
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.service.DeteccionRostroService;
+import edu.cent35.asistencias.service.PaseAsistenciaService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,42 +16,42 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.Base64;
 
 /**
- * Endpoints auxiliares de reconocimiento facial.
+ * Pase de asistencia automático por reconocimiento facial (RF-17 a RF-19).
+ * Pantalla y endpoint del loop continuo.
  * <p>
- * En Sprint 4 esta clase también tenía la pantalla de prueba y el endpoint
- * de identificación. En Sprint 5 ambos quedaron incorporados al
- * {@link PaseAsistenciaController} (que adicionalmente marca asistencia
- * cuando reconoce). Acá sobrevive sólo {@code /detectar}, que lo usa el
- * JS de registro facial para dibujar el recuadro amarillo en vivo sobre
- * el rostro durante la captura.
+ * Reemplaza a la antigua pantalla {@code /reconocimiento/prueba}: en lugar
+ * de sólo identificar, marca la asistencia cuando reconoce.
  */
 @Controller
-@RequestMapping("/reconocimiento")
+@RequestMapping("/asistencia/pase")
 @PreAuthorize("hasAnyRole('INSTITUCION', 'ADMIN')")
 @RequiredArgsConstructor
 @Slf4j
-public class ReconocimientoController {
+public class PaseAsistenciaController {
 
-    private final DeteccionRostroService deteccionRostroService;
+    private final PaseAsistenciaService paseAsistenciaService;
+
+    /** Pantalla del pase: webcam + loop de reconocimiento + marca automática. */
+    @GetMapping
+    public String pantalla() {
+        return "asistencia/pase";
+    }
 
     /**
-     * Detecta rostros en una imagen y devuelve cuántos hay y el bounding box
-     * del más grande. <i>No identifica</i> de quién es: solo "hay cara acá".
-     * Lo usa {@code registro-facial.js} para mostrar el recuadro mientras
-     * se graba el rostro del docente.
+     * Recibe un frame, identifica al docente, intenta marcar asistencia y
+     * responde con el resultado combinado. JSON.
      */
-    @PostMapping("/detectar")
+    @PostMapping("/marcar")
     @ResponseBody
-    public DeteccionRostroDto detectar(@RequestBody CapturaImagenDto captura) {
+    public PaseAsistenciaResultadoDto marcar(@RequestBody CapturaImagenDto captura) {
         byte[] imagen;
         try {
             imagen = decodificarDataUrl(captura.imagen());
         } catch (IllegalArgumentException ex) {
-            log.warn("Captura inválida en /reconocimiento/detectar: {}", ex.getMessage());
-            return DeteccionRostroDto.sinRostro(
-                "La imagen capturada no es válida. Intentá de nuevo.");
+            log.warn("Captura inválida en /asistencia/pase/marcar: {}", ex.getMessage());
+            return PaseAsistenciaResultadoDto.sinRostro();
         }
-        return deteccionRostroService.detectar(imagen);
+        return paseAsistenciaService.pasar(imagen);
     }
 
     /** Convierte un data URL base64 en los bytes de la imagen. */

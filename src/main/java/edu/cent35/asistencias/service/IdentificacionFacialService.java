@@ -98,7 +98,8 @@ public class IdentificacionFacialService {
                 log.debug("Identificación tenant={} → docente={} distancia={}",
                           tenantId, d.getId(), mejorDistancia);
                 return IdentificacionResultadoDto.match(
-                    d.getId(), d.getNombreCompleto(), mejorDistancia,
+                    d.getId(), d.getNombreCompleto(),
+                    mejorMatch.getId(), mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }
             return IdentificacionResultadoDto.noReconocido(mejorDistancia,
