@@ -2,15 +2,23 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.AsistenciaManual;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.JustificacionAusencia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.ModeloFacial;
+import edu.cent35.asistencias.model.MotivoCargaManual;
+import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
+import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
+import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
+import edu.cent35.asistencias.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,6 +73,10 @@ public class AsistenciaService {
     private final HorarioRepository horarioRepository;
     private final DocenteRepository docenteRepository;
     private final ModeloFacialRepository modeloFacialRepository;
+    private final AsistenciaManualRepository asistenciaManualRepository;
+    private final JustificacionAusenciaRepository justificacionAusenciaRepository;
+    private final MotivoCargaManualRepository motivoCargaManualRepository;
+    private final UsuarioRepository usuarioRepository;
 
     /**
      * Distancia LBPH máxima esperada. Se usa para mapear la distancia bruta
@@ -176,6 +188,129 @@ public class AsistenciaService {
     }
 
     /**
+     * Carga manual de asistencia por un admin (RF-22 a RF-24).
+     * <p>
+     * Crea la fila en {@code asistencias} y el detalle 1:1 en
+     * {@code asistencias_manuales}. Si ya existe una marca para
+     * {@code (docente, horario, fecha)}, falla (no se sobreescribe sin
+     * acción explícita).
+     */
+    @Transactional
+    public Asistencia marcarManual(Long docenteId, Long horarioId, java.time.LocalDate fecha,
+                                   LocalTime horaRegistrada, EstadoAsistencia estado,
+                                   Short motivoId, String detalleAdicional,
+                                   Long usuarioActualId) {
+        Long tenantId = TenantContext.getRequired();
+        Docente docente = obtenerDocenteValidado(docenteId, tenantId);
+        Horario horario = obtenerHorarioValidado(horarioId, tenantId);
+
+        if (estado == null) {
+            throw new IllegalArgumentException("Hay que indicar el estado de la asistencia.");
+        }
+        if (horaRegistrada == null) {
+            throw new IllegalArgumentException("Hay que indicar la hora.");
+        }
+        if (fecha == null || fecha.isAfter(java.time.LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha no puede ser futura.");
+        }
+        if (asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(docenteId, horarioId, fecha)
+                .isPresent()) {
+            throw new IllegalArgumentException(
+                "Ya existe una marca para ese docente, horario y fecha.");
+        }
+
+        MotivoCargaManual motivo = motivoCargaManualRepository.findById(motivoId)
+            .orElseThrow(() -> new IllegalArgumentException("El motivo seleccionado no existe."));
+        if (Boolean.FALSE.equals(motivo.getActivo())) {
+            throw new IllegalArgumentException("El motivo elegido está inactivo.");
+        }
+
+        Usuario admin = usuarioRepository.findById(usuarioActualId)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Usuario actual no encontrado: " + usuarioActualId));
+
+        Asistencia asistencia = Asistencia.builder()
+            .docente(docente)
+            .comision(horario.getComision())
+            .horario(horario)
+            .fecha(fecha)
+            .horaRegistrada(horaRegistrada.withSecond(0).withNano(0))
+            .estado(estado)
+            .metodo(MetodoAsistencia.MANUAL)
+            .build();
+        asistencia.setInstitucionId(tenantId);
+        Asistencia guardada = asistenciaRepository.save(asistencia);
+
+        AsistenciaManual detalle = AsistenciaManual.builder()
+            .asistencia(guardada)
+            .usuario(admin)
+            .motivo(motivo)
+            .detalleAdicional(trimToNull(detalleAdicional))
+            .build();
+        asistenciaManualRepository.save(detalle);
+
+        log.info("Asistencia MANUAL marcada: id={}, docente={}, horario={}, fecha={}, estado={}, motivo={}",
+                 guardada.getId(), docenteId, horarioId, fecha, estado, motivo.getCodigo());
+        return guardada;
+    }
+
+    /**
+     * Justifica una ausencia (RF-25, RF-26). Sólo aplica a asistencias
+     * persistidas con estado {@code AUSENTE}. Para justificar una "ausencia
+     * calculada" del listado, primero hay que cargarla manualmente como
+     * AUSENTE y después justificarla.
+     */
+    @Transactional
+    public JustificacionAusencia justificarAusencia(Long asistenciaId, String motivo,
+                                                    String documentoUrl, Long usuarioActualId) {
+        Long tenantId = TenantContext.getRequired();
+        Asistencia asistencia = asistenciaRepository.findById(asistenciaId)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Asistencia no encontrada: " + asistenciaId));
+        if (!tenantId.equals(asistencia.getInstitucionId())) {
+            log.warn("Cross-tenant blocked: tenant {} intento justificar asistencia id={}",
+                     tenantId, asistenciaId);
+            throw new EntityNotFoundException("Asistencia no encontrada");
+        }
+        if (asistencia.getEstado() != EstadoAsistencia.AUSENTE) {
+            throw new IllegalArgumentException(
+                "Solo se pueden justificar asistencias con estado AUSENTE.");
+        }
+        if (justificacionAusenciaRepository.findByAsistenciaId(asistenciaId).isPresent()) {
+            throw new IllegalArgumentException("Esta ausencia ya está justificada.");
+        }
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("El motivo de la justificación es obligatorio.");
+        }
+
+        Usuario admin = usuarioRepository.findById(usuarioActualId)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Usuario actual no encontrado: " + usuarioActualId));
+
+        JustificacionAusencia justificacion = JustificacionAusencia.builder()
+            .asistencia(asistencia)
+            .usuario(admin)
+            .motivo(motivo.trim())
+            .documentoUrl(trimToNull(documentoUrl))
+            .build();
+        JustificacionAusencia guardada = justificacionAusenciaRepository.save(justificacion);
+        log.info("Ausencia justificada: asistencia_id={}, usuario={}", asistenciaId, admin.getId());
+        return guardada;
+    }
+
+    /** Motivos activos para el selector del form de carga manual. */
+    @Transactional(readOnly = true)
+    public List<MotivoCargaManual> motivosActivos() {
+        return motivoCargaManualRepository.findByActivoTrueOrderByDescripcionAsc();
+    }
+
+    /** Indica si la asistencia ya tiene justificación adjunta. */
+    @Transactional(readOnly = true)
+    public boolean tieneJustificacion(Long asistenciaId) {
+        return justificacionAusenciaRepository.findByAsistenciaId(asistenciaId).isPresent();
+    }
+
+    /**
      * Lista las asistencias de un día concreto, incluyendo las marcas
      * <b>AUSENTE calculadas</b>: para cada horario activo del día que ya
      * terminó (o si la fecha es anterior a hoy) y no tiene fila para
@@ -263,6 +398,26 @@ public class AsistenciaService {
         double score = Math.max(0.0, 1.0 - (distancia / umbralDistancia));
         score = Math.min(1.0, score);
         return BigDecimal.valueOf(score).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private Horario obtenerHorarioValidado(Long horarioId, Long tenantId) {
+        Horario h = horarioRepository.findById(horarioId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "El horario seleccionado no existe."));
+        // Tenant: via materia padre.
+        if (h.getComision() == null || h.getComision().getMateria() == null
+                || !tenantId.equals(h.getComision().getMateria().getInstitucionId())) {
+            log.warn("Cross-tenant blocked: tenant {} intento usar horario id={}",
+                     tenantId, horarioId);
+            throw new IllegalArgumentException("El horario seleccionado no existe.");
+        }
+        return h;
+    }
+
+    private static String trimToNull(String s) {
+        if (s == null) return null;
+        String t = s.trim();
+        return t.isEmpty() ? null : t;
     }
 
     private Docente obtenerDocenteValidado(Long docenteId, Long tenantId) {

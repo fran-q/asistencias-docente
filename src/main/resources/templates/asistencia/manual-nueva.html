@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Carga manual de asistencia - Asistencias</title>
+</head>
+<body>
+    <section class="asistencia-manual">
+        <header class="page-header">
+            <h1>Cargar asistencia manual</h1>
+            <p class="page-header__subtitle">
+                Para cuando el reconocimiento falló o el docente no estaba registrado.
+                Quedará identificada como <code>MANUAL</code> con el motivo elegido.
+            </p>
+        </header>
+
+        <div class="card" style="max-width: 720px;">
+            <form th:action="@{/asistencias/manual/nueva}" th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="docenteId">Docente <span class="required">*</span></label>
+                        <select id="docenteId" th:field="*{docenteId}" required
+                                th:classappend="${#fields.hasErrors('docenteId')} ? 'is-invalid'">
+                            <option value="">-- Elegir docente --</option>
+                            <option th:each="d : ${docentes}"
+                                    th:value="${d.id}"
+                                    th:text="|${d.apellido}, ${d.nombre} (DNI ${d.dni})|">
+                                Apellido, Nombre
+                            </option>
+                        </select>
+                        <span class="form-error" th:if="${#fields.hasErrors('docenteId')}"
+                              th:errors="*{docenteId}">err</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="horarioId">Horario <span class="required">*</span></label>
+                        <select id="horarioId" th:field="*{horarioId}" required
+                                th:classappend="${#fields.hasErrors('horarioId')} ? 'is-invalid'">
+                            <option value="">-- Elegir horario --</option>
+                            <option th:each="h : ${horarios}"
+                                    th:value="${h.id}"
+                                    th:text="|${h.comision.materia.codigo} - ${h.comision.codigo}: ${h.dia} ${#temporals.format(h.horaInicio,'HH:mm')}-${#temporals.format(h.horaFin,'HH:mm')}|">
+                                MAT - A: Lun 18:00-20:00
+                            </option>
+                        </select>
+                        <span class="form-error" th:if="${#fields.hasErrors('horarioId')}"
+                              th:errors="*{horarioId}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha">Fecha <span class="required">*</span></label>
+                        <input type="date" id="fecha" th:field="*{fecha}" required
+                               th:classappend="${#fields.hasErrors('fecha')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('fecha')}"
+                              th:errors="*{fecha}">err</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="horaRegistrada">Hora <span class="required">*</span></label>
+                        <input type="time" id="horaRegistrada" th:field="*{horaRegistrada}" required
+                               th:classappend="${#fields.hasErrors('horaRegistrada')} ? 'is-invalid'">
+                        <span class="form-error" th:if="${#fields.hasErrors('horaRegistrada')}"
+                              th:errors="*{horaRegistrada}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="estado">Estado <span class="required">*</span></label>
+                        <select id="estado" th:field="*{estado}" required
+                                th:classappend="${#fields.hasErrors('estado')} ? 'is-invalid'">
+                            <option th:each="e : ${estadosPosibles}"
+                                    th:value="${e}"
+                                    th:text="${e}">PRESENTE</option>
+                        </select>
+                        <span class="form-error" th:if="${#fields.hasErrors('estado')}"
+                              th:errors="*{estado}">err</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="motivoId">Motivo <span class="required">*</span></label>
+                        <select id="motivoId" th:field="*{motivoId}" required
+                                th:classappend="${#fields.hasErrors('motivoId')} ? 'is-invalid'">
+                            <option value="">-- Elegir motivo --</option>
+                            <option th:each="m : ${motivos}"
+                                    th:value="${m.id}"
+                                    th:text="${m.descripcion}">Falla técnica de la cámara</option>
+                        </select>
+                        <span class="form-error" th:if="${#fields.hasErrors('motivoId')}"
+                              th:errors="*{motivoId}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="detalleAdicional">Detalle adicional (opcional)</label>
+                    <textarea id="detalleAdicional" th:field="*{detalleAdicional}" rows="3"
+                              maxlength="2000"
+                              placeholder="Notas adicionales: lo que el docente comentó, contexto, etc."
+                              th:classappend="${#fields.hasErrors('detalleAdicional')} ? 'is-invalid'"></textarea>
+                    <span class="form-error" th:if="${#fields.hasErrors('detalleAdicional')}"
+                          th:errors="*{detalleAdicional}">err</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Guardar asistencia</button>
+                    <a th:href="@{/asistencias}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

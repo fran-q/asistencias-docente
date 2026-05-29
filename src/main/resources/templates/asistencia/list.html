@@ -14,6 +14,7 @@
                     horarios cuya hora de fin ya pasó y no tienen marca.
                 </p>
             </div>
+            <a th:href="@{/asistencias/manual/nueva}" class="btn btn--primary">+ Cargar manual</a>
         </header>
 
         <!-- Filtros -->
@@ -53,6 +54,7 @@
                             <th>Estado</th>
                             <th>Método</th>
                             <th>Confianza</th>
+                            <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,9 +95,17 @@
                                 <span th:unless="${a.confianza != null}"
                                       class="text-muted">—</span>
                             </td>
+                            <td class="table__actions">
+                                <a th:if="${a.id != null and a.estado.name() == 'AUSENTE'}"
+                                   th:href="@{/asistencias/{id}/justificar(id=${a.id})}"
+                                   class="btn btn--ghost btn--sm">Justificar</a>
+                                <span th:if="${a.calculada}" class="text-muted">
+                                    <small>cargá manual para justificar</small>
+                                </span>
+                            </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(asistencias)}">
-                            <td colspan="8" class="table__empty">
+                            <td colspan="9" class="table__empty">
                                 Sin asistencias para esta fecha con los filtros seleccionados.
                             </td>
                         </tr>

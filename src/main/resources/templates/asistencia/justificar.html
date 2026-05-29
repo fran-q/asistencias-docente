@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Justificar ausencia - Asistencias</title>
+</head>
+<body>
+    <section class="asistencia-justificar">
+        <header class="page-header">
+            <h1>Justificar ausencia</h1>
+            <p class="page-header__subtitle">
+                Adjuntá el motivo (obligatorio) y opcionalmente un link al documento
+                respaldatorio (certificado, autorización, etc.).
+            </p>
+        </header>
+
+        <div class="card" style="max-width: 720px;">
+            <form th:action="@{/asistencias/{id}/justificar(id=${asistenciaId})}"
+                  th:object="${form}" method="post" novalidate>
+
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="motivo">Motivo <span class="required">*</span></label>
+                    <textarea id="motivo" th:field="*{motivo}" rows="4" maxlength="2000" required
+                              placeholder="Ej.: presentó certificado médico por gripe del 15 al 17 de junio."
+                              th:classappend="${#fields.hasErrors('motivo')} ? 'is-invalid'"></textarea>
+                    <span class="form-error" th:if="${#fields.hasErrors('motivo')}"
+                          th:errors="*{motivo}">err</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="documentoUrl">URL del documento (opcional)</label>
+                    <input type="text" id="documentoUrl" th:field="*{documentoUrl}" maxlength="255"
+                           placeholder="https://drive.example.com/.../certificado.pdf"
+                           th:classappend="${#fields.hasErrors('documentoUrl')} ? 'is-invalid'">
+                    <small class="form-hint">
+                        Si tenés un PDF/foto del certificado subido, pegá el link aquí.
+                    </small>
+                    <span class="form-error" th:if="${#fields.hasErrors('documentoUrl')}"
+                          th:errors="*{documentoUrl}">err</span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary">Justificar ausencia</button>
+                    <a th:href="@{/asistencias}" class="btn btn--ghost">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

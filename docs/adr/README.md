@@ -30,3 +30,4 @@ Cada ADR contiene:
 | 0005 | Diseño del consentimiento biométrico | Aceptada |
 | 0006 | Reorganización a package-by-layer | Aceptada |
 | 0007 | Reconocimiento facial con JavaCV + LBPH | Aceptada |
+| 0008 | Modelo de asistencia automática | Aceptada |
