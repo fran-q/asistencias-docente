@@ -1,6 +1,6 @@
 # Sistema de Asistencias Digital con Reconocimiento Facial
 
-Sistema web multi-tenant para automatizar el registro de asistencia docente en universidades e institutos terciarios mediante reconocimiento facial.
+Sistema web para automatizar el registro de asistencia docente en universidades e institutos terciarios mediante reconocimiento facial.
 
 > Proyecto académico - Prácticas Profesionalizantes III - CENT35 - Tierra del Fuego, Argentina.
 
@@ -20,15 +20,13 @@ Sistema web multi-tenant para automatizar el registro de asistencia docente en u
 
 ## Características
 
-- Multi-tenant con aislamiento total entre instituciones (200 a 400 docentes por institución).
-- Reconocimiento facial automático con embeddings cifrados (sin almacenar fotografías).
-- Carga manual de asistencia como fallback.
-- Auditoría completa de acciones administrativas.
+- Usuarios administradores con aislamiento total entre instituciones (200 a 400 docentes por institución).
+- Reconocimiento facial automático con data cifrada (sin almacenar fotografías).
+- Carga manual de asistencia como alternativa.
 - Cumplimiento de la Ley 25.326 y Resolución AAIP 255/2022 sobre datos biométricos.
 
 ## Estructura del proyecto
 
-Organización **package-by-layer** (ver [ADR-0006](docs/adr/0006-organizacion-por-capas.md)).
 
 ```
 asistencias/
