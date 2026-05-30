@@ -29,6 +29,8 @@
 
     /** Tiempo entre frames enviados al servidor. */
     const INTERVALO_MS = 1000;
+    /** Pausa tras marcar (nueva o ya estaba) — evita ruido continuo. */
+    const PAUSA_TRAS_MARCAR_MS = 5000;
 
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -36,6 +38,8 @@
     let stream = null;
     let loopId = null;
     let enVuelo = false;
+    let pausaTimeoutId = null;
+    let cuentaRegresivaId = null;
 
     // ---- Cámara: toggle ---------------------------------------------------
 
@@ -113,7 +117,50 @@
             clearInterval(loopId);
             loopId = null;
         }
+        cancelarPausa();
         btnPase.textContent = 'Iniciar pase';
+    }
+
+    /**
+     * Pausa el envío de frames por unos segundos tras una marca exitosa.
+     * Durante la pausa, el botón "Detener pase" sigue activo (el loop NO
+     * se detiene del todo), pero no se mandan más frames al servidor.
+     */
+    function pausarLoopTrasMarcar(claseLabel) {
+        cancelarPausa();
+        if (!loopId) return;             // ya estaba detenido manualmente
+        clearInterval(loopId);           // freno el envío
+        loopId = null;
+
+        let restante = Math.round(PAUSA_TRAS_MARCAR_MS / 1000);
+        actualizarCuentaRegresiva(restante, claseLabel);
+        cuentaRegresivaId = setInterval(function () {
+            restante--;
+            if (restante > 0) {
+                actualizarCuentaRegresiva(restante, claseLabel);
+            }
+        }, 1000);
+
+        pausaTimeoutId = setTimeout(function () {
+            cancelarPausa();
+            // Reanudar el loop si la cámara sigue prendida y el botón sigue activo
+            if (stream && btnPase.textContent === 'Detener pase') {
+                marcarFrame();
+                loopId = setInterval(marcarFrame, INTERVALO_MS);
+            }
+        }, PAUSA_TRAS_MARCAR_MS);
+    }
+
+    function cancelarPausa() {
+        if (pausaTimeoutId)    { clearTimeout(pausaTimeoutId);   pausaTimeoutId = null; }
+        if (cuentaRegresivaId) { clearInterval(cuentaRegresivaId); cuentaRegresivaId = null; }
+    }
+
+    function actualizarCuentaRegresiva(segundos, claseLabel) {
+        const baseMsg = claseLabel
+            ? 'Asistencia ya registrada para ' + claseLabel + '.'
+            : 'Asistencia ya registrada.';
+        mostrarMensaje(baseMsg + ' Próximo escaneo en ' + segundos + ' s…', 'info');
     }
 
     async function marcarFrame() {
@@ -171,6 +218,9 @@
             distanciaEl.textContent = data.distancia
                 ? 'Distancia: ' + data.distancia.toFixed(1) + ' (menor = más parecido)'
                 : '';
+            // Pausa breve para no bombardear el server con frames del mismo
+            // docente que ya está marcado. Backend igual es idempotente.
+            pausarLoopTrasMarcar(data.claseLabel);
             return;
         }
 

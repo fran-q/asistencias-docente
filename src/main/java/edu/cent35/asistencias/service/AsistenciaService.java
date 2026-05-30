@@ -23,6 +23,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -181,10 +182,22 @@ public class AsistenciaService {
             .build();
         asistencia.setInstitucionId(tenantId);
 
-        Asistencia guardada = asistenciaRepository.save(asistencia);
-        log.info("Asistencia AUTO marcada: id={}, docente={}, horario={}, fecha={}, estado={}",
-                 guardada.getId(), docenteId, horario.getId(), fecha, estado);
-        return ResultadoMarca.creada(guardada);
+        try {
+            Asistencia guardada = asistenciaRepository.saveAndFlush(asistencia);
+            log.info("Asistencia AUTO marcada: id={}, docente={}, horario={}, fecha={}, estado={}",
+                     guardada.getId(), docenteId, horario.getId(), fecha, estado);
+            return ResultadoMarca.creada(guardada);
+        } catch (DataIntegrityViolationException ex) {
+            // Race condition: otro request acaba de insertar la marca para
+            // el mismo (docente, horario, fecha). El UNIQUE de BD lo bloqueo.
+            // Releemos y devolvemos como ya existente.
+            log.info("Race condition al marcar asistencia: docente {} horario {} fecha {} - ya existía",
+                     docenteId, horario.getId(), fecha);
+            Asistencia ya = asistenciaRepository
+                .findByDocenteIdAndHorarioIdAndFecha(docenteId, horario.getId(), fecha)
+                .orElseThrow(() -> ex);  // si no la encontramos, propagamos el error original
+            return ResultadoMarca.yaEstaba(ya);
+        }
     }
 
     /**

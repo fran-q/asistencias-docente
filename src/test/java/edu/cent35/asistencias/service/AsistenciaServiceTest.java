@@ -83,7 +83,7 @@ class AsistenciaServiceTest {
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
-        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
             DOCENTE_ID, null, 50.0, instante);
@@ -106,7 +106,7 @@ class AsistenciaServiceTest {
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
-        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
             DOCENTE_ID, null, 80.0, instante);
@@ -174,7 +174,7 @@ class AsistenciaServiceTest {
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
-        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Distancia 25 con umbral 100 → score 0.75
         AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
