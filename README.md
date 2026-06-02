@@ -6,7 +6,14 @@ Sistema web para automatizar el registro de asistencia docente en universidades 
 
 ## Estado
 
-**En desarrollo** — Sprint 5 cerrado (asistencia automática end-to-end: pase por reconocimiento facial, listado con AUSENTES calculadas, carga manual con motivo del catálogo, justificación de ausencias). Próximo: Sprint 6 (reportes, UML, video demo, cierre del proyecto). Primera entrega prevista: junio 2026.
+**Primera entrega cerrada (junio 2026)** — los 6 sprints del cronograma
+están completos. El sistema cubre: gestión de la institución y administradores,
+estructura académica (carreras, materias, comisiones, horarios + grilla
+semanal), docentes, consentimiento biométrico (Ley 25.326), reconocimiento
+facial con OpenCV/LBPH, pase de asistencia automático, listado con
+AUSENTES calculadas, carga manual, justificaciones, y exportación de
+reportes a CSV. Documentación completa: ADRs, diagramas UML, manuales
+de administrador y técnico, changelog por sprint.
 
 ## Stack
 
@@ -63,7 +70,7 @@ asistencias/
 | **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | ✅ |
 | **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ✅ |
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ✅ |
-| **S6** | 19-jun a 24-jun | Cierre: diagramas UML, manuales, video demo | ⏳ |
+| **S6** | 19-jun a 24-jun | Cierre: reportes CSV + diagramas UML + manuales + changelog | ✅ |
 
 Detalle completo en `docs/1. Guia Proyecto Sistema Asistencias.docx`.
 
@@ -73,6 +80,11 @@ Detalle completo en `docs/1. Guia Proyecto Sistema Asistencias.docx`.
 - 🗂️ [Diagrama de Base de Datos](docs/2.%20Diagrama%20BD%20Sistema%20Asistencias.pdf)
 - 📋 [Documento de Requerimientos](docs/3.%20Requerimientos%20Sistema%20Asistencias.docx)
 - 🏛️ [Decisiones arquitectónicas (ADR)](docs/adr/)
+- 📊 [Diagramas UML](docs/uml/) (PlantUML)
+- 📘 [Manual del Administrador](docs/manuales/manual-administrador.md)
+- 🔧 [Manual Técnico](docs/manuales/manual-tecnico.md)
+- 📜 [CHANGELOG por sprint](CHANGELOG.md)
+- 🎬 [Guión sugerido para el video demo](docs/guion-video-demo.md)
 
 ## Marco legal
 

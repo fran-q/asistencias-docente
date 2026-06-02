@@ -1,0 +1,197 @@
+@startuml clases-dominio
+title Sistema de Asistencias Digital con Reconocimiento Facial\nDiagrama de Clases del Dominio (entidades JPA)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+' ============================================================
+' SUPERCLASE TENANT
+' ============================================================
+abstract class BaseTenantEntity {
+  - institucionId : Long
+}
+
+' ============================================================
+' INSTITUCIÓN Y USUARIOS
+' ============================================================
+class Institucion {
+  - id : Long
+  - nombre : String
+  - cuit : String
+  - activo : Boolean
+}
+
+class Usuario <<tenant>> {
+  - id : Long
+  - username : String
+  - email : String
+  - passwordHash : String
+  - nombre, apellido : String
+  - activo : Boolean
+}
+
+class Rol {
+  - id : Short
+  - codigo : RolCodigo
+  - descripcion : String
+}
+
+enum RolCodigo {
+  INSTITUCION
+  ADMIN
+}
+
+Usuario --|> BaseTenantEntity
+Usuario "*" --> "1" Rol
+Institucion "1" -- "*" Usuario
+
+' ============================================================
+' ACADÉMICO
+' ============================================================
+class Carrera <<tenant>> {
+  - id : Long
+  - codigo : String
+  - nombre : String
+  - activo : Boolean
+}
+
+class Materia <<tenant>> {
+  - id : Long
+  - codigo : String
+  - nombre : String
+  - activo : Boolean
+}
+
+class Comision {
+  - id : Long
+  - codigo : String
+  - cupo : Integer
+  - activo : Boolean
+}
+
+class Horario {
+  - id : Long
+  - diaSemana : Byte
+  - horaInicio : LocalTime
+  - horaFin : LocalTime
+  - toleranciaMin : Short
+  - vigenteDesde, vigenteHasta : LocalDate
+  - activo : Boolean
+}
+
+enum DiaSemana {
+  LUNES .. DOMINGO
+}
+
+Carrera --|> BaseTenantEntity
+Materia --|> BaseTenantEntity
+Carrera "1" -- "*" Materia
+Materia "1" -- "*" Comision
+Comision "1" -- "*" Horario
+Horario "*" --> "1" DiaSemana
+
+' ============================================================
+' DOCENTE Y CONSENTIMIENTO
+' ============================================================
+class Docente <<tenant>> {
+  - id : Long
+  - dni : String
+  - legajo : String
+  - nombre, apellido : String
+  - email, telefono : String
+  - fechaAlta : LocalDate
+  - activo : Boolean
+}
+
+class ConsentimientoBiometrico {
+  - id : Long
+  - versionTerminos : String
+  - metodo : MetodoConsentimiento
+  - fechaConsentimiento, fechaRevocacion : LocalDateTime
+  - vigente : Boolean
+  - ip/userAgent (otorgamiento y revocación)
+  - motivoRevocacion : String
+}
+
+enum MetodoConsentimiento { ESCRITO; DIGITAL }
+enum EstadoConsentimiento { NUNCA_OTORGADO; ACTIVO; REVOCADO }
+
+Docente --|> BaseTenantEntity
+Materia "*" --> "0..1" Docente : titular
+Comision "*" --> "0..1" Docente : asignado
+Docente "1" -- "*" ConsentimientoBiometrico
+ConsentimientoBiometrico --> MetodoConsentimiento
+ConsentimientoBiometrico ..> Usuario : registradoPor / revocadoPor
+
+' ============================================================
+' BIOMETRÍA
+' ============================================================
+class ModeloFacial {
+  - id : Long
+  - embeddingCifrado : byte[]  <<AES + gzip>>
+  - algoritmo : String = "LBPH"
+  - versionAlgoritmo : String
+  - dimensiones : Short
+  - activo : Boolean
+  - fechaRegistro, fechaBaja : LocalDateTime
+}
+
+Docente "1" -- "*" ModeloFacial
+ModeloFacial ..> Usuario : registradoPor
+
+' ============================================================
+' ASISTENCIA
+' ============================================================
+class Asistencia <<tenant>> {
+  - id : Long
+  - fecha : LocalDate
+  - horaRegistrada : LocalTime
+  - estado : EstadoAsistencia
+  - metodo : MetodoAsistencia
+  - confianza : BigDecimal(5,4)
+}
+
+enum EstadoAsistencia { PRESENTE; TARDE; AUSENTE }
+enum MetodoAsistencia { AUTOMATICO; MANUAL }
+
+class AsistenciaManual {
+  - id : Long
+  - detalleAdicional : String
+}
+
+class MotivoCargaManual {
+  - id : Short
+  - codigo : String
+  - descripcion : String
+  - activo : Boolean
+}
+
+class JustificacionAusencia {
+  - id : Long
+  - motivo : String
+  - documentoUrl : String
+}
+
+Asistencia --|> BaseTenantEntity
+Asistencia "*" --> "1" Docente
+Asistencia "*" --> "1" Comision
+Asistencia "*" --> "1" Horario
+Asistencia "*" --> "0..1" ModeloFacial
+Asistencia --> EstadoAsistencia
+Asistencia --> MetodoAsistencia
+Asistencia "1" -- "0..1" AsistenciaManual
+Asistencia "1" -- "0..1" JustificacionAusencia
+AsistenciaManual "*" --> "1" MotivoCargaManual
+AsistenciaManual ..> Usuario : cargadoPor
+JustificacionAusencia ..> Usuario : justificadoPor
+
+note bottom of Asistencia
+  Idempotencia:
+  UNIQUE (docente_id, horario_id, fecha)
+
+  AUSENTE no se persiste por el flujo
+  automático: se calcula al listar.
+end note
+
+@enduml

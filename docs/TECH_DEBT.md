@@ -130,3 +130,66 @@ Cuando agreguemos consultas con JOIN a entidades de docente, asistencia, etc., *
 4. ID secuenciales (no leakeables) + camuflado como "no encontrado" si hay cross-tenant.
 
 Tests de aislamiento al final de cada CRUD que JOINee. **Esto se descubrió manualmente en Fase D — no automatizado**. Pendiente: agregar test de integración con dos tenants.
+
+---
+
+## TD-004: Conversión lineal distancia LBPH → confianza
+
+**Detectado**: Sprint 5 Fase A
+**Severidad**: Baja
+**Estado**: Aceptado
+
+### Contexto
+
+La tabla `asistencias.confianza` está pensada como score 0–1 (mayor = más confiable). LBPH devuelve distancia (menor = mejor). El service usa una conversión lineal:
+
+```java
+score = max(0, 1 - distancia / umbralConfianza)
+```
+
+con `umbralConfianza` como referencia.
+
+### Por qué es deuda
+
+LBPH no garantiza linealidad entre distancia y "probabilidad de match". Distancia 50 no es exactamente "50% mejor que 100". Para un PoC alcanza, pero para reportes estadísticos serios habría que calibrar con datos reales (histogramas de distancia para matches y no-matches).
+
+### Próximo paso
+
+Cuando haya datos reales, hacer una calibración no lineal (p. ej. una sigmoide) y publicar la nueva fórmula en ADR-0007.
+
+---
+
+## TD-005: Cache de modelos LBPH sin TTL ni límite de memoria
+
+**Detectado**: Sprint 4 Fase D
+**Severidad**: Baja en PoC, Media en producción
+
+### Síntoma
+
+`IdentificacionFacialService` mantiene un `ConcurrentHashMap<Long, LBPHFaceRecognizer>` indefinido. Para 200-400 docentes por institución es manejable, pero:
+- Si una institución crece a miles, la RAM nativa de OpenCV sube proporcionalmente.
+- No hay TTL: un docente dado de baja queda en cache hasta que se llame a `sincronizarCache` (que sí lo limpia, pero solo en próxima identificación).
+
+### Mitigación temporal
+
+`sincronizarCache` se ejecuta en cada llamada a `identificar`. Como el cliente llama frecuentemente, los modelos obsoletos se evictan en segundos.
+
+### Próximo paso
+
+Migrar a una librería de cache con TTL y tamaño máximo (Caffeine). Si la cantidad de docentes crece mucho, evaluar embeddings tipo FaceNet con índice ANN (FAISS, HNSWLib).
+
+---
+
+## TD-006: Reportes — sin paginación
+
+**Detectado**: Sprint 6 Fase A
+**Severidad**: Baja en PoC, Media en producción
+
+### Síntoma
+
+`ReporteAsistenciaService.reporte()` trae **todas** las asistencias del rango de fechas en una sola query y las carga en memoria. Para 200-400 docentes × 30 días × 5 horarios por semana ≈ 30.000 filas. Manejable en RAM, pero crece linealmente.
+
+### Próximo paso
+
+- Para la pantalla HTML: paginar con `Pageable` (Spring Data).
+- Para el CSV: streaming row-by-row al `HttpServletResponse`, sin cargar todo.

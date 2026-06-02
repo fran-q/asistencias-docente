@@ -59,6 +59,8 @@
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Pase de asistencia</a>
             <a th:href="@{/asistencias}" class="navbar__link"
                sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Asistencias</a>
+            <a th:href="@{/reportes}" class="navbar__link"
+               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Reportes</a>
             <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
         </nav>
 

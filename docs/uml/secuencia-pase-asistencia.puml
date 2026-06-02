@@ -1,0 +1,107 @@
+@startuml secuencia-pase-asistencia
+title Flujo: Pase de asistencia automático\n(desde el frame en la cámara hasta la marca en BD)
+
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+autonumber
+
+actor "Operador\n(admin INSTITUCION/ADMIN)" as Op
+participant "Navegador\n(pase-asistencia.js)" as JS
+participant "PaseAsistenciaController" as PC
+participant "PaseAsistenciaService" as PS
+participant "IdentificacionFacialService" as IFS
+participant "DeteccionRostroService\n(OpenCV Haar)" as DRS
+participant "MotorLbphService\n(OpenCV LBPH)" as MLS
+participant "CifradoBiometricoService\n(AES)" as CIF
+participant "AsistenciaService" as AS
+database "MariaDB\n(asistencias,\nmodelos_faciales)" as DB
+
+Op -> JS : Encender cámara\n+ Iniciar pase
+activate JS
+JS -> JS : getUserMedia()\nloop cada 1 s
+
+loop por cada frame
+  JS -> JS : capturar frame\ntoDataURL JPEG
+  JS -> PC : POST /asistencia/pase/marcar\n{imagen: data URL}
+  activate PC
+  PC -> PS : pasar(bytes)
+  activate PS
+
+  PS -> IFS : identificar(bytes)
+  activate IFS
+  IFS -> DRS : extraerRostroNormalizado(...)
+  activate DRS
+  DRS --> IFS : RostroExtraido(Mat, x, y, w, h)
+  deactivate DRS
+
+  IFS -> DB : findActivosDelTenant(tenantId)
+  IFS -> CIF : descifrar(blob) + descomprimir
+  CIF --> IFS : YAML del modelo
+  IFS -> MLS : deserializar(YAML)
+  MLS --> IFS : LBPHFaceRecognizer
+  note right of IFS
+    Cache en memoria por modelo;
+    sólo se descifra/deserializa
+    una vez.
+  end note
+
+  IFS -> MLS : predict(rostro)
+  MLS --> IFS : distancia (menor = mejor)
+
+  alt distancia <= umbral
+    IFS --> PS : reconocido = docente X
+  else
+    IFS --> PS : no reconocido
+    PS --> PC : noReconocido(bbox)
+    PC --> JS : JSON
+    JS -> JS : recuadro AMARILLO
+  end
+  deactivate IFS
+
+  PS -> AS : marcarAutomatica(docenteId,\n  modeloFacialId, distancia)
+  activate AS
+  AS -> DB : findHoyParaDocente(docente, dia)
+  AS -> AS : ¿hora_actual ∈\n[hora_inicio - tolerancia, hora_fin]?
+
+  alt fuera de ventana
+    AS --> PS : ResultadoMarca.sinClase
+    PS --> PC : reconocidoSinClase(...)
+    PC --> JS : JSON
+    JS -> JS : recuadro AMARILLO\n+ "no hay clase ahora"
+  else dentro de ventana
+    AS -> DB : findByDocenteIdAndHorarioIdAndFecha
+    alt ya existe marca
+      AS --> PS : ResultadoMarca.yaEstaba
+      PS --> PC : marcado(yaEstaba=true)
+      PC --> JS : JSON
+      JS -> JS : recuadro AZUL\n+ "ya estaba marcado"\n+ pausa 5 s
+    else no existe → crear
+      AS -> AS : calcular estado\n(PRESENTE/TARDE)
+      AS -> DB : saveAndFlush(Asistencia)
+      alt UNIQUE violation\n(race con otro request)
+        DB --> AS : DataIntegrityViolation
+        AS -> DB : releer marca existente
+        AS --> PS : ResultadoMarca.yaEstaba
+      else OK
+        DB --> AS : Asistencia persistida
+        AS --> PS : ResultadoMarca.creada
+      end
+      PS --> PC : marcado(yaEstaba=false)
+      PC --> JS : JSON
+      JS -> JS : recuadro VERDE\n+ "Asistencia marcada: PRESENTE/TARDE"\n+ pausa 5 s
+    end
+  end
+  deactivate AS
+  deactivate PS
+  deactivate PC
+end
+
+deactivate JS
+
+note over JS
+  Durante la pausa de 5 s, la cámara
+  sigue prendida pero NO se mandan
+  frames al servidor.
+end note
+
+@enduml

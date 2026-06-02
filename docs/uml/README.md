@@ -1,23 +1,47 @@
 # Diagramas UML
 
-Diagramas del sistema en formato PlantUML (`.puml`) versionados junto a su renderizado (`.png`).
+Diagramas del sistema en formato **PlantUML** (texto plano versionado).
+Cada `.puml` se renderiza a PNG/SVG con cualquier herramienta PlantUML.
 
-## Diagramas previstos
+## Diagramas
 
-| Diagrama | Sprint donde se hace | Archivo |
+| Archivo | Qué muestra | Sprint |
 |---|---|---|
-| Casos de uso | S0 | `casos-de-uso.puml` |
-| Secuencia - Login | S1 | `secuencia-login.puml` |
-| Secuencia - Toma de asistencia automática | S5 | `secuencia-asistencia-automatica.puml` |
-| Estados - Asistencia | S5 | `estados-asistencia.puml` |
-| Clases - Modelo de dominio | S6 | `clases-dominio.puml` |
-| Componentes - Módulos del monolito | S6 | `componentes.puml` |
-| Despliegue | S6 | `despliegue.puml` |
+| `casos-de-uso.puml` | Actores y casos de uso del sistema, agrupados por dominio. | S6 |
+| `clases-dominio.puml` | Entidades JPA principales con relaciones, enums y `BaseTenantEntity`. | S6 |
+| `secuencia-pase-asistencia.puml` | Flujo completo del pase automático: frame → detección → identificación LBPH → marcado en BD. | S6 |
 
-El diagrama Entidad-Relación de la base de datos ya está hecho y vive en `docs/2. Diagrama BD Sistema Asistencias.pdf`.
+El **diagrama Entidad-Relación de la BD** ya está hecho y vive en
+`docs/2. Diagrama BD Sistema Asistencias.pdf`.
 
-## Cómo trabajar con PlantUML
+## Cómo renderizar
 
-1. Instalar el plugin **PlantUML integration** en IntelliJ (Settings → Plugins).
-2. Editar el `.puml` con preview en vivo.
-3. Exportar a PNG desde el preview y commitear ambos archivos.
+### Opción A — Servidor PlantUML público (más rápido)
+1. Abrir https://www.plantuml.com/plantuml/uml/
+2. Copiar el contenido del `.puml`.
+3. Descargar el PNG generado.
+
+### Opción B — IntelliJ IDEA
+1. Settings → Plugins → instalar **"PlantUML integration"**.
+2. Abrir cualquier `.puml`: la vista previa aparece a la derecha.
+3. Botón derecho sobre el preview → "Save Diagram" → PNG.
+
+### Opción C — CLI con Java
+```bash
+# Descargar plantuml.jar de https://plantuml.com/download
+java -jar plantuml.jar docs/uml/*.puml
+# Genera un .png al lado de cada .puml
+```
+
+### Opción D — VS Code
+1. Instalar la extensión **"PlantUML"** (jebbs).
+2. Abrir el `.puml` → `Alt+D` → vista previa.
+3. Comando "PlantUML: Export Current Diagram" → PNG.
+
+## Convenciones de notación usadas
+
+- **`<<tenant>>`** en una clase marca que extiende `BaseTenantEntity`
+  (tiene columna `institucion_id`).
+- **`<<system>>`** en un actor marca un componente automatizado.
+- Las notas `note` describen invariantes o decisiones de diseño
+  relevantes (idempotencia, constraints, etc.).

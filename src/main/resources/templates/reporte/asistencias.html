@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Reporte de asistencias - Asistencias</title>
+</head>
+<body>
+    <section class="reportes">
+        <header class="page-header">
+            <h1>Reporte de asistencias</h1>
+            <p class="page-header__subtitle">
+                Filtrá las asistencias persistidas en un rango de fechas y
+                descargá el resultado como CSV (abre directo en Excel).
+            </p>
+        </header>
+
+        <!-- Filtros -->
+        <form method="get" th:action="@{/reportes}" class="card"
+              style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+                <label for="desde">Desde</label>
+                <input type="date" id="desde" name="desde" th:value="${filtro.desde}">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="hasta">Hasta</label>
+                <input type="date" id="hasta" name="hasta" th:value="${filtro.hasta}">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="docenteId">Docente</label>
+                <select id="docenteId" name="docenteId">
+                    <option value="">Todos</option>
+                    <option th:each="d : ${docentes}"
+                            th:value="${d.id}"
+                            th:text="|${d.apellido}, ${d.nombre}|"
+                            th:selected="${d.id == filtro.docenteId}">Apellido, Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="materiaId">Materia</label>
+                <select id="materiaId" name="materiaId">
+                    <option value="">Todas</option>
+                    <option th:each="m : ${materias}"
+                            th:value="${m.id}"
+                            th:text="|${m.codigo} - ${m.nombre}|"
+                            th:selected="${m.id == filtro.materiaId}">MAT - Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option th:each="e : ${estadosPosibles}"
+                            th:value="${e}"
+                            th:text="${e}"
+                            th:selected="${e == filtro.estado}">PRESENTE</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="metodo">Método</label>
+                <select id="metodo" name="metodo">
+                    <option value="">Todos</option>
+                    <option th:each="m : ${metodosPosibles}"
+                            th:value="${m}"
+                            th:text="${m}"
+                            th:selected="${m == filtro.metodo}">AUTOMATICO</option>
+                </select>
+            </div>
+            <div class="form-actions" style="margin:0;">
+                <button type="submit" class="btn btn--primary">Aplicar</button>
+                <a th:href="@{/reportes}" class="btn btn--ghost">Limpiar</a>
+            </div>
+        </form>
+
+        <!-- Acción de descarga -->
+        <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+            <span>
+                Resultados:
+                <strong th:text="${#lists.size(filas)}">0</strong>
+                fila(s)
+            </span>
+            <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                        docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                        estado=${filtro.estado}, metodo=${filtro.metodo})}"
+               class="btn btn--primary">
+                ⬇ Descargar CSV
+            </a>
+        </div>
+
+        <div th:if="${error != null}" class="alert alert--error"
+             style="margin-top:1rem;" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <div class="card card--no-padding" style="margin-top:1rem;">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Docente</th>
+                            <th>Materia</th>
+                            <th>Comisión</th>
+                            <th>Horario</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                            <th>Método</th>
+                            <th>Justif.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="f : ${filas}">
+                            <td>
+                                <span th:text="${#temporals.format(f.fecha, 'dd/MM/yyyy')}">01/06/2026</span>
+                                <small class="text-muted" th:text="${f.diaSemana}">Lunes</small>
+                            </td>
+                            <td>
+                                <span th:text="|${f.docenteApellido}, ${f.docenteNombre}|">García, María</span>
+                                <small class="text-muted" th:text="|DNI ${f.docenteDni}|">DNI 12345</small>
+                            </td>
+                            <td>
+                                <code th:text="${f.materiaCodigo}">MAT</code>
+                                <small class="text-muted" th:text="${f.materiaNombre}">Matemática</small>
+                            </td>
+                            <td><code th:text="${f.comisionCodigo}">A</code></td>
+                            <td>
+                                <span th:text="|${#temporals.format(f.horaInicio,'HH:mm')}-${#temporals.format(f.horaFin,'HH:mm')}|">18:00-20:00</span>
+                            </td>
+                            <td>
+                                <span th:if="${f.horaRegistrada != null}"
+                                      th:text="${#temporals.format(f.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
+                                <span th:unless="${f.horaRegistrada != null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${f.estado == 'PRESENTE'}"
+                                      class="badge badge--success">Presente</span>
+                                <span th:if="${f.estado == 'TARDE'}"
+                                      class="badge badge--warning">Tarde</span>
+                                <span th:if="${f.estado == 'AUSENTE'}"
+                                      class="badge badge--danger">Ausente</span>
+                            </td>
+                            <td>
+                                <span th:text="${f.metodo}">AUTOMATICO</span>
+                                <small th:if="${f.confianza != null}" class="text-muted"
+                                       th:text="|conf ${#numbers.formatDecimal(f.confianza,1,4)}|">conf 0.85</small>
+                            </td>
+                            <td>
+                                <span th:if="${f.justificada}" class="badge badge--success">Sí</span>
+                                <span th:unless="${f.justificada}" class="text-muted">—</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(filas)}">
+                            <td colspan="9" class="table__empty">
+                                Sin resultados para los filtros seleccionados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

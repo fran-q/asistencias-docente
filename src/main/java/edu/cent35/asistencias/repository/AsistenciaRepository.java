@@ -34,4 +34,31 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         ORDER BY a.horaRegistrada DESC, a.id DESC
     """)
     List<Asistencia> findDelDia(@Param("fecha") LocalDate fecha);
+
+    /**
+     * Reporte de asistencias filtradas. Todos los filtros son opcionales
+     * salvo el rango de fechas. Trae las asociaciones necesarias para la
+     * fila del CSV.
+     */
+    @Query("""
+        SELECT a FROM Asistencia a
+        JOIN FETCH a.docente d
+        JOIN FETCH a.comision c
+        JOIN FETCH c.materia m
+        LEFT JOIN FETCH m.carrera
+        JOIN FETCH a.horario h
+        WHERE a.fecha BETWEEN :desde AND :hasta
+          AND (:docenteId IS NULL OR d.id = :docenteId)
+          AND (:materiaId IS NULL OR m.id = :materiaId)
+          AND (:estado    IS NULL OR a.estado = :estado)
+          AND (:metodo    IS NULL OR a.metodo = :metodo)
+        ORDER BY a.fecha DESC, a.horaRegistrada DESC, a.id DESC
+    """)
+    List<Asistencia> findParaReporte(
+        @Param("desde")     LocalDate desde,
+        @Param("hasta")     LocalDate hasta,
+        @Param("docenteId") Long docenteId,
+        @Param("materiaId") Long materiaId,
+        @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
+        @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
 }
