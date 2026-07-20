@@ -96,6 +96,40 @@ Cosas no obvias que surgieron y se documentan acá para que no se repitan:
 
 8. **Calibración del umbral**: LBPH devuelve "distancia" (menor = más parecido). Por default usamos `app.biometria.umbral-confianza=100.0`. Suele dar match decente para una persona registrada con 10-15 capturas y reconocida en condiciones de iluminación similares. Se puede subir/bajar según calibración.
 
+## Desviación aceptada del RF-08 (decisión formal, post-cierre)
+
+El RF-08, tal como quedó tras la entrevista de requerimientos, expresa preferencia por
+**embeddings de deep learning** (FaceNet/ArcFace/SFace) por sobre el reconocedor clásico
+de OpenCV. La implementación usa **LBPH**, que no genera un embedding reutilizable sino
+un modelo entrenado por docente. Esa diferencia se formaliza acá como **desviación
+aceptada de alcance del prototipo**, con estos términos:
+
+- **Qué se cumple igual**: no se almacenan imágenes (RNF-08), el dato biométrico se
+  persiste cifrado (RNF-07), el re-registro (RF-09) y la supresión ARCO (RNF-14)
+  funcionan, y el criterio de minimizar falsos positivos rige el umbral (RF-16).
+- **Qué no se cumple literalmente**: el "embedding reutilizable" del RF-08. El modelo
+  LBPH es funcionalmente equivalente para el flujo del PoC, pero es más sensible a
+  iluminación/pose y su verificación 1:N es más pesada.
+- **Camino de migración identificado y verificado**: los bindings de JavaCV ya incluidos
+  en el classpath (`opencv-4.10.0-1.5.11.jar`) contienen `FaceRecognizerSF` (SFace,
+  embeddings de 128 dims con similitud coseno) y `FaceDetectorYN` (YuNet). La migración
+  **no requiere dependencias nuevas**: solo el modelo `.onnx` del zoo de OpenCV y el
+  reemplazo de `MotorLbphService` por un motor de embeddings. La tabla `modelos_faciales`
+  no cambia (el vector cifrado de 512 bytes entra en el mismo BLOB; `dimensiones` pasa a
+  valer 128 con su semántica original).
+- **Estado**: migración planificada como trabajo futuro, no incluida en la primera
+  entrega. La defensa del proyecto presenta LBPH como decisión consciente de prototipo.
+
+## Supresión física ARCO (RNF-14) — excepción al borrado lógico
+
+Ante el ejercicio del derecho de **Cancelación** (Ley 25.326), el vector biométrico se
+borra **físicamente** — única excepción a la regla general de baja lógica del sistema.
+`ModeloFacialService.suprimirDatosBiometricos()` elimina todos los modelos del docente
+(activo e históricos), evicta los recognizers del cache en memoria (para que no quede
+una copia deserializada capaz de reconocer), y conserva las asistencias históricas: la
+FK `asistencias.modelo_facial_id` es `ON DELETE SET NULL` desde V001, de modo que el
+registro administrativo queda intacto y deja de ser dato biométrico.
+
 ## Consecuencias
 
 **Positivas**:
