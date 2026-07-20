@@ -56,16 +56,26 @@ public class IdentificacionFacialService {
     /**
      * Identifica el rostro presente en {@code imagenBytes} contra los modelos
      * faciales activos del tenant actual.
+     * <p>
+     * <b>Instrumentacion de calibracion (RF-16 / RNF-01)</b>: cada intento
+     * con rostro detectado loguea una linea {@code CALIBRACION} con la
+     * distancia del mejor match y los tiempos parciales. Esas lineas son la
+     * fuente de datos del protocolo {@code docs/calibracion-umbral.md}.
+     * Nota: la primera llamada tras arrancar incluye descifrado y
+     * deserializacion de los modelos (cache frio); para medir tiempos usar
+     * las llamadas siguientes (cache caliente).
      */
     @Transactional(readOnly = true)
     public IdentificacionResultadoDto identificar(byte[] imagenBytes) {
         Long tenantId = TenantContext.getRequired();
+        long inicioNs = System.nanoTime();
 
         DeteccionRostroService.RostroExtraido extraido =
             deteccionRostroService.extraerRostroNormalizado(imagenBytes, tamanoRostro);
         if (extraido == null) {
             return IdentificacionResultadoDto.sinRostro();
         }
+        long finDeteccionNs = System.nanoTime();
 
         try {
             List<ModeloFacial> modelos = modeloFacialRepository.findActivosDelTenant(tenantId);
@@ -93,10 +103,21 @@ public class IdentificacionFacialService {
                 }
             }
 
-            if (mejorMatch != null && mejorDistancia <= umbralConfianza) {
+            long finComparacionNs = System.nanoTime();
+            long msDeteccion   = (finDeteccionNs - inicioNs) / 1_000_000;
+            long msComparacion = (finComparacionNs - finDeteccionNs) / 1_000_000;
+            long msTotal       = (finComparacionNs - inicioNs) / 1_000_000;
+
+            boolean reconocido = mejorMatch != null && mejorDistancia <= umbralConfianza;
+            log.info("CALIBRACION reconocido={} docenteId={} distancia={} umbral={} modelosComparados={} msDeteccion={} msComparacion={} msTotal={}",
+                     reconocido,
+                     reconocido ? mejorMatch.getDocente().getId() : "-",
+                     String.format("%.1f", mejorDistancia),
+                     umbralConfianza, modelos.size(),
+                     msDeteccion, msComparacion, msTotal);
+
+            if (reconocido) {
                 Docente d = mejorMatch.getDocente();
-                log.debug("Identificación tenant={} → docente={} distancia={}",
-                          tenantId, d.getId(), mejorDistancia);
                 return IdentificacionResultadoDto.match(
                     d.getId(), d.getNombreCompleto(),
                     mejorMatch.getId(), mejorDistancia,
@@ -107,6 +128,20 @@ public class IdentificacionFacialService {
 
         } finally {
             extraido.rostro().close();
+        }
+    }
+
+    /**
+     * Saca del cache (y libera la memoria nativa) el recognizer de un modelo
+     * puntual. Lo usa la <b>supresion fisica ARCO</b> (RNF-14): al borrar el
+     * vector de la BD hay que asegurarse de que tampoco quede una copia
+     * deserializada en memoria capaz de seguir reconociendo al docente.
+     */
+    public void evictarModelo(Long modeloFacialId) {
+        LBPHFaceRecognizer rec = cache.remove(modeloFacialId);
+        if (rec != null) {
+            rec.close();
+            log.info("Cache evict explicito del modelo facial id={} (supresion)", modeloFacialId);
         }
     }
 

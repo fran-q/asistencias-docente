@@ -47,6 +47,7 @@ public class ModeloFacialService {
     private final DeteccionRostroService deteccionRostroService;
     private final MotorLbphService motorLbph;
     private final CifradoBiometricoService cifradoService;
+    private final IdentificacionFacialService identificacionFacialService;
 
     @Value("${app.biometria.minimo-capturas-validas}")
     private int minimoCapturasValidas;
@@ -90,6 +91,63 @@ public class ModeloFacialService {
     public boolean tieneModeloActivo(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
         return modeloFacialRepository.findByDocenteIdAndActivoTrue(docente.getId()).isPresent();
+    }
+
+    /**
+     * {@code true} si el docente tiene ALGUN modelo facial en la BD, activo
+     * o historico. Lo usa la UI para saber si corresponde ofrecer la
+     * supresion ARCO (que borra tambien los historicos).
+     */
+    @Transactional(readOnly = true)
+    public boolean tieneModelos(Long docenteId) {
+        Docente docente = obtenerDocenteValidado(docenteId);
+        return !modeloFacialRepository
+            .findByDocenteIdOrderByFechaRegistroDescIdDesc(docente.getId()).isEmpty();
+    }
+
+    /**
+     * Supresion FISICA de todos los datos biometricos del docente
+     * (derecho ARCO de Cancelacion - RNF-14, Ley 25.326).
+     * <p>
+     * <b>Por que DELETE fisico y no baja logica</b>: la baja logica es la
+     * regla general del sistema, pero el vector biometrico es la excepcion
+     * documentada. Una fila con {@code activo=false} sigue conteniendo el
+     * dato sensible; ante una supresion, el dato tiene que desaparecer de
+     * verdad. Se borran TODOS los modelos del docente (activo e historicos).
+     * <p>
+     * <b>Que se conserva</b>: las asistencias historicas. La FK
+     * {@code asistencias.modelo_facial_id} es {@code ON DELETE SET NULL}
+     * (V001), asi que los registros administrativos quedan intactos con la
+     * referencia biometrica en NULL — ya no son dato biometrico.
+     * <p>
+     * Ademas se evicta el recognizer del cache en memoria: sin esto, una
+     * copia deserializada seguiria pudiendo reconocer al docente hasta el
+     * proximo reinicio.
+     *
+     * @return cantidad de modelos suprimidos
+     */
+    @Transactional
+    public int suprimirDatosBiometricos(Long docenteId, Long usuarioActualId) {
+        Docente docente = obtenerDocenteValidado(docenteId);
+
+        List<ModeloFacial> modelos = modeloFacialRepository
+            .findByDocenteIdOrderByFechaRegistroDescIdDesc(docente.getId());
+        if (modelos.isEmpty()) {
+            throw new IllegalArgumentException(
+                "El docente no tiene datos biométricos para suprimir.");
+        }
+
+        // 1) Evictar del cache ANTES de borrar (defensa en profundidad).
+        modelos.forEach(m -> identificacionFacialService.evictarModelo(m.getId()));
+
+        // 2) DELETE fisico. La FK de asistencias es ON DELETE SET NULL:
+        //    el historial administrativo se conserva.
+        modeloFacialRepository.deleteAll(modelos);
+        modeloFacialRepository.flush();
+
+        log.info("ARCO: supresion fisica de {} modelo(s) biometrico(s) del docente {} ejecutada por usuario {}",
+                 modelos.size(), docenteId, usuarioActualId);
+        return modelos.size();
     }
 
     /**

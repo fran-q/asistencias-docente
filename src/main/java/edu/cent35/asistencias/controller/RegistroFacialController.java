@@ -96,6 +96,28 @@ public class RegistroFacialController {
         }
     }
 
+    /**
+     * Supresion fisica de los datos biometricos del docente (derecho ARCO
+     * de Cancelacion - RNF-14). Borra TODOS los modelos faciales del docente
+     * (activo e historicos) de forma definitiva; las asistencias historicas
+     * se conservan.
+     */
+    @PostMapping("/suprimir")
+    public String suprimir(@PathVariable Long docenteId,
+                           @AuthenticationPrincipal CustomUserDetails principal,
+                           RedirectAttributes redirect) {
+        try {
+            int suprimidos = modeloFacialService
+                .suprimirDatosBiometricos(docenteId, principal.getUsuarioId());
+            redirect.addFlashAttribute("flashMensaje",
+                "Datos biométricos suprimidos definitivamente ("
+                + suprimidos + " modelo(s) eliminados). Las asistencias históricas se conservan.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/docentes/" + docenteId + "/editar";
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El docente solicitado no existe.");

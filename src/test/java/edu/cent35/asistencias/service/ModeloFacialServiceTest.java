@@ -47,6 +47,7 @@ class ModeloFacialServiceTest {
     @Mock private DeteccionRostroService deteccionRostroService;
     @Mock private MotorLbphService motorLbph;
     @Mock private CifradoBiometricoService cifradoService;
+    @Mock private IdentificacionFacialService identificacionFacialService;
 
     @InjectMocks private ModeloFacialService service;
 
@@ -174,6 +175,55 @@ class ModeloFacialServiceTest {
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
             .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // ========================================================================
+    //  suprimirDatosBiometricos (ARCO - RNF-14)
+    // ========================================================================
+
+    @Test
+    @DisplayName("suprimir: borra FISICAMENTE todos los modelos y evicta el cache")
+    void suprimir_borradoFisico() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        ModeloFacial activo = ModeloFacial.builder().id(10L).activo(true).build();
+        ModeloFacial historico = ModeloFacial.builder().id(9L).activo(false).build();
+        when(modeloFacialRepository.findByDocenteIdOrderByFechaRegistroDescIdDesc(DOCENTE_ID))
+            .thenReturn(List.of(activo, historico));
+
+        int suprimidos = service.suprimirDatosBiometricos(DOCENTE_ID, USUARIO_ACTUAL_ID);
+
+        assertThat(suprimidos).isEqualTo(2);
+        // Borrado fisico: deleteAll, NO baja logica (save nunca se llama).
+        verify(modeloFacialRepository).deleteAll(List.of(activo, historico));
+        verify(modeloFacialRepository, never()).save(any());
+        // Defensa en profundidad: el cache en memoria tambien se evicta.
+        verify(identificacionFacialService).evictarModelo(10L);
+        verify(identificacionFacialService).evictarModelo(9L);
+    }
+
+    @Test
+    @DisplayName("suprimir: sin modelos -> error claro, no borra nada")
+    void suprimir_sinModelos() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(modeloFacialRepository.findByDocenteIdOrderByFechaRegistroDescIdDesc(DOCENTE_ID))
+            .thenReturn(List.of());
+
+        assertThatThrownBy(() -> service.suprimirDatosBiometricos(DOCENTE_ID, USUARIO_ACTUAL_ID))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("suprimir");
+        verify(modeloFacialRepository, never()).deleteAll(anyList());
+    }
+
+    @Test
+    @DisplayName("suprimir: docente de otro tenant -> EntityNotFound (no revela existencia)")
+    void suprimir_crossTenant() {
+        Docente ajeno = docenteActivoA();
+        ajeno.setInstitucionId(TENANT_B);
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(ajeno));
+
+        assertThatThrownBy(() -> service.suprimirDatosBiometricos(DOCENTE_ID, USUARIO_ACTUAL_ID))
+            .isInstanceOf(EntityNotFoundException.class);
+        verify(modeloFacialRepository, never()).deleteAll(anyList());
     }
 
     // ========================================================================

@@ -31,8 +31,15 @@ public class PaseAsistenciaService {
     /**
      * Pasa asistencia a partir de un frame. Combina identificación facial
      * con marcado de asistencia.
+     * <p>
+     * <b>Medicion RNF-01</b>: el requerimiento presupuesta deteccion +
+     * identificacion + registro. Cuando se crea una marca nueva se loguea
+     * el tiempo total {@code RNF01} — ese es el numero a reportar en la
+     * defensa (las lineas {@code CALIBRACION} del identificador cubren solo
+     * deteccion + comparacion).
      */
     public PaseAsistenciaResultadoDto pasar(byte[] imagenBytes) {
+        long inicioNs = System.nanoTime();
         IdentificacionResultadoDto id = identificacionService.identificar(imagenBytes);
 
         if (!id.rostroDetectado()) {
@@ -57,8 +64,9 @@ public class PaseAsistenciaService {
 
         Asistencia a = marca.asistencia();
         String claseLabel = armarClaseLabel(a);
-        log.debug("Pase de asistencia OK: docente={}, estado={}, yaEstaba={}",
-                  id.docenteId(), a.getEstado(), marca.yaEstaba());
+        long msTotal = (System.nanoTime() - inicioNs) / 1_000_000;
+        log.info("RNF01 pase completo: docente={} estado={} yaEstaba={} msTotal={}",
+                 id.docenteId(), a.getEstado(), marca.yaEstaba(), msTotal);
         return PaseAsistenciaResultadoDto.marcado(
             id.docenteId(), id.docenteNombre(), id.distancia(),
             id.x(), id.y(), id.ancho(), id.alto(),

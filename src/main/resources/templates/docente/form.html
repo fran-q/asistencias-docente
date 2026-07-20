@@ -213,6 +213,22 @@
                       class="text-muted">
                     Reactivá al docente para poder registrar su rostro.
                 </span>
+
+                <!-- Supresión ARCO (RNF-14): borrado FÍSICO del dato biométrico.
+                     Disponible siempre que exista algún modelo (activo o histórico),
+                     sin importar el estado del consentimiento: es el ejercicio de
+                     un derecho del docente, no una operación del flujo normal. -->
+                <form th:if="${tieneModelosBiometricos}"
+                      th:action="@{/docentes/{id}/rostro/suprimir(id=${docente.id})}" method="post"
+                      class="inline-form"
+                      th:data-confirm="|¿Suprimir definitivamente los datos biométricos de ${docente.nombreCompleto}?|"
+                      data-confirm-detail="Borrado FÍSICO e irreversible del modelo facial (derecho de Cancelación, Ley 25.326). Se eliminan también los modelos históricos. Las asistencias ya registradas se conservan. Si el docente vuelve a dar su consentimiento, habrá que registrar su rostro de nuevo."
+                      data-confirm-action="Suprimir definitivamente"
+                      data-confirm-style="danger">
+                    <button type="submit" class="btn btn--ghost btn--danger">
+                        Suprimir datos biométricos (ARCO)
+                    </button>
+                </form>
             </div>
         </div>
     </section>

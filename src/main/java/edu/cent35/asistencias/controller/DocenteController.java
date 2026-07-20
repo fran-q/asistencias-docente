@@ -135,6 +135,8 @@ public class DocenteController {
         model.addAttribute("tieneModeloFacial", modeloFacialService.tieneModeloActivo(id));
         modeloFacialService.modeloActivoDe(id)
             .ifPresent(m -> model.addAttribute("modeloFacial", m));
+        // Supresion ARCO (RNF-14): tambien contempla modelos historicos
+        model.addAttribute("tieneModelosBiometricos", modeloFacialService.tieneModelos(id));
     }
 
     @PostMapping("/{id}/baja")
