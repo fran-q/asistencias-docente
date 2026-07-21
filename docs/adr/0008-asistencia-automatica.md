@@ -30,18 +30,38 @@ Esto encaja con el pedido explícito del cliente: *"Desde que pasa el horario de
 
 **Alternativa descartada**: una tolerancia única global por institución. Más simple pero menos flexible (algunos turnos podrían tener más margen que otros).
 
-### 2. AUSENTE: calculada al listar, no persistida
+### 2. AUSENTE: modelo híbrido — job programado + cálculo al listar
 
-Las marcas AUSENTE generadas automáticamente **no se persisten**. El método `AsistenciaService.listarDelDia(fecha)` las **calcula al vuelo**:
+> **Actualizado post-cierre** (auditoría del dossier de defensa): la versión
+> original de esta decisión era "calculada al listar, no persistida". Se
+> evolucionó a un **modelo híbrido** al implementarse el job programado que
+> la entrevista de requerimientos había dejado abierto.
 
-- Para cada horario activo del día del tenant cuyo docente no tiene fila en `asistencias` y cuya `hora_fin` ya pasó (o si la fecha es anterior a hoy) → fila virtual con `estado = AUSENTE`, `id = null`, sin método.
+**Capa 1 — Job programado (`GeneradorAusenciasService`)**: un `@Scheduled`
+(cron configurable, default cada 30 minutos) recorre las instituciones
+activas y, por cada horario del día ya terminado (`hora_fin` pasada,
+vigencia válida, docente activo) sin marca para su docente asignado,
+**persiste** la fila `AUSENTE`. Convenciones:
+- `metodo = AUTOMATICO` (generada por el sistema sin intervención humana;
+  `MANUAL` queda reservado para cargas hechas por una persona). Sin modelo
+  facial ni confianza — el CHECK de V001 lo permite.
+- `hora_registrada = hora_fin` del horario (momento en que la ausencia se
+  volvió definitiva).
+- **Multi-tenant sin request**: los hilos del scheduler no pasan por
+  `TenantInterceptor`; el job setea `TenantContext` por institución (y lo
+  limpia en `finally`) y todas sus queries llevan `institucionId` explícito.
+- **Idempotencia**: verificación previa + el UNIQUE `(docente, horario,
+  fecha)` resuelven la carrera con un pase facial simultáneo a favor de la
+  marca real.
 
-**Por qué**:
-- No necesitamos un job programado que recorra todos los horarios al final del día.
-- Si el horario cambia (se agrega/quita una clase), el listado refleja la realidad automáticamente.
-- Si el admin decide que una ausencia hay que registrarla y justificarla, la carga manualmente — ahí sí queda persistida.
+**Capa 2 — Cálculo al vuelo (`listarDelDia`)**: se mantiene como ventana de
+gracia. Entre que termina la clase y corre el próximo job, el listado sigue
+mostrando la fila AUSENTE virtual. Cuando el job la persiste, la fila real
+reemplaza naturalmente a la virtual (la clave docente:horario queda cubierta).
 
-**Alternativa descartada**: un `@Scheduled` que inserta filas AUSENTE al cerrar la franja. Más prolijo para reportes pero exige mantener un cron e introduce complejidad de zona horaria/desfasajes. Se evaluará en sprints futuros si los reportes lo justifican.
+**Qué habilita la persistencia**: justificar la ausencia directamente
+(RF-25/26, sin el paso intermedio de carga manual), inclusión en reportes,
+y base para alertas del dashboard (RF-37).
 
 ### 3. Idempotencia del pase automático
 
