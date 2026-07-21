@@ -63,6 +63,39 @@ reemplaza naturalmente a la virtual (la clave docente:horario queda cubierta).
 (RF-25/26, sin el paso intermedio de carga manual), inclusión en reportes,
 y base para alertas del dashboard (RF-37).
 
+### 2.bis Desempate de horario ante ambigüedad (RF-18)
+
+> **Agregado post-cierre**: cierra el segundo tema `[ABIERTO]` de la entrevista.
+
+La cámara está en **secretaría, no en el aula**: el sistema no observa la clase, la
+**deduce** cruzando la hora del registro con los horarios. Con un solo horario en ventana
+el caso es trivial, pero hay dos escenarios ambiguos reales:
+
+- **Consecutivos**: el docente da 18-20 y 20-22 y se presenta 19:55 — con la tolerancia,
+  ambas ventanas lo contienen.
+- **Solapados**: el docente está asignado a dos comisiones a la misma hora. La validación
+  de superposición de `HorarioService` es **por comisión**, así que este caso no está
+  prohibido a nivel de datos.
+
+La implementación previa tomaba `findFirst()` sobre la lista: dependía del orden de la
+query, era **arbitraria y no reproducible**. El criterio formalizado, en orden:
+
+1. **Preferir horarios sin marca previa.** Si el docente ya registró la clase de las 18,
+   la marca nueva corresponde a la siguiente — resuelve el caso consecutivo de la forma
+   más natural. *Salvaguarda*: si todos los candidatos ya están marcados, no se filtra,
+   para que el flujo siga devolviendo "ya estaba marcado" (idempotencia) en vez de
+   "no hay clase".
+2. **Hora de inicio más cercana** al momento del registro. A las 19:55, la clase que
+   arranca 20:00 está a 5 minutos y la que arrancó 18:00 a 115.
+3. **Menor id** ante empate exacto, para que la decisión sea **determinista**.
+
+Si ningún horario contiene el momento actual, **no se registra**: el caso se deriva a
+carga manual (RF-22 a RF-24), coherente con la política de no marcar ante duda. Cada
+ambigüedad detectada se loguea (`RF-18 ambigüedad` / `RF-18 desempate`) para trazabilidad.
+
+Cubierto por 4 tests: consecutivos con marca previa, consecutivos sin marcas, solapados
+con mismo inicio, y preservación de la idempotencia.
+
 ### 3. Idempotencia del pase automático
 
 El UNIQUE de BD garantiza que no haya dos filas para el mismo `(docente_id, horario_id, fecha)`. Pero confiar sólo en la BD obliga a manejar la `DataIntegrityViolationException` para cada loop del navegador. Lo respetamos también a nivel aplicación:

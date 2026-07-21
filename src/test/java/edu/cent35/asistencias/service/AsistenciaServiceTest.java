@@ -185,6 +185,111 @@ class AsistenciaServiceTest {
     }
 
     // ========================================================================
+    //  RF-18: desempate de horario ante ambigüedad
+    // ========================================================================
+
+    @Test
+    @DisplayName("RF-18 consecutivos: si ya marcó la clase anterior, la marca va a la siguiente")
+    void desempate_consecutivos_prefiereSinMarca() {
+        Docente docente = docenteActivoA();
+        Horario anterior = horarioLunes18a20Tolerancia15(docente);              // 18:00-20:00, id 60
+        Horario siguiente = horarioLunes(docente, 61L, 20, 0, 22, 0);           // 20:00-22:00
+        // 19:55: la ventana de la anterior sigue abierta (hasta 20:00) y la de
+        // la siguiente ya abrió (20:00 - 15 min de tolerancia = 19:45).
+        LocalDateTime instante = unLunesA(19, 55);
+        LocalDate fecha = instante.toLocalDate();
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+            .thenReturn(List.of(anterior, siguiente));
+        // La clase anterior YA está marcada; la siguiente no.
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, fecha))
+            .thenReturn(Optional.of(Asistencia.builder().id(500L)
+                .estado(EstadoAsistencia.PRESENTE).build()));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, 61L, fecha))
+            .thenReturn(Optional.empty());
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
+            DOCENTE_ID, null, 50.0, instante);
+
+        assertThat(r.marcada()).isTrue();
+        assertThat(r.yaEstaba()).isFalse();
+        // Se asignó a la clase que está por empezar, no a la ya marcada.
+        assertThat(r.asistencia().getHorario().getId()).isEqualTo(61L);
+        // Y como aún no dieron las 20:00, entra como PRESENTE (dentro de tolerancia).
+        assertThat(r.asistencia().getEstado()).isEqualTo(EstadoAsistencia.PRESENTE);
+    }
+
+    @Test
+    @DisplayName("RF-18 consecutivos sin marcas: gana el horario con inicio más cercano")
+    void desempate_consecutivos_inicioMasCercano() {
+        Docente docente = docenteActivoA();
+        Horario anterior = horarioLunes18a20Tolerancia15(docente);              // 18:00-20:00
+        Horario siguiente = horarioLunes(docente, 61L, 20, 0, 22, 0);           // 20:00-22:00
+        LocalDateTime instante = unLunesA(19, 55);   // 5 min de las 20:00, 115 de las 18:00
+        LocalDate fecha = instante.toLocalDate();
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+            .thenReturn(List.of(anterior, siguiente));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
+            .thenReturn(Optional.empty());
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
+            DOCENTE_ID, null, 50.0, instante);
+
+        assertThat(r.asistencia().getHorario().getId()).isEqualTo(61L);
+    }
+
+    @Test
+    @DisplayName("RF-18 solapados con mismo inicio: desempata por menor id (determinista)")
+    void desempate_solapados_menorId() {
+        Docente docente = docenteActivoA();
+        Horario comisionA = horarioLunes(docente, 71L, 18, 0, 20, 0);
+        Horario comisionB = horarioLunes(docente, 70L, 18, 0, 20, 0);   // mismo horario, id menor
+        LocalDateTime instante = unLunesA(18, 10);
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+            .thenReturn(List.of(comisionA, comisionB));   // llegan en orden "arbitrario"
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
+            .thenReturn(Optional.empty());
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
+            DOCENTE_ID, null, 50.0, instante);
+
+        // Determinista: siempre el mismo, sin importar el orden de la query.
+        assertThat(r.asistencia().getHorario().getId()).isEqualTo(70L);
+    }
+
+    @Test
+    @DisplayName("RF-18 idempotencia preservada: con un solo horario ya marcado devuelve yaEstaba")
+    void desempate_noRompeIdempotencia() {
+        Docente docente = docenteActivoA();
+        Horario h = horarioLunes18a20Tolerancia15(docente);
+        LocalDateTime instante = unLunesA(18, 30);
+        LocalDate fecha = instante.toLocalDate();
+        Asistencia existente = Asistencia.builder().id(500L)
+            .estado(EstadoAsistencia.PRESENTE).build();
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+            .thenReturn(List.of(h));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, fecha))
+            .thenReturn(Optional.of(existente));
+
+        AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
+            DOCENTE_ID, null, 50.0, instante);
+
+        assertThat(r.marcada()).isTrue();
+        assertThat(r.yaEstaba()).isTrue();
+        verify(asistenciaRepository, never()).saveAndFlush(any());
+    }
+
+    // ========================================================================
     //  helpers
     // ========================================================================
 
@@ -218,5 +323,30 @@ class AsistenciaServiceTest {
     /** Construye un LocalDateTime de un lunes (2026-05-25 fue lunes). */
     private LocalDateTime unLunesA(int hora, int minuto) {
         return LocalDate.of(2026, 5, 25).atTime(hora, minuto);
+    }
+
+    /**
+     * Horario de lunes con id, franja y tolerancia 15, para los casos de
+     * ambigüedad del RF-18. Cada uno con su propia comisión (representa
+     * comisiones distintas del mismo docente).
+     */
+    private Horario horarioLunes(Docente docente, Long id,
+                                 int inicioHora, int inicioMin,
+                                 int finHora, int finMin) {
+        Materia materia = Materia.builder().id(MATERIA_ID).codigo("MAT").nombre("Matemática")
+            .build();
+        materia.setInstitucionId(TENANT_A);
+        Comision comision = Comision.builder()
+            .id(COMISION_ID + id).codigo("C" + id).materia(materia)
+            .docenteAsignado(docente).activo(true).build();
+        return Horario.builder()
+            .id(id).comision(comision)
+            .diaSemana((byte) 1)
+            .horaInicio(LocalTime.of(inicioHora, inicioMin))
+            .horaFin(LocalTime.of(finHora, finMin))
+            .toleranciaMin((short) 15)
+            .vigenteDesde(LocalDate.of(2026, 1, 1))
+            .activo(true)
+            .build();
     }
 }

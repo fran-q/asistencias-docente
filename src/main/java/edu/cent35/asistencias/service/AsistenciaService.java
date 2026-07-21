@@ -146,7 +146,7 @@ public class AsistenciaService {
         List<Horario> horariosHoy = horarioRepository
             .findHoyParaDocente(docenteId, diaSemana, tenantId);
 
-        Optional<Horario> enCurso = elegirHorarioEnCurso(horariosHoy, ahora);
+        Optional<Horario> enCurso = elegirHorarioEnCurso(horariosHoy, ahora, docenteId, fecha);
         if (enCurso.isEmpty()) {
             log.info("Marca rechazada: docente {} no tiene clase ahora (ningún horario en ventana)",
                      docenteId);
@@ -375,15 +375,83 @@ public class AsistenciaService {
     // ------------------------------------------------------------------------
 
     /**
-     * Devuelve el horario en curso (ventana
-     * {@code [hora_inicio - tolerancia, hora_fin]}). Si hay varios, devuelve
-     * el primero — eso ocurre sólo con horarios solapados (que no deberían
-     * existir por la validación de superposición en HorarioService).
+     * Elige el horario al que corresponde una marca hecha en {@code ahora}
+     * (RF-18: determinación automática de materia y horario).
+     * <p>
+     * <b>Por qué hace falta un criterio explícito.</b> La cámara está en
+     * secretaría, no en el aula: el sistema no "ve" la clase, la deduce
+     * cruzando la hora del registro con los horarios cargados. Cuando hay
+     * un solo horario en ventana el caso es trivial, pero puede haber
+     * <i>ambigüedad</i> en dos escenarios reales:
+     * <ul>
+     *   <li><b>Horarios consecutivos</b>: el docente da 18-20 y 20-22 y se
+     *       presenta 19:55 — con la tolerancia, ambas ventanas lo contienen.</li>
+     *   <li><b>Horarios solapados</b>: el docente está asignado a dos
+     *       comisiones distintas a la misma hora (la validación de
+     *       superposición de {@code HorarioService} es <i>por comisión</i>,
+     *       así que este caso no está prohibido).</li>
+     * </ul>
+     * Tomar "el primero de la lista" dependía del orden de la query: era
+     * arbitrario y no reproducible. Estos son los criterios, en orden:
+     * <ol>
+     *   <li><b>Preferir los horarios sin marca previa.</b> Si el docente ya
+     *       registró la clase de las 18, la marca nueva corresponde a la
+     *       siguiente. Resuelve el caso consecutivo de la forma más natural.
+     *       <i>Salvaguarda</i>: si TODOS los candidatos ya están marcados no
+     *       se filtra, para que el flujo siga devolviendo "ya estaba marcado"
+     *       (idempotencia) en lugar de "no hay clase".</li>
+     *   <li><b>La hora de inicio más cercana al momento del registro.</b>
+     *       A las 19:55, la clase que arranca 20:00 está a 5 minutos y la que
+     *       arrancó 18:00 a 115: el docente evidentemente viene a la segunda.</li>
+     *   <li><b>Menor id</b> como desempate final, para que la decisión sea
+     *       <b>determinista</b> y reproducible ante un empate exacto.</li>
+     * </ol>
+     * Si ningún horario contiene el momento actual, devuelve vacío: el
+     * sistema <b>no registra</b> y el caso se deriva a carga manual
+     * (RF-22 a RF-24), coherente con la política de no marcar ante duda.
      */
-    private Optional<Horario> elegirHorarioEnCurso(List<Horario> horariosHoy, LocalTime ahora) {
-        return horariosHoy.stream()
+    private Optional<Horario> elegirHorarioEnCurso(List<Horario> horariosHoy,
+                                                   LocalTime ahora,
+                                                   Long docenteId,
+                                                   LocalDate fecha) {
+        List<Horario> enVentana = horariosHoy.stream()
             .filter(h -> estaEnCurso(h, ahora))
-            .findFirst();
+            .toList();
+
+        if (enVentana.isEmpty()) {
+            return Optional.empty();
+        }
+        if (enVentana.size() == 1) {
+            return Optional.of(enVentana.get(0));
+        }
+
+        // --- Caso ambiguo: hay más de un horario en ventana (RF-18) ---
+        log.info("RF-18 ambigüedad: docente {} tiene {} horarios en ventana a las {} - aplicando desempate",
+                 docenteId, enVentana.size(), ahora);
+
+        // Criterio 1: preferir los que todavía no tienen marca.
+        List<Horario> sinMarca = enVentana.stream()
+            .filter(h -> asistenciaRepository
+                .findByDocenteIdAndHorarioIdAndFecha(docenteId, h.getId(), fecha)
+                .isEmpty())
+            .toList();
+        List<Horario> candidatos = sinMarca.isEmpty() ? enVentana : sinMarca;
+
+        // Criterios 2 y 3: hora de inicio más cercana, y menor id ante empate.
+        Optional<Horario> elegido = candidatos.stream()
+            .min(Comparator
+                .comparingLong((Horario h) -> minutosHasta(ahora, h.getHoraInicio()))
+                .thenComparing(Horario::getId));
+
+        elegido.ifPresent(h -> log.info(
+            "RF-18 desempate: elegido horario {} (inicio {}) para docente {}",
+            h.getId(), h.getHoraInicio(), docenteId));
+        return elegido;
+    }
+
+    /** Distancia absoluta en minutos entre dos horas del mismo día. */
+    private long minutosHasta(LocalTime desde, LocalTime hasta) {
+        return Math.abs(java.time.Duration.between(desde, hasta).toMinutes());
     }
 
     private boolean estaEnCurso(Horario h, LocalTime ahora) {
