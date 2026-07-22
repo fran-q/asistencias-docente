@@ -20,9 +20,22 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * {@code WHERE institucion_id = :institucionId}, usando el valor de
  * {@link TenantContext}.
  * <p>
- * <b>Cuando se ejecuta</b>: corre en cada metodo dentro de paquetes
- * {@code application/} de cualquier modulo de dominio (donde viven los
- * services). Solo activa el filtro si:
+ * <b>Cuando se ejecuta</b>: corre en cada metodo publico de los beans
+ * anotados con {@code @Service} (donde vive la logica de negocio).
+ * <p>
+ * <b>Historia del pointcut (leccion aprendida, TD-007)</b>: originalmente
+ * apuntaba a {@code edu.cent35.asistencias..application..*}, que era
+ * correcto con la organizacion package-by-feature. Al reorganizar el
+ * proyecto a package-by-layer (ADR-0006) los paquetes {@code application/}
+ * desaparecieron y el pointcut dejo de coincidir con nada: el aspecto
+ * quedo <b>silenciosamente inactivo</b> y la capa 1 de la defensa
+ * multi-tenant murio sin que ningun test lo detectara (los tests son
+ * unitarios con Mockito y no ejercitan Hibernate). Se cambio a un
+ * pointcut por <b>anotacion</b> ({@code @Service}) en vez de por nombre
+ * de paquete, justamente para que un futuro renombre de paquetes no lo
+ * vuelva a romper.
+ * <p>
+ * Solo activa el filtro si:
  * <ol>
  *   <li>Hay una transaccion activa (lo controla Spring via
  *       {@link TransactionSynchronizationManager#isActualTransactionActive()}).</li>
@@ -43,8 +56,8 @@ public class TenantFilterAspect {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Before("execution(* edu.cent35.asistencias..application..*(..))")
-    public void enableTenantFilter() {
+    @Before("@within(org.springframework.stereotype.Service)")
+    public void activarFiltroTenant() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {
             return;
         }

@@ -180,6 +180,67 @@ Migrar a una librería de cache con TTL y tamaño máximo (Caffeine). Si la cant
 
 ---
 
+## TD-007: El aspecto multi-tenant quedó inactivo tras la reorganización (RESUELTO)
+
+**Detectado**: revisión general post-Sprint 6.
+**Severidad**: **Alta** — fuga multi-tenant real y activa.
+**Estado**: Resuelto. Queda como lección documentada.
+
+### Síntoma
+
+`TenantFilterAspect` no se ejecutaba. El filtro Hibernate `"tenant"` nunca se activaba,
+por lo que las **derived queries** sobre entidades tenant-scoped devolvían datos de
+**todas las instituciones**. Ejemplos afectados: `CarreraService.listar()`,
+`MateriaService.listar()`, `DocenteService.listar()` y todos los selectores de
+docentes/materias/carreras de los formularios.
+
+### Causa
+
+El pointcut apuntaba a una estructura de paquetes que dejó de existir:
+
+```java
+@Before("execution(* edu.cent35.asistencias..application..*(..))")
+```
+
+Era correcto con package-by-feature (`docente/application/`, `academico/application/`).
+La reorganización a package-by-layer (ADR-0006, commit `24b8dd2`) movió los services a
+`edu.cent35.asistencias.service` y eliminó todos los paquetes `application/`. El pointcut
+dejó de coincidir con nada.
+
+### Por qué no lo detectó nadie
+
+Tres razones que conviene entender:
+
+1. **Un aspecto que no matchea no falla**: simplemente no hace nada. No hay error, no hay
+   warning, no hay log. Falla en silencio.
+2. **Los tests son unitarios con Mockito**: no ejercitan Hibernate ni el tejido AOP, así
+   que ninguno podía notarlo.
+3. **Las otras dos capas de defensa lo enmascararon**: el WHERE explícito en JOINs
+   (TD-003) y la validación en services siguieron funcionando, así que la aplicación
+   "andaba bien" en el uso normal con un solo tenant de prueba.
+
+### Solución aplicada
+
+Pointcut por **anotación** en vez de por nombre de paquete:
+
+```java
+@Before("@within(org.springframework.stereotype.Service)")
+```
+
+Un renombre o movimiento de paquetes ya no puede romperlo. Además se agregó
+`TenantFilterAspectTest`, que parsea el pointcut y verifica que alcance a un `@Service`
+real — se validó que ese test **falla** con el pointcut viejo, es decir que tiene poder
+de detección real.
+
+### Lección para llevarse
+
+Una refactorización de estructura puede romper **configuración que depende de nombres de
+paquete** (pointcuts de AOP, `@ComponentScan`, escaneo de entidades, reglas de ArchUnit)
+sin que el compilador ni los tests digan nada. Al reorganizar paquetes hay que auditar
+explícitamente todo lo que referencia rutas de paquete como texto.
+
+---
+
 ## TD-006: Reportes — sin paginación
 
 **Detectado**: Sprint 6 Fase A
