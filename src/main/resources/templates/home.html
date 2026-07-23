@@ -7,30 +7,66 @@
 </head>
 <body>
     <section class="home">
-        <h1>Bienvenido, <span th:text="${username}">Usuario</span></h1>
-        <p class="home__subtitle">
-            Has iniciado sesion correctamente. El sistema esta en Sprint 0 (setup inicial).
-        </p>
+        <header class="page-header">
+            <h1>Hola, <span th:text="${username}">Usuario</span></h1>
+            <p class="page-header__subtitle">
+                ¿Qué querés hacer hoy? Accedé rápido a las secciones más usadas.
+            </p>
+        </header>
 
-        <div class="card">
-            <h2>Estado del proyecto</h2>
-            <ul class="checklist">
-                <li class="checklist__item checklist__item--done">Spring Boot + Java 21 corriendo</li>
-                <li class="checklist__item checklist__item--done">Conexion a MariaDB establecida</li>
-                <li class="checklist__item checklist__item--done">Esquema de BD creado por Flyway (15 tablas)</li>
-                <li class="checklist__item checklist__item--done">Spring Security con login funcional</li>
-                <li class="checklist__item checklist__item--done">Layout Thymeleaf base + modo oscuro</li>
-                <li class="checklist__item checklist__item--pending">Sprint 1: Multi-tenancy + autenticacion real</li>
-                <li class="checklist__item checklist__item--pending">Sprint 2 a 6: Modulos academico, docentes, reconocimiento, MVP</li>
-            </ul>
-        </div>
+        <!-- Accesos rápidos -->
+        <div class="home__acciones"
+             style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
+                    gap:1rem; margin-top:1rem;">
 
-        <div class="card">
-            <h2>Detalle de la sesion</h2>
-            <dl class="kv">
-                <dt>Usuario</dt><dd th:text="${username}">-</dd>
-                <dt>Roles</dt><dd th:text="${authorities}">-</dd>
-            </dl>
+            <a th:href="@{/asistencia/pase}" class="card home__accion"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Pase de asistencia</h2>
+                <p class="text-muted" style="margin:0;">
+                    Reconocé al docente por cámara y registrá su asistencia en el acto.
+                </p>
+            </a>
+
+            <a th:href="@{/asistencias}" class="card home__accion"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Asistencias</h2>
+                <p class="text-muted" style="margin:0;">
+                    Consultá las marcas del día, cargá manuales y justificá ausencias.
+                </p>
+            </a>
+
+            <a th:href="@{/reportes}" class="card home__accion"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Reportes</h2>
+                <p class="text-muted" style="margin:0;">
+                    Filtrá por período, docente o materia y exportá a CSV.
+                </p>
+            </a>
+
+            <a th:href="@{/docentes}" class="card home__accion"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Docentes</h2>
+                <p class="text-muted" style="margin:0;">
+                    Gestioná el personal docente, consentimientos y modelo facial.
+                </p>
+            </a>
+
+            <a th:href="@{/grilla}" class="card home__accion"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Grilla semanal</h2>
+                <p class="text-muted" style="margin:0;">
+                    Visualizá los horarios de cursada de cada carrera.
+                </p>
+            </a>
+
+            <a th:href="@{/usuarios}" class="card home__accion"
+               sec:authorize="hasRole('INSTITUCION')"
+               style="text-decoration:none; display:block;">
+                <h2 style="margin:0 0 0.35rem;">Usuarios</h2>
+                <p class="text-muted" style="margin:0;">
+                    Administrá las cuentas de acceso de tu institución.
+                </p>
+            </a>
         </div>
     </section>
 </body>

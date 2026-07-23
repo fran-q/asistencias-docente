@@ -1,5 +1,5 @@
 /*
- * pase-asistencia.js — Sprint 5 Fase B
+ * pase-asistencia.js
  *
  * Pantalla de pase de asistencia:
  *  - botón único Encender/Apagar cámara (toggle),

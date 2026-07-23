@@ -1,5 +1,5 @@
 /*
- * registro-facial.js — Sprint 4 Fase C
+ * registro-facial.js
  *
  * Pantalla de registro del modelo facial:
  *  - botón único Encender/Apagar cámara (toggle, cambia de texto),
