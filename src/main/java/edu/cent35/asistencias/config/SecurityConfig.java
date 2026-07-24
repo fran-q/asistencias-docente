@@ -48,7 +48,17 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/", true)
-                .failureUrl("/login?error")
+                // Tras un login fallido preservamos SOLO el usuario intentado
+                // (nunca la contrasenia) para reponerlo en el formulario. Mejora
+                // la usabilidad (RNF-21/24) sin exponer credenciales: la
+                // contrasenia se vuelve a escribir.
+                .failureHandler((request, response, exception) -> {
+                    String usuario = request.getParameter("username");
+                    if (usuario != null && !usuario.isBlank()) {
+                        request.getSession().setAttribute("ULTIMO_USUARIO_LOGIN", usuario);
+                    }
+                    response.sendRedirect(request.getContextPath() + "/login?error");
+                })
                 .permitAll()
             )
             .logout(logout -> logout
