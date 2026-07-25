@@ -6,16 +6,10 @@ import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.stereotype.Service;
 
 /**
- * Cifra y descifra los modelos biométricos antes de persistirlos.
- * <p>
- * Usa AES vía Spring Security Crypto ({@code Encryptors.stronger}, que
- * deriva la clave con PBKDF2 y cifra en modo GCM). Cumple el requisito de
- * la Resolución AAIP 255/2022 de proteger los datos biométricos con
- * "medidas de seguridad razonables".
- * <p>
- * La clave y el salt se configuran en {@code application.properties}
- * ({@code app.biometria.*}); en un despliegue real deben venir de
- * variables de entorno. Ver ADR-0007.
+ * Cifra y descifra los modelos biométricos antes de guardarlos, con AES-GCM y clave derivada
+ * por PBKDF2 (Encryptors.stronger), que es la "medida de seguridad razonable" que exige la
+ * Resolución AAIP 255/2022. La clave y el salt salen de app.biometria.*; en producción tienen
+ * que venir de variables de entorno y no del properties (ADR-0007).
  */
 @Service
 public class CifradoBiometricoService {

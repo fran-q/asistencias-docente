@@ -34,19 +34,11 @@ import static org.bytedeco.opencv.global.opencv_core.CV_32SC1;
 @Slf4j
 public class MotorLbphService {
 
-    /**
-     * Etiqueta única usada al entrenar. Como cada modelo es de un solo
-     * docente, el valor concreto es irrelevante; lo relevante de
-     * {@code predict()} es la distancia, no el label.
-     */
+    // Etiqueta fija de entrenamiento: cada modelo es de un solo docente, asi que lo que importa
+    // de predict() es la distancia y no el label.
     public static final int LABEL_DOCENTE = 1;
 
-    /**
-     * Entrena un modelo LBPH con los rostros dados y lo devuelve serializado.
-     *
-     * @param rostros lista de rostros ya normalizados (gris, mismo tamaño)
-     * @return el modelo LBPH serializado (formato YAML de OpenCV)
-     */
+    // Entrena un modelo LBPH con los rostros normalizados y lo devuelve ya serializado.
     public byte[] entrenar(List<Mat> rostros) {
         if (rostros == null || rostros.isEmpty()) {
             throw new IllegalArgumentException("Se necesita al menos un rostro para entrenar.");
@@ -73,11 +65,7 @@ public class MotorLbphService {
         }
     }
 
-    /**
-     * Reconstruye un {@link LBPHFaceRecognizer} a partir del modelo
-     * previamente entrenado y comprimido. Usado en la fase de
-     * identificación (Fase D).
-     */
+    // Reconstruye el recognizer a partir del modelo entrenado y comprimido que hay en la base.
     public LBPHFaceRecognizer deserializar(byte[] modeloComprimido) {
         byte[] yaml = descomprimir(modeloComprimido);
         File tmp = null;
@@ -94,10 +82,7 @@ public class MotorLbphService {
         }
     }
 
-    /**
-     * Serializa un recognizer ya entrenado a bytes. OpenCV solo sabe
-     * guardar a un archivo, así que se usa uno temporal de paso.
-     */
+    // Pasa el recognizer a bytes; va por un archivo temporal porque OpenCV solo guarda a disco.
     private byte[] serializar(LBPHFaceRecognizer recognizer) {
         File tmp = null;
         try {
@@ -111,11 +96,7 @@ public class MotorLbphService {
         }
     }
 
-    /**
-     * Comprime con gzip. El YAML de OpenCV tiene mucha repetición (números
-     * en texto) y comprime muy bien — típicamente 5-10x. Esto evita que el
-     * INSERT supere el {@code max_allowed_packet} de MariaDB.
-     */
+    // Comprime con gzip: el YAML de OpenCV baja 5-10x y asi el INSERT no pasa el max_allowed_packet.
     private byte[] comprimir(byte[] datos) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (GZIPOutputStream gz = new GZIPOutputStream(out)) {
@@ -135,6 +116,7 @@ public class MotorLbphService {
         }
     }
 
+    // Borra el archivo temporal de paso, avisando por log si no se pudo.
     private void borrarTemporal(File tmp) {
         if (tmp == null) return;
         try {

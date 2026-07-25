@@ -22,42 +22,12 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Job programado que materializa las ausencias del dia (cierra el hueco
- * del RF-19: "Ausente = sin registro", pero nadie creaba ese registro).
- * <p>
- * <b>Que hace</b>: para cada horario activo del dia cuyo {@code hora_fin}
- * ya paso y cuyo docente asignado no tiene marca, crea una fila
- * {@code Asistencia} con estado AUSENTE. Con la fila persistida, la
- * ausencia se puede justificar directamente (RF-25/RF-26) y entra en los
- * reportes sin pasos intermedios.
- * <p>
- * <b>Convenciones</b>:
- * <ul>
- *   <li>{@code metodo = AUTOMATICO}: la marca la genera el sistema sin
- *       intervencion del administrador (mismo sentido que el pase facial;
- *       MANUAL queda reservado para cargas hechas por una persona). Sin
- *       modelo facial ni confianza — el CHECK de la BD lo permite.</li>
- *   <li>{@code hora_registrada = hora_fin} del horario: el momento en que
- *       la ausencia se volvio definitiva.</li>
- * </ul>
- * <p>
- * <b>Multi-tenant</b>: los hilos del scheduler NO pasan por
- * {@code TenantInterceptor}, asi que no hay contexto de tenant. El job
- * itera las instituciones activas, setea {@code TenantContext} por cada
- * una (y lo limpia en {@code finally}), y ademas todas las queries llevan
- * el {@code institucionId} como parametro explicito — el aislamiento no
- * depende del filtro automatico de Hibernate.
- * <p>
- * <b>Idempotencia y carreras</b>: se re-verifica la existencia de marca
- * antes de insertar, y el UNIQUE {@code (docente, horario, fecha)} de la
- * BD resuelve la carrera con un pase facial simultaneo: si el docente
- * marca justo cuando corre el job, gana la marca real y la ausencia se
- * descarta sin error. Correr el job dos veces no duplica nada.
- * <p>
- * <b>Sin transaccion global</b>: cada insercion es su propia transaccion
- * (las del repositorio). Si el job muere a mitad de camino, lo ya insertado
- * queda y la proxima corrida completa el resto — la idempotencia lo hace
- * seguro y evita una transaccion larga sobre muchas instituciones.
+ * Job programado que materializa las ausencias del día (RF-19): por cada horario que ya
+ * terminó y cuyo docente no marcó, crea una Asistencia AUSENTE con método AUTOMATICO y
+ * hora_registrada = hora_fin, de modo que se pueda justificar y entre en los reportes.
+ * Como el scheduler no pasa por TenantInterceptor, itera las instituciones activas seteando
+ * y limpiando el TenantContext a mano, y es idempotente: el UNIQUE de la base resuelve la
+ * carrera contra un pase facial simultáneo y correrlo dos veces no duplica nada.
  */
 @Service
 @RequiredArgsConstructor
@@ -71,11 +41,7 @@ public class GeneradorAusenciasService {
     @Value("${app.asistencia.ausencias-habilitado:true}")
     private boolean habilitado;
 
-    /**
-     * Punto de entrada programado. Corre segun el cron configurado
-     * ({@code app.asistencia.ausencias-cron}, por defecto cada 30 minutos)
-     * y procesa todas las instituciones activas.
-     */
+    // Entrada del cron (por defecto cada 30 minutos): recorre todas las instituciones activas.
     @Scheduled(cron = "${app.asistencia.ausencias-cron:0 */30 * * * *}")
     public void ejecutar() {
         if (!habilitado) {
@@ -106,12 +72,8 @@ public class GeneradorAusenciasService {
         }
     }
 
-    /**
-     * Genera las ausencias pendientes de UNA institucion para una fecha y
-     * hora dadas. Publico y determinista para poder testearlo sin scheduler.
-     *
-     * @return cantidad de ausencias creadas
-     */
+    // Genera las ausencias de una institución en la fecha y hora dadas; público para testearlo
+    // sin depender del scheduler. Devuelve cuántas creó.
     public int generarParaInstitucion(Long institucionId, LocalDate fecha, LocalTime ahora) {
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
         List<Horario> horarios =
@@ -157,6 +119,7 @@ public class GeneradorAusenciasService {
     }
 
     // Vigencia del horario en la fecha dada: desde <= fecha <= hasta (hasta nullable).
+    // Indica si la fecha cae dentro del período de vigencia del horario.
     private boolean estaVigente(Horario h, LocalDate fecha) {
         if (h.getVigenteDesde() != null && fecha.isBefore(h.getVigenteDesde())) return false;
         return h.getVigenteHasta() == null || !fecha.isAfter(h.getVigenteHasta());

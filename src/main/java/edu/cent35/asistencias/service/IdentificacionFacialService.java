@@ -53,18 +53,8 @@ public class IdentificacionFacialService {
     // Cache: modeloFacialId → recognizer ya cargado y listo para predict.
     private final ConcurrentHashMap<Long, LBPHFaceRecognizer> cache = new ConcurrentHashMap<>();
 
-    /**
-     * Identifica el rostro presente en {@code imagenBytes} contra los modelos
-     * faciales activos del tenant actual.
-     * <p>
-     * <b>Instrumentacion de calibracion (RF-16 / RNF-01)</b>: cada intento
-     * con rostro detectado loguea una linea {@code CALIBRACION} con la
-     * distancia del mejor match y los tiempos parciales. Esas lineas son la
-     * fuente de datos del protocolo {@code docs/calibracion-umbral.md}.
-     * Nota: la primera llamada tras arrancar incluye descifrado y
-     * deserializacion de los modelos (cache frio); para medir tiempos usar
-     * las llamadas siguientes (cache caliente).
-     */
+    // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una linea
+    // CALIBRACION con distancia y tiempos, que es la fuente de docs/calibracion-umbral.md.
     @Transactional(readOnly = true)
     public IdentificacionResultadoDto identificar(byte[] imagenBytes) {
         Long tenantId = TenantContext.getRequired();
@@ -131,12 +121,8 @@ public class IdentificacionFacialService {
         }
     }
 
-    /**
-     * Saca del cache (y libera la memoria nativa) el recognizer de un modelo
-     * puntual. Lo usa la <b>supresion fisica ARCO</b> (RNF-14): al borrar el
-     * vector de la BD hay que asegurarse de que tampoco quede una copia
-     * deserializada en memoria capaz de seguir reconociendo al docente.
-     */
+    // Saca el recognizer del cache y libera su memoria nativa; sin esto, tras un borrado ARCO
+    // una copia en memoria seguiria reconociendo al docente hasta el proximo reinicio.
     public void evictarModelo(Long modeloFacialId) {
         LBPHFaceRecognizer rec = cache.remove(modeloFacialId);
         if (rec != null) {
@@ -145,11 +131,7 @@ public class IdentificacionFacialService {
         }
     }
 
-    /**
-     * Asegura que el cache contenga exactamente los recognizers de los
-     * modelos activos pasados: carga los nuevos y descarta los que ya no
-     * deberían estar.
-     */
+    // Deja en el cache exactamente los modelos activos: carga los nuevos y descarta los viejos.
     private void sincronizarCache(List<ModeloFacial> modelosActivos) {
         Set<Long> idsActivos = modelosActivos.stream()
             .map(ModeloFacial::getId)
@@ -172,6 +154,7 @@ public class IdentificacionFacialService {
         }
     }
 
+    // Descifra el modelo guardado y lo deserializa a un recognizer listo para comparar.
     private LBPHFaceRecognizer cargar(ModeloFacial m) {
         byte[] descifrado = cifradoService.descifrar(m.getEmbeddingCifrado());
         LBPHFaceRecognizer rec = motorLbph.deserializar(descifrado);

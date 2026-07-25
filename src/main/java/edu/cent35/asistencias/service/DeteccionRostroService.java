@@ -26,16 +26,9 @@ import static org.bytedeco.opencv.global.opencv_imgproc.equalizeHist;
 import static org.bytedeco.opencv.global.opencv_imgproc.resize;
 
 /**
- * Detección de rostros en imágenes usando OpenCV (Haar Cascade).
- * Cubre la primera etapa del pipeline de reconocimiento facial (Sprint 4):
- * dada una imagen, ubicar si hay un rostro y dónde.
- * <p>
- * No persiste nada ni hace reconocimiento (identificar de quién es el
- * rostro) — eso son las fases C y D. Esta clase solo responde "hay cara
- * acá y está en estas coordenadas".
- * <p>
- * El clasificador Haar se carga una vez al iniciar la aplicación desde
- * {@code resources/opencv/haarcascade_frontalface_default.xml}.
+ * Primera etapa del pipeline facial: ubica rostros en una imagen con el Haar Cascade de
+ * OpenCV, que se carga una sola vez al arrancar. Solo responde "hay cara acá y en estas
+ * coordenadas": no identifica de quién es ni persiste nada.
  */
 @Service
 @Slf4j
@@ -46,11 +39,8 @@ public class DeteccionRostroService {
 
     private CascadeClassifier clasificadorRostro;
 
-    /**
-     * Carga el Haar Cascade al arrancar. {@link CascadeClassifier} necesita
-     * una ruta de archivo en disco, así que el XML del classpath se copia a
-     * un archivo temporal.
-     */
+    // Carga el Haar Cascade al arrancar; el XML del classpath se copia a disco porque
+    // CascadeClassifier solo acepta una ruta de archivo.
     @PostConstruct
     void cargarClasificador() {
         try {
@@ -73,13 +63,7 @@ public class DeteccionRostroService {
         }
     }
 
-    /**
-     * Detecta rostros en una imagen ya decodificada (JPEG/PNG en bytes).
-     *
-     * @param imagenBytes contenido binario de la imagen
-     * @return resumen de la detección: cuántos rostros y el bounding box
-     *         del más grande (el más cercano a la cámara)
-     */
+    // Cuenta los rostros de la imagen y devuelve el recuadro del más grande (el más cercano).
     public DeteccionRostroDto detectar(byte[] imagenBytes) {
         if (imagenBytes == null || imagenBytes.length == 0) {
             return DeteccionRostroDto.sinRostro("No se recibió ninguna imagen.");
@@ -131,21 +115,11 @@ public class DeteccionRostroService {
         }
     }
 
-    /**
-     * Resultado de extraer el rostro de una imagen: el rostro ya normalizado
-     * (gris, lado fijo) y las coordenadas del bounding box dentro de la
-     * imagen original.
-     */
+    // Rostro ya normalizado más sus coordenadas dentro de la imagen original.
     public record RostroExtraido(Mat rostro, int x, int y, int ancho, int alto) {}
 
-    /**
-     * Detecta el rostro de una imagen y devuelve ese rostro normalizado
-     * (gris, redimensionado a {@code tamano}×{@code tamano} px) junto con
-     * sus coordenadas en la imagen original.
-     * <p>
-     * Exige exactamente <b>un</b> rostro: si hay cero o más de uno devuelve
-     * {@code null}. El caller debe cerrar el Mat resultante.
-     */
+    // Devuelve el rostro en gris y escalado a tamaño fijo; exige exactamente uno, si no null.
+    // El que llama se tiene que encargar de cerrar el Mat.
     public RostroExtraido extraerRostroNormalizado(byte[] imagenBytes, int tamano) {
         if (imagenBytes == null || imagenBytes.length == 0) {
             return null;
@@ -187,6 +161,7 @@ public class DeteccionRostroService {
     }
 
     // Devuelve el rectángulo de mayor área dentro del vector.
+    // Elige el rostro de mayor área, que es el que está más cerca de la cámara.
     private Rect rostroMasGrande(RectVector rostros) {
         Rect mayor = rostros.get(0);
         long areaMayor = (long) mayor.width() * mayor.height();

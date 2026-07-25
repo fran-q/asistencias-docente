@@ -51,12 +51,7 @@ public class ConsentimientoBiometricoService {
     private final DocenteRepository docenteRepository;
     private final UsuarioRepository usuarioRepository;
 
-    /**
-     * Estado actual del consentimiento del docente.
-     * Devuelve {@link EstadoConsentimiento#NUNCA_OTORGADO} si nunca hubo
-     * ningun registro, {@code ACTIVO} si el ultimo esta vigente, o
-     * {@code REVOCADO} si el ultimo fue revocado.
-     */
+    // Estado del consentimiento del docente segun su ultimo registro, o NUNCA_OTORGADO si no hay.
     @Transactional(readOnly = true)
     public EstadoConsentimiento estadoActual(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -78,12 +73,7 @@ public class ConsentimientoBiometricoService {
         return opt;
     }
 
-    /**
-     * Estado del consentimiento de cada docente del tenant actual.
-     * Pensado para el listado de docentes (una sola query, evita N+1).
-     * Si un docente no esta en el Map devuelto, se interpreta como
-     * {@link EstadoConsentimiento#NUNCA_OTORGADO}.
-     */
+    // Estado de todos los docentes en una sola query, para el listado (evita N+1).
     @Transactional(readOnly = true)
     public Map<Long, EstadoConsentimiento> estadosPorDocenteEnTenant() {
         Long tenantId = TenantContext.getRequired();
@@ -107,28 +97,13 @@ public class ConsentimientoBiometricoService {
         return historial;
     }
 
-    /**
-     * Inicializa las asociaciones LAZY que el template Thymeleaf necesita
-     * leer despues de que la transaccion cierre. Requerido porque
-     * {@code spring.jpa.open-in-view=false}.
-     */
+    // Toca los lazy que el template va a leer ya cerrada la transaccion (open-in-view=false).
     private void touchAsociacionesLazy(ConsentimientoBiometrico c) {
         if (c.getRegistradoPor() != null) c.getRegistradoPor().getUsername();
         if (c.getRevocadoPor() != null) c.getRevocadoPor().getUsername();
     }
 
-    /**
-     * Registra un consentimiento nuevo para el docente. Bloquea si ya hay
-     * uno vigente (hay que revocar primero).
-     *
-     * @param docenteId       a quien pertenece
-     * @param metodo          ESCRITO (admin en representacion) o DIGITAL
-     * @param fechaFirma      cuando lo firmo el docente (puede ser pasada)
-     * @param ip              IP del admin que esta cargando (audit forense)
-     * @param userAgent       User-Agent del admin (audit forense)
-     * @param documentoUrl    opcional: URL al PDF escaneado
-     * @param usuarioActualId id del admin logueado
-     */
+    // Registra un consentimiento nuevo guardando IP y User-Agent del admin; falla si ya hay uno vigente.
     @Transactional
     public ConsentimientoBiometrico otorgar(
             Long docenteId,
@@ -183,16 +158,7 @@ public class ConsentimientoBiometricoService {
         return saved;
     }
 
-    /**
-     * Revoca el consentimiento vigente del docente. Audita IP/UA del admin
-     * que ejecuta la revocacion (no del docente).
-     *
-     * @param docenteId         a quien pertenece
-     * @param motivo            texto libre opcional (derecho ARCO)
-     * @param ip                IP del admin (audit)
-     * @param userAgent         User-Agent del admin (audit)
-     * @param usuarioActualId   id del admin logueado
-     */
+    // Revoca el consentimiento vigente (derecho ARCO), auditando al admin que lo ejecuta.
     @Transactional
     public ConsentimientoBiometrico revocar(
             Long docenteId,
@@ -226,11 +192,7 @@ public class ConsentimientoBiometricoService {
 
     // ----------------------------------------------------------------------
 
-    /**
-     * Carga el docente validando que sea del tenant actual.
-     * Si no, tira {@code EntityNotFoundException} igual que si no existiera
-     * (defensa: no revelar a otro tenant que el id existe).
-     */
+    // Carga el docente validando tenant; si es de otro responde "no existe" para no revelarlo.
     private Docente obtenerDocenteValidado(Long docenteId) {
         Long tenantId = TenantContext.getRequired();
         Docente d = docenteRepository.findById(docenteId)
@@ -243,6 +205,7 @@ public class ConsentimientoBiometricoService {
         return d;
     }
 
+    // Normaliza texto opcional: deja null si viene vacio o solo con espacios.
     private static String trimToNull(String s) {
         if (s == null) return null;
         String t = s.trim();

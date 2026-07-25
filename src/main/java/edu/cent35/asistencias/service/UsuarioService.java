@@ -49,6 +49,7 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
+    // Busca por id validando que el usuario sea de la misma institución.
     public Usuario buscarPorId(Long id) {
         Usuario u = usuarioRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + id));
@@ -56,10 +57,7 @@ public class UsuarioService {
         return u;
     }
 
-    /**
-     * Crea un usuario nuevo en la institucion del tenant actual.
-     * El password viene en claro y se hashea con BCrypt antes de persistir.
-     */
+    // Crea un usuario en la institución actual; la contraseña se hashea con BCrypt antes de guardar.
     @Transactional
     public Usuario crear(String username, String email, String passwordPlano,
                          String nombre, String apellido, RolCodigo rolCodigo) {
@@ -93,10 +91,7 @@ public class UsuarioService {
         return saved;
     }
 
-    /**
-     * Actualiza datos editables: nombre, apellido, email, rol, activo.
-     * NO cambia username ni password (eso es separado).
-     */
+    // Edita nombre, apellido, email, rol y estado; el username y la contraseña van aparte.
     @Transactional
     public Usuario actualizar(Long id, String nombre, String apellido, String email,
                               RolCodigo rolCodigo, boolean activo, Long usuarioActualId) {

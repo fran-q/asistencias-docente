@@ -82,6 +82,7 @@ public class GrillaService {
             .build();
     }
 
+    // Traduce un horario a un bloque de la grilla: en qué fila arranca y cuántas ocupa.
     private GrillaSemanalDto.GrillaItem toGridItem(Horario h) {
         // Touch lazy
         h.getComision().getCodigo();
@@ -111,11 +112,13 @@ public class GrillaService {
             .build();
     }
 
+    // Cuántas franjas de media hora hay entre el inicio de la grilla (07:00) y esa hora.
     private int slotsDesdeInicio(LocalTime t) {
         long min = Duration.between(GRID_INICIO, t).toMinutes();
         return (int) Math.floorDiv(min, (long) MINUTOS_POR_SLOT);
     }
 
+    // Recorta el slot al rango visible de la grilla, para que nada se dibuje fuera.
     private int clamp(int slot) {
         if (slot < 0) return 0;
         if (slot > TOTAL_SLOTS) return TOTAL_SLOTS;

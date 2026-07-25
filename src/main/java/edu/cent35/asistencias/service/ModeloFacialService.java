@@ -93,11 +93,7 @@ public class ModeloFacialService {
         return modeloFacialRepository.findByDocenteIdAndActivoTrue(docente.getId()).isPresent();
     }
 
-    /**
-     * {@code true} si el docente tiene ALGUN modelo facial en la BD, activo
-     * o historico. Lo usa la UI para saber si corresponde ofrecer la
-     * supresion ARCO (que borra tambien los historicos).
-     */
+    // Indica si el docente tiene algun modelo, activo o historico; la UI lo usa para ofrecer ARCO.
     @Transactional(readOnly = true)
     public boolean tieneModelos(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -105,27 +101,10 @@ public class ModeloFacialService {
             .findByDocenteIdOrderByFechaRegistroDescIdDesc(docente.getId()).isEmpty();
     }
 
-    /**
-     * Supresion FISICA de todos los datos biometricos del docente
-     * (derecho ARCO de Cancelacion - RNF-14, Ley 25.326).
-     * <p>
-     * <b>Por que DELETE fisico y no baja logica</b>: la baja logica es la
-     * regla general del sistema, pero el vector biometrico es la excepcion
-     * documentada. Una fila con {@code activo=false} sigue conteniendo el
-     * dato sensible; ante una supresion, el dato tiene que desaparecer de
-     * verdad. Se borran TODOS los modelos del docente (activo e historicos).
-     * <p>
-     * <b>Que se conserva</b>: las asistencias historicas. La FK
-     * {@code asistencias.modelo_facial_id} es {@code ON DELETE SET NULL}
-     * (V001), asi que los registros administrativos quedan intactos con la
-     * referencia biometrica en NULL — ya no son dato biometrico.
-     * <p>
-     * Ademas se evicta el recognizer del cache en memoria: sin esto, una
-     * copia deserializada seguiria pudiendo reconocer al docente hasta el
-     * proximo reinicio.
-     *
-     * @return cantidad de modelos suprimidos
-     */
+    // Borrado FISICO de todos los modelos del docente (derecho ARCO de cancelacion, RNF-14).
+    // Es la excepcion a la baja logica del sistema: una fila inactiva seguiria conteniendo el
+    // dato biometrico. Las asistencias se conservan porque la FK es ON DELETE SET NULL, y ademas
+    // se evicta el recognizer del cache para que no siga reconociendo desde memoria.
     @Transactional
     public int suprimirDatosBiometricos(Long docenteId, Long usuarioActualId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -150,13 +129,7 @@ public class ModeloFacialService {
         return modelos.size();
     }
 
-    /**
-     * Registra (o re-registra) el modelo facial de un docente.
-     *
-     * @param docenteId        a quién pertenece
-     * @param capturas         imágenes en bytes (una por cada captura pedida)
-     * @param usuarioActualId  admin que ejecuta el registro
-     */
+    // Registra o re-registra el modelo facial del docente a partir de las capturas tomadas.
     @Transactional
     public ModeloFacial registrar(Long docenteId, List<byte[]> capturas, Long usuarioActualId) {
         Docente docente = obtenerDocenteValidado(docenteId);
