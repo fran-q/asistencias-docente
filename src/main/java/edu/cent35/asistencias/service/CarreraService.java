@@ -31,13 +31,13 @@ public class CarreraService {
     private final CarreraRepository carreraRepository;
     private final MateriaRepository materiaRepository;
 
-    /** Lista todas las carreras del tenant (activas e inactivas). */
+    // Lista todas las carreras del tenant (activas e inactivas).
     @Transactional(readOnly = true)
     public List<Carrera> listar() {
         return carreraRepository.findAllByOrderByActivoDescNombreAsc();
     }
 
-    /** Busca por id validando que pertenezca al tenant actual. */
+    // Busca por id validando que pertenezca al tenant actual.
     @Transactional(readOnly = true)
     public Carrera buscarPorId(Long id) {
         Long tenantId = TenantContext.getRequired();
@@ -116,7 +116,7 @@ public class CarreraService {
         log.info("Carrera dada de baja: id={}", id);
     }
 
-    /** Reactiva una carrera previamente dada de baja. */
+    // Reactiva una carrera previamente dada de baja.
     @Transactional
     public void darDeAlta(Long id) {
         Carrera c = buscarPorId(id);

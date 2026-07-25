@@ -8,12 +8,12 @@ package edu.cent35.asistencias.model;
  */
 public enum EstadoConsentimiento {
 
-    /** El docente nunca otorgo consentimiento (no hay filas para el). */
+    // El docente nunca otorgo consentimiento (no hay filas para el).
     NUNCA_OTORGADO,
 
-    /** Hay un consentimiento vigente: {@code fecha_revocacion IS NULL}. */
+    // Hay un consentimiento vigente: {@code fecha_revocacion IS NULL}.
     ACTIVO,
 
-    /** El consentimiento mas reciente fue revocado por el docente o el admin. */
+    // El consentimiento mas reciente fue revocado por el docente o el admin.
     REVOCADO
 }

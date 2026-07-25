@@ -69,7 +69,7 @@ public class ConsentimientoBiometrico {
     @Column(nullable = false, length = 20)
     private MetodoConsentimiento metodo;
 
-    /** Opcional: URL/ruta a un PDF escaneado del documento firmado. */
+    // Opcional: URL/ruta a un PDF escaneado del documento firmado.
     @Column(name = "documento_url", length = 255)
     private String documentoUrl;
 
@@ -80,11 +80,11 @@ public class ConsentimientoBiometrico {
     @Column(name = "fecha_consentimiento", nullable = false)
     private LocalDateTime fechaConsentimiento;
 
-    /** Null si esta vigente. */
+    // Null si esta vigente.
     @Column(name = "fecha_revocacion")
     private LocalDateTime fechaRevocacion;
 
-    /** Atajo: {@code true} si {@code fechaRevocacion == null}. */
+    // Atajo: {@code true} si {@code fechaRevocacion == null}.
     @Column(nullable = false)
     @Builder.Default
     private Boolean vigente = true;

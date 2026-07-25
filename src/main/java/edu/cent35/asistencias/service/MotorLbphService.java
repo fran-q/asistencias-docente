@@ -126,7 +126,7 @@ public class MotorLbphService {
         return out.toByteArray();
     }
 
-    /** Descomprime gzip. Inverso de {@link #comprimir(byte[])}. */
+    // Descomprime gzip. Inverso de {@link #comprimir(byte[])}.
     private byte[] descomprimir(byte[] comprimido) {
         try (GZIPInputStream gz = new GZIPInputStream(new ByteArrayInputStream(comprimido))) {
             return gz.readAllBytes();

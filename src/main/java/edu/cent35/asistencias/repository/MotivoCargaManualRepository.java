@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface MotivoCargaManualRepository extends JpaRepository<MotivoCargaManual, Short> {
 
-    /** Motivos activos para mostrar en el selector del form. */
+    // Motivos activos para mostrar en el selector del form.
     List<MotivoCargaManual> findByActivoTrueOrderByDescripcionAsc();
 }

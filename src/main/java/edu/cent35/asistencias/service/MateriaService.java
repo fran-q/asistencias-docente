@@ -68,13 +68,13 @@ public class MateriaService {
         return m;
     }
 
-    /** Docentes activos del tenant para el selector de "Titular". */
+    // Docentes activos del tenant para el selector de "Titular".
     @Transactional(readOnly = true)
     public List<Docente> docentesActivosParaSelector() {
         return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
     }
 
-    /** Lista las carreras activas del tenant para selectores de UI. */
+    // Lista las carreras activas del tenant para selectores de UI.
     @Transactional(readOnly = true)
     public List<Carrera> carrerasActivasParaSelector() {
         return carreraRepository.findByActivoTrueOrderByNombreAsc();
@@ -202,7 +202,7 @@ public class MateriaService {
         return d;
     }
 
-    /** Obtiene la carrera validando que pertenezca al tenant actual. */
+    // Obtiene la carrera validando que pertenezca al tenant actual.
     private Carrera obtenerCarreraValidada(Long carreraId, Long tenantId) {
         Carrera c = carreraRepository.findById(carreraId)
             .orElseThrow(() -> new IllegalArgumentException("La carrera seleccionada no existe."));

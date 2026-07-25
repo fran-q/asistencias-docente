@@ -41,7 +41,7 @@ public class UsuarioService {
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
 
-    /** Lista los usuarios de la institucion actual (activos + inactivos, ordenados). */
+    // Lista los usuarios de la institucion actual (activos + inactivos, ordenados).
     @Transactional(readOnly = true)
     public List<Usuario> listarMiInstitucion() {
         Long tenantId = TenantContext.getRequired();
@@ -153,7 +153,7 @@ public class UsuarioService {
         return saved;
     }
 
-    /** Resetea la contrasena de un usuario. Solo el superadmin puede hacerlo. */
+    // Resetea la contrasena de un usuario. Solo el superadmin puede hacerlo.
     @Transactional
     public void resetearPassword(Long id, String passwordPlanoNuevo) {
         Usuario u = buscarPorId(id);
@@ -162,7 +162,7 @@ public class UsuarioService {
         log.info("Password reseteado para usuario id={}, username={}", u.getId(), u.getUsername());
     }
 
-    /** Verifica que el usuario pertenezca al tenant actual; defensa en profundidad. */
+    // Verifica que el usuario pertenezca al tenant actual; defensa en profundidad.
     private void ensureMismoTenant(Usuario u) {
         Long tenantId = TenantContext.getRequired();
         if (!tenantId.equals(u.getInstitucionId())) {

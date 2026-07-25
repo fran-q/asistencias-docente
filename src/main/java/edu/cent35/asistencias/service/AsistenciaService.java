@@ -325,13 +325,13 @@ public class AsistenciaService {
         return guardada;
     }
 
-    /** Motivos activos para el selector del form de carga manual. */
+    // Motivos activos para el selector del form de carga manual.
     @Transactional(readOnly = true)
     public List<MotivoCargaManual> motivosActivos() {
         return motivoCargaManualRepository.findByActivoTrueOrderByDescripcionAsc();
     }
 
-    /** Indica si la asistencia ya tiene justificación adjunta. */
+    // Indica si la asistencia ya tiene justificación adjunta.
     @Transactional(readOnly = true)
     public boolean tieneJustificacion(Long asistenciaId) {
         return justificacionAusenciaRepository.findByAsistenciaId(asistenciaId).isPresent();
@@ -463,7 +463,7 @@ public class AsistenciaService {
         return elegido;
     }
 
-    /** Distancia absoluta en minutos entre dos horas del mismo día. */
+    // Distancia absoluta en minutos entre dos horas del mismo día.
     private long minutosHasta(LocalTime desde, LocalTime hasta) {
         return Math.abs(java.time.Duration.between(desde, hasta).toMinutes());
     }
@@ -526,11 +526,11 @@ public class AsistenciaService {
         return d;
     }
 
-    /** Reloj inyectable para futuros tests (Clock.systemDefaultZone() por default). */
+    // Reloj inyectable para futuros tests (Clock.systemDefaultZone() por default).
     @SuppressWarnings("unused")
     private Clock clock = Clock.systemDefaultZone();
 
-    /** Formato de fecha para los mensajes que ve el usuario (dd/MM/yyyy). */
+    // Formato de fecha para los mensajes que ve el usuario (dd/MM/yyyy).
     private static final DateTimeFormatter FORMATO_FECHA =
         DateTimeFormatter.ofPattern("dd/MM/yyyy");
 }

@@ -49,7 +49,7 @@ public class Horario {
     @JoinColumn(name = "comision_id", nullable = false)
     private Comision comision;
 
-    /** 1=Lunes ... 7=Domingo (ISO 8601). Persistido como TINYINT. */
+    // 1=Lunes ... 7=Domingo (ISO 8601). Persistido como TINYINT.
     @Column(name = "dia_semana", nullable = false)
     private Byte diaSemana;
 
@@ -73,7 +73,7 @@ public class Horario {
     @Builder.Default
     private Boolean activo = true;
 
-    /** Helper de conveniencia: devuelve el enum DiaSemana correspondiente. */
+    // Helper de conveniencia: devuelve el enum DiaSemana correspondiente.
     public DiaSemana getDia() {
         return diaSemana == null ? null : DiaSemana.fromNumero(diaSemana);
     }

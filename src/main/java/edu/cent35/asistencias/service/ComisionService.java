@@ -74,7 +74,7 @@ public class ComisionService {
         return c;
     }
 
-    /** Docentes activos del tenant - para el selector del form. */
+    // Docentes activos del tenant - para el selector del form.
     @Transactional(readOnly = true)
     public List<Docente> docentesActivosParaSelector() {
         return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();

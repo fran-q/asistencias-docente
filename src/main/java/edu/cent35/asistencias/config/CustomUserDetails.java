@@ -12,17 +12,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Implementacion de Spring Security {@link UserDetails} que adicionalmente
- * expone el {@code institucionId} del usuario logueado.
- * <p>
- * Lo usa {@link CustomUserDetailsService} para construir el principal
- * que vive en la {@code SecurityContext}, y
- * {@link edu.cent35.asistencias.config.TenantInterceptor}
- * lo lee en cada request para popular el {@code TenantContext}.
- * <p>
- * El rol del usuario se mapea a una autoridad de Spring Security con el
- * prefijo {@code ROLE_} (convencion estandar): {@code ROLE_ADMIN},
- * {@code ROLE_INSTITUCION}.
+ * Principal de Spring Security que además del username expone el institucionId, que es lo
+ * que TenantInterceptor lee en cada request para armar el TenantContext. El rol se mapea a
+ * una autoridad con el prefijo estándar ROLE_ (ROLE_ADMIN, ROLE_INSTITUCION).
  */
 @Getter
 public class CustomUserDetails implements UserDetails {
@@ -47,11 +39,13 @@ public class CustomUserDetails implements UserDetails {
         );
     }
 
+    // Spring Security compara contra este hash BCrypt al autenticar.
     @Override
     public String getPassword() {
         return passwordHash;
     }
 
+    // Un usuario dado de baja queda inhabilitado por las cuatro vías a la vez.
     @Override public boolean isAccountNonExpired()      { return activo; }
     @Override public boolean isAccountNonLocked()       { return activo; }
     @Override public boolean isCredentialsNonExpired()  { return activo; }

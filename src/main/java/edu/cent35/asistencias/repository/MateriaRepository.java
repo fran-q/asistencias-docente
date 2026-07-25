@@ -11,10 +11,10 @@ import java.util.Optional;
 @Repository
 public interface MateriaRepository extends JpaRepository<Materia, Long> {
 
-    /** Lista todas las materias del tenant (filtro Hibernate aplicado). */
+    // Lista todas las materias del tenant (filtro Hibernate aplicado).
     List<Materia> findAllByOrderByActivoDescNombreAsc();
 
-    /** Lista las materias de una carrera (filtro tenant aplicado por estar la carrera misma filtrada). */
+    // Lista las materias de una carrera (filtro tenant aplicado por estar la carrera misma filtrada).
     List<Materia> findByCarreraIdOrderByActivoDescNombreAsc(Long carreraId);
 
     Optional<Materia> findByCodigo(String codigo);
@@ -23,9 +23,9 @@ public interface MateriaRepository extends JpaRepository<Materia, Long> {
 
     long countByCarreraIdAndActivoTrue(Long carreraId);
 
-    /** Solo materias activas, ordenadas por nombre. Para selectores de UI. */
+    // Solo materias activas, ordenadas por nombre. Para selectores de UI.
     List<Materia> findByActivoTrueOrderByNombreAsc();
 
-    /** Cuenta materias activas donde un docente es titular - para bloquear su baja. */
+    // Cuenta materias activas donde un docente es titular - para bloquear su baja.
     long countByDocenteTitularIdAndActivoTrue(Long docenteId);
 }

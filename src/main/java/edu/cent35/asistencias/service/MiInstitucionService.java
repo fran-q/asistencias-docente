@@ -67,7 +67,7 @@ public class MiInstitucionService {
         return saved;
     }
 
-    /** Convierte strings vacios o whitespace a null para mantener limpio el dato. */
+    // Convierte strings vacios o whitespace a null para mantener limpio el dato.
     private static String blankToNull(String s) {
         if (s == null) return null;
         String trimmed = s.trim();

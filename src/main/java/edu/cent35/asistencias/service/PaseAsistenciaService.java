@@ -75,7 +75,7 @@ public class PaseAsistenciaService {
             claseLabel);
     }
 
-    /** Construye un label legible para la clase: "Comisión A - Matemática (18:00-20:00)". */
+    // Construye un label legible para la clase: "Comisión A - Matemática (18:00-20:00)".
     private String armarClaseLabel(Asistencia a) {
         Horario h = a.getHorario();
         Materia m = a.getComision().getMateria();

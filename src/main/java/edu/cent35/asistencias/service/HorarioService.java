@@ -19,18 +19,10 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Operaciones sobre los horarios semanales de las comisiones. Cubre RF-14.
- * <p>
- * Validaciones de negocio:
- * <ul>
- *   <li>La comision debe pertenecer al tenant actual.</li>
- *   <li>Al crear, la comision debe estar activa.</li>
- *   <li>{@code horaFin > horaInicio}.</li>
- *   <li>{@code 0 <= toleranciaMin <= 120}.</li>
- *   <li>{@code vigenteHasta >= vigenteDesde} (si se proveyo).</li>
- *   <li>No superposicion de franjas dentro de la misma comision en el
- *       mismo dia (chequeado contra {@code findSolapamientos}).</li>
- * </ul>
+ * Gestiona las franjas horarias semanales de cada comisión (RF-14): alta, edición,
+ * baja y reactivación. Valida que la comisión sea del tenant actual, que la hora de
+ * fin sea posterior a la de inicio y que la franja no se superponga con otra de la
+ * misma comisión el mismo día.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,18 +34,14 @@ public class HorarioService {
     private final HorarioRepository horarioRepository;
     private final ComisionRepository comisionRepository;
 
+    // Lista los horarios del tenant actual, recorriendo sus comisiones (TD-003).
     @Transactional(readOnly = true)
     public List<Horario> listar() {
-        // Hay que usar query con JOIN explicito por tenant (TD-003)
         Long tenantId = TenantContext.getRequired();
-        // Como Horario no tiene query custom de tenant, listamos via las comisiones del tenant
-        // y unimos sus horarios. Mas simple: una query JPQL ad-hoc.
-        // Por ahora usamos una iteracion via comisiones del tenant (es eficiente para nuestro
-        // volumen: pocas comisiones, pocos horarios cada una).
         List<Comision> comisiones = comisionRepository.findAllDelTenant(tenantId);
         return comisiones.stream()
             .flatMap(c -> {
-                // touch para inicializar lazy
+                // Touch para inicializar los lazy antes de que los use el template.
                 if (c.getMateria() != null) {
                     c.getMateria().getCodigo();
                     if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
@@ -63,19 +51,20 @@ public class HorarioService {
             .toList();
     }
 
+    // Busca un horario del tenant actual; responde "no encontrado" si es de otra institución.
     @Transactional(readOnly = true)
     public Horario buscarPorId(Long id) {
         Long tenantId = TenantContext.getRequired();
         Horario h = horarioRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Horario no encontrado: " + id));
-        // Validar tenant via comision -> materia
+        // El tenant del horario se deduce por su cadena comision -> materia.
         if (h.getComision() == null
                 || h.getComision().getMateria() == null
                 || !tenantId.equals(h.getComision().getMateria().getInstitucionId())) {
             log.warn("Cross-tenant blocked: tenant {} intento acceder horario id={}", tenantId, id);
             throw new EntityNotFoundException("Horario no encontrado");
         }
-        // Touch para que el template pueda renderizar comision/materia
+        // Touch para que el template pueda renderizar comisión y materia.
         h.getComision().getCodigo();
         h.getComision().getMateria().getCodigo();
         if (h.getComision().getMateria().getCarrera() != null) {
@@ -84,6 +73,7 @@ public class HorarioService {
         return h;
     }
 
+    // Crea una franja en una comisión activa, validando horas, tolerancia, vigencia y solapamiento.
     @Transactional
     public Horario crear(Long comisionId, DiaSemana dia, LocalTime horaInicio, LocalTime horaFin,
                          Short toleranciaMin, LocalDate vigenteDesde, LocalDate vigenteHasta) {
@@ -122,6 +112,7 @@ public class HorarioService {
         return saved;
     }
 
+    // Modifica una franja existente y vuelve a correr todas las validaciones de alta.
     @Transactional
     public Horario actualizar(Long id, Long comisionId, DiaSemana dia,
                               LocalTime horaInicio, LocalTime horaFin, Short toleranciaMin,
@@ -154,6 +145,7 @@ public class HorarioService {
         return saved;
     }
 
+    // Desactiva un horario sin borrarlo, para no perder las asistencias que lo referencian.
     @Transactional
     public void darDeBaja(Long id) {
         Horario h = buscarPorId(id);
@@ -165,6 +157,7 @@ public class HorarioService {
         log.info("Horario dado de baja: id={}", id);
     }
 
+    // Reactiva un horario, revalidando que no se solape con otro creado mientras estaba de baja.
     @Transactional
     public void darDeAlta(Long id) {
         Horario h = buscarPorId(id);
@@ -175,8 +168,6 @@ public class HorarioService {
             throw new IllegalArgumentException(
                 "La comisión de este horario está inactiva. Reactivala primero.");
         }
-        // Al reactivar, volver a chequear que no haya solapamiento (puede haberse creado uno
-        // mientras estaba dado de baja)
         validarSinSolapamiento(h.getComision().getId(), h.getDia(),
                                h.getHoraInicio(), h.getHoraFin(), id);
         h.setActivo(true);
@@ -188,6 +179,7 @@ public class HorarioService {
     //  Validaciones privadas
     // ============================================================
 
+    // Trae una comisión asegurando que sea del tenant actual.
     private Comision obtenerComisionValidada(Long comisionId, Long tenantId) {
         Comision c = comisionRepository.findById(comisionId)
             .orElseThrow(() -> new IllegalArgumentException("La comisión seleccionada no existe."));
@@ -195,12 +187,13 @@ public class HorarioService {
             log.warn("Cross-tenant blocked: tenant {} intento usar comision id={}", tenantId, comisionId);
             throw new IllegalArgumentException("La comisión seleccionada no existe.");
         }
-        // Touch
+        // Touch para inicializar los lazy.
         c.getMateria().getCodigo();
         if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
         return c;
     }
 
+    // Exige ambas horas y que la de fin sea posterior a la de inicio.
     private void validarHoras(LocalTime inicio, LocalTime fin) {
         if (inicio == null || fin == null) {
             throw new IllegalArgumentException("Hora de inicio y de fin son obligatorias.");
@@ -211,14 +204,16 @@ public class HorarioService {
         }
     }
 
+    // Acepta null (se guarda 15 por defecto) o un valor entre 0 y 120 minutos.
     private void validarTolerancia(Short toleranciaMin) {
-        if (toleranciaMin == null) return;   // se acepta null y se default-ea a 15 al persistir
+        if (toleranciaMin == null) return;
         if (toleranciaMin < 0 || toleranciaMin > MAX_TOLERANCIA_MIN) {
             throw new IllegalArgumentException(
                 "La tolerancia debe estar entre 0 y " + MAX_TOLERANCIA_MIN + " minutos.");
         }
     }
 
+    // Exige fecha de inicio de vigencia y que la de fin no sea anterior.
     private void validarVigencia(LocalDate desde, LocalDate hasta) {
         if (desde == null) {
             throw new IllegalArgumentException("La fecha de inicio de vigencia es obligatoria.");
@@ -229,10 +224,7 @@ public class HorarioService {
         }
     }
 
-    /**
-     * Verifica que no haya superposicion de franjas en la misma comision/dia.
-     * Si hay, lanza IllegalArgumentException con detalle del conflicto.
-     */
+    // Rechaza la franja si pisa a otra de la misma comisión el mismo día.
     private void validarSinSolapamiento(Long comisionId, DiaSemana dia,
                                         LocalTime inicio, LocalTime fin, Long excludeId) {
         Byte diaNum = dia == null ? null : dia.getNumero();

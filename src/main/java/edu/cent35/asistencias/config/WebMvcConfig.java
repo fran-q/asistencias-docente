@@ -9,11 +9,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Configuracion de Spring MVC.
- * <p>
- * Registra el {@link TenantInterceptor} para que corra en cada request
- * HTTP, seteando el {@link edu.cent35.asistencias.config.TenantContext}
- * a partir del usuario autenticado.
+ * Configuración de Spring MVC. Registra el TenantInterceptor para que corra en cada request
+ * y publique el tenant del usuario autenticado, salteando los estáticos y actuator.
  */
 @Configuration
 @RequiredArgsConstructor
@@ -21,6 +18,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final TenantInterceptor tenantInterceptor;
 
+    // Aplica el interceptor a todo salvo estáticos y actuator, que no necesitan tenant.
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tenantInterceptor)

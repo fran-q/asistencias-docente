@@ -67,11 +67,11 @@ public class ModeloFacial {
     @Column(name = "embedding_cifrado", nullable = false)
     private byte[] embeddingCifrado;
 
-    /** Algoritmo usado. En Sprint 4: {@code "LBPH"}. */
+    // Algoritmo usado. En Sprint 4: {@code "LBPH"}.
     @Column(nullable = false, length = 50)
     private String algoritmo;
 
-    /** Versión del algoritmo / librería. Ej.: la versión de OpenCV. */
+    // Versión del algoritmo / librería. Ej.: la versión de OpenCV.
     @Column(name = "version_algoritmo", nullable = false, length = 20)
     private String versionAlgoritmo;
 
@@ -98,7 +98,7 @@ public class ModeloFacial {
     @Column(name = "fecha_registro", nullable = false, updatable = false)
     private LocalDateTime fechaRegistro;
 
-    /** Null mientras el modelo está activo; se completa al darlo de baja. */
+    // Null mientras el modelo está activo; se completa al darlo de baja.
     @Column(name = "fecha_baja")
     private LocalDateTime fechaBaja;
 }

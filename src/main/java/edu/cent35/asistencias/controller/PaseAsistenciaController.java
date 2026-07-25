@@ -31,7 +31,7 @@ public class PaseAsistenciaController {
 
     private final PaseAsistenciaService paseAsistenciaService;
 
-    /** Pantalla del pase: webcam + loop de reconocimiento + marca automática. */
+    // Pantalla del pase: webcam + loop de reconocimiento + marca automática.
     @GetMapping
     public String pantalla() {
         return "asistencia/pase";
@@ -54,7 +54,7 @@ public class PaseAsistenciaController {
         return paseAsistenciaService.pasar(imagen);
     }
 
-    /** Convierte un data URL base64 en los bytes de la imagen. */
+    // Convierte un data URL base64 en los bytes de la imagen.
     private static byte[] decodificarDataUrl(String dataUrl) {
         if (dataUrl == null || dataUrl.isBlank()) {
             throw new IllegalArgumentException("data URL vacío");

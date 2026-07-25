@@ -41,10 +41,10 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
 
     long countByMateriaIdAndActivoTrue(Long materiaId);
 
-    /** Cuenta comisiones activas asignadas a un docente - para bloquear su baja. */
+    // Cuenta comisiones activas asignadas a un docente - para bloquear su baja.
     long countByDocenteAsignadoIdAndActivoTrue(Long docenteId);
 
-    /** Cuenta comisiones del tenant - chequea pertenencia via materia. */
+    // Cuenta comisiones del tenant - chequea pertenencia via materia.
     @Query("SELECT COUNT(c) FROM Comision c JOIN c.materia m WHERE c.id = :id")
     long countByIdEnTenant(@Param("id") Long id);
 

@@ -156,7 +156,7 @@ public class GeneradorAusenciasService {
         return creadas;
     }
 
-    /** Vigencia del horario en la fecha dada: desde <= fecha <= hasta (hasta nullable). */
+    // Vigencia del horario en la fecha dada: desde <= fecha <= hasta (hasta nullable).
     private boolean estaVigente(Horario h, LocalDate fecha) {
         if (h.getVigenteDesde() != null && fecha.isBefore(h.getVigenteDesde())) return false;
         return h.getVigenteHasta() == null || !fecha.isAfter(h.getVigenteHasta());

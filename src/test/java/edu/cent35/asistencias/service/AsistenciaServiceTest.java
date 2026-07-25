@@ -363,7 +363,7 @@ class AsistenciaServiceTest {
         return d;
     }
 
-    /** Horario lunes 18:00-20:00 con 15 min de tolerancia previa. */
+    // Horario lunes 18:00-20:00 con 15 min de tolerancia previa.
     private Horario horarioLunes18a20Tolerancia15(Docente docenteAsignado) {
         Materia materia = Materia.builder().id(MATERIA_ID).codigo("MAT").nombre("Matemática")
             .build();
@@ -382,7 +382,7 @@ class AsistenciaServiceTest {
             .build();
     }
 
-    /** Construye un LocalDateTime de un lunes (2026-05-25 fue lunes). */
+    // Construye un LocalDateTime de un lunes (2026-05-25 fue lunes).
     private LocalDateTime unLunesA(int hora, int minuto) {
         return LocalDate.of(2026, 5, 25).atTime(hora, minuto);
     }

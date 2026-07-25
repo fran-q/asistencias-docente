@@ -23,7 +23,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     Optional<Asistencia> findByDocenteIdAndHorarioIdAndFecha(
         Long docenteId, Long horarioId, LocalDate fecha);
 
-    /** Asistencias del día (en el tenant actual, gracias al @Filter). */
+    // Asistencias del día (en el tenant actual, gracias al @Filter).
     @Query("""
         SELECT a FROM Asistencia a
         JOIN FETCH a.docente d

@@ -50,7 +50,7 @@ public class IdentificacionFacialService {
     @Value("${app.biometria.umbral-confianza}")
     private double umbralConfianza;
 
-    /** Cache: modeloFacialId → recognizer ya cargado y listo para predict. */
+    // Cache: modeloFacialId → recognizer ya cargado y listo para predict.
     private final ConcurrentHashMap<Long, LBPHFaceRecognizer> cache = new ConcurrentHashMap<>();
 
     /**

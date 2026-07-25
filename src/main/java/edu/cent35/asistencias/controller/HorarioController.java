@@ -167,7 +167,7 @@ public class HorarioController {
         return "redirect:/horarios";
     }
 
-    /** Carga las comisiones disponibles + los días de semana en el modelo. */
+    // Carga las comisiones disponibles + los días de semana en el modelo.
     private void prepararDatosForm(Model model, Comision comisionActual) {
         List<Comision> opciones = new ArrayList<>(comisionService.comisionesActivasParaSelector());
         if (comisionActual != null && Boolean.FALSE.equals(comisionActual.getActivo())

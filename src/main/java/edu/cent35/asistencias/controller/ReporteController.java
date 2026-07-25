@@ -48,7 +48,7 @@ public class ReporteController {
     private final DocenteService docenteService;
     private final MateriaService materiaService;
 
-    /** Pantalla del reporte con filtros + tabla. */
+    // Pantalla del reporte con filtros + tabla.
     @GetMapping
     public String pantalla(
             @RequestParam(name = "desde", required = false)
@@ -88,7 +88,7 @@ public class ReporteController {
         return "reporte/asistencias";
     }
 
-    /** Descarga el reporte como CSV (UTF-8 con BOM para Excel). */
+    // Descarga el reporte como CSV (UTF-8 con BOM para Excel).
     @GetMapping("/csv")
     public void descargarCsv(
             @ModelAttribute ReporteFiltroDto filtro,
@@ -158,7 +158,7 @@ public class ReporteController {
         ));
     }
 
-    /** Escapa un campo CSV con separador ';' y comillas dobles (RFC 4180 con coma → ';'). */
+    // Escapa un campo CSV con separador ';' y comillas dobles (RFC 4180 con coma → ';').
     private static String csv(Object v) {
         if (v == null) return "";
         String s = String.valueOf(v);

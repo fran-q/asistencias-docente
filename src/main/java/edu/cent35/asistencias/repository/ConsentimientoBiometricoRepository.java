@@ -32,7 +32,7 @@ public interface ConsentimientoBiometricoRepository extends JpaRepository<Consen
      */
     Optional<ConsentimientoBiometrico> findTopByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
-    /** Historial completo del docente, ordenado del mas nuevo al mas viejo. */
+    // Historial completo del docente, ordenado del mas nuevo al mas viejo.
     List<ConsentimientoBiometrico> findByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
     /**
@@ -65,7 +65,7 @@ public interface ConsentimientoBiometricoRepository extends JpaRepository<Consen
     """)
     List<UltimoEstadoConsentimientoView> findUltimoEstadoPorDocenteEnTenant(@Param("tenantId") Long tenantId);
 
-    /** Proyeccion liviana para {@link #findUltimoEstadoPorDocenteEnTenant}. */
+    // Proyeccion liviana para {@link #findUltimoEstadoPorDocenteEnTenant}.
     interface UltimoEstadoConsentimientoView {
         Long getDocenteId();
         Boolean getVigente();

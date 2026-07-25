@@ -53,7 +53,7 @@ public class ReconocimientoController {
         return deteccionRostroService.detectar(imagen);
     }
 
-    /** Convierte un data URL base64 en los bytes de la imagen. */
+    // Convierte un data URL base64 en los bytes de la imagen.
     private static byte[] decodificarDataUrl(String dataUrl) {
         if (dataUrl == null || dataUrl.isBlank()) {
             throw new IllegalArgumentException("data URL vacío");

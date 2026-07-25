@@ -14,10 +14,10 @@ import java.util.List;
 @Repository
 public interface HorarioRepository extends JpaRepository<Horario, Long> {
 
-    /** Horarios de una comision, ordenados por dia y hora. */
+    // Horarios de una comision, ordenados por dia y hora.
     List<Horario> findByComisionIdOrderByDiaSemanaAscHoraInicioAsc(Long comisionId);
 
-    /** Cuenta horarios activos de una comision (para validar baja). */
+    // Cuenta horarios activos de una comision (para validar baja).
     long countByComisionIdAndActivoTrue(Long comisionId);
 
     /**

@@ -36,7 +36,7 @@ public class ComisionFormDto {
     @Min(value = 1, message = "El cupo debe ser un número positivo")
     private Integer cupo;
 
-    /** Opcional: docente asignado a la comisión. Null = sin asignar. */
+    // Opcional: docente asignado a la comisión. Null = sin asignar.
     private Long docenteAsignadoId;
 
     public static ComisionFormDto from(Comision c) {

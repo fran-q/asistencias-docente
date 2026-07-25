@@ -41,13 +41,13 @@ public class GrillaService {
     private final HorarioRepository horarioRepository;
     private final CarreraRepository carreraRepository;
 
-    /** Carreras activas del tenant para popular el selector. */
+    // Carreras activas del tenant para popular el selector.
     @Transactional(readOnly = true)
     public List<Carrera> carrerasActivasParaSelector() {
         return carreraRepository.findByActivoTrueOrderByNombreAsc();
     }
 
-    /** Construye la grilla con los horarios activos de una carrera. */
+    // Construye la grilla con los horarios activos de una carrera.
     @Transactional(readOnly = true)
     public GrillaSemanalDto cargarGrillaPara(Long carreraId) {
         Long tenantId = TenantContext.getRequired();
@@ -122,7 +122,7 @@ public class GrillaService {
         return slot;
     }
 
-    /** Etiquetas "07:00", "08:00", ... una cada 2 slots (cada hora completa). */
+    // Etiquetas "07:00", "08:00", ... una cada 2 slots (cada hora completa).
     private List<GrillaSemanalDto.HoraLabel> buildHoraLabels() {
         List<GrillaSemanalDto.HoraLabel> labels = new ArrayList<>();
         LocalTime t = GRID_INICIO;

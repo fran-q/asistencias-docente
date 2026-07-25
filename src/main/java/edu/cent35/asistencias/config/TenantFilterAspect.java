@@ -12,41 +12,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
- * Aspecto que activa el filtro de Hibernate {@code "tenant"} en cada
- * metodo transaccional de los modulos de aplicacion.
- * <p>
- * El filtro hace que toda query JPA contra entidades anotadas con
- * {@code @Filter(name = "tenant")} incluya automaticamente
- * {@code WHERE institucion_id = :institucionId}, usando el valor de
- * {@link TenantContext}.
- * <p>
- * <b>Cuando se ejecuta</b>: corre en cada metodo publico de los beans
- * anotados con {@code @Service} (donde vive la logica de negocio).
- * <p>
- * <b>Historia del pointcut (leccion aprendida, TD-007)</b>: originalmente
- * apuntaba a {@code edu.cent35.asistencias..application..*}, que era
- * correcto con la organizacion package-by-feature. Al reorganizar el
- * proyecto a package-by-layer (ADR-0006) los paquetes {@code application/}
- * desaparecieron y el pointcut dejo de coincidir con nada: el aspecto
- * quedo <b>silenciosamente inactivo</b> y la capa 1 de la defensa
- * multi-tenant murio sin que ningun test lo detectara (los tests son
- * unitarios con Mockito y no ejercitan Hibernate). Se cambio a un
- * pointcut por <b>anotacion</b> ({@code @Service}) en vez de por nombre
- * de paquete, justamente para que un futuro renombre de paquetes no lo
- * vuelva a romper.
- * <p>
- * Solo activa el filtro si:
- * <ol>
- *   <li>Hay una transaccion activa (lo controla Spring via
- *       {@link TransactionSynchronizationManager#isActualTransactionActive()}).</li>
- *   <li>Hay un tenant en {@link TenantContext}.</li>
- * </ol>
- * <p>
- * <b>Importante</b>: el orden de este aspecto es el default
- * ({@code LOWEST_PRECEDENCE}), de manera que corra <i>despues</i>
- * (mas interno) que el aspecto de {@code @Transactional} configurado
- * con menor precedencia en
- * {@link edu.cent35.asistencias.config.JpaConfig}.
+ * Activa el filtro de Hibernate "tenant" en los beans @Service, para que toda query contra
+ * entidades tenant-scoped agregue sola su WHERE institucion_id. El pointcut apunta a la
+ * anotación y no a un nombre de paquete, porque reorganizar los paquetes ya lo dejó
+ * silenciosamente inactivo una vez (TD-007, ver docs/TECH_DEBT.md).
  */
 @Aspect
 @Component
@@ -56,6 +25,7 @@ public class TenantFilterAspect {
     @PersistenceContext
     private EntityManager entityManager;
 
+    // Activa el filtro solo si hay transacción abierta y un tenant en contexto.
     @Before("@within(org.springframework.stereotype.Service)")
     public void activarFiltroTenant() {
         if (!TransactionSynchronizationManager.isActualTransactionActive()) {

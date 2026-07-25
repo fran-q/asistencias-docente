@@ -25,10 +25,10 @@ public class GrillaSemanalDto {
     LocalTime horaMax;        // hora maxima visible en la grilla (default 23:00)
     int totalSlots;           // cantidad de slots de 30 min entre horaMin y horaMax
 
-    /** Etiquetas de hora a mostrar en la columna izquierda (07:00, 08:00, ...). */
+    // Etiquetas de hora a mostrar en la columna izquierda (07:00, 08:00, ...).
     List<HoraLabel> labels;
 
-    /** Items posicionados en el grid. */
+    // Items posicionados en el grid.
     List<GrillaItem> items;
 
     @Value

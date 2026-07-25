@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface CarreraRepository extends JpaRepository<Carrera, Long> {
 
-    /** Listado ordenado por nombre, limitado al tenant via filtro Hibernate. */
+    // Listado ordenado por nombre, limitado al tenant via filtro Hibernate.
     List<Carrera> findAllByOrderByActivoDescNombreAsc();
 
     Optional<Carrera> findByCodigo(String codigo);
@@ -20,6 +20,6 @@ public interface CarreraRepository extends JpaRepository<Carrera, Long> {
 
     long countByActivoTrue();
 
-    /** Solo carreras activas, ordenadas por nombre. Para selectores de UI. */
+    // Solo carreras activas, ordenadas por nombre. Para selectores de UI.
     List<Carrera> findByActivoTrueOrderByNombreAsc();
 }

@@ -41,7 +41,7 @@ import static org.bytedeco.opencv.global.opencv_imgproc.resize;
 @Slf4j
 public class DeteccionRostroService {
 
-    /** Lado mínimo (px) de un rostro para considerarlo válido; descarta ruido. */
+    // Lado mínimo (px) de un rostro para considerarlo válido; descarta ruido.
     private static final int LADO_MINIMO_ROSTRO = 80;
 
     private CascadeClassifier clasificadorRostro;
@@ -186,7 +186,7 @@ public class DeteccionRostroService {
         }
     }
 
-    /** Devuelve el rectángulo de mayor área dentro del vector. */
+    // Devuelve el rectángulo de mayor área dentro del vector.
     private Rect rostroMasGrande(RectVector rostros) {
         Rect mayor = rostros.get(0);
         long areaMayor = (long) mayor.width() * mayor.height();

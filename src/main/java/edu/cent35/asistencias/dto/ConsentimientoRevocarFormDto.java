@@ -22,11 +22,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ConsentimientoRevocarFormDto {
 
-    /** Motivo opcional, texto libre (derecho ARCO). */
+    // Motivo opcional, texto libre (derecho ARCO).
     @Size(max = 500, message = "El motivo no puede superar los 500 caracteres")
     private String motivo;
 
-    /** Confirmacion explicita: misma salvaguarda que en el otorgamiento. */
+    // Confirmacion explicita: misma salvaguarda que en el otorgamiento.
     @AssertTrue(message = "Tenés que confirmar la revocación tildando la casilla")
     private boolean confirmaRevocacion;
 }

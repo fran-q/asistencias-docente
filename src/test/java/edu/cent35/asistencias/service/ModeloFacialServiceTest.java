@@ -270,7 +270,7 @@ class ModeloFacialServiceTest {
         return List.of(arr);
     }
 
-    /** Stub de RostroExtraido con un Mat vacío. El servicio no inspecciona la imagen. */
+    // Stub de RostroExtraido con un Mat vacío. El servicio no inspecciona la imagen.
     private DeteccionRostroService.RostroExtraido rostroExtraidoValido() {
         return new DeteccionRostroService.RostroExtraido(new Mat(), 0, 0, 200, 200);
     }

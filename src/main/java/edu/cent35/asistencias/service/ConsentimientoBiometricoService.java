@@ -68,7 +68,7 @@ public class ConsentimientoBiometricoService {
             .orElse(EstadoConsentimiento.NUNCA_OTORGADO);
     }
 
-    /** Consentimiento vigente del docente, si existe. */
+    // Consentimiento vigente del docente, si existe.
     @Transactional(readOnly = true)
     public Optional<ConsentimientoBiometrico> vigenteDe(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -97,7 +97,7 @@ public class ConsentimientoBiometricoService {
         return resultado;
     }
 
-    /** Historial completo del docente (del mas nuevo al mas viejo). */
+    // Historial completo del docente (del mas nuevo al mas viejo).
     @Transactional(readOnly = true)
     public List<ConsentimientoBiometrico> historialDe(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);

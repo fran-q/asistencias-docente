@@ -13,23 +13,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 /**
- * Setea el {@link TenantContext} al inicio de cada request HTTP a partir
- * del usuario autenticado (si lo hay), y lo limpia al finalizar.
- * <p>
- * Tambien populariza el MDC con {@code tenantId} y {@code userId} para
- * que los logs traceen automaticamente a quien correspondia cada accion
- * (RNF-10 sobre trazabilidad multi-tenant).
- * <p>
- * <b>Importante</b>: este interceptor corre incluso para endpoints
- * publicos (ej: {@code /login}), pero solo setea el contexto si hay
- * un {@link CustomUserDetails} en la {@code SecurityContext}. Para
- * requests anonimos, los campos quedan en N/A y el filtro de Hibernate
- * no se activa.
+ * Setea el TenantContext al inicio de cada request a partir del usuario autenticado y lo
+ * limpia al terminar, además de dejar tenantId y userId en el MDC para que los logs sean
+ * trazables (RNF-10). Corre también en endpoints públicos como /login, pero ahí no hay
+ * principal y el filtro de Hibernate simplemente no se activa.
  */
 @Component
 @Slf4j
 public class TenantInterceptor implements HandlerInterceptor {
 
+    // Antes del controller: si hay usuario logueado, publica su tenant e id en contexto y MDC.
     @Override
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
@@ -48,6 +41,7 @@ public class TenantInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    // Al cerrar el request: limpia todo, porque el hilo vuelve al pool de Tomcat.
     @Override
     public void afterCompletion(HttpServletRequest request,
                                 HttpServletResponse response,

@@ -32,7 +32,7 @@ public class MateriaFormDto {
     @NotNull(message = "Hay que elegir una carrera")
     private Long carreraId;
 
-    /** Opcional: id del docente titular (puede ser null). */
+    // Opcional: id del docente titular (puede ser null).
     private Long docenteTitularId;
 
     public static MateriaFormDto from(Materia m) {

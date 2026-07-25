@@ -48,6 +48,13 @@ dependencies {
 	testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
+// El codigo fuente esta en UTF-8 (acentos y enies en comentarios y mensajes).
+// Java 21 ya usa UTF-8 por defecto, pero se fija explicitamente para que la
+// compilacion no dependa del locale de la maquina que buildea.
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }

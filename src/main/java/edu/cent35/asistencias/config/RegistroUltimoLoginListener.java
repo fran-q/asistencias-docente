@@ -11,20 +11,10 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
- * Sella {@code usuarios.ultimo_login} cada vez que alguien se autentica.
- * <p>
- * Escucha el {@link AuthenticationSuccessEvent} que publica Spring Security en
- * vez de engancharse a un {@code AuthenticationSuccessHandler} del form login:
- * asi no se toca la cadena de redireccion post-login y el sello queda
- * desacoplado de la configuracion de seguridad.
- * <p>
- * El evento se dispara una sola vez, en el login real. Los requests
- * siguientes viajan con la sesion ya establecida y no re-autentican, con lo
- * cual no vuelven a disparar el evento.
- * <p>
- * Es un dato de auditoria (RNF-10): si el UPDATE falla, se loguea y se sigue.
- * Nadie se queda sin poder entrar al sistema porque no se pudo escribir el
- * sello.
+ * Sella usuarios.ultimo_login cada vez que alguien se autentica (RNF-10). Escucha el evento
+ * de Spring Security en lugar de enganchar un AuthenticationSuccessHandler para no tocar la
+ * redirección post-login, y si el UPDATE falla solo lo registra: nadie se queda afuera del
+ * sistema porque no se pudo escribir un dato de auditoría.
  */
 @Component
 @RequiredArgsConstructor
@@ -33,9 +23,10 @@ public class RegistroUltimoLoginListener {
 
     private final UsuarioRepository usuarioRepository;
 
-    /** Reloj inyectable para tests (Clock.systemDefaultZone() por default). */
+    // Reloj inyectable para tests (Clock.systemDefaultZone() por default).
     private Clock clock = Clock.systemDefaultZone();
 
+    // Corre una sola vez por login real; los requests siguientes ya viajan con la sesión hecha.
     @EventListener
     public void registrarUltimoLogin(AuthenticationSuccessEvent evento) {
         Object principal = evento.getAuthentication().getPrincipal();
@@ -51,7 +42,7 @@ public class RegistroUltimoLoginListener {
         }
     }
 
-    /** Solo para tests: permite fijar el reloj. */
+    // Solo para tests: permite fijar el reloj.
     void setClock(Clock clock) {
         this.clock = clock;
     }

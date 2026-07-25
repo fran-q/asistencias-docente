@@ -12,32 +12,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Configuracion de Spring Security para autenticacion real (Sprint 1 Fase C).
- * <p>
- * Reemplaza el {@code InMemoryUserDetailsManager} provisorio del Sprint 0.
- * Spring Security autodetecta el {@link CustomUserDetailsService} declarado
- * en el modulo {@code shared.security} y lo usa para cargar usuarios desde
- * la tabla {@code usuarios}.
- * <p>
- * Provee:
- * <ul>
- *   <li>Form login en {@code /login} con redireccion a {@code /} al exito.</li>
- *   <li>Logout que limpia {@code JSESSIONID} y redirige a {@code /login?logout}.</li>
- *   <li>Recursos publicos: {@code /login}, {@code /css/**}, {@code /js/**},
- *       {@code /img/**}, {@code /webjars/**}, {@code /actuator/health}.</li>
- *   <li>Resto requiere autenticacion.</li>
- *   <li>BCrypt como {@link PasswordEncoder} (RNF-06).</li>
- * </ul>
- * <p>
- * El {@code TenantContext} se setea via
- * {@link edu.cent35.asistencias.config.TenantInterceptor}
- * en cada request autenticado.
+ * Configuración de Spring Security: form login en /login, logout que limpia la JSESSIONID,
+ * BCrypt como encoder (RNF-06) y acceso libre solo a los estáticos y al health. Todo lo
+ * demás exige autenticación, y el tenant lo publica después TenantInterceptor.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity   // habilita @PreAuthorize / @PostAuthorize en controllers y services
 public class SecurityConfig {
 
+    // Arma la cadena de filtros: qué es público, cómo se entra y cómo se sale.
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -69,6 +53,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    // BCrypt: las contraseñas nunca se guardan ni se comparan en texto plano (RNF-06).
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

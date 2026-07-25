@@ -25,7 +25,7 @@ import java.time.LocalTime;
 @Builder
 public class AsistenciaListItemDto {
 
-    /** {@code null} si es una fila AUSENTE calculada. */
+    // {@code null} si es una fila AUSENTE calculada.
     Long id;
 
     Long docenteId;
@@ -42,13 +42,13 @@ public class AsistenciaListItemDto {
     LocalTime horaFin;
 
     LocalDate fecha;
-    /** {@code null} si AUSENTE calculada. */
+    // {@code null} si AUSENTE calculada.
     LocalTime horaRegistrada;
 
     EstadoAsistencia estado;
-    /** {@code null} si AUSENTE calculada (no hay método). */
+    // {@code null} si AUSENTE calculada (no hay método).
     MetodoAsistencia metodo;
-    /** Sólo presente si {@code metodo == AUTOMATICO}. */
+    // Sólo presente si {@code metodo == AUTOMATICO}.
     BigDecimal confianza;
 
     public static AsistenciaListItemDto from(Asistencia a) {
@@ -98,7 +98,7 @@ public class AsistenciaListItemDto {
             .build();
     }
 
-    /** {@code true} si esta fila no se persistió (es AUSENTE calculada). */
+    // {@code true} si esta fila no se persistió (es AUSENTE calculada).
     public boolean isCalculada() {
         return id == null;
     }

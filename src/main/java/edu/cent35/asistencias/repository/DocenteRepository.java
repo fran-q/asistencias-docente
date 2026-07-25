@@ -11,10 +11,10 @@ import java.util.Optional;
 @Repository
 public interface DocenteRepository extends JpaRepository<Docente, Long> {
 
-    /** Todos los docentes del tenant, ordenados por apellido / nombre. */
+    // Todos los docentes del tenant, ordenados por apellido / nombre.
     List<Docente> findAllByOrderByActivoDescApellidoAscNombreAsc();
 
-    /** Solo docentes activos, para selectores de UI. */
+    // Solo docentes activos, para selectores de UI.
     List<Docente> findByActivoTrueOrderByApellidoAscNombreAsc();
 
     Optional<Docente> findByDni(String dni);

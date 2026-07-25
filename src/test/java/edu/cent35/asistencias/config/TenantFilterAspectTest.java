@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class TenantFilterAspectTest {
 
-    /** El mismo pointcut declarado en el aspecto. Debe mantenerse sincronizado. */
+    // El mismo pointcut declarado en el aspecto. Debe mantenerse sincronizado.
     private static final String POINTCUT = "@within(org.springframework.stereotype.Service)";
 
     @Test

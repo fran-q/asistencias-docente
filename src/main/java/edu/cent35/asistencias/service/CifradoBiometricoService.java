@@ -29,12 +29,12 @@ public class CifradoBiometricoService {
         this.encryptor = Encryptors.stronger(clave, salt);
     }
 
-    /** Cifra datos en claro (ej. el modelo LBPH serializado). */
+    // Cifra datos en claro (ej. el modelo LBPH serializado).
     public byte[] cifrar(byte[] datosEnClaro) {
         return encryptor.encrypt(datosEnClaro);
     }
 
-    /** Descifra datos previamente cifrados con {@link #cifrar(byte[])}. */
+    // Descifra datos previamente cifrados con {@link #cifrar(byte[])}.
     public byte[] descifrar(byte[] datosCifrados) {
         return encryptor.decrypt(datosCifrados);
     }

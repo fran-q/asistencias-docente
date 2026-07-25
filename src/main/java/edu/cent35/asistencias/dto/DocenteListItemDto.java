@@ -19,7 +19,7 @@ public class DocenteListItemDto {
     String telefono;
     LocalDate fechaAlta;
     boolean activo;
-    /** Estado del consentimiento biometrico (Sprint 3 Fase D). */
+    // Estado del consentimiento biometrico (Sprint 3 Fase D).
     EstadoConsentimiento estadoConsentimiento;
 
     public static DocenteListItemDto from(Docente d, EstadoConsentimiento estadoConsentimiento) {

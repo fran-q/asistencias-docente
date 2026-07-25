@@ -17,10 +17,10 @@ import java.util.Optional;
  */
 public interface ModeloFacialRepository extends JpaRepository<ModeloFacial, Long> {
 
-    /** Modelo facial activo de un docente, si tiene. Solo deberia haber uno. */
+    // Modelo facial activo de un docente, si tiene. Solo deberia haber uno.
     Optional<ModeloFacial> findByDocenteIdAndActivoTrue(Long docenteId);
 
-    /** Historial completo de modelos del docente, del más nuevo al más viejo. */
+    // Historial completo de modelos del docente, del más nuevo al más viejo.
     List<ModeloFacial> findByDocenteIdOrderByFechaRegistroDescIdDesc(Long docenteId);
 
     /**

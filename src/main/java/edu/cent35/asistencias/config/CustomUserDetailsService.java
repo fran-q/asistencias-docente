@@ -15,22 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Carga el {@link UserDetails} desde la tabla {@code usuarios}.
- * Reemplaza al {@code InMemoryUserDetailsManager} provisorio del Sprint 0.
- * <p>
- * <b>Resolucion del usuario por username</b>: como el username solo es
- * unico dentro de una institucion (UQ {@code institucion_id, username}),
- * podriamos tener colisiones globales. En la primera version del login
- * (Sprint 1) los seeds de prueba usan usernames distintivos por
- * institucion ({@code superadmin.cent35} vs {@code superadmin.utf}), de
- * modo que la busqueda global devuelve un unico usuario.
- * <p>
- * Si en el futuro habilitamos un selector de institucion en el login
- * para soportar usernames repetidos, este service evoluciona para
- * recibir tambien el {@code institucionId}.
- * <p>
- * Si la query devuelve >1 usuarios (colision global), el login falla con
- * mensaje generico para no filtrar la existencia de tenants distintos.
+ * Carga el usuario desde la tabla usuarios para que Spring Security lo autentique. Busca por
+ * username global aunque el username solo sea único por institución: si dos instituciones
+ * llegaran a repetirlo, el login falla con mensaje genérico en vez de elegir uno al azar, y
+ * la solución definitiva sería sumar un selector de institución en la pantalla de login.
  */
 @Service
 @RequiredArgsConstructor
@@ -39,6 +27,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
 
+    // Devuelve el principal, o falla con el mismo mensaje si no existe, hay ambigüedad o está inactivo.
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

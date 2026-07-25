@@ -43,7 +43,7 @@ public class DocenteService {
         return docenteRepository.findAllByOrderByActivoDescApellidoAscNombreAsc();
     }
 
-    /** Docentes activos para selectores. */
+    // Docentes activos para selectores.
     @Transactional(readOnly = true)
     public List<Docente> activosParaSelector() {
         return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();

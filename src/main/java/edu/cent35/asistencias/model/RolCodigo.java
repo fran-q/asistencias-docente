@@ -10,9 +10,9 @@ package edu.cent35.asistencias.model;
  */
 public enum RolCodigo {
 
-    /** Cuenta institucional - gestiona los administradores. */
+    // Cuenta institucional - gestiona los administradores.
     INSTITUCION,
 
-    /** Personal administrativo - opera el sistema dia a dia. */
+    // Personal administrativo - opera el sistema dia a dia.
     ADMIN
 }

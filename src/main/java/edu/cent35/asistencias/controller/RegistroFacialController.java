@@ -43,7 +43,7 @@ public class RegistroFacialController {
     private final ModeloFacialService modeloFacialService;
     private final ConsentimientoBiometricoService consentimientoService;
 
-    /** Pantalla de captura: webcam + N capturas del rostro. */
+    // Pantalla de captura: webcam + N capturas del rostro.
     @GetMapping("/registrar")
     public String pantallaRegistro(@PathVariable Long docenteId,
                                    Model model,

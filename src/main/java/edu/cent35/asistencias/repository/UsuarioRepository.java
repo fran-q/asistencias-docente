@@ -33,7 +33,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      */
     Optional<Usuario> findByUsernameAndInstitucionId(String username, Long institucionId);
 
-    /** Variante por email. */
+    // Variante por email.
     Optional<Usuario> findByEmailAndInstitucionId(String email, Long institucionId);
 
     /**
@@ -49,10 +49,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmailAndInstitucionId(String email, Long institucionId);
 
-    /** Lista los usuarios activos de una institucion. */
+    // Lista los usuarios activos de una institucion.
     List<Usuario> findByInstitucionIdAndActivoTrueOrderByApellidoAscNombreAsc(Long institucionId);
 
-    /** Lista todos los usuarios de una institucion (activos e inactivos). */
+    // Lista todos los usuarios de una institucion (activos e inactivos).
     List<Usuario> findByInstitucionIdOrderByActivoDescApellidoAscNombreAsc(Long institucionId);
 
     /**

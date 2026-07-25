@@ -12,9 +12,9 @@ package edu.cent35.asistencias.model;
  */
 public enum MetodoConsentimiento {
 
-    /** Firma manuscrita en papel; el admin carga el registro. */
+    // Firma manuscrita en papel; el admin carga el registro.
     ESCRITO,
 
-    /** Aceptacion digital del propio docente (Sprint 4+). */
+    // Aceptacion digital del propio docente (Sprint 4+).
     DIGITAL
 }

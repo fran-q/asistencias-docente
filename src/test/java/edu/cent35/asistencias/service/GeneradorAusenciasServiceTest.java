@@ -36,7 +36,7 @@ class GeneradorAusenciasServiceTest {
     private static final Long TENANT_A = 1L;
     private static final Long DOCENTE_ID = 50L;
     private static final Long HORARIO_ID = 60L;
-    /** Lunes (2026-05-25 fue lunes). */
+    // Lunes (2026-05-25 fue lunes).
     private static final LocalDate LUNES = LocalDate.of(2026, 5, 25);
 
     @Mock private InstitucionRepository institucionRepository;
@@ -148,7 +148,7 @@ class GeneradorAusenciasServiceTest {
 
     // ------------------------------------------------------------------------
 
-    /** Horario lunes 18:00-20:00 vigente, con docente activo asignado. */
+    // Horario lunes 18:00-20:00 vigente, con docente activo asignado.
     private Horario horarioLunes18a20() {
         Docente docente = Docente.builder()
             .id(DOCENTE_ID).dni("12345678").nombre("Juana").apellido("Pérez").activo(true)

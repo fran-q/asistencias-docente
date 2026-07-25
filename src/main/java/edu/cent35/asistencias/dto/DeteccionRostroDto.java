@@ -22,7 +22,7 @@ public record DeteccionRostroDto(
     String mensaje
 ) {
 
-    /** Atajo para construir un resultado sin rostro detectado. */
+    // Atajo para construir un resultado sin rostro detectado.
     public static DeteccionRostroDto sinRostro(String mensaje) {
         return new DeteccionRostroDto(false, 0, null, null, null, null, mensaje);
     }

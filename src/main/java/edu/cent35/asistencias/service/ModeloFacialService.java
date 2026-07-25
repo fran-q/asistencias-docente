@@ -61,22 +61,22 @@ public class ModeloFacialService {
     @Value("${app.biometria.intervalo-captura-ms}")
     private int intervaloCapturaMs;
 
-    /** Cuántos frames válidos como mínimo hace falta para entrenar. */
+    // Cuántos frames válidos como mínimo hace falta para entrenar.
     public int getMinimoCapturasValidas() {
         return minimoCapturasValidas;
     }
 
-    /** Duración (segundos) de la grabación que pide la UI. */
+    // Duración (segundos) de la grabación que pide la UI.
     public int getDuracionGrabacionSeg() {
         return duracionGrabacionSeg;
     }
 
-    /** Intervalo (ms) entre frames durante la grabación. */
+    // Intervalo (ms) entre frames durante la grabación.
     public int getIntervaloCapturaMs() {
         return intervaloCapturaMs;
     }
 
-    /** Modelo facial activo del docente, si tiene uno. */
+    // Modelo facial activo del docente, si tiene uno.
     @Transactional(readOnly = true)
     public Optional<ModeloFacial> modeloActivoDe(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -86,7 +86,7 @@ public class ModeloFacialService {
         return opt;
     }
 
-    /** {@code true} si el docente tiene un modelo facial activo. */
+    // {@code true} si el docente tiene un modelo facial activo.
     @Transactional(readOnly = true)
     public boolean tieneModeloActivo(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -241,7 +241,7 @@ public class ModeloFacialService {
         }
     }
 
-    /** Historial de modelos del docente, del más nuevo al más viejo. */
+    // Historial de modelos del docente, del más nuevo al más viejo.
     @Transactional(readOnly = true)
     public List<ModeloFacial> historialDe(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -265,7 +265,7 @@ public class ModeloFacialService {
         return d;
     }
 
-    /** Inicializa el lazy que la UI lee fuera de transacción (open-in-view=false). */
+    // Inicializa el lazy que la UI lee fuera de transacción (open-in-view=false).
     private void touchLazy(ModeloFacial m) {
         if (m.getRegistradoPor() != null) {
             m.getRegistradoPor().getUsername();

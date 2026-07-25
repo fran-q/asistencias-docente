@@ -83,7 +83,7 @@ public class Docente extends BaseTenantEntity {
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
 
-    /** Helper: nombre + apellido en un solo string. */
+    // Helper: nombre + apellido en un solo string.
     public String getNombreCompleto() {
         return apellido + ", " + nombre;
     }
