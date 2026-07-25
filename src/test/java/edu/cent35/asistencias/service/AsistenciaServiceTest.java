@@ -7,6 +7,8 @@ import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.model.MotivoCargaManual;
+import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,6 +48,7 @@ class AsistenciaServiceTest {
     private static final Long HORARIO_ID = 60L;
     private static final Long COMISION_ID = 70L;
     private static final Long MATERIA_ID = 80L;
+    private static final Long USUARIO_ID = 90L;
 
     @Mock private AsistenciaRepository asistenciaRepository;
     @Mock private HorarioRepository horarioRepository;
@@ -290,8 +294,66 @@ class AsistenciaServiceTest {
     }
 
     // ========================================================================
+    //  marcarManual: la fecha tiene que caer en el dia del horario
+    // ========================================================================
+
+    @Test
+    @DisplayName("marcarManual: rechaza una fecha que no cae en el dia del horario")
+    void marcarManual_rechazaFechaDeOtroDia() {
+        Docente docente = docenteActivoA();
+        Horario horarioDeLunes = horarioLunes18a20Tolerancia15(docente);
+        // 2026-05-30 fue sabado: el horario es de lunes, asi que no corresponde.
+        LocalDate unSabado = LocalDate.of(2026, 5, 30);
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findById(HORARIO_ID)).thenReturn(Optional.of(horarioDeLunes));
+
+        assertThatThrownBy(() -> service.marcarManual(
+                DOCENTE_ID, HORARIO_ID, unSabado, LocalTime.of(18, 5),
+                EstadoAsistencia.TARDE, (short) 1, null, USUARIO_ID))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Sábado")
+            .hasMessageContaining("Lunes");
+
+        // No se persiste nada si la fecha no corresponde.
+        verify(asistenciaRepository, never()).save(any());
+        verify(asistenciaManualRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("marcarManual: acepta la fecha cuando cae en el dia del horario")
+    void marcarManual_aceptaFechaDelMismoDia() {
+        Docente docente = docenteActivoA();
+        Horario horarioDeLunes = horarioLunes18a20Tolerancia15(docente);
+        LocalDate unLunes = LocalDate.of(2026, 5, 25);   // lunes, igual que el horario
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findById(HORARIO_ID)).thenReturn(Optional.of(horarioDeLunes));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, unLunes))
+            .thenReturn(Optional.empty());
+        when(motivoCargaManualRepository.findById((short) 1))
+            .thenReturn(Optional.of(motivoActivo()));
+        when(usuarioRepository.findById(USUARIO_ID)).thenReturn(Optional.of(new Usuario()));
+        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Asistencia guardada = service.marcarManual(
+            DOCENTE_ID, HORARIO_ID, unLunes, LocalTime.of(18, 5),
+            EstadoAsistencia.TARDE, (short) 1, null, USUARIO_ID);
+
+        assertThat(guardada.getFecha()).isEqualTo(unLunes);
+        assertThat(guardada.getEstado()).isEqualTo(EstadoAsistencia.TARDE);
+        verify(asistenciaManualRepository).save(any());
+    }
+
+    // ========================================================================
     //  helpers
     // ========================================================================
+
+    private MotivoCargaManual motivoActivo() {
+        return MotivoCargaManual.builder()
+            .id((short) 1).codigo("FALLA_CAMARA").descripcion("Falla tecnica de la camara web")
+            .activo(true).build();
+    }
 
     private Docente docenteActivoA() {
         Docente d = Docente.builder()

@@ -3,6 +3,7 @@ package edu.cent35.asistencias.service;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.AsistenciaManual;
+import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
@@ -35,6 +36,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -225,6 +227,18 @@ public class AsistenciaService {
         }
         if (fecha == null || fecha.isAfter(java.time.LocalDate.now())) {
             throw new IllegalArgumentException("La fecha no puede ser futura.");
+        }
+        // La clase solo existe el dia de la semana en que esta programado el
+        // horario: si la fecha cae en otro dia, la marca seria inconsistente
+        // (ej. una clase de lunes registrada un sabado). Se valida aca porque
+        // en la carga manual la fecha la elige el admin a mano.
+        DiaSemana diaDelHorario = DiaSemana.fromNumero(horario.getDiaSemana());
+        DiaSemana diaDeLaFecha = DiaSemana.deLaFecha(fecha);
+        if (diaDelHorario != diaDeLaFecha) {
+            throw new IllegalArgumentException(
+                "El " + FORMATO_FECHA.format(fecha) + " cae " + diaDeLaFecha.getEtiqueta()
+                + " y el horario elegido es de " + diaDelHorario.getEtiqueta()
+                + ". Elegí una fecha que caiga un " + diaDelHorario.getEtiqueta() + ".");
         }
         if (asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(docenteId, horarioId, fecha)
                 .isPresent()) {
@@ -515,4 +529,8 @@ public class AsistenciaService {
     /** Reloj inyectable para futuros tests (Clock.systemDefaultZone() por default). */
     @SuppressWarnings("unused")
     private Clock clock = Clock.systemDefaultZone();
+
+    /** Formato de fecha para los mensajes que ve el usuario (dd/MM/yyyy). */
+    private static final DateTimeFormatter FORMATO_FECHA =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy");
 }
