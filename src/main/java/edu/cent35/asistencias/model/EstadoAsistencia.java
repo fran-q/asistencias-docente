@@ -10,10 +10,10 @@ package edu.cent35.asistencias.model;
  */
 public enum EstadoAsistencia {
 
-    // Marcó dentro de la ventana {@code [hora_inicio - tolerancia, hora_inicio]}.
+    // Marcó dentro de la ventana [hora_inicio - tolerancia, hora_inicio].
     PRESENTE,
 
-    // Marcó después de {@code hora_inicio} (se registra la hora exacta).
+    // Marcó después de hora_inicio (se registra la hora exacta).
     TARDE,
 
     // No marcó dentro del horario. Se calcula al listar o lo carga el admin manualmente.

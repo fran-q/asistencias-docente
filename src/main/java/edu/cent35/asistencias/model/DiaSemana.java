@@ -23,9 +23,13 @@ public enum DiaSemana {
         this.etiqueta = etiqueta;
     }
 
+    // Numero ISO del dia (1=Lunes, 7=Domingo), que es lo que se guarda en la columna.
     public byte getNumero()    { return numero; }
+
+    // Nombre para mostrar, con acento ("Miércoles", "Sábado").
     public String getEtiqueta() { return etiqueta; }
 
+    // Convierte el numero guardado en la base al valor del enum.
     public static DiaSemana fromNumero(byte n) {
         for (DiaSemana d : values()) {
             if (d.numero == n) return d;
@@ -33,11 +37,7 @@ public enum DiaSemana {
         throw new IllegalArgumentException("Dia de semana invalido: " + n);
     }
 
-    /**
-     * Dia de la semana en que cae una fecha. {@link LocalDate} numera los
-     * dias con el mismo criterio ISO 8601 que este enum (1=Lunes, 7=Domingo),
-     * asi que el mapeo es directo.
-     */
+    // Dia en que cae una fecha; LocalDate usa la misma numeracion ISO, asi que el mapeo es directo.
     public static DiaSemana deLaFecha(LocalDate fecha) {
         return fromNumero((byte) fecha.getDayOfWeek().getValue());
     }

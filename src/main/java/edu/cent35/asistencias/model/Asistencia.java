@@ -92,19 +92,13 @@ public class Asistencia extends BaseTenantEntity {
     @Column(nullable = false, length = 15)
     private MetodoAsistencia metodo;
 
-    // Sólo presente cuando {@code metodo == AUTOMATICO}.
+    // Sólo presente cuando metodo == AUTOMATICO.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "modelo_facial_id")
     private ModeloFacial modeloFacial;
 
-    /**
-     * Score de confianza del reconocimiento facial entre 0 y 1.
-     * Sólo presente cuando {@code metodo == AUTOMATICO}.
-     * <p>
-     * En LBPH el valor real es <i>distancia</i> (menor = mejor). Se convierte
-     * a un score 0-1 en el service para que sea coherente con otros métodos
-     * de reconocimiento que puedan agregarse en el futuro.
-     */
+    // Score 0-1 del reconocimiento, solo cuando la marca es AUTOMATICO. LBPH devuelve una
+    // distancia (menor = mejor) que el service convierte a score para no atarse al algoritmo.
     @Column(precision = 5, scale = 4)
     private BigDecimal confianza;
 

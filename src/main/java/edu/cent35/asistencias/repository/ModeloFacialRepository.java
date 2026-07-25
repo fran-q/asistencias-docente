@@ -23,11 +23,7 @@ public interface ModeloFacialRepository extends JpaRepository<ModeloFacial, Long
     // Historial completo de modelos del docente, del más nuevo al más viejo.
     List<ModeloFacial> findByDocenteIdOrderByFechaRegistroDescIdDesc(Long docenteId);
 
-    /**
-     * Modelos faciales activos de todos los docentes activos del tenant.
-     * Es la base de la identificación (Fase D): se compara una cara contra
-     * todos estos modelos.
-     */
+    // Modelos activos del tenant: es el universo contra el que se compara cada rostro.
     @Query("""
         SELECT m FROM ModeloFacial m
         JOIN FETCH m.docente d

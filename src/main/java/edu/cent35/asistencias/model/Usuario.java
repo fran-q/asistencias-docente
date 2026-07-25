@@ -55,18 +55,12 @@ public class Usuario extends BaseTenantEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Institucion del usuario (read-only desde JPA).
-     * El valor de {@code institucion_id} se gestiona via
-     * {@link BaseTenantEntity#setInstitucionId(Long)}.
-     */
+    // Institucion del usuario, de solo lectura: el id se maneja desde BaseTenantEntity.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "institucion_id", insertable = false, updatable = false)
     private Institucion institucion;
 
-    /**
-     * Rol del usuario (eager: lo necesitamos en cada check de seguridad).
-     */
+    // Rol del usuario; se trae eager porque hace falta en cada chequeo de seguridad.
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "rol_id", nullable = false)
     private Rol rol;

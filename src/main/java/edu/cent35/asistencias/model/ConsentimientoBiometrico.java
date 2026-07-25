@@ -73,10 +73,7 @@ public class ConsentimientoBiometrico {
     @Column(name = "documento_url", length = 255)
     private String documentoUrl;
 
-    /**
-     * Fecha en que el docente otorgo el consentimiento (puede ser
-     * anterior a {@code creadoEn} si el admin lo carga retroactivamente).
-     */
+    // Fecha en que el docente firmó; puede ser anterior a la carga si el admin la registra después.
     @Column(name = "fecha_consentimiento", nullable = false)
     private LocalDateTime fechaConsentimiento;
 
@@ -84,7 +81,7 @@ public class ConsentimientoBiometrico {
     @Column(name = "fecha_revocacion")
     private LocalDateTime fechaRevocacion;
 
-    // Atajo: {@code true} si {@code fechaRevocacion == null}.
+    // Atajo: true si fechaRevocacion == null.
     @Column(nullable = false)
     @Builder.Default
     private Boolean vigente = true;

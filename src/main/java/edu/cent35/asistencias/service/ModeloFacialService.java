@@ -22,15 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Registro del modelo biométrico facial de un docente (RF-08, RF-09).
- * <p>
- * Orquesta el pipeline de registro: valida que el docente tenga
- * consentimiento ACTIVO (ADR-0005), extrae el rostro de cada captura,
- * entrena el modelo LBPH, lo cifra y lo persiste. Soporta re-registro
- * (RF-09): el modelo anterior se da de baja, no se borra.
- * <p>
- * <b>Multi-tenant</b>: valida el docente contra el tenant actual (mismo
- * patrón que el resto de servicios sobre entidades hijas de Docente).
+ * Registra el modelo biométrico facial del docente (RF-08, RF-09): exige consentimiento
+ * ACTIVO, extrae el rostro de cada captura, entrena el LBPH, lo cifra y lo guarda. Al
+ * re-registrar el modelo viejo se da de baja en vez de borrarse, salvo en una supresión
+ * ARCO, que es el único caso donde el dato biométrico se elimina de verdad.
  */
 @Service
 @RequiredArgsConstructor
@@ -86,7 +81,7 @@ public class ModeloFacialService {
         return opt;
     }
 
-    // {@code true} si el docente tiene un modelo facial activo.
+    // true si el docente tiene un modelo facial activo.
     @Transactional(readOnly = true)
     public boolean tieneModeloActivo(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);

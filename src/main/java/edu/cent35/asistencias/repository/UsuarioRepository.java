@@ -14,39 +14,27 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio JPA de usuarios.
- * <p>
- * <b>IMPORTANTE</b>: en Fase B se activara el filtro de Hibernate por
- * tenant, lo que hara que <i>casi todos</i> los metodos {@code findXxx}
- * filtren automaticamente por la institucion del request actual.
- * <p>
- * Mientras tanto (Fase A), los metodos definidos a continuacion incluyen
- * <b>institucionId explicitamente</b> para evitar fugas entre tenants.
- * Cuando el filtro este activo podremos quitar el parametro y simplificar.
+ * Repositorio de usuarios. Aunque el filtro de Hibernate ya acota por institución, casi todos
+ * los métodos siguen recibiendo el institucionId de forma explícita: es la segunda capa de la
+ * defensa multi-tenant y no depende de que el filtro esté activo (ADR-0004).
  */
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    /**
-     * Busca un usuario por username dentro de una institucion.
-     * Util para el {@code UserDetailsService} de Spring Security.
-     */
+    // Busca por username dentro de una institucion concreta.
     Optional<Usuario> findByUsernameAndInstitucionId(String username, Long institucionId);
 
     // Variante por email.
     Optional<Usuario> findByEmailAndInstitucionId(String email, Long institucionId);
 
-    /**
-     * Busqueda global por username (sin tenant). Util en el login,
-     * cuando todavia no sabemos a que institucion pertenece.
-     * El username NO es unico globalmente (lo es por institucion),
-     * por eso devuelve lista. En el login resolvemos por institucion
-     * + username juntos cuando agreguemos el selector.
-     */
+    // Busqueda global para el login, cuando todavia no se sabe la institucion. Devuelve lista
+    // porque el username solo es unico dentro de cada institucion.
     List<Usuario> findByUsername(String username);
 
+    // Indica si el username ya está tomado en esa institución.
     boolean existsByUsernameAndInstitucionId(String username, Long institucionId);
 
+    // Indica si el email ya está tomado en esa institución.
     boolean existsByEmailAndInstitucionId(String email, Long institucionId);
 
     // Lista los usuarios activos de una institucion.
@@ -55,21 +43,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Lista todos los usuarios de una institucion (activos e inactivos).
     List<Usuario> findByInstitucionIdOrderByActivoDescApellidoAscNombreAsc(Long institucionId);
 
-    /**
-     * Cuenta cuantos usuarios con un rol especifico estan activos en una institucion.
-     * Se usa para evitar que la institucion se quede sin cuenta INSTITUCION
-     * (ej: la ultima cuenta INSTITUCION no puede desactivarse a si misma).
-     */
+    // Cuenta usuarios activos de un rol; evita que la institucion se quede sin cuenta INSTITUCION.
     long countByInstitucionIdAndRolCodigoAndActivoTrue(Long institucionId, String rolCodigo);
 
-    /**
-     * Sella la fecha/hora del ultimo login exitoso (dato de auditoria, RNF-10).
-     * <p>
-     * Se hace por <b>id</b> y no por username porque el username solo es unico
-     * dentro de una institucion. Lleva su propia transaccion porque lo dispara
-     * {@link edu.cent35.asistencias.config.RegistroUltimoLoginListener} durante
-     * el login, fuera de cualquier transaccion abierta.
-     */
+    // Sella el ultimo login exitoso (RNF-10). Va por id porque el username no es unico global, y
+    // lleva su propia transaccion porque el listener lo dispara fuera de una abierta.
     @Modifying
     @Transactional
     @Query("UPDATE Usuario u SET u.ultimoLogin = :momento WHERE u.id = :id")

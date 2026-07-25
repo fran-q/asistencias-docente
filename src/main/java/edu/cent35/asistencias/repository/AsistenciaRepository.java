@@ -16,10 +16,7 @@ import java.util.Optional;
  */
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
 
-    /**
-     * Asistencia ya registrada para el triple (docente, horario, fecha).
-     * Usado para garantizar idempotencia: si existe, no se vuelve a marcar.
-     */
+    // Marca ya existente para (docente, horario, fecha); es la base de la idempotencia.
     Optional<Asistencia> findByDocenteIdAndHorarioIdAndFecha(
         Long docenteId, Long horarioId, LocalDate fecha);
 
@@ -35,11 +32,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     """)
     List<Asistencia> findDelDia(@Param("fecha") LocalDate fecha);
 
-    /**
-     * Reporte de asistencias filtradas. Todos los filtros son opcionales
-     * salvo el rango de fechas. Trae las asociaciones necesarias para la
-     * fila del CSV.
-     */
+    // Filas del reporte: solo el rango de fechas es obligatorio, el resto de filtros son opcionales.
     @Query("""
         SELECT a FROM Asistencia a
         JOIN FETCH a.docente d

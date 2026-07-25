@@ -11,6 +11,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+/**
+ * Repositorio de franjas horarias, con las consultas que sostienen el pase de asistencia y la
+ * detección de superposiciones. El tenant viaja como parámetro porque se resuelve por JOIN.
+ */
 @Repository
 public interface HorarioRepository extends JpaRepository<Horario, Long> {
 
@@ -20,12 +24,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
     // Cuenta horarios activos de una comision (para validar baja).
     long countByComisionIdAndActivoTrue(Long comisionId);
 
-    /**
-     * Horarios activos de una carrera, para la grilla semanal.
-     * <p>
-     * Filtra explicitamente por {@code institucionId} - el filtro Hibernate
-     * sobre Materia/Carrera no se propaga al JOIN en JPQL.
-     */
+    // Horarios activos de una carrera, para dibujar la grilla semanal.
     @Query("""
         SELECT h
           FROM Horario h
@@ -41,12 +40,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
     List<Horario> findActivosPorCarrera(@Param("carreraId") Long carreraId,
                                         @Param("tenantId")  Long tenantId);
 
-    /**
-     * Horarios activos del tenant en un día puntual, con docente asignado.
-     * Sirve para calcular los AUSENTE del listado: cada uno de estos
-     * horarios deberia tener una marca para la fecha; los que no la tengan
-     * y cuya hora_fin ya pasó cuentan como AUSENTE.
-     */
+    // Horarios del dia con docente asignado; los que no tengan marca y ya terminaron son AUSENTE.
     @Query("""
         SELECT h FROM Horario h
         JOIN FETCH h.comision c
@@ -62,13 +56,8 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
         @Param("dia") Byte diaSemana,
         @Param("tenantId") Long tenantId);
 
-    /**
-     * Horarios de hoy en los que el docente está asignado a la comisión.
-     * <p>
-     * El filtro fino de "está corriendo ahora" (ventana
-     * {@code [hora_inicio - tolerancia, hora_fin]}) se hace en Java —
-     * la tolerancia depende de cada Horario, no de un valor global.
-     */
+    // Clases de hoy del docente. Si esta corriendo o no se decide en Java, porque la tolerancia
+    // es propia de cada horario y no un valor global.
     @Query("""
         SELECT h FROM Horario h
         JOIN FETCH h.comision c
@@ -84,11 +73,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
         @Param("dia") Byte diaSemana,
         @Param("tenantId") Long tenantId);
 
-    /**
-     * Detecta superposicion de horarios para una misma comision.
-     * Devuelve los horarios existentes que solapan con la franja propuesta
-     * (excluyendo el id pasado en {@code excludeId} si se esta editando).
-     */
+    // Franjas de la misma comision que pisan a la propuesta; excludeId evita compararse consigo misma.
     @Query("""
         SELECT h
           FROM Horario h

@@ -78,6 +78,7 @@ public class Horario {
         return diaSemana == null ? null : DiaSemana.fromNumero(diaSemana);
     }
 
+    // Guarda el dia como su numero ISO, que es el tipo real de la columna.
     public void setDia(DiaSemana d) {
         this.diaSemana = d == null ? null : d.getNumero();
     }

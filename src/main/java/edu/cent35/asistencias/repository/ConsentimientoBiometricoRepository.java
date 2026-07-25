@@ -20,25 +20,16 @@ import java.util.Optional;
  */
 public interface ConsentimientoBiometricoRepository extends JpaRepository<ConsentimientoBiometrico, Long> {
 
-    /**
-     * Consentimiento vigente del docente, si existe.
-     * Solo deberia haber uno (lo garantiza el service).
-     */
+    // Consentimiento vigente del docente; el service garantiza que no haya mas de uno.
     Optional<ConsentimientoBiometrico> findByDocenteIdAndVigenteTrue(Long docenteId);
 
-    /**
-     * Ultimo registro del docente, vigente o revocado.
-     * Usado para inferir el estado actual cuando puede no haber vigente.
-     */
+    // Ultimo registro del docente, vigente o revocado, para deducir su estado actual.
     Optional<ConsentimientoBiometrico> findTopByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
     // Historial completo del docente, ordenado del mas nuevo al mas viejo.
     List<ConsentimientoBiometrico> findByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
-    /**
-     * Cuenta cuantos docentes activos del tenant tienen consentimiento vigente.
-     * Util para badges agregados / dashboards.
-     */
+    // Cuenta los docentes activos con consentimiento vigente.
     @Query("""
         SELECT COUNT(DISTINCT c.docente.id)
         FROM ConsentimientoBiometrico c
@@ -48,12 +39,7 @@ public interface ConsentimientoBiometricoRepository extends JpaRepository<Consen
     """)
     long countDocentesConVigenteEnTenant(@Param("tenantId") Long tenantId);
 
-    /**
-     * Proyeccion para alimentar el badge "Consentimiento" del listado de
-     * docentes en una sola query (evita N+1). Devuelve, por cada docente
-     * con al menos un consentimiento en el tenant, el id del docente y
-     * el flag {@code vigente} del registro mas reciente.
-     */
+    // Estado de todos los docentes en una sola query, para el listado (evita N+1).
     @Query("""
         SELECT c.docente.id AS docenteId, c.vigente AS vigente
         FROM ConsentimientoBiometrico c
@@ -65,7 +51,7 @@ public interface ConsentimientoBiometricoRepository extends JpaRepository<Consen
     """)
     List<UltimoEstadoConsentimientoView> findUltimoEstadoPorDocenteEnTenant(@Param("tenantId") Long tenantId);
 
-    // Proyeccion liviana para {@link #findUltimoEstadoPorDocenteEnTenant}.
+    // Proyeccion liviana para findUltimoEstadoPorDocenteEnTenant.
     interface UltimoEstadoConsentimientoView {
         Long getDocenteId();
         Boolean getVigente();

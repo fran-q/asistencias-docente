@@ -10,23 +10,18 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repositorio de comisiones. Comisión no tiene institucion_id propio, así que las consultas
+ * del tenant van por JOIN contra materia y llevan el institucionId como parámetro explícito.
+ */
 @Repository
 public interface ComisionRepository extends JpaRepository<Comision, Long> {
 
-    /**
-     * Lista las comisiones de una materia.
-     * Como Comision NO esta tenant-scoped directamente, el aislamiento
-     * se logra a nivel service: solo se busca por materia ya validada.
-     */
+    // Comisiones de una materia; el aislamiento lo garantiza el service, que valida la materia antes.
     List<Comision> findByMateriaIdOrderByActivoDescCodigoAsc(Long materiaId);
 
-    /**
-     * Lista todas las comisiones del tenant actual via JOIN con materia.
-     * <p>
-     * <b>IMPORTANTE</b>: el filtro Hibernate {@code "tenant"} NO se propaga
-     * automaticamente a entidades JOINeadas en JPQL - hay que filtrar
-     * explicitamente por {@code institucionId}. Por eso el parametro.
-     */
+    // Comisiones del tenant por JOIN con materia. El institucionId va explicito porque el filtro
+    // de Hibernate no se propaga a las entidades JOINeadas en JPQL (TD-003).
     @Query("""
         SELECT c FROM Comision c
         JOIN c.materia m
@@ -35,10 +30,13 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
         """)
     List<Comision> findAllDelTenant(@Param("tenantId") Long tenantId);
 
+    // Busca una comisión por su código dentro de la materia.
     Optional<Comision> findByMateriaIdAndCodigo(Long materiaId, String codigo);
 
+    // Indica si el código ya está tomado en esa materia.
     boolean existsByMateriaIdAndCodigo(Long materiaId, String codigo);
 
+    // Cuenta comisiones activas de una materia, para bloquear su baja.
     long countByMateriaIdAndActivoTrue(Long materiaId);
 
     // Cuenta comisiones activas asignadas a un docente - para bloquear su baja.
@@ -48,12 +46,7 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
     @Query("SELECT COUNT(c) FROM Comision c JOIN c.materia m WHERE c.id = :id")
     long countByIdEnTenant(@Param("id") Long id);
 
-    /**
-     * Comisiones activas del tenant con materia activa, para selectores de UI.
-     * <p>
-     * Filtra explicitamente por institucionId (TD-003: el filtro Hibernate
-     * sobre Materia no se propaga al JOIN en JPQL).
-     */
+    // Solo las activas con materia activa, para los combos de los formularios.
     @Query("""
         SELECT c FROM Comision c
         JOIN c.materia m

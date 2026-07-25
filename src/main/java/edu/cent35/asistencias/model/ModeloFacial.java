@@ -55,19 +55,13 @@ public class ModeloFacial {
     @JoinColumn(name = "docente_id", nullable = false)
     private Docente docente;
 
-    /**
-     * Modelo LBPH serializado y cifrado con AES. Columna LONGBLOB.
-     * <p>
-     * Hibernate 6 + MariaDB: {@code @Lob byte[]} mapea a {@code BLOB} o
-     * {@code TINYBLOB} corto. Para forzar LONGBLOB (que es lo que necesita
-     * un modelo LBPH cifrado) hay que indicar explícitamente el tipo JDBC
-     * {@code LONGVARBINARY}.
-     */
+    // Modelo LBPH serializado, comprimido y cifrado con AES. Va a LONGBLOB porque un BLOB comun
+    // se queda corto para el tamano que ocupa.
     @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     @Column(name = "embedding_cifrado", nullable = false)
     private byte[] embeddingCifrado;
 
-    // Algoritmo usado. En Sprint 4: {@code "LBPH"}.
+    // Algoritmo usado. En Sprint 4: "LBPH".
     @Column(nullable = false, length = 50)
     private String algoritmo;
 
@@ -75,14 +69,8 @@ public class ModeloFacial {
     @Column(name = "version_algoritmo", nullable = false, length = 20)
     private String versionAlgoritmo;
 
-    /**
-     * Para embeddings sería el largo del vector. Con LBPH se reutiliza para
-     * guardar el lado (px) de la imagen de rostro normalizada. Ver ADR-0007.
-     * <p>
-     * Es {@code Short} (no {@code Integer}) porque la columna en BD es
-     * {@code SMALLINT} (heredado de V001); Hibernate {@code validate}
-     * requiere que el tipo Java coincida con el SQL.
-     */
+    // Con LBPH guarda el lado en px del rostro normalizado; con embeddings sería el largo del
+    // vector (ADR-0007). Es Short porque la columna es SMALLINT y Hibernate valida los tipos.
     @Column(nullable = false)
     private Short dimensiones;
 
