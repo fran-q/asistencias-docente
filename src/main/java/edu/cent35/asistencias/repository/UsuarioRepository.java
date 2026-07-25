@@ -3,8 +3,13 @@ import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,4 +61,17 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
      * (ej: la ultima cuenta INSTITUCION no puede desactivarse a si misma).
      */
     long countByInstitucionIdAndRolCodigoAndActivoTrue(Long institucionId, String rolCodigo);
+
+    /**
+     * Sella la fecha/hora del ultimo login exitoso (dato de auditoria, RNF-10).
+     * <p>
+     * Se hace por <b>id</b> y no por username porque el username solo es unico
+     * dentro de una institucion. Lleva su propia transaccion porque lo dispara
+     * {@link edu.cent35.asistencias.config.RegistroUltimoLoginListener} durante
+     * el login, fuera de cualquier transaccion abierta.
+     */
+    @Modifying
+    @Transactional
+    @Query("UPDATE Usuario u SET u.ultimoLogin = :momento WHERE u.id = :id")
+    int registrarUltimoLogin(@Param("id") Long id, @Param("momento") LocalDateTime momento);
 }
