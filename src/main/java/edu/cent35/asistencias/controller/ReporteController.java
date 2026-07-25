@@ -31,8 +31,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Reporte de asistencias con exportación a CSV (Sprint 6 Fase A).
- * Roles INSTITUCION y ADMIN.
+ * Reporte de asistencias filtrable por período, docente, materia, estado y método, para los
+ * roles INSTITUCION y ADMIN. El mismo filtro alimenta la tabla en pantalla y la descarga en
+ * CSV, que sale en UTF-8 con BOM para que Excel lo abra sin romper los acentos.
  */
 @Controller
 @RequestMapping("/reportes")
@@ -132,6 +133,7 @@ public class ReporteController {
             "justificada", "motivo_justificacion"));
     }
 
+    // Vuelca una fila del reporte al CSV, en el mismo orden que la cabecera.
     private void escribirFila(PrintWriter w, AsistenciaReporteRowDto f) {
         w.println(String.join(";",
             csv(f.getAsistenciaId()),
@@ -169,16 +171,18 @@ public class ReporteController {
         return s;
     }
 
+    // Formatea un decimal para el CSV; se deja el punto porque Excel lo interpreta bien y el
+    // separador de columnas ya es punto y coma.
     private static String csv(BigDecimal v) {
-        // Excel español espera coma decimal; pero el separador es ; → BigDecimal usa "."
-        // que Excel-Argentina interpreta bien. Lo dejamos como punto para compatibilidad amplia.
         return v == null ? "" : v.toPlainString();
     }
 
+    // Formatea una hora para el CSV, o vacío si no hay.
     private static String csvTime(LocalTime t) {
         return t == null ? "" : t.format(FMT_HORA);
     }
 
+    // Formatea una fecha para el CSV, o vacío si no hay.
     private static String csv(LocalDate d) {
         return d == null ? "" : d.format(FMT_FECHA);
     }

@@ -24,8 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 /**
- * CRUD de usuarios (admins) de la institucion del SUPERADMIN logueado.
- * Cubre RF-06.
+ * Administración de las cuentas de la propia institución (RF-06), reservada al rol
+ * INSTITUCION. Permite crear admins, editarlos, activarlos o desactivarlos y resetearles la
+ * contraseña, siempre dentro de la institución del usuario logueado.
  */
 @Controller
 @RequestMapping("/usuarios")
@@ -61,6 +62,7 @@ public class UsuarioController {
         return "usuario/form-nuevo";
     }
 
+    // Da de alta un admin de la institución; la contraseña se hashea antes de guardarse.
     @PostMapping("/nuevo")
     public String crear(@Valid @org.springframework.web.bind.annotation.ModelAttribute("form") UsuarioCreateFormDto form,
                         BindingResult binding,
@@ -105,6 +107,7 @@ public class UsuarioController {
         return "usuario/form-editar";
     }
 
+    // Edita los datos de la cuenta, sin tocar username ni contraseña.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @org.springframework.web.bind.annotation.ModelAttribute("form") UsuarioEditFormDto form,
@@ -152,6 +155,7 @@ public class UsuarioController {
         return "usuario/form-password";
     }
 
+    // Asigna una contraseña nueva a la cuenta elegida.
     @PostMapping("/{id}/password")
     public String resetearPassword(@PathVariable Long id,
                                    @Valid @org.springframework.web.bind.annotation.ModelAttribute("form") PasswordResetDto form,

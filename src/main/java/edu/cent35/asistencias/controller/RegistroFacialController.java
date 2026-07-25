@@ -26,11 +26,9 @@ import java.util.Base64;
 import java.util.List;
 
 /**
- * Registro del modelo facial de un docente (RF-08, RF-09). Roles
- * INSTITUCION y ADMIN.
- * <p>
- * El registro exige que el docente tenga un consentimiento biométrico
- * ACTIVO (ADR-0005): sin consentimiento no se puede tomar la huella facial.
+ * Pantalla de registro del modelo facial de un docente (RF-08, RF-09), para los roles
+ * INSTITUCION y ADMIN. Exige que el docente tenga un consentimiento ACTIVO: sin eso no se
+ * le puede tomar la huella facial (ADR-0005).
  */
 @Controller
 @RequestMapping("/docentes/{docenteId}/rostro")
@@ -68,10 +66,7 @@ public class RegistroFacialController {
         return "reconocimiento/registrar-rostro";
     }
 
-    /**
-     * Recibe las capturas del rostro, entrena el modelo y lo persiste.
-     * Respuesta JSON (el flujo de captura es JavaScript).
-     */
+    // Recibe las capturas, entrena el modelo facial y lo guarda cifrado; responde JSON.
     @PostMapping("/registrar")
     @ResponseBody
     public RegistroFacialResultadoDto registrar(@PathVariable Long docenteId,
@@ -96,12 +91,8 @@ public class RegistroFacialController {
         }
     }
 
-    /**
-     * Supresion fisica de los datos biometricos del docente (derecho ARCO
-     * de Cancelacion - RNF-14). Borra TODOS los modelos faciales del docente
-     * (activo e historicos) de forma definitiva; las asistencias historicas
-     * se conservan.
-     */
+    // Borra definitivamente todos los modelos faciales del docente (derecho ARCO); las
+    // asistencias históricas se conservan.
     @PostMapping("/suprimir")
     public String suprimir(@PathVariable Long docenteId,
                            @AuthenticationPrincipal CustomUserDetails principal,
@@ -118,16 +109,14 @@ public class RegistroFacialController {
         return "redirect:/docentes/" + docenteId + "/editar";
     }
 
+    // Si el docente no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El docente solicitado no existe.");
         return "redirect:/docentes";
     }
 
-    /**
-     * Convierte un data URL base64 ({@code data:image/jpeg;base64,XXXX})
-     * en bytes de imagen.
-     */
+    // Pasa un data URL base64 del navegador a los bytes crudos de la imagen.
     private static byte[] decodificarDataUrl(String dataUrl) {
         if (dataUrl == null || dataUrl.isBlank()) {
             throw new IllegalArgumentException("Una de las capturas llegó vacía.");

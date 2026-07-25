@@ -30,7 +30,9 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Listado, carga manual y justificación de asistencias (RF-22 a RF-26, RF-30).
+ * Pantallas de asistencias: el listado del día, la carga manual para cuando el
+ * reconocimiento falla y la justificación de ausencias (RF-22 a RF-26, RF-30). El listado
+ * mezcla las marcas reales con las ausencias que el sistema calcula al vuelo.
  */
 @Controller
 @RequestMapping("/asistencias")
@@ -88,6 +90,7 @@ public class AsistenciaController {
         return "asistencia/manual-nueva";
     }
 
+    // Procesa la carga manual; si el service la rechaza, vuelve al formulario con el motivo.
     @PostMapping("/manual/nueva")
     public String crearManual(@Valid @ModelAttribute("form") AsistenciaManualFormDto form,
                               BindingResult binding,
@@ -114,6 +117,7 @@ public class AsistenciaController {
         }
     }
 
+    // Carga docentes, horarios y motivos que necesitan los combos del formulario.
     private void agregarDatosManualForm(Model model) {
         model.addAttribute("docentes", docenteService.listar());
         model.addAttribute("horarios", horarioService.listar());
@@ -140,6 +144,7 @@ public class AsistenciaController {
         return "asistencia/justificar";
     }
 
+    // Adjunta una justificación a una ausencia ya registrada.
     @PostMapping("/{id}/justificar")
     public String justificar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") JustificacionAusenciaFormDto form,
@@ -163,6 +168,7 @@ public class AsistenciaController {
         }
     }
 
+    // Si el id no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La asistencia solicitada no existe.");

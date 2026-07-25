@@ -10,11 +10,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * Controladores de paginas comunes: login y home.
+ * Páginas comunes a toda la aplicación: el login y el panel de inicio. El login repone el
+ * usuario tipeado cuando el intento anterior falló, para no obligar a escribirlo de nuevo.
  */
 @Controller
 public class HomeController {
 
+    // Muestra el login, reponiendo el usuario del intento fallido anterior (nunca la contraseña).
     @GetMapping("/login")
     public String login(HttpServletRequest request, Model model) {
         // Si venimos de un login fallido, reponemos el usuario que se intento
@@ -31,6 +33,7 @@ public class HomeController {
         return "auth/login";
     }
 
+    // Panel de inicio con los accesos rápidos según el rol.
     @GetMapping("/")
     public String home(Authentication authentication, Model model) {
         model.addAttribute("username", authentication.getName());

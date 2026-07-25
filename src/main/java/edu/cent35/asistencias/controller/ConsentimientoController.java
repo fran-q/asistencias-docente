@@ -30,11 +30,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.time.LocalDateTime;
 
 /**
- * Endpoints para otorgar / revocar consentimiento biometrico. Roles
- * INSTITUCION y ADMIN. Cumple RF-10 (Ley 25.326, Resolucion AAIP 255/2022).
- * <p>
- * En Sprint 3 solo se expone {@code otorgar}; la revocacion llega en
- * sub-fase D.3.
+ * Pantallas para otorgar y revocar el consentimiento biométrico del docente (RF-10), como
+ * exigen la Ley 25.326 y la Resolución AAIP 255/2022. Cada operación queda auditada con la
+ * IP y el User-Agent del administrador que la ejecuta, no del docente.
  */
 @Controller
 @RequestMapping("/docentes/{docenteId}/consentimiento")
@@ -46,6 +44,7 @@ public class ConsentimientoController {
     private final DocenteService docenteService;
     private final ConsentimientoBiometricoService consentimientoService;
 
+    // Muestra el texto legal vigente para que el docente lo acepte.
     @GetMapping("/otorgar")
     public String formOtorgar(@PathVariable Long docenteId,
                               Model model,
@@ -76,6 +75,7 @@ public class ConsentimientoController {
         return "docente/consentimiento-otorgar";
     }
 
+    // Registra el consentimiento junto con la IP y el User-Agent del administrador.
     @PostMapping("/otorgar")
     public String otorgar(@PathVariable Long docenteId,
                           @Valid @ModelAttribute("form") ConsentimientoOtorgarFormDto form,
@@ -148,6 +148,7 @@ public class ConsentimientoController {
         return "docente/consentimiento-revocar";
     }
 
+    // Revoca el consentimiento vigente (derecho ARCO), dejando también constancia auditada.
     @PostMapping("/revocar")
     public String revocar(@PathVariable Long docenteId,
                           @Valid @ModelAttribute("form") ConsentimientoRevocarFormDto form,
@@ -187,19 +188,14 @@ public class ConsentimientoController {
         }
     }
 
+    // Si el docente no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El docente solicitado no existe.");
         return "redirect:/docentes";
     }
 
-    /**
-     * Extrae la IP real del cliente. Si la app se despliega tras un proxy
-     * reverso (nginx, Apache, ALB), respetar {@code X-Forwarded-For};
-     * caso contrario {@code getRemoteAddr()}.
-     * En desarrollo local devuelve la IP del request directo (suele ser
-     * {@code 127.0.0.1} o {@code 0:0:0:0:0:0:0:1}).
-     */
+    // Saca la IP real del cliente, mirando X-Forwarded-For por si hay un proxy reverso delante.
     private static String extraerIp(HttpServletRequest request) {
         String xff = request.getHeader("X-Forwarded-For");
         if (xff != null && !xff.isBlank()) {

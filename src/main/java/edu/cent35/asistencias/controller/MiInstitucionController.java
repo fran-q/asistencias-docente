@@ -18,11 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Vista y edicion de "mi institucion" (la del usuario con rol
- * INSTITUCION logueado).
- * <p>
- * Restringido a rol INSTITUCION. El ADMIN comun no accede
- * a esta pantalla.
+ * Vista y edición de los datos de la propia institución, restringida al rol INSTITUCION.
+ * Nunca recibe un id por parámetro: la institución sale del TenantContext, así que no hay
+ * forma de pedir la de otro.
  */
 @Controller
 @RequestMapping("/mi-institucion")
@@ -37,6 +35,7 @@ public class MiInstitucionController {
 
     private final MiInstitucionService service;
 
+    // Muestra los datos de la institución del usuario logueado.
     @GetMapping
     public String view(Model model) {
         Institucion inst = service.getMiInstitucion();
@@ -47,6 +46,7 @@ public class MiInstitucionController {
         return VIEW;
     }
 
+    // Guarda los cambios; si el nombre o el CUIT ya son de otra institución, lo informa.
     @PostMapping
     public String update(@Valid InstitucionFormDto form,
                          BindingResult binding,

@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CRUD de Comisiones (RF-13). Roles INSTITUCION y ADMIN.
+ * Pantallas de alta, edición, baja y reactivación de comisiones (RF-13), para los roles
+ * INSTITUCION y ADMIN. Cada acción vuelve al listado con un mensaje del resultado, y los
+ * errores de validación reabren el formulario con lo que el usuario ya había cargado.
  */
 @Controller
 @RequestMapping("/comisiones")
@@ -37,6 +39,7 @@ public class ComisionController {
 
     private final ComisionService service;
 
+    // Muestra el listado de las comisiones.
     @GetMapping
     public String listar(Model model) {
         List<ComisionListItemDto> items = service.listar().stream()
@@ -46,6 +49,7 @@ public class ComisionController {
         return "academico/comision-list";
     }
 
+    // Abre el formulario de alta vacío.
     @GetMapping("/nueva")
     public String formNueva(Model model) {
         if (!model.containsAttribute("form")) {
@@ -56,6 +60,7 @@ public class ComisionController {
         return "academico/comision-form";
     }
 
+    // Procesa el alta; si la validación falla vuelve al formulario con lo ya cargado.
     @PostMapping("/nueva")
     public String crear(@Valid @ModelAttribute("form") ComisionFormDto form,
                         BindingResult binding,
@@ -82,6 +87,7 @@ public class ComisionController {
         }
     }
 
+    // Abre el formulario de edición con los datos actuales.
     @GetMapping("/{id}/editar")
     public String formEditar(@PathVariable Long id, Model model) {
         Comision c = service.buscarPorId(id);
@@ -94,6 +100,7 @@ public class ComisionController {
         return "academico/comision-form";
     }
 
+    // Procesa la edición; si la validación falla vuelve al formulario.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") ComisionFormDto form,
@@ -124,6 +131,7 @@ public class ComisionController {
         }
     }
 
+    // Da de baja la comisión y vuelve al listado con el resultado.
     @PostMapping("/{id}/baja")
     public String darDeBaja(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -135,6 +143,7 @@ public class ComisionController {
         return "redirect:/comisiones";
     }
 
+    // Reactiva la comisión y vuelve al listado con el resultado.
     @PostMapping("/{id}/alta")
     public String darDeAlta(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -146,17 +155,14 @@ public class ComisionController {
         return "redirect:/comisiones";
     }
 
+    // Si el id no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La comisión solicitada no existe.");
         return "redirect:/comisiones";
     }
 
-    /**
-     * Carga al modelo las materias y docentes disponibles para el form.
-     * Si se está editando una comisión cuya materia/docente quedaron inactivos,
-     * los sumamos a sus listas para que el select los muestre.
-     */
+    // Carga los combos del formulario, sumando el valor actual si quedó inactivo (si no, no se vería).
     private void prepararDatosForm(Model model, Comision comisionActual) {
         List<Materia> materias = new ArrayList<>(service.materiasActivasParaSelector());
         if (comisionActual != null && comisionActual.getMateria() != null

@@ -18,8 +18,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 /**
- * Vista grilla horaria semanal por carrera (RF-14 visual).
- * GET /grilla[?carreraId=N]
+ * Vista de calendario semanal con los horarios de una carrera (RF-14). Es solo lectura: los
+ * bloques enlazan al formulario de edición del horario correspondiente.
  */
 @Controller
 @RequestMapping("/grilla")
@@ -29,6 +29,7 @@ public class GrillaController {
 
     private final GrillaService grillaService;
 
+    // Arma la grilla semanal de la carrera elegida, o de la primera si no se eligió ninguna.
     @GetMapping
     public String mostrar(@RequestParam(name = "carreraId", required = false) Long carreraId,
                           Model model) {
@@ -53,6 +54,7 @@ public class GrillaController {
         return "academico/grilla";
     }
 
+    // Si la carrera no existe o es de otra institución, avisa y vuelve a la grilla.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La carrera solicitada no existe.");

@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CRUD de Horarios (RF-14). Roles INSTITUCION y ADMIN.
+ * Pantallas de alta, edición, baja y reactivación de franjas horarias (RF-14), para los
+ * roles INSTITUCION y ADMIN. Los choques de superposición llegan como error de negocio del
+ * service y se muestran sobre el mismo formulario.
  */
 @Controller
 @RequestMapping("/horarios")
@@ -40,6 +42,7 @@ public class HorarioController {
     private final HorarioService horarioService;
     private final ComisionService comisionService;
 
+    // Muestra el listado de los horarios.
     @GetMapping
     public String listar(Model model) {
         List<HorarioListItemDto> items = horarioService.listar().stream()
@@ -49,6 +52,7 @@ public class HorarioController {
         return "academico/horario-list";
     }
 
+    // Abre el formulario de alta vacío.
     @GetMapping("/nuevo")
     public String formNuevo(Model model) {
         if (!model.containsAttribute("form")) {
@@ -62,6 +66,7 @@ public class HorarioController {
         return "academico/horario-form";
     }
 
+    // Procesa el alta; si la validación falla vuelve al formulario con lo ya cargado.
     @PostMapping("/nuevo")
     public String crear(@Valid @ModelAttribute("form") HorarioFormDto form,
                         BindingResult binding,
@@ -93,6 +98,7 @@ public class HorarioController {
         }
     }
 
+    // Abre el formulario de edición con los datos actuales.
     @GetMapping("/{id}/editar")
     public String formEditar(@PathVariable Long id, Model model) {
         Horario h = horarioService.buscarPorId(id);
@@ -105,6 +111,7 @@ public class HorarioController {
         return "academico/horario-form";
     }
 
+    // Procesa la edición; si la validación falla vuelve al formulario.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") HorarioFormDto form,
@@ -139,6 +146,7 @@ public class HorarioController {
         }
     }
 
+    // Da de baja el horario y vuelve al listado con el resultado.
     @PostMapping("/{id}/baja")
     public String darDeBaja(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -150,6 +158,7 @@ public class HorarioController {
         return "redirect:/horarios";
     }
 
+    // Reactiva el horario y vuelve al listado con el resultado.
     @PostMapping("/{id}/alta")
     public String darDeAlta(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -161,6 +170,7 @@ public class HorarioController {
         return "redirect:/horarios";
     }
 
+    // Si el id no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El horario solicitado no existe.");

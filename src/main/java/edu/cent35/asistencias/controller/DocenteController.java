@@ -27,7 +27,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * CRUD de Docentes (RF-07). Roles INSTITUCION y ADMIN.
+ * Pantallas de alta, edición, baja y reactivación de docentes (RF-07), para los roles
+ * INSTITUCION y ADMIN. El listado además muestra el estado del consentimiento biométrico
+ * de cada docente, que es lo que habilita registrarle el modelo facial.
  */
 @Controller
 @RequestMapping("/docentes")
@@ -40,6 +42,7 @@ public class DocenteController {
     private final ConsentimientoBiometricoService consentimientoService;
     private final ModeloFacialService modeloFacialService;
 
+    // Muestra el listado de los docentes.
     @GetMapping
     public String listar(Model model) {
         var estados = consentimientoService.estadosPorDocenteEnTenant();
@@ -52,6 +55,7 @@ public class DocenteController {
         return "docente/list";
     }
 
+    // Abre el formulario de alta vacío.
     @GetMapping("/nuevo")
     public String formNuevo(Model model) {
         if (!model.containsAttribute("form")) {
@@ -63,6 +67,7 @@ public class DocenteController {
         return "docente/form";
     }
 
+    // Procesa el alta; si la validación falla vuelve al formulario con lo ya cargado.
     @PostMapping("/nuevo")
     public String crear(@Valid @ModelAttribute("form") DocenteFormDto form,
                         BindingResult binding,
@@ -86,6 +91,7 @@ public class DocenteController {
         }
     }
 
+    // Abre el formulario de edición con los datos actuales.
     @GetMapping("/{id}/editar")
     public String formEditar(@PathVariable Long id, Model model) {
         Docente d = service.buscarPorId(id);
@@ -96,6 +102,7 @@ public class DocenteController {
         return "docente/form";
     }
 
+    // Procesa la edición; si la validación falla vuelve al formulario.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") DocenteFormDto form,
@@ -119,11 +126,7 @@ public class DocenteController {
         }
     }
 
-    /**
-     * Pobla los atributos de modelo necesarios para renderizar
-     * {@code docente/form} en modo editar: datos del docente, estado del
-     * consentimiento biométrico (Sprint 3) y del modelo facial (Sprint 4).
-     */
+    // Carga lo que necesita la pantalla de edición: datos, consentimiento y modelo facial.
     private void agregarDatosEdicion(Long id, Model model) {
         model.addAttribute("docente", service.buscarPorId(id));
         model.addAttribute("modo", "editar");
@@ -139,6 +142,7 @@ public class DocenteController {
         model.addAttribute("tieneModelosBiometricos", modeloFacialService.tieneModelos(id));
     }
 
+    // Da de baja el docente y vuelve al listado con el resultado.
     @PostMapping("/{id}/baja")
     public String darDeBaja(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -150,6 +154,7 @@ public class DocenteController {
         return "redirect:/docentes";
     }
 
+    // Reactiva el docente y vuelve al listado con el resultado.
     @PostMapping("/{id}/alta")
     public String darDeAlta(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -161,6 +166,7 @@ public class DocenteController {
         return "redirect:/docentes";
     }
 
+    // Si el id no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El docente solicitado no existe.");

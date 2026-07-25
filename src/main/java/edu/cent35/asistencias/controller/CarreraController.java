@@ -23,8 +23,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 
 /**
- * CRUD de Carreras (RF-11).
- * Accesible para roles INSTITUCION y ADMIN.
+ * Pantallas de alta, edición, baja y reactivación de carreras (RF-11), para los roles
+ * INSTITUCION y ADMIN. Cada acción vuelve al listado con un mensaje del resultado, y los
+ * errores de validación reabren el formulario con lo que el usuario ya había cargado.
  */
 @Controller
 @RequestMapping("/carreras")
@@ -59,6 +60,7 @@ public class CarreraController {
         return "academico/carrera-form";
     }
 
+    // Procesa el alta; si la validación falla vuelve al formulario con lo ya cargado.
     @PostMapping("/nueva")
     public String crear(@Valid @ModelAttribute("form") CarreraFormDto form,
                         BindingResult binding,
@@ -96,6 +98,7 @@ public class CarreraController {
         return "academico/carrera-form";
     }
 
+    // Procesa la edición; si la validación falla vuelve al formulario.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") CarreraFormDto form,
@@ -135,6 +138,7 @@ public class CarreraController {
         return "redirect:/carreras";
     }
 
+    // Reactiva la carrera y vuelve al listado con el resultado.
     @PostMapping("/{id}/alta")
     public String darDeAlta(@PathVariable Long id, RedirectAttributes redirect) {
         try {

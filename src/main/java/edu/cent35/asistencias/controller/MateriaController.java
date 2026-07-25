@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CRUD de Materias (RF-12). Roles INSTITUCION y ADMIN.
+ * Pantallas de alta, edición, baja y reactivación de materias (RF-12), para los roles
+ * INSTITUCION y ADMIN. Cada acción vuelve al listado con un mensaje del resultado, y los
+ * errores de validación reabren el formulario con lo que el usuario ya había cargado.
  */
 @Controller
 @RequestMapping("/materias")
@@ -37,6 +39,7 @@ public class MateriaController {
 
     private final MateriaService service;
 
+    // Muestra el listado de las materias.
     @GetMapping
     public String listar(Model model) {
         List<MateriaListItemDto> items = service.listar().stream()
@@ -46,6 +49,7 @@ public class MateriaController {
         return "academico/materia-list";
     }
 
+    // Abre el formulario de alta vacío.
     @GetMapping("/nueva")
     public String formNueva(Model model) {
         if (!model.containsAttribute("form")) {
@@ -56,6 +60,7 @@ public class MateriaController {
         return "academico/materia-form";
     }
 
+    // Procesa el alta; si la validación falla vuelve al formulario con lo ya cargado.
     @PostMapping("/nueva")
     public String crear(@Valid @ModelAttribute("form") MateriaFormDto form,
                         BindingResult binding,
@@ -82,6 +87,7 @@ public class MateriaController {
         }
     }
 
+    // Abre el formulario de edición con los datos actuales.
     @GetMapping("/{id}/editar")
     public String formEditar(@PathVariable Long id, Model model) {
         Materia m = service.buscarPorId(id);
@@ -94,6 +100,7 @@ public class MateriaController {
         return "academico/materia-form";
     }
 
+    // Procesa la edición; si la validación falla vuelve al formulario.
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") MateriaFormDto form,
@@ -124,6 +131,7 @@ public class MateriaController {
         }
     }
 
+    // Da de baja la materia y vuelve al listado con el resultado.
     @PostMapping("/{id}/baja")
     public String darDeBaja(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -135,6 +143,7 @@ public class MateriaController {
         return "redirect:/materias";
     }
 
+    // Reactiva la materia y vuelve al listado con el resultado.
     @PostMapping("/{id}/alta")
     public String darDeAlta(@PathVariable Long id, RedirectAttributes redirect) {
         try {
@@ -146,17 +155,14 @@ public class MateriaController {
         return "redirect:/materias";
     }
 
+    // Si el id no existe o es de otra institución, avisa y vuelve al listado.
     @ExceptionHandler(EntityNotFoundException.class)
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "La materia solicitada no existe.");
         return "redirect:/materias";
     }
 
-    /**
-     * Carga al modelo las carreras y docentes disponibles para el form.
-     * Si se está editando una materia con carrera/docente inactivos, los
-     * sumamos a sus listas para que el select los muestre.
-     */
+    // Carga los combos del formulario, sumando el valor actual si quedó inactivo (si no, no se vería).
     private void prepararDatosForm(Model model, Materia materiaActual) {
         List<Carrera> carreras = new ArrayList<>(service.carrerasActivasParaSelector());
         if (materiaActual != null && materiaActual.getCarrera() != null

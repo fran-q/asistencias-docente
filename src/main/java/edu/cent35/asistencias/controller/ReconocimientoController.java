@@ -15,14 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.Base64;
 
 /**
- * Endpoints auxiliares de reconocimiento facial.
- * <p>
- * En Sprint 4 esta clase también tenía la pantalla de prueba y el endpoint
- * de identificación. En Sprint 5 ambos quedaron incorporados al
- * {@link PaseAsistenciaController} (que adicionalmente marca asistencia
- * cuando reconoce). Acá sobrevive sólo {@code /detectar}, que lo usa el
- * JS de registro facial para dibujar el recuadro amarillo en vivo sobre
- * el rostro durante la captura.
+ * Endpoint auxiliar de detección facial: dice si hay un rostro y dónde, sin identificarlo.
+ * Lo consume el JS del registro facial para dibujar el recuadro en vivo mientras se captura.
  */
 @Controller
 @RequestMapping("/reconocimiento")
@@ -33,12 +27,7 @@ public class ReconocimientoController {
 
     private final DeteccionRostroService deteccionRostroService;
 
-    /**
-     * Detecta rostros en una imagen y devuelve cuántos hay y el bounding box
-     * del más grande. <i>No identifica</i> de quién es: solo "hay cara acá".
-     * Lo usa {@code registro-facial.js} para mostrar el recuadro mientras
-     * se graba el rostro del docente.
-     */
+    // Dice cuántos rostros hay y dónde está el más grande, sin identificar de quién es.
     @PostMapping("/detectar")
     @ResponseBody
     public DeteccionRostroDto detectar(@RequestBody CapturaImagenDto captura) {

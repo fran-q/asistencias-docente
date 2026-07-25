@@ -16,11 +16,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.util.Base64;
 
 /**
- * Pase de asistencia automático por reconocimiento facial (RF-17 a RF-19).
- * Pantalla y endpoint del loop continuo.
- * <p>
- * Reemplaza a la antigua pantalla {@code /reconocimiento/prueba}: en lugar
- * de sólo identificar, marca la asistencia cuando reconoce.
+ * Pase de asistencia por reconocimiento facial (RF-17 a RF-19): la pantalla con la cámara y
+ * el endpoint que consume su loop continuo. Cada frame que llega se identifica y, si hay
+ * clase en curso, se marca la asistencia en el acto.
  */
 @Controller
 @RequestMapping("/asistencia/pase")
@@ -37,10 +35,7 @@ public class PaseAsistenciaController {
         return "asistencia/pase";
     }
 
-    /**
-     * Recibe un frame, identifica al docente, intenta marcar asistencia y
-     * responde con el resultado combinado. JSON.
-     */
+    // Recibe un frame del loop, identifica al docente e intenta marcar; responde JSON.
     @PostMapping("/marcar")
     @ResponseBody
     public PaseAsistenciaResultadoDto marcar(@RequestBody CapturaImagenDto captura) {
