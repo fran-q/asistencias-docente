@@ -23,10 +23,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ConsentimientoOtorgarFormDto {
 
-    /**
-     * Casilla "He leído y acepto el texto en nombre del docente que firmó".
-     * Es la salvaguarda de UI para que el admin no haga clic sin querer.
-     */
+    // Casilla que el admin marca en nombre del docente que firmó; evita el clic distraído.
     @AssertTrue(message = "Tenés que confirmar que el docente leyó y firmó el texto antes de registrar el consentimiento")
     private boolean aceptaTexto;
 }

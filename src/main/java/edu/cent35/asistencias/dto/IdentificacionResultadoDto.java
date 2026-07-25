@@ -30,16 +30,19 @@ public record IdentificacionResultadoDto(
     String mensaje
 ) {
 
+    // No se detectó ninguna cara en el frame (o se detectó más de una).
     public static IdentificacionResultadoDto sinRostro() {
         return new IdentificacionResultadoDto(false, false, null, null, null, null,
             null, null, null, null, "No se detectó ningún rostro.");
     }
 
+    // La institución todavía no tiene ningún rostro registrado contra el cual comparar.
     public static IdentificacionResultadoDto noHayModelos(int x, int y, int ancho, int alto) {
         return new IdentificacionResultadoDto(true, false, null, null, null, null,
             x, y, ancho, alto, "Ningún docente tiene modelo facial registrado.");
     }
 
+    // Hubo coincidencia por debajo del umbral: se identificó al docente.
     public static IdentificacionResultadoDto match(Long docenteId, String nombre,
                                                    Long modeloFacialId, double distancia,
                                                    int x, int y, int ancho, int alto) {
@@ -48,6 +51,7 @@ public record IdentificacionResultadoDto(
             x, y, ancho, alto, "Rostro presente: " + nombre);
     }
 
+    // Se detectó una cara pero ningún modelo quedó dentro del umbral.
     public static IdentificacionResultadoDto noReconocido(double mejorDistancia,
                                                           int x, int y, int ancho, int alto) {
         return new IdentificacionResultadoDto(true, false, null, null, null, mejorDistancia,

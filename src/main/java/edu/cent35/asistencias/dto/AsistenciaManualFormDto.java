@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * Datos que viajan entre el formulario de la asistencia y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

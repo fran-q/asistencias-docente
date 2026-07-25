@@ -51,6 +51,7 @@ public class AsistenciaListItemDto {
     // Sólo presente si metodo == AUTOMATICO.
     BigDecimal confianza;
 
+    // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static AsistenciaListItemDto from(Asistencia a) {
         Horario h = a.getHorario();
         return AsistenciaListItemDto.builder()
@@ -73,10 +74,7 @@ public class AsistenciaListItemDto {
             .build();
     }
 
-    /**
-     * Construye una fila AUSENTE calculada para un horario que no tiene marca.
-     * Se usa cuando la {@code hora_fin} del horario ya pasó (o la fecha es anterior).
-     */
+    // Fila AUSENTE que no está en la base: se calcula al vuelo para un horario ya terminado sin marca.
     public static AsistenciaListItemDto ausenteCalculada(Horario h, LocalDate fecha) {
         return AsistenciaListItemDto.builder()
             .id(null)
@@ -103,12 +101,14 @@ public class AsistenciaListItemDto {
         return id == null;
     }
 
+    // Nombre del día para mostrar en la fila.
     private static String labelDia(Byte numero) {
         if (numero == null) return "";
         DiaSemana d = DiaSemana.fromNumero(numero);
         return d == null ? "" : capitalizar(d.name());
     }
 
+    // Deja la primera letra en mayúscula y el resto en minúscula.
     private static String capitalizar(String s) {
         if (s == null || s.isEmpty()) return s;
         return s.charAt(0) + s.substring(1).toLowerCase();

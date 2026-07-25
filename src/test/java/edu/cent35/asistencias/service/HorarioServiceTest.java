@@ -34,6 +34,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el ABM de franjas horarias: hora de fin posterior a la de inicio, tolerancia dentro de
+ * rango y, sobre todo, que no se solapen dos franjas de la misma comisión el mismo día.
+ */
 @ExtendWith(MockitoExtension.class)
 class HorarioServiceTest {
 

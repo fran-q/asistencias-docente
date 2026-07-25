@@ -7,6 +7,10 @@ import lombok.Value;
 
 import java.time.LocalDateTime;
 
+/**
+ * Fila ya preparada de las carreras para la tabla del listado. Se arma dentro de la transacción
+ * para que el template no tenga que tocar entidades ni disparar consultas perezosas.
+ */
 @Value
 @Builder
 public class CarreraListItemDto {
@@ -17,6 +21,7 @@ public class CarreraListItemDto {
     LocalDateTime creadoEn;
     LocalDateTime actualizadoEn;
 
+    // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static CarreraListItemDto from(Carrera c) {
         return CarreraListItemDto.builder()
             .id(c.getId())

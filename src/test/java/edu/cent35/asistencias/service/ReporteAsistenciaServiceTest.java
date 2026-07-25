@@ -33,6 +33,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el armado del reporte: que los filtros opcionales se apliquen bien y que cada fila
+ * traiga adosado su detalle de carga manual y de justificación.
+ */
 @ExtendWith(MockitoExtension.class)
 class ReporteAsistenciaServiceTest {
 

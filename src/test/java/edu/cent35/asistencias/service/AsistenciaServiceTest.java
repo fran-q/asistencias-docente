@@ -40,6 +40,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el marcado de asistencia: la ventana de tolerancia que decide PRESENTE o TARDE, la
+ * idempotencia por (docente, horario, fecha), el desempate del RF-18 cuando hay varias clases
+ * en ventana y la validación de que la fecha manual caiga en el día del horario.
+ */
 @ExtendWith(MockitoExtension.class)
 class AsistenciaServiceTest {
 
@@ -355,6 +360,7 @@ class AsistenciaServiceTest {
             .activo(true).build();
     }
 
+    // Docente activo del tenant A.
     private Docente docenteActivoA() {
         Docente d = Docente.builder()
             .id(DOCENTE_ID).dni("12345678").nombre("Juana").apellido("Pérez").activo(true)
@@ -387,11 +393,8 @@ class AsistenciaServiceTest {
         return LocalDate.of(2026, 5, 25).atTime(hora, minuto);
     }
 
-    /**
-     * Horario de lunes con id, franja y tolerancia 15, para los casos de
-     * ambigüedad del RF-18. Cada uno con su propia comisión (representa
-     * comisiones distintas del mismo docente).
-     */
+    // Horario de lunes con franja a medida, para los casos de ambigüedad del RF-18. Cada uno
+    // lleva su propia comisión, así representan comisiones distintas del mismo docente.
     private Horario horarioLunes(Docente docente, Long id,
                                  int inicioHora, int inicioMin,
                                  int finHora, int finMin) {

@@ -117,6 +117,7 @@ class IdentificacionFacialServiceTest {
         return new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100);
     }
 
+    // Modelo facial activo del docente indicado.
     @SuppressWarnings("unused")
     private ModeloFacial modeloDe(Docente d) {
         return ModeloFacial.builder()

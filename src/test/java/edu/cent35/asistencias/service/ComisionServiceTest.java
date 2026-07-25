@@ -29,6 +29,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el ABM de comisiones, cuyo tenant se resuelve por la materia padre. Verifica que no se
+ * pueda usar una materia de otra institución ni dar de baja una comisión con horarios activos.
+ */
 @ExtendWith(MockitoExtension.class)
 class ComisionServiceTest {
 
@@ -121,6 +125,7 @@ class ComisionServiceTest {
             .isInstanceOf(EntityNotFoundException.class);
     }
 
+    // Materia asociada al tenant indicado.
     private Materia materiaConTenant(Long tenant) {
         Carrera car = Carrera.builder().id(1L).codigo("ECO").nombre("Eco").activo(true).build();
         car.setInstitucionId(tenant);
@@ -129,6 +134,7 @@ class ComisionServiceTest {
         return m;
     }
 
+    // Comisión activa colgando de una materia del tenant A.
     private Comision comisionActivaA() {
         return Comision.builder()
             .id(40L).codigo("A").materia(materiaConTenant(TENANT_A)).activo(true).build();

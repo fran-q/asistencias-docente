@@ -15,6 +15,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+/**
+ * Datos que viajan entre el formulario de el horario y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -47,6 +51,7 @@ public class HorarioFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate vigenteHasta;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static HorarioFormDto from(Horario h) {
         return HorarioFormDto.builder()
             .comisionId(h.getComision().getId())

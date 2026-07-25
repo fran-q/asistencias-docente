@@ -45,6 +45,7 @@ class AsistenciaReporteRowDtoTest {
         assertThat(fila.getDiaSemana()).isEqualTo("Miércoles");
     }
 
+    // Arma una asistencia con la fecha y el día de horario que pida el caso.
     private Asistencia asistenciaCon(LocalDate fecha, byte diaSemanaHorario) {
         Materia materia = Materia.builder()
             .id(1L).codigo("BIO-201").nombre("Biología").build();

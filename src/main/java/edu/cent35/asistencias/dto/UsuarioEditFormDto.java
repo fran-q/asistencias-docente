@@ -41,6 +41,7 @@ public class UsuarioEditFormDto {
     @NotNull
     private Boolean activo;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static UsuarioEditFormDto from(Usuario u) {
         return UsuarioEditFormDto.builder()
             .email(u.getEmail())

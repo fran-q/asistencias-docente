@@ -9,10 +9,12 @@ package edu.cent35.asistencias.dto;
  */
 public record RegistroFacialResultadoDto(boolean exito, String mensaje) {
 
+    // Registro exitoso, con el detalle de cuántas capturas se aprovecharon.
     public static RegistroFacialResultadoDto ok(String mensaje) {
         return new RegistroFacialResultadoDto(true, mensaje);
     }
 
+    // Registro fallido, con el motivo que se le muestra al usuario.
     public static RegistroFacialResultadoDto error(String mensaje) {
         return new RegistroFacialResultadoDto(false, mensaje);
     }

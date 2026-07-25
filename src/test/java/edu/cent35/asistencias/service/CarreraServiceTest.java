@@ -25,6 +25,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el ABM de carreras: código único dentro de la institución, aislamiento entre tenants y
+ * el bloqueo de la baja mientras queden materias activas colgando.
+ */
 @ExtendWith(MockitoExtension.class)
 class CarreraServiceTest {
 
@@ -112,6 +116,7 @@ class CarreraServiceTest {
         assertThat(c.getActivo()).isTrue();
     }
 
+    // Carrera activa del tenant A.
     private Carrera activa() {
         Carrera c = Carrera.builder().id(1L).codigo("ECO").nombre("Economia").activo(true).build();
         c.setInstitucionId(TENANT_A);

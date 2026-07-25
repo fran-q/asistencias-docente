@@ -12,6 +12,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Datos que viajan entre el formulario de la comisión y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,6 +43,7 @@ public class ComisionFormDto {
     // Opcional: docente asignado a la comisión. Null = sin asignar.
     private Long docenteAsignadoId;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static ComisionFormDto from(Comision c) {
         return ComisionFormDto.builder()
             .codigo(c.getCodigo())

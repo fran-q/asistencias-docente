@@ -8,6 +8,10 @@ import lombok.Value;
 
 import java.time.LocalDate;
 
+/**
+ * Fila ya preparada de los docentes para la tabla del listado. Se arma dentro de la transacción
+ * para que el template no tenga que tocar entidades ni disparar consultas perezosas.
+ */
 @Value
 @Builder
 public class DocenteListItemDto {
@@ -22,6 +26,7 @@ public class DocenteListItemDto {
     // Estado del consentimiento biometrico (Sprint 3 Fase D).
     EstadoConsentimiento estadoConsentimiento;
 
+    // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static DocenteListItemDto from(Docente d, EstadoConsentimiento estadoConsentimiento) {
         return DocenteListItemDto.builder()
             .id(d.getId())

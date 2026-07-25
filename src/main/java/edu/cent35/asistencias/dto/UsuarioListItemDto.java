@@ -23,6 +23,7 @@ public class UsuarioListItemDto {
     boolean activo;
     LocalDateTime ultimoLogin;
 
+    // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static UsuarioListItemDto from(Usuario u) {
         return UsuarioListItemDto.builder()
             .id(u.getId())

@@ -30,6 +30,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el job que materializa las ausencias: que solo tome horarios ya terminados y sin marca,
+ * y que sea idempotente, de modo que correrlo dos veces no duplique nada.
+ */
 @ExtendWith(MockitoExtension.class)
 class GeneradorAusenciasServiceTest {
 

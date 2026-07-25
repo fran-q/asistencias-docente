@@ -17,6 +17,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
+/**
+ * Datos que viajan entre el formulario de el docente y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -51,6 +55,7 @@ public class DocenteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaAlta;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static DocenteFormDto from(Docente d) {
         return DocenteFormDto.builder()
             .dni(d.getDni())

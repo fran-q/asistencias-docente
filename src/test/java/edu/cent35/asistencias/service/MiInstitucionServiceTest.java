@@ -24,6 +24,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre la edición de la propia institución, verificando que el id salga siempre del
+ * TenantContext y que nunca se pueda alcanzar la institución de otro.
+ */
 @ExtendWith(MockitoExtension.class)
 class MiInstitucionServiceTest {
 

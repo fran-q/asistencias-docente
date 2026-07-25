@@ -41,6 +41,7 @@ public class AsistenciaReporteRowDto {
     boolean justificada;           // true si la AUSENTE tiene justificación adjunta
     String motivoJustificacion;    // motivo de la justificación, si la hay
 
+    // Arma la fila del reporte sumando, si los hay, el detalle manual y el de la justificación.
     public static AsistenciaReporteRowDto from(Asistencia a,
                                                AsistenciaManual manualOrNull,
                                                String motivoJustOrNull) {
@@ -72,11 +73,8 @@ public class AsistenciaReporteRowDto {
             .build();
     }
 
-    /**
-     * Dia que se muestra junto a la fecha. Sale de la <b>fecha</b> de la marca,
-     * no del dia programado del horario: si por un error de carga no coinciden,
-     * el reporte tiene que mostrar el dia que realmente corresponde a la fecha.
-     */
+    // Día que acompaña a la fecha. Sale de la fecha y no del día programado del horario: si por
+    // un error de carga no coinciden, tiene que mostrarse el que de verdad corresponde a la fecha.
     private static String labelDia(LocalDate fecha) {
         if (fecha == null) return "";
         return DiaSemana.deLaFecha(fecha).getEtiqueta();

@@ -23,6 +23,7 @@ public class PasswordResetDto {
     @NotBlank(message = "Repetí la contraseña")
     private String confirmacion;
 
+    // Indica si la contraseña y su repetición son iguales.
     public boolean coincide() {
         return nuevaPassword != null && nuevaPassword.equals(confirmacion);
     }

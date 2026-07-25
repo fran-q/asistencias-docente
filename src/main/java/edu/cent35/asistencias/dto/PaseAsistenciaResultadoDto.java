@@ -36,6 +36,7 @@ public record PaseAsistenciaResultadoDto(
     String mensaje
 ) {
 
+    // No se detectó ninguna cara en el frame.
     public static PaseAsistenciaResultadoDto sinRostro() {
         return new PaseAsistenciaResultadoDto(
             false, false, null, null, null,
@@ -44,6 +45,7 @@ public record PaseAsistenciaResultadoDto(
             "No se detectó ningún rostro.");
     }
 
+    // Se detectó una cara pero no coincide con ningún docente registrado.
     public static PaseAsistenciaResultadoDto noReconocido(double distancia,
                                                           int x, int y, int ancho, int alto) {
         return new PaseAsistenciaResultadoDto(
@@ -53,6 +55,7 @@ public record PaseAsistenciaResultadoDto(
             "Rostro no reconocido.");
     }
 
+    // Se identificó al docente, pero en este momento no tiene ninguna clase en curso.
     public static PaseAsistenciaResultadoDto reconocidoSinClase(Long docenteId, String nombre,
                                                                 double distancia,
                                                                 int x, int y, int ancho, int alto,
@@ -64,6 +67,7 @@ public record PaseAsistenciaResultadoDto(
             motivo);
     }
 
+    // Se identificó al docente y quedó registrada su asistencia.
     public static PaseAsistenciaResultadoDto marcado(Long docenteId, String nombre, double distancia,
                                                      int x, int y, int ancho, int alto,
                                                      boolean yaEstaba, String estado, String claseLabel) {

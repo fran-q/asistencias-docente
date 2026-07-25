@@ -27,6 +27,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el ABM de materias: código único, carrera del mismo tenant y el bloqueo de la baja
+ * mientras queden comisiones activas.
+ */
 @ExtendWith(MockitoExtension.class)
 class MateriaServiceTest {
 
@@ -120,12 +124,14 @@ class MateriaServiceTest {
             .hasMessageContaining("carrera");
     }
 
+    // Carrera activa del tenant A.
     private Carrera carreraActivaA() {
         Carrera c = Carrera.builder().id(CARRERA_ID).codigo("ECO").nombre("Eco").activo(true).build();
         c.setInstitucionId(TENANT_A);
         return c;
     }
 
+    // Materia activa colgando de una carrera del tenant A.
     private Materia materiaActivaA() {
         Materia m = Materia.builder()
             .id(20L).codigo("MAT").nombre("Matematica").carrera(carreraActivaA()).activo(true).build();

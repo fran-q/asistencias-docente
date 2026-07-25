@@ -31,6 +31,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el consentimiento biométrico: que no se pueda otorgar dos veces sin revocar, que el
+ * estado se deduzca del último registro y que cada operación quede auditada.
+ */
 @ExtendWith(MockitoExtension.class)
 class ConsentimientoBiometricoServiceTest {
 
@@ -266,6 +270,7 @@ class ConsentimientoBiometricoServiceTest {
         return docenteDeTenant(TENANT_A);
     }
 
+    // Docente del tenant indicado.
     private Docente docenteDeTenant(Long tenantId) {
         Docente d = Docente.builder()
             .id(DOCENTE_ID).dni("99888777").nombre("Juana").apellido("Pérez").activo(true)
@@ -274,6 +279,7 @@ class ConsentimientoBiometricoServiceTest {
         return d;
     }
 
+    // Usuario administrador del tenant indicado.
     private Usuario usuarioDeTenant(Long tenantId) {
         Usuario u = Usuario.builder()
             .id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com")
@@ -283,6 +289,7 @@ class ConsentimientoBiometricoServiceTest {
         return u;
     }
 
+    // Consentimiento sin revocar del docente.
     private ConsentimientoBiometrico consentimientoVigente() {
         return ConsentimientoBiometrico.builder()
             .id(1000L)

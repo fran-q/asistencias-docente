@@ -11,6 +11,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Datos que viajan entre el formulario de la materia y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -35,6 +39,7 @@ public class MateriaFormDto {
     // Opcional: id del docente titular (puede ser null).
     private Long docenteTitularId;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static MateriaFormDto from(Materia m) {
         return MateriaFormDto.builder()
             .codigo(m.getCodigo())

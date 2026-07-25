@@ -32,6 +32,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Cubre el registro del modelo facial: que exija consentimiento activo, que descarte las
+ * capturas sin rostro claro y que la supresión ARCO borre de verdad todos los modelos.
+ */
 @ExtendWith(MockitoExtension.class)
 class ModeloFacialServiceTest {
 
@@ -255,6 +259,7 @@ class ModeloFacialServiceTest {
         return d;
     }
 
+    // Usuario administrador del tenant A.
     private Usuario usuarioA() {
         Usuario u = Usuario.builder()
             .id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com")
@@ -264,6 +269,7 @@ class ModeloFacialServiceTest {
         return u;
     }
 
+    // Lista de capturas simuladas para el registro.
     private List<byte[]> capturasDe(int n) {
         byte[][] arr = new byte[n][];
         for (int i = 0; i < n; i++) arr[i] = new byte[]{ (byte) i };

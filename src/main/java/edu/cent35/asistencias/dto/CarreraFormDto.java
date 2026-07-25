@@ -10,6 +10,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Datos que viajan entre el formulario de la carrera y el controlador. Lleva las anotaciones de
+ * validación, así que los errores se detectan antes de llegar al service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -28,6 +32,7 @@ public class CarreraFormDto {
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String nombre;
 
+    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static CarreraFormDto from(Carrera c) {
         return CarreraFormDto.builder()
             .codigo(c.getCodigo())

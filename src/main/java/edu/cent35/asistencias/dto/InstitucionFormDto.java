@@ -45,9 +45,7 @@ public class InstitucionFormDto {
     @Size(max = 30, message = "El telefono no puede superar 30 caracteres")
     private String telefonoContacto;
 
-    /**
-     * Construye el DTO a partir de una entidad para pre-rellenar el form.
-     */
+    // Precarga el formulario con los datos actuales de la institución.
     public static InstitucionFormDto from(Institucion entidad) {
         return InstitucionFormDto.builder()
             .nombre(entidad.getNombre())
