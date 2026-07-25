@@ -17,17 +17,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Operaciones sobre los docentes de la institucion del tenant actual.
- * Cubre RF-07.
- * <p>
- * Reglas:
- * <ul>
- *   <li>DNI unico por institucion (obligatorio).</li>
- *   <li>Legajo unico por institucion (opcional).</li>
- *   <li>Fecha de alta no puede ser futura.</li>
- *   <li>No se puede dar de baja un docente que sea titular de
- *       materias activas o este asignado a comisiones activas.</li>
- * </ul>
+ * ABM de los docentes de la institución actual (RF-07), con DNI obligatorio y legajo opcional,
+ * ambos únicos dentro de la institución. La baja es lógica y se bloquea mientras el docente
+ * siga siendo titular de materias activas o esté asignado a comisiones activas.
  */
 @Service
 @RequiredArgsConstructor
@@ -39,17 +31,20 @@ public class DocenteService {
     private final ComisionRepository comisionRepository;
 
     @Transactional(readOnly = true)
+    // Lista los docentes del tenant, activos primero.
     public List<Docente> listar() {
         return docenteRepository.findAllByOrderByActivoDescApellidoAscNombreAsc();
     }
 
     // Docentes activos para selectores.
     @Transactional(readOnly = true)
+    // Solo los activos, para poblar los combos de los formularios.
     public List<Docente> activosParaSelector() {
         return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
     }
 
     @Transactional(readOnly = true)
+    // Busca por id validando que sea del tenant actual; si no, responde "no encontrado".
     public Docente buscarPorId(Long id) {
         Long tenantId = TenantContext.getRequired();
         Docente d = docenteRepository.findById(id)
@@ -62,6 +57,7 @@ public class DocenteService {
     }
 
     @Transactional
+    // Da de alta un docente, exigiendo DNI y legajo sin repetir dentro de la institución.
     public Docente crear(String dni, String legajo, String nombre, String apellido,
                          String email, String telefono, LocalDate fechaAlta) {
 
@@ -97,6 +93,7 @@ public class DocenteService {
     }
 
     @Transactional
+    // Edita los datos del docente, cuidando que DNI y legajo no choquen con otro.
     public Docente actualizar(Long id, String dni, String legajo, String nombre, String apellido,
                               String email, String telefono, LocalDate fechaAlta) {
 
@@ -129,6 +126,7 @@ public class DocenteService {
     }
 
     @Transactional
+    // Baja lógica; se bloquea si sigue siendo titular o está asignado a comisiones activas.
     public void darDeBaja(Long id) {
         Docente d = buscarPorId(id);
         if (Boolean.FALSE.equals(d.getActivo())) {
@@ -151,6 +149,7 @@ public class DocenteService {
     }
 
     @Transactional
+    // Reactiva un docente dado de baja.
     public void darDeAlta(Long id) {
         Docente d = buscarPorId(id);
         if (Boolean.TRUE.equals(d.getActivo())) {
@@ -161,6 +160,7 @@ public class DocenteService {
         log.info("Docente reactivado: id={}", id);
     }
 
+    // Exige fecha de alta y que no sea futura.
     private void validarFechaAlta(LocalDate fecha) {
         if (fecha == null) throw new IllegalArgumentException("La fecha de alta es obligatoria.");
         if (fecha.isAfter(LocalDate.now())) {
@@ -168,6 +168,7 @@ public class DocenteService {
         }
     }
 
+    // Normaliza campos opcionales: deja null si viene vacío o solo con espacios.
     private static String blankToNull(String s) {
         if (s == null) return null;
         String t = s.trim();

@@ -19,16 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Operaciones sobre las comisiones del tenant actual. Cubre RF-13.
- * <p>
- * <b>Comision no es tenant-scoped directamente</b> (no tiene
- * institucion_id propia). El tenant lo determina la materia padre,
- * y la query {@code findAllDelTenant()} usa JOIN con materia, lo que
- * activa el filtro Hibernate {@code "tenant"} sobre Materia.
- * Para {@code findById} validamos manualmente via la materia.
- * <p>
- * El campo {@code docenteAsignadoId} queda NULL hasta Sprint 3
- * (V004 lo hizo nullable).
+ * ABM de las comisiones del tenant actual (RF-13), con cupo y docente asignado opcionales.
+ * Comisión no lleva institucion_id propio: su tenant sale de la materia padre, así que los
+ * listados van por JOIN contra materia y los findById validan la cadena a mano.
  */
 @Service
 @RequiredArgsConstructor
@@ -41,6 +34,7 @@ public class ComisionService {
     private final DocenteRepository docenteRepository;
 
     @Transactional(readOnly = true)
+    // Lista las comisiones del tenant, resolviendo el tenant por JOIN con materia.
     public List<Comision> listar() {
         Long tenantId = TenantContext.getRequired();
         List<Comision> comisiones = comisionRepository.findAllDelTenant(tenantId);
@@ -58,6 +52,7 @@ public class ComisionService {
     }
 
     @Transactional(readOnly = true)
+    // Busca por id validando el tenant a través de la materia padre.
     public Comision buscarPorId(Long id) {
         Long tenantId = TenantContext.getRequired();
         Comision c = comisionRepository.findById(id)
@@ -80,10 +75,7 @@ public class ComisionService {
         return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
     }
 
-    /**
-     * Comisiones activas del tenant para popular selectores de UI
-     * (ej: el form de creacion de horarios).
-     */
+    // Solo las activas, para poblar el combo del formulario de horarios.
     @Transactional(readOnly = true)
     public List<Comision> comisionesActivasParaSelector() {
         Long tenantId = TenantContext.getRequired();
@@ -98,6 +90,7 @@ public class ComisionService {
     }
 
     @Transactional(readOnly = true)
+    // Materias activas del tenant, para el combo del formulario de comisiones.
     public List<Materia> materiasActivasParaSelector() {
         List<Materia> ms = materiaRepository.findByActivoTrueOrderByNombreAsc();
         ms.forEach(m -> { if (m.getCarrera() != null) m.getCarrera().getCodigo(); });
@@ -105,6 +98,7 @@ public class ComisionService {
     }
 
     @Transactional
+    // Crea una comisión bajo una materia activa, con código único dentro de esa materia.
     public Comision crear(String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
@@ -141,6 +135,7 @@ public class ComisionService {
     }
 
     @Transactional
+    // Edita la comisión: código, materia, cupo y docente asignado.
     public Comision actualizar(Long id, String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
         Comision c = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
@@ -184,6 +179,7 @@ public class ComisionService {
     }
 
     @Transactional
+    // Baja lógica; se bloquea si todavía cuelgan horarios activos.
     public void darDeBaja(Long id) {
         Comision c = buscarPorId(id);
         if (Boolean.FALSE.equals(c.getActivo())) {
@@ -201,6 +197,7 @@ public class ComisionService {
     }
 
     @Transactional
+    // Reactiva la comisión, siempre que su materia esté activa.
     public void darDeAlta(Long id) {
         Comision c = buscarPorId(id);
         if (Boolean.TRUE.equals(c.getActivo())) {
@@ -215,6 +212,7 @@ public class ComisionService {
         log.info("Comision reactivada: id={}", id);
     }
 
+    // Trae la materia asegurando que sea del tenant actual.
     private Materia obtenerMateriaValidada(Long materiaId, Long tenantId) {
         Materia m = materiaRepository.findById(materiaId)
             .orElseThrow(() -> new IllegalArgumentException("La materia seleccionada no existe."));
@@ -223,16 +221,12 @@ public class ComisionService {
                      tenantId, materiaId, m.getInstitucionId());
             throw new IllegalArgumentException("La materia seleccionada no existe.");
         }
-        // touch carrera para que se inicialice (lazy)
+        // Touch para inicializar la carrera antes de que la use el template.
         if (m.getCarrera() != null) m.getCarrera().getCodigo();
         return m;
     }
 
-    /**
-     * Obtiene el docente validando que pertenezca al tenant.
-     * Devuelve null si {@code docenteId} es null (el asignado es opcional).
-     * Si {@code requireActivo}, ademas se valida que este activo.
-     */
+    // Trae el docente asignado validando tenant; devuelve null si no se eligió ninguno (es opcional).
     private Docente obtenerDocenteValidadoOrNull(Long docenteId, Long tenantId, boolean requireActivo) {
         if (docenteId == null) return null;
         Docente d = docenteRepository.findById(docenteId)

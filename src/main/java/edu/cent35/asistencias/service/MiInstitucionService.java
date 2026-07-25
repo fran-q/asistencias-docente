@@ -14,16 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Operaciones sobre la institucion del usuario logueado ("mi institucion").
- * <p>
- * El usuario con rol INSTITUCION puede ver y editar los datos de SU
- * institucion - jamas la de otra. La proteccion es doble:
- * <ol>
- *   <li>{@link TenantContext#getRequired()} provee el id que se usa
- *       para fetch (no aceptamos id externo, evita IDOR).</li>
- *   <li>El controlador exige rol INSTITUCION via
- *       {@code @PreAuthorize}.</li>
- * </ol>
+ * Permite al rol INSTITUCION ver y editar los datos de su propia institución, nunca la de
+ * otra. El id sale siempre del TenantContext y no de un parámetro del request, que es lo
+ * que evita un IDOR; el control de rol lo pone además el controlador.
  */
 @Service
 @RequiredArgsConstructor
@@ -32,9 +25,7 @@ public class MiInstitucionService {
 
     private final InstitucionRepository institucionRepository;
 
-    /**
-     * Devuelve la institucion del tenant actual.
-     */
+    // Devuelve la institución del tenant actual.
     @Transactional(readOnly = true)
     public Institucion getMiInstitucion() {
         Long tenantId = TenantContext.getRequired();
@@ -43,12 +34,7 @@ public class MiInstitucionService {
                 "Institucion no encontrada para tenantId=" + tenantId));
     }
 
-    /**
-     * Actualiza los datos editables de la institucion del tenant actual.
-     *
-     * @throws DataIntegrityViolationException si el nombre o cuit nuevo
-     *         colisiona con el de otra institucion existente.
-     */
+    // Edita los datos de la institución actual; falla si el nombre o el CUIT ya son de otra.
     @Transactional
     public Institucion actualizar(InstitucionFormDto dto) {
         Long tenantId = TenantContext.getRequired();

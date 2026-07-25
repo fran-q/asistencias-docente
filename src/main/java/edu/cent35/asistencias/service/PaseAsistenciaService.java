@@ -28,16 +28,7 @@ public class PaseAsistenciaService {
     private final IdentificacionFacialService identificacionService;
     private final AsistenciaService asistenciaService;
 
-    /**
-     * Pasa asistencia a partir de un frame. Combina identificación facial
-     * con marcado de asistencia.
-     * <p>
-     * <b>Medicion RNF-01</b>: el requerimiento presupuesta deteccion +
-     * identificacion + registro. Cuando se crea una marca nueva se loguea
-     * el tiempo total {@code RNF01} — ese es el numero a reportar en la
-     * defensa (las lineas {@code CALIBRACION} del identificador cubren solo
-     * deteccion + comparacion).
-     */
+    // Pasa asistencia desde un frame: identifica y marca, midiendo el tiempo total (RNF-01).
     public PaseAsistenciaResultadoDto pasar(byte[] imagenBytes) {
         long inicioNs = System.nanoTime();
         IdentificacionResultadoDto id = identificacionService.identificar(imagenBytes);

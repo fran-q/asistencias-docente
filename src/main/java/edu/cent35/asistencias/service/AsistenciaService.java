@@ -45,27 +45,11 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Marca de asistencia automática (RF-17 a RF-21).
- * <p>
- * Una marca automática es válida cuando, en el instante de la identificación,
- * el docente tiene un horario corriendo en una de sus comisiones. La ventana
- * es {@code [hora_inicio - tolerancia, hora_fin]}:
- * <ul>
- *   <li>Antes del {@code hora_inicio} (dentro de la tolerancia) → PRESENTE.</li>
- *   <li>A partir del {@code hora_inicio} → TARDE (se guarda la hora exacta).</li>
- *   <li>Fuera de la ventana → no se marca (no hay clase ahora).</li>
- * </ul>
- * <p>
- * La tolerancia es propia de cada {@code Horario} (sprint 2). El estado
- * AUSENTE no se persiste por este service: se calcula al listar (los
- * horarios cuya {@code hora_fin} ya pasó y no tienen fila para esa fecha).
- * <p>
- * <b>Idempotencia</b>: si ya hay marca para (docente, horario, fecha) la
- * devolvemos sin volver a insertar — el UNIQUE de la BD ya lo garantiza,
- * pero también lo respetamos a nivel aplicación.
- * <p>
- * <b>Multi-tenant</b>: el docente se valida contra el tenant actual. La
- * entidad {@code Asistencia} es tenant-scoped (institucion_id denormalizado).
+ * Registra las asistencias del docente, sea por reconocimiento facial o por carga manual
+ * (RF-17 a RF-21). Una marca automática solo entra si el docente tiene una clase corriendo
+ * dentro de la ventana [hora_inicio - tolerancia, hora_fin]: antes del inicio queda PRESENTE
+ * y a partir del inicio TARDE; es idempotente por (docente, horario, fecha) y siempre valida
+ * que el docente pertenezca al tenant actual.
  */
 @Service
 @RequiredArgsConstructor
@@ -81,22 +65,11 @@ public class AsistenciaService {
     private final MotivoCargaManualRepository motivoCargaManualRepository;
     private final UsuarioRepository usuarioRepository;
 
-    /**
-     * Distancia LBPH máxima esperada. Se usa para mapear la distancia bruta
-     * del recognizer a un score 0-1 (1 = perfecto, 0 = límite del umbral).
-     * Reusa el mismo valor configurado para el umbral de identificación.
-     */
+    // Distancia LBPH máxima esperada; sirve para llevar la distancia cruda a un score 0-1.
     @Value("${app.biometria.umbral-confianza}")
     private double umbralDistancia;
 
-    /**
-     * Resultado de un intento de marcado.
-     *
-     * @param marcada         true si quedó una marca persistida (nueva o ya existente)
-     * @param asistencia      la marca, null si no se pudo marcar
-     * @param yaEstaba        true cuando {@code marcada=true} y la marca ya existía (idempotente)
-     * @param motivoNoMarca   mensaje explicando por qué no se marcó (null si se marcó)
-     */
+    // Resultado de un intento de marcado: si quedó marca, cuál es, si ya existía y si no, por qué.
     public record ResultadoMarca(
         boolean marcada,
         Asistencia asistencia,
@@ -114,15 +87,7 @@ public class AsistenciaService {
         }
     }
 
-    /**
-     * Marca asistencia automática. Si no hay clase corriendo o ya existe
-     * marca para esta clase, no falla — devuelve un {@link ResultadoMarca}
-     * indicando el caso.
-     *
-     * @param docenteId        a quién corresponde la marca
-     * @param modeloFacialId   modelo con el que se identificó (puede ser null si se quiere desacoplar)
-     * @param distanciaLbph    distancia que devolvió el recognizer (menor = mejor)
-     */
+    // Marca por reconocimiento facial; si no hay clase o ya estaba marcada, no falla: lo informa.
     @Transactional
     public ResultadoMarca marcarAutomatica(Long docenteId,
                                            Long modeloFacialId,
@@ -130,9 +95,7 @@ public class AsistenciaService {
         return marcarAutomatica(docenteId, modeloFacialId, distanciaLbph, LocalDateTime.now());
     }
 
-    /**
-     * Variante con instante explícito — pensada para tests.
-     */
+    // Misma marca pero con el instante recibido por parámetro, para poder testearla.
     @Transactional
     public ResultadoMarca marcarAutomatica(Long docenteId,
                                            Long modeloFacialId,
@@ -202,14 +165,7 @@ public class AsistenciaService {
         }
     }
 
-    /**
-     * Carga manual de asistencia por un admin (RF-22 a RF-24).
-     * <p>
-     * Crea la fila en {@code asistencias} y el detalle 1:1 en
-     * {@code asistencias_manuales}. Si ya existe una marca para
-     * {@code (docente, horario, fecha)}, falla (no se sobreescribe sin
-     * acción explícita).
-     */
+    // Carga manual por un admin (RF-22 a RF-24): crea la marca y su detalle con motivo y autor.
     @Transactional
     public Asistencia marcarManual(Long docenteId, Long horarioId, java.time.LocalDate fecha,
                                    LocalTime horaRegistrada, EstadoAsistencia estado,
@@ -228,10 +184,8 @@ public class AsistenciaService {
         if (fecha == null || fecha.isAfter(java.time.LocalDate.now())) {
             throw new IllegalArgumentException("La fecha no puede ser futura.");
         }
-        // La clase solo existe el dia de la semana en que esta programado el
-        // horario: si la fecha cae en otro dia, la marca seria inconsistente
-        // (ej. una clase de lunes registrada un sabado). Se valida aca porque
-        // en la carga manual la fecha la elige el admin a mano.
+        // La clase solo existe el día que está programado el horario, y acá la fecha la
+        // elige el admin a mano: sin este chequeo entraría un lunes marcado un sábado.
         DiaSemana diaDelHorario = DiaSemana.fromNumero(horario.getDiaSemana());
         DiaSemana diaDeLaFecha = DiaSemana.deLaFecha(fecha);
         if (diaDelHorario != diaDeLaFecha) {
@@ -281,12 +235,7 @@ public class AsistenciaService {
         return guardada;
     }
 
-    /**
-     * Justifica una ausencia (RF-25, RF-26). Sólo aplica a asistencias
-     * persistidas con estado {@code AUSENTE}. Para justificar una "ausencia
-     * calculada" del listado, primero hay que cargarla manualmente como
-     * AUSENTE y después justificarla.
-     */
+    // Justifica una ausencia ya persistida como AUSENTE (RF-25, RF-26); las calculadas no aplican.
     @Transactional
     public JustificacionAusencia justificarAusencia(Long asistenciaId, String motivo,
                                                     String documentoUrl, Long usuarioActualId) {
@@ -337,12 +286,7 @@ public class AsistenciaService {
         return justificacionAusenciaRepository.findByAsistenciaId(asistenciaId).isPresent();
     }
 
-    /**
-     * Lista las asistencias de un día concreto, incluyendo las marcas
-     * <b>AUSENTE calculadas</b>: para cada horario activo del día que ya
-     * terminó (o si la fecha es anterior a hoy) y no tiene fila para
-     * el docente asignado, se agrega una fila virtual.
-     */
+    // Lista el día pedido sumando AUSENTE calculadas: horarios ya terminados y sin marca real.
     @Transactional(readOnly = true)
     public List<AsistenciaListItemDto> listarDelDia(LocalDate fecha) {
         Long tenantId = TenantContext.getRequired();
@@ -388,42 +332,7 @@ public class AsistenciaService {
 
     // ------------------------------------------------------------------------
 
-    /**
-     * Elige el horario al que corresponde una marca hecha en {@code ahora}
-     * (RF-18: determinación automática de materia y horario).
-     * <p>
-     * <b>Por qué hace falta un criterio explícito.</b> La cámara está en
-     * secretaría, no en el aula: el sistema no "ve" la clase, la deduce
-     * cruzando la hora del registro con los horarios cargados. Cuando hay
-     * un solo horario en ventana el caso es trivial, pero puede haber
-     * <i>ambigüedad</i> en dos escenarios reales:
-     * <ul>
-     *   <li><b>Horarios consecutivos</b>: el docente da 18-20 y 20-22 y se
-     *       presenta 19:55 — con la tolerancia, ambas ventanas lo contienen.</li>
-     *   <li><b>Horarios solapados</b>: el docente está asignado a dos
-     *       comisiones distintas a la misma hora (la validación de
-     *       superposición de {@code HorarioService} es <i>por comisión</i>,
-     *       así que este caso no está prohibido).</li>
-     * </ul>
-     * Tomar "el primero de la lista" dependía del orden de la query: era
-     * arbitrario y no reproducible. Estos son los criterios, en orden:
-     * <ol>
-     *   <li><b>Preferir los horarios sin marca previa.</b> Si el docente ya
-     *       registró la clase de las 18, la marca nueva corresponde a la
-     *       siguiente. Resuelve el caso consecutivo de la forma más natural.
-     *       <i>Salvaguarda</i>: si TODOS los candidatos ya están marcados no
-     *       se filtra, para que el flujo siga devolviendo "ya estaba marcado"
-     *       (idempotencia) en lugar de "no hay clase".</li>
-     *   <li><b>La hora de inicio más cercana al momento del registro.</b>
-     *       A las 19:55, la clase que arranca 20:00 está a 5 minutos y la que
-     *       arrancó 18:00 a 115: el docente evidentemente viene a la segunda.</li>
-     *   <li><b>Menor id</b> como desempate final, para que la decisión sea
-     *       <b>determinista</b> y reproducible ante un empate exacto.</li>
-     * </ol>
-     * Si ningún horario contiene el momento actual, devuelve vacío: el
-     * sistema <b>no registra</b> y el caso se deriva a carga manual
-     * (RF-22 a RF-24), coherente con la política de no marcar ante duda.
-     */
+    // Elige a qué clase corresponde la marca (RF-18): sin marcar antes, inicio más cercano, menor id.
     private Optional<Horario> elegirHorarioEnCurso(List<Horario> horariosHoy,
                                                    LocalTime ahora,
                                                    Long docenteId,
@@ -468,26 +377,21 @@ public class AsistenciaService {
         return Math.abs(java.time.Duration.between(desde, hasta).toMinutes());
     }
 
+    // Indica si el momento cae dentro de [hora_inicio - tolerancia, hora_fin].
     private boolean estaEnCurso(Horario h, LocalTime ahora) {
         short tol = h.getToleranciaMin() == null ? 0 : h.getToleranciaMin();
         LocalTime ventanaInicio = h.getHoraInicio().minusMinutes(tol);
-        // dentro de [ventanaInicio, horaFin]
         return !ahora.isBefore(ventanaInicio) && !ahora.isAfter(h.getHoraFin());
     }
 
+    // PRESENTE hasta la hora de inicio inclusive (la tolerancia permite llegar antes), TARDE después.
     private EstadoAsistencia calcularEstado(Horario h, LocalTime ahora) {
-        // PRESENTE si llegó hasta hora_inicio inclusive (puede ser antes con la tolerancia).
-        // TARDE si llegó después del hora_inicio.
         return ahora.isAfter(h.getHoraInicio())
             ? EstadoAsistencia.TARDE
             : EstadoAsistencia.PRESENTE;
     }
 
-    /**
-     * Convierte la distancia LBPH (donde menor = mejor) a un score 0-1
-     * (donde 1 = mejor). Se usa el umbral configurado como referencia:
-     * {@code score = max(0, 1 - distancia/umbral)}.
-     */
+    // Pasa la distancia LBPH (menor = mejor) a un score 0-1 (mayor = mejor) contra el umbral.
     private BigDecimal distanciaToConfianza(double distancia) {
         if (umbralDistancia <= 0) return BigDecimal.ZERO;
         double score = Math.max(0.0, 1.0 - (distancia / umbralDistancia));
@@ -495,11 +399,11 @@ public class AsistenciaService {
         return BigDecimal.valueOf(score).setScale(4, RoundingMode.HALF_UP);
     }
 
+    // Trae un horario asegurando que sea del tenant actual (se deduce por su materia padre).
     private Horario obtenerHorarioValidado(Long horarioId, Long tenantId) {
         Horario h = horarioRepository.findById(horarioId)
             .orElseThrow(() -> new IllegalArgumentException(
                 "El horario seleccionado no existe."));
-        // Tenant: via materia padre.
         if (h.getComision() == null || h.getComision().getMateria() == null
                 || !tenantId.equals(h.getComision().getMateria().getInstitucionId())) {
             log.warn("Cross-tenant blocked: tenant {} intento usar horario id={}",
@@ -509,12 +413,14 @@ public class AsistenciaService {
         return h;
     }
 
+    // Normaliza texto opcional: deja null si viene vacío o solo con espacios.
     private static String trimToNull(String s) {
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
 
+    // Trae un docente asegurando que sea del tenant actual; si no, responde "no encontrado".
     private Docente obtenerDocenteValidado(Long docenteId, Long tenantId) {
         Docente d = docenteRepository.findById(docenteId)
             .orElseThrow(() -> new EntityNotFoundException("Docente no encontrado: " + docenteId));

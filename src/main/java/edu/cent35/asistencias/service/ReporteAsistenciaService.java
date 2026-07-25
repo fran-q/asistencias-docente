@@ -33,11 +33,7 @@ public class ReporteAsistenciaService {
     private final AsistenciaManualRepository asistenciaManualRepository;
     private final JustificacionAusenciaRepository justificacionAusenciaRepository;
 
-    /**
-     * Devuelve las filas del reporte aplicando los filtros recibidos. Las
-     * referencias a {@code AsistenciaManual} y a la justificación se buscan
-     * en bulk para no caer en N+1.
-     */
+    // Arma las filas del reporte; los detalles manuales y de justificación se traen en bulk (evita N+1).
     @Transactional(readOnly = true)
     public List<AsistenciaReporteRowDto> reporte(ReporteFiltroDto filtro) {
         // Default: rango del mes actual si no se especifica.

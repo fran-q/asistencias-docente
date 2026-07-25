@@ -3,35 +3,17 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.repository.*;
 
 /**
- * Texto legal del consentimiento informado para tratamiento de datos
- * biometricos del docente. Cumple con los requisitos de la Ley 25.326
- * (informacion previa al titular) y de la Resolucion AAIP 255/2022
- * (datos biometricos = sensibles, consentimiento expreso).
- * <p>
- * <b>Versionado</b>: cuando se modifique el texto, hay que incrementar
- * {@link #VERSION_ACTUAL} y dejar el texto anterior accesible si fuera
- * necesario reconstruir el historico. Los docentes que aceptaron versiones
- * previas siguen vigentes (su aceptacion fue legal en ese momento); el
- * sistema puede sugerirles re-aceptar la version nueva pero no es
- * obligatorio.
- * <p>
- * En la base de datos, cada registro guarda en {@code version_terminos}
- * el valor de {@link #VERSION_ACTUAL} que estaba al momento de aceptar.
+ * Texto legal del consentimiento informado para tratar datos biométricos del docente, según
+ * la Ley 25.326 y la Resolución AAIP 255/2022 (biométricos = sensibles, consentimiento
+ * expreso). Cada aceptación guarda la VERSION_ACTUAL vigente en ese momento, así que al
+ * cambiar el cuerpo hay que incrementarla: las aceptaciones viejas siguen siendo válidas.
  */
 public final class TextoConsentimiento {
 
-    /**
-     * Version del texto vigente. Formato {@code aaaa-mm-vN}.
-     * Incrementar cuando se modifique el cuerpo del texto.
-     */
+    // Versión vigente del texto (formato aaaa-mm-vN); incrementar al tocar el cuerpo.
     public static final String VERSION_ACTUAL = "2026-05-v1";
 
-    /**
-     * Cuerpo del consentimiento. Se renderiza tal cual en la pantalla
-     * de aceptacion (template Thymeleaf {@code consentimiento-otorgar.html}).
-     * <p>
-     * Si el texto cambia, hay que ajustar tambien {@link #VERSION_ACTUAL}.
-     */
+    // Cuerpo que se muestra tal cual en la pantalla de aceptación.
     public static final String CUERPO = """
         CONSENTIMIENTO INFORMADO PARA EL TRATAMIENTO DE DATOS BIOMETRICOS
         (Ley Nacional N° 25.326 de Proteccion de Datos Personales y

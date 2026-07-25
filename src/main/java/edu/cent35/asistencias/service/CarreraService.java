@@ -15,13 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Operaciones sobre las carreras de la institucion del tenant actual.
- * Cubre RF-11.
- * <p>
- * Aislamiento multi-tenant: combina el filtro Hibernate {@code "tenant"}
- * (activado por {@code TenantFilterAspect} en metodos transaccionales)
- * con validacion explicita en {@link #buscarPorId(Long)} para casos
- * donde el filtro no aplica (ej: {@code findById}).
+ * ABM de las carreras de la institución actual (RF-11), con baja lógica en vez de borrado.
+ * El aislamiento se apoya en el filtro de Hibernate y además valida el tenant a mano en
+ * buscarPorId, porque findById no pasa por el filtro.
  */
 @Service
 @RequiredArgsConstructor
@@ -46,12 +42,13 @@ public class CarreraService {
         if (!tenantId.equals(c.getInstitucionId())) {
             log.warn("Cross-tenant blocked: tenant {} intento acceder carrera id={} (tenant {})",
                      tenantId, id, c.getInstitucionId());
-            // Camuflar como not-found
+            // Se responde "no encontrada" para no revelar que el id existe en otra institución.
             throw new EntityNotFoundException("Carrera no encontrada");
         }
         return c;
     }
 
+    // Crea una carrera con código único dentro de la institución.
     @Transactional
     public Carrera crear(String codigo, String nombre) {
         Long tenantId = TenantContext.getRequired();
@@ -76,6 +73,7 @@ public class CarreraService {
         return saved;
     }
 
+    // Renombra la carrera, cuidando que el código nuevo no choque con otra.
     @Transactional
     public Carrera actualizar(Long id, String codigo, String nombre) {
         Carrera c = buscarPorId(id);
@@ -95,10 +93,7 @@ public class CarreraService {
         return saved;
     }
 
-    /**
-     * Da de baja lógica una carrera. Bloquea si tiene materias activas
-     * (forzar al usuario a darlas de baja primero - evita orfandad lógica).
-     */
+    // Baja lógica; se bloquea si todavía cuelgan materias activas, para no dejarlas huérfanas.
     @Transactional
     public void darDeBaja(Long id) {
         Carrera c = buscarPorId(id);
