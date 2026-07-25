@@ -51,7 +51,14 @@
         });
 
         menu.querySelectorAll('a, button').forEach(function (el) {
-            el.addEventListener('click', function () { setOpen(false); });
+            el.addEventListener('click', function () {
+                // Cerramos el drawer SIN animar: como el link navega a otra
+                // pagina, no queremos ver el drawer deslizandose mientras carga.
+                // nav-preload suprime la transicion; la pagina nueva ya arranca
+                // limpia (script inline del layout).
+                body.classList.add('nav-preload');
+                setOpen(false);
+            });
         });
 
         // --- Deteccion de overflow ---
@@ -74,6 +81,12 @@
                 // Volvio a entrar todo: si el drawer estaba abierto, cerrarlo
                 setOpen(false);
             }
+
+            // Recordar la decision para que la proxima pagina arranque ya en
+            // el modo correcto (script inline del layout) y no parpadee.
+            try {
+                sessionStorage.setItem('navCompact', overflow ? '1' : '0');
+            } catch (e) { /* sin sessionStorage: no pasa nada */ }
         }
 
         var resizeTimer;
@@ -84,6 +97,21 @@
 
         // Initial run + resize
         evaluateLayout();
+
+        // Reactivar las transiciones despues de pintar el estado inicial: el
+        // doble requestAnimationFrame garantiza que el navegador ya pinto el
+        // modo compacto sin animar, y a partir de aca las interacciones del
+        // usuario (abrir/cerrar drawer) SI animan. Es idempotente.
+        function quitarPreload() { body.classList.remove('nav-preload'); }
+
+        requestAnimationFrame(function () {
+            requestAnimationFrame(quitarPreload);
+        });
+        // Respaldo: si la pagina cargo con la pestana en segundo plano, rAF
+        // queda pausado y nav-preload no se quitaria. El evento 'load' SI se
+        // dispara con la pestana oculta, asi que garantiza que no quede pegado.
+        window.addEventListener('load', quitarPreload);
+
         window.addEventListener('resize', scheduleEvaluate);
 
         // ResizeObserver es mas robusto: detecta cambios incluso si no hay resize

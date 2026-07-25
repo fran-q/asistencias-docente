@@ -13,6 +13,26 @@
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
+    <!--
+      Anti-parpadeo del navbar (ver navbar.js). El navbar decide hamburguesa
+      vs. links completos midiendo el ancho con JS, así que cada página llegaba
+      del servidor en modo desktop y colapsaba a hamburguesa al cargar. Este
+      script aplica, ANTES del primer paint, el modo detectado en la navegación
+      anterior (guardado en sessionStorage), y suprime transiciones durante la
+      carga para que el drawer no "aparezca deslizando". navbar.js quita
+      nav-preload tras el primer paint.
+    -->
+    <script>
+        (function () {
+            try {
+                document.body.classList.add('nav-preload');
+                if (sessionStorage.getItem('navCompact') === '1') {
+                    document.body.classList.add('nav-compact');
+                }
+            } catch (e) { /* sin sessionStorage: cae al comportamiento previo */ }
+        })();
+    </script>
+
     <!-- ============ NAVBAR ============ -->
     <header class="navbar">
         <!-- Hamburguesa: visible en pantallas chicas (<=900px), oculta en desktop -->

@@ -870,6 +870,15 @@ body.nav-compact .navbar__toggle    { display: inline-flex; }
 body.nav-compact .navbar__backdrop  { display: block; }
 body.nav-compact .navbar__username  { display: none; }   /* ahorrar espacio */
 
+/* Durante la carga inicial (clase puesta por el script inline del layout)
+   suprimimos las transiciones del navbar, para que el modo compacto aplicado
+   antes del paint no "aparezca deslizando". navbar.js quita nav-preload tras
+   el primer frame, devolviendo la animación a las interacciones del usuario. */
+body.nav-preload .navbar__menu,
+body.nav-preload .navbar__backdrop {
+    transition: none !important;
+}
+
 /* El menu se transforma en drawer fijo a la izquierda, fuera de pantalla */
 body.nav-compact .navbar__menu {
     position: fixed;
