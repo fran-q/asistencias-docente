@@ -6,20 +6,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Superclase para entidades tenant-scoped: aporta la columna
- * {@code institucion_id} compartida por todas las tablas que pertenecen
- * a una institucion.
- * <p>
- * En la <b>Fase B del Sprint 1</b> se sumara aqui (o en
- * {@code package-info.java}) el {@code @FilterDef} de Hibernate y
- * cada entidad concreta llevara {@code @Filter("tenant")}, junto con
- * el aspecto que activa el filtro por request a partir del
- * {@code TenantContext}.
- * <p>
- * Por ahora la columna queda mapeada y la entidad la persiste, pero
- * no hay filtrado automatico (las queries devolveran datos de todos
- * los tenants si se ejecutan sin un WHERE manual). El aislamiento se
- * activa cuando llegue la Fase B.
+ * Superclase de las entidades que pertenecen a una institución: aporta la columna
+ * institucion_id sobre la que actúa el filtro de Hibernate. Cada entidad concreta suma su
+ * propio @Filter("tenant"), y TenantFilterAspect lo activa por transacción.
  */
 @MappedSuperclass
 @Getter
