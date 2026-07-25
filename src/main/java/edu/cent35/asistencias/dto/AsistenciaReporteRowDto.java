@@ -47,7 +47,7 @@ public class AsistenciaReporteRowDto {
         return AsistenciaReporteRowDto.builder()
             .asistenciaId(a.getId())
             .fecha(a.getFecha())
-            .diaSemana(labelDia(a.getHorario().getDiaSemana()))
+            .diaSemana(labelDia(a.getFecha()))
             .horaInicio(a.getHorario().getHoraInicio())
             .horaFin(a.getHorario().getHoraFin())
             .carreraCodigo(a.getComision().getMateria().getCarrera() != null
@@ -72,11 +72,13 @@ public class AsistenciaReporteRowDto {
             .build();
     }
 
-    private static String labelDia(Byte numero) {
-        if (numero == null) return "";
-        DiaSemana d = DiaSemana.fromNumero(numero);
-        if (d == null) return "";
-        String n = d.name();
-        return n.charAt(0) + n.substring(1).toLowerCase();
+    /**
+     * Dia que se muestra junto a la fecha. Sale de la <b>fecha</b> de la marca,
+     * no del dia programado del horario: si por un error de carga no coinciden,
+     * el reporte tiene que mostrar el dia que realmente corresponde a la fecha.
+     */
+    private static String labelDia(LocalDate fecha) {
+        if (fecha == null) return "";
+        return DiaSemana.deLaFecha(fecha).getEtiqueta();
     }
 }
