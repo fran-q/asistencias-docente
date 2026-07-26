@@ -28,11 +28,20 @@ Restricciones del proyecto:
 - *Deep Java Library (DJL) + modelo ONNX*: más preciso (embeddings tipo FaceNet/ArcFace) pero más complejo de configurar y de explicar en una defensa académica.
 - *Servicio externo Python*: viola la restricción "reconocimiento en Java".
 
-### 2. Restricción de plataforma nativa
+### 2. Restricción de plataforma nativa — **la decisión no llegó a tener efecto**
 
-`gradle.properties` fija `javacpp.platform=windows-x86_64`. Sin esto, Gradle descarga ~1 GB de binarios de todas las plataformas. Con la restricción baja solo los de Windows (~150 MB).
+La intención era fijar `javacpp.platform=windows-x86_64` en `gradle.properties` para que Gradle bajara solo los binarios de Windows en vez de los de las diez plataformas.
 
-**Consecuencia**: si el CI corre en Linux hay que sobreescribir con `-Pjavacpp.platform=linux-x86_64`. Documentado en el propio `gradle.properties`.
+**No funciona.** Esa propiedad la lee el plugin `org.bytedeco.gradle-javacpp-platform`, que **nunca se aplicó** al build. Sin el plugin, `opencv-platform` arrastra igual todos los binarios: se resuelven 23 jars nativos (android, ios, linux, macOS y Windows).
+
+Verificado listando los artefactos del `runtimeClasspath`, no por inspección del archivo. La propiedad quedó como una declaración de intención sin efecto real, y este ADR la daba por hecha.
+
+**Consecuencias de que no aplique:**
+
+- Cada build limpio descarga cientos de MB de binarios que no se usan.
+- En compensación, el CI sobre Linux **no necesita** ningún override: `linux-x86_64` ya está en el classpath.
+
+**Para hacerla efectiva** habría que aplicar el plugin de plataforma de JavaCPP, que se publica fuera del portal de plugins de Gradle y por lo tanto exige declarar el repositorio en `settings.gradle`. Queda como mejora pendiente: se intentó y se revirtió por no tocar la configuración de build cerca de la entrega, dado que el costo actual es tiempo de descarga y no una falla.
 
 ### 3. Algoritmo: LBPH (Local Binary Patterns Histograms)
 
@@ -141,7 +150,7 @@ registro administrativo queda intacto y deja de ser dato biométrico.
 **Negativas**:
 - LBPH es sensible a iluminación y pose; menos robusto que un enfoque por embeddings. Aceptable para un PoC.
 - Verificación O(N): no escala a miles de docentes sin optimización (anotado para Sprint 5).
-- `javacpp.platform` fija la plataforma: el build local es Windows-only salvo override.
+- `javacpp.platform` **no** fija la plataforma: falta el plugin que lee esa propiedad, así que cada build descarga los binarios de las diez plataformas (ver decisión 2).
 - La columna `dimensiones` de `modelos_faciales` fue pensada para embeddings de vector fijo; con LBPH se reutiliza para guardar el tamaño de la imagen normalizada.
 
 ## Referencias
