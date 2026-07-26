@@ -48,9 +48,11 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | ID | Requerimiento | Descripción |
 |---|---|---|
 | RF-01 | Inicio de sesión | El sistema debe permitir a administradores e instituciones autenticarse mediante usuario y contraseña. |
-| RF-02 | Gestión de contraseñas | El sistema debe permitir el cambio de contraseña y aplicar políticas mínimas de seguridad (longitud mínima, complejidad). |
+| RF-02 | Gestión de contraseñas | El sistema debe permitir el cambio de contraseña y aplicar políticas mínimas de seguridad (longitud mínima, complejidad). Las contraseñas se almacenan con una función de hash de un solo sentido: no deben poder recuperarse, solo restablecerse. |
 | RF-03 | Control de acceso por rol | El sistema debe restringir el acceso a funcionalidades y datos según el rol del usuario autenticado. |
 | RF-04 | Aislamiento multi-tenant | Un administrador de la institución A no debe poder acceder, consultar ni modificar datos de la institución B bajo ninguna circunstancia. |
+| RF-39 | Verificación del correo de la cuenta | El sistema debe permitir a cada cuenta confirmar que controla la dirección de correo declarada, mediante un código de un solo uso enviado a esa dirección. Una dirección sin verificar no ofrece garantía de ser alcanzable. |
+| RF-40 | Recuperación autónoma de contraseña | Una cuenta que olvidó su contraseña debe poder fijar una nueva sin intervención de otro usuario, acreditando el control de su correo. El sistema no debe revelar si una cuenta existe al responder a estas solicitudes. |
 
 ### 3.2. Módulo de Gestión de Instituciones
 
@@ -88,6 +90,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-19 | Clasificación del estado de asistencia | El sistema debe clasificar la asistencia en Presente (dentro de la tolerancia), Llegada Tarde (pasada la tolerancia) o Ausente (sin registro). |
 | RF-20 | Retroalimentación visual | El sistema debe mostrar una notificación clara indicando si el reconocimiento fue exitoso (nombre + materia) o si no fue posible identificar. |
 | RF-21 | Registro de metadatos | Cada registro debe almacenar: fecha, hora exacta, docente, materia/comisión, estado, método (automático/manual) e institución. |
+| RF-38 | Detección de vivacidad | El sistema debe distinguir a una persona presente de una reproducción de su imagen (fotografía o pantalla), verificando señales de vida como parpadeo o micromovimiento entre fotogramas, dentro del mismo presupuesto de tiempo del RF-17. |
 
 ### 3.6. Módulo de Carga Manual de Asistencia
 
@@ -101,6 +104,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
+| RF-41 | Registro automático de ausencias | El sistema debe registrar la ausencia de los docentes que no fueron marcados en una clase ya finalizada, sin intervención del administrador. Una ausencia que solo se calcula al consultar no puede justificarse ni auditarse, porque no existe como registro. |
 | RF-25 | Clasificación de ausencias | Las ausencias deben poder clasificarse como justificadas o injustificadas. |
 | RF-26 | Justificación de ausencias | El administrador debe poder marcar una ausencia como justificada e ingresar una descripción del motivo. |
 
@@ -166,7 +170,8 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RNF-11 | Ley N° 25.326 | El sistema debe cumplir con la Ley Nacional de Protección de Datos Personales. |
 | RNF-12 | Resolución AAIP 255/2022 | El sistema debe respetar la clasificación de los datos biométricos como datos sensibles, con protección reforzada. |
 | RNF-13 | Consentimiento informado | El tratamiento de datos biométricos requiere consentimiento libre, expreso e informado, por escrito o medio equivalente. |
-| RNF-14 | Derechos ARCO | El sistema debe facilitar los derechos de Acceso, Rectificación, Cancelación y Oposición sobre los datos del docente. |
+| RNF-14 | Derechos ARCO | El sistema debe facilitar los derechos de Acceso, Rectificación, Cancelación y Oposición sobre los datos del docente. El ejercicio de la Cancelación sobre datos biométricos debe producir una **supresión efectiva**: no alcanza con marcar el registro como inactivo, porque el dato sensible seguiría almacenado. |
+| RNF-28 | Conservación del registro administrativo | La supresión de los datos biométricos de un docente no debe eliminar sus asistencias históricas, que constituyen registro administrativo de la institución. Deben conservarse sin ninguna referencia al dato biométrico suprimido. |
 
 ### 4.5. Tecnología y Arquitectura
 

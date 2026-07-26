@@ -26,9 +26,11 @@ class Usuario <<tenant>> {
   - id : Long
   - username : String
   - email : String
+  - emailVerificadoEn : LocalDateTime
   - passwordHash : String
   - nombre, apellido : String
   - activo : Boolean
+  - ultimoLogin : LocalDateTime
 }
 
 class Rol {
@@ -45,6 +47,33 @@ enum RolCodigo {
 Usuario --|> BaseTenantEntity
 Usuario "*" --> "1" Rol
 Institucion "1" -- "*" Usuario
+
+class CodigoVerificacion <<tenant>> {
+  - id : Long
+  - proposito : PropositoCodigo
+  - email : String
+  - codigoHash : String  <<BCrypt>>
+  - expiraEn : LocalDateTime
+  - usadoEn : LocalDateTime
+  - intentos : Short
+  - ipSolicitud : String
+}
+
+enum PropositoCodigo {
+  VERIFICACION_EMAIL
+  RECUPERACION_PASSWORD
+}
+
+CodigoVerificacion --|> BaseTenantEntity
+Usuario "1" -- "*" CodigoVerificacion
+CodigoVerificacion --> PropositoCodigo
+
+note right of CodigoVerificacion
+  El código NO se guarda en claro.
+  Vence a los 15 min, se consume
+  en el primer uso, tope de 5
+  intentos y 5 pedidos por hora.
+end note
 
 ' ============================================================
 ' ACADÉMICO
@@ -190,8 +219,13 @@ note bottom of Asistencia
   Idempotencia:
   UNIQUE (docente_id, horario_id, fecha)
 
-  AUSENTE no se persiste por el flujo
-  automático: se calcula al listar.
+  AUSENTE es híbrido:
+  · se CALCULA al listar, para la ventana
+    entre el fin de la clase y el job;
+  · se PERSISTE después, cuando corre
+    GeneradorAusenciasService
+    (metodo=AUTOMATICO, hora=hora_fin).
+  Solo la persistida se puede justificar.
 end note
 
 @enduml

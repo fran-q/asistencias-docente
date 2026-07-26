@@ -637,7 +637,7 @@ De los **37 RF**: la gran mayoría implementados. Pendientes o parciales:
 | RF-34/35/36 | Auditoría: tabla creada, registro automático fuera de alcance |
 | RF-37 | Dashboard con métricas del día: parcial |
 | RNF-22 | Modo claro conmutable: solo oscuro |
-| *(nuevo)* | **Vivacidad / anti-spoofing**: no implementado (candidato RF-38) |
+| RF-38 | **Vivacidad / anti-spoofing**: especificado, no implementado |
 
 ### Deuda técnica documentada
 

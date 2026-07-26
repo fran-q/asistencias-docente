@@ -61,7 +61,17 @@ loop por cada frame
   PS -> AS : marcarAutomatica(docenteId,\n  modeloFacialId, distancia)
   activate AS
   AS -> DB : findHoyParaDocente(docente, dia)
-  AS -> AS : ¿hora_actual ∈\n[hora_inicio - tolerancia, hora_fin]?
+  AS -> AS : filtrar los que estén en ventana\n[hora_inicio - tolerancia, hora_fin]
+
+  note right of AS
+    RF-18 — puede haber MÁS DE UNO en ventana:
+    clases consecutivas (18-20 y 20-22 a las 19:55)
+    o dos comisiones a la misma hora.
+    Desempate determinista, en este orden:
+      1. preferir los que aún no tienen marca
+      2. hora de inicio más cercana a ahora
+      3. menor id
+  end note
 
   alt fuera de ventana
     AS --> PS : ResultadoMarca.sinClase

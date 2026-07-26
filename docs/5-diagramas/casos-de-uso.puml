@@ -10,12 +10,19 @@ actor "Administrador\nInstitución\n(rol INSTITUCION)" as Insti
 actor "Administrador\noperativo\n(rol ADMIN)" as Admin
 actor Docente
 actor "Sistema de\nReconocimiento\n(JavaCV + LBPH)" as Sys <<system>>
+actor "Tarea programada\n(job de ausencias)" as Job <<system>>
+actor "Servidor de correo\n(SMTP)" as Smtp <<system>>
 
 rectangle "Sistema de Asistencias" {
 
   package "Gestión de la institución" {
     usecase "Editar datos\nde la institución" as UC_INST
     usecase "Crear y dar de\nbaja administradores" as UC_USR
+  }
+
+  package "Cuenta propia" {
+    usecase "Verificar el correo\nde mi cuenta" as UC_VER
+    usecase "Recuperar contraseña\nolvidada" as UC_REC
   }
 
   package "Gestión académica" {
@@ -32,12 +39,14 @@ rectangle "Sistema de Asistencias" {
     usecase "Revocar consentimiento" as UC_REV
     usecase "Registrar rostro\n(grabación 30 s)" as UC_REG
     usecase "Re-registrar rostro\n(da de baja el anterior)" as UC_RER
+    usecase "Suprimir datos biométricos\n(derecho ARCO)" as UC_ARCO
   }
 
   package "Asistencia" {
     usecase "Pasar asistencia\nautomática" as UC_PASE
     usecase "Identificar rostro\ny marcar" as UC_IDEN
     usecase "Cargar asistencia\nmanual con motivo" as UC_MAN
+    usecase "Generar ausencias\nde clases terminadas" as UC_AUS
     usecase "Justificar ausencia" as UC_JUS
     usecase "Ver listado de\nasistencias del día" as UC_LIST
     usecase "Exportar reporte CSV" as UC_REP
@@ -69,6 +78,8 @@ Insti --> UC_REG
 Admin --> UC_REG
 Insti --> UC_RER
 Admin --> UC_RER
+Insti --> UC_ARCO
+Admin --> UC_ARCO
 
 Insti --> UC_PASE
 Admin --> UC_PASE
@@ -81,8 +92,19 @@ Admin --> UC_LIST
 Insti --> UC_REP
 Admin --> UC_REP
 
+' Cualquier cuenta puede verificar su correo; recuperar no requiere sesion.
+Insti --> UC_VER
+Admin --> UC_VER
+Insti --> UC_REC
+Admin --> UC_REC
+
 ' === Docente: sujeto pasivo (no se loguea, solo se le toma asistencia) ===
 Docente .. UC_PASE : presenta su rostro
+
+' === Procesos automáticos ===
+Job --> UC_AUS : corre cada 30 min
+UC_VER ..> Smtp : envía el código
+UC_REC ..> Smtp : envía el código
 
 ' === Sistema interno ===
 UC_PASE ..> UC_IDEN : <<include>>
@@ -91,6 +113,8 @@ UC_IDEN <-- Sys : ejecuta LBPH
 ' === Dependencias funcionales (extend / include) ===
 UC_REG ..> UC_CON : <<requires>>\nconsentimiento ACTIVO
 UC_PASE ..> UC_REG : <<requires>>\nmodelo facial activo
-UC_JUS  ..> UC_MAN : <<requires>>\nasistencia AUSENTE persistida
+UC_ARCO ..> UC_REG : <<destruye>>\ntodos los modelos,\nincluidos los históricos
+UC_JUS  ..> UC_AUS : <<requires>>\nAUSENTE persistida\n(por el job o carga manual)
+UC_MAN  ..> UC_AUS : <<or>>\ncrea la AUSENTE a mano
 
 @enduml

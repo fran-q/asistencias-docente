@@ -88,6 +88,8 @@ los almacenes de datos. Todavía sin el detalle interno de cada proceso.
 | P4 | Gestionar docentes y biometría (consentimiento + modelo facial) |
 | P5 | Registrar asistencia (automática y manual) |
 | P6 | Generar reportes |
+| P7 | Materializar ausencias de clases terminadas (proceso programado, sin operador) |
+| P8 | Verificar correo y recuperar contraseña (código de un solo uso) |
 
 **Almacenes de datos:**
 | Cód | Almacén | Tablas que agrupa |
@@ -99,6 +101,7 @@ los almacenes de datos. Todavía sin el detalle interno de cada proceso.
 | D5 | Académico | carreras, materias, comisiones, horarios |
 | D6 | Asistencias | asistencias, asistencias_manuales, justificaciones_ausencia |
 | D7 | Motivos de carga manual | motivos_carga_manual |
+| D8 | Códigos de verificación | codigos_verificacion |
 
 **Flujos principales:**
 | Desde | Hacia | Dato |
@@ -130,6 +133,8 @@ flowchart TB
     EE1[Administrador]
     EE2[Docente]
     EE3[Cámara web]
+    EE4[Planificador<br/>de tareas]
+    EE5[Servidor<br/>de correo]
 
     P1([P1 Autenticar y<br/>controlar acceso])
     P2([P2 Gestionar institución<br/>y usuarios])
@@ -137,6 +142,8 @@ flowchart TB
     P4([P4 Gestionar docentes<br/>y biometría])
     P5([P5 Registrar<br/>asistencia])
     P6([P6 Generar<br/>reportes])
+    P7([P7 Materializar<br/>ausencias])
+    P8([P8 Verificar correo /<br/>recuperar contraseña])
 
     D1[(D1 Usuarios y seguridad)]
     D2[(D2 Docentes)]
@@ -145,6 +152,7 @@ flowchart TB
     D5[(D5 Académico)]
     D6[(D6 Asistencias)]
     D7[(D7 Motivos carga manual)]
+    D8[(D8 Códigos de verificación)]
 
     EE1 -- credenciales --> P1
     P1 <--> D1
@@ -176,7 +184,26 @@ flowchart TB
     D2 --> P6
     D5 --> P6
     P6 -- reporte CSV --> EE1
+
+    EE4 -- dispara cada 30 min --> P7
+    P7 -- lee horarios terminados --> D5
+    P7 -- consulta marcas del día --> D6
+    P7 -- escribe AUSENTE --> D6
+
+    EE1 -- pide código / lo tipea --> P8
+    P8 <--> D8
+    P8 -- actualiza contraseña o marca verificado --> D1
+    P8 -- envía código --> EE5
+    EE5 -- correo --> EE1
 ```
+
+**Sobre P7.** Es el único proceso que **no lo dispara una persona**: lo lanza el planificador
+cada 30 minutos. Por eso su entidad externa es el reloj y no el administrador. Sin él, una
+ausencia solo existiría como cálculo al listar y no se podría justificar, porque no habría
+fila que justificar.
+
+**Sobre P8.** El código viaja por fuera del sistema —al buzón de la persona— y vuelve tipeado
+a mano. Ese rodeo es justamente lo que prueba que controla esa casilla.
 
 ---
 

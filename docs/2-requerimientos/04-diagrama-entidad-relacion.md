@@ -54,6 +54,7 @@ erDiagram
     usuarios ||--o{ asistencias_manuales : carga
     usuarios ||--o{ justificaciones_ausencia : justifica
     usuarios ||--o{ auditoria : ejecuta
+    usuarios ||--o{ codigos_verificacion : "recibe códigos"
 
     comisiones ||--o{ asistencias : "ocurre en"
     horarios ||--o{ asistencias : "en franja"
@@ -78,8 +79,22 @@ erDiagram
         bigint institucion_id FK
         smallint rol_id FK
         varchar username
+        varchar email
+        timestamp email_verificado_en "NULL = sin verificar"
         varchar password_hash "BCrypt"
         boolean activo
+        timestamp ultimo_login
+    }
+    codigos_verificacion {
+        bigint id PK
+        bigint institucion_id FK
+        bigint usuario_id FK
+        varchar proposito "VERIFICACION_EMAIL | RECUPERACION_PASSWORD"
+        varchar email "a qué buzón se envió"
+        varchar codigo_hash "nunca en texto plano"
+        timestamp expira_en
+        timestamp usado_en "NOT NULL = ya consumido"
+        smallint intentos
     }
     docentes {
         bigint id PK
@@ -187,6 +202,11 @@ erDiagram
   raíz) y `ADMIN` (operativo).
 - **usuarios** — Personas con acceso al sistema (login). Pertenecen a una
   institución y tienen un rol. La contraseña se guarda con BCrypt.
+- **codigos_verificacion** — Códigos de un solo uso enviados por correo, tanto
+  para confirmar que la persona controla su buzón como para recuperar la
+  contraseña olvidada. El código se guarda hasheado, vence a los 15 minutos, se
+  consume en el primer uso y lleva contador de intentos: seis dígitos son un
+  millón de combinaciones, y sin ese tope se probarían por fuerza bruta.
 
 ### Dominio Docentes / Biometría
 - **docentes** — Personal docente; sujetos pasivos (no se loguean). Su perfil

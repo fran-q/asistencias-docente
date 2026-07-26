@@ -391,7 +391,7 @@ Si podes responder estas doce sin mirar, estas listo:
 
 | Tema | Estado | Como se defiende |
 |---|---|---|
-| **Vivacidad / anti-spoofing** | No implementado | Candidato RF-38, con solucion disenada (parpadeo/movimiento dentro de los 3 s). Mitigacion: la camara esta en secretaria, a la vista del personal — el ataque no es anonimo. |
+| **Vivacidad / anti-spoofing** | No implementado | Especificado como RF-38, con solucion disenada (parpadeo/movimiento dentro de los 3 s). Mitigacion: la camara esta en secretaria, a la vista del personal — el ataque no es anonimo. |
 | **Embeddings (RF-08)** | LBPH en su lugar | Desviacion formalizada en ADR-0007, con migracion verificada y planificada. |
 | **Export PDF / Excel / graficos** (RF-31/32/33) | Hay CSV | Alcance del prototipo; los datos ya estan listos para cualquier formato. |
 | **Modo claro** (RNF-22) | Solo oscuro | Pendiente menor de UI. |

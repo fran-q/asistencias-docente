@@ -20,7 +20,8 @@
 11. [Carga manual de asistencia](#11-carga-manual-de-asistencia)
 12. [Justificar una ausencia](#12-justificar-una-ausencia)
 13. [Reportes y exportación CSV](#13-reportes-y-exportación-csv)
-14. [Buenas prácticas](#14-buenas-prácticas)
+14. [Mi cuenta: verificar el correo y recuperar la contraseña](#14-mi-cuenta-verificar-el-correo-y-recuperar-la-contraseña)
+15. [Buenas prácticas](#15-buenas-prácticas)
 
 ---
 
@@ -184,6 +185,21 @@ consentimiento vigente.
 Hacer clic en **"Actualizar rostro"** repite el proceso. El modelo anterior
 queda **dado de baja** automáticamente; el nuevo queda activo.
 
+### Suprimir los datos biométricos (derecho ARCO)
+
+Si el docente pide que se eliminen sus datos faciales —es su derecho por la Ley
+25.326— usá **"Suprimir datos biométricos"** en su ficha.
+
+> ⚠️ **Esta acción no se puede deshacer.** A diferencia del resto del sistema, que
+> da de baja sin borrar, acá **se elimina de verdad**: se borran todos los modelos
+> del docente, incluidos los históricos, y también la copia que el sistema tenía
+> cargada en memoria. Una ficha marcada como "inactiva" seguiría conteniendo el
+> dato biométrico, y ante un pedido de supresión eso no alcanza.
+
+**Qué se conserva:** las asistencias ya registradas. Quedan intactas como registro
+administrativo, pero sin ninguna referencia biométrica. Si el docente vuelve a dar
+su consentimiento, hay que registrarle el rostro de nuevo desde cero.
+
 ---
 
 ## 9. Pase de asistencia automático
@@ -247,8 +263,15 @@ Menú → **Asistencias**.
 
 ## 12. Justificar una ausencia
 
-Solo aplica a marcas AUSENTE **persistidas** (las calculadas hay que
-cargarlas manualmente primero como AUSENTE).
+Solo aplica a marcas AUSENTE **persistidas**.
+
+> **No hace falta cargarlas a mano.** El sistema revisa cada 30 minutos las clases
+> que ya terminaron y, para las que no tienen marca, deja registrada la ausencia
+> sola. Recién ahí aparece el botón de justificar.
+>
+> Si acabás de ver una fila AUSENTE en gris y todavía no te deja justificarla, es
+> porque la clase terminó hace poco y el sistema aún no pasó a registrarla. Esperá
+> unos minutos o cargala manualmente si necesitás resolverlo en el momento.
 
 1. En el listado, fila AUSENTE → botón **"Justificar"**.
 2. Cargar el **motivo** (texto libre, obligatorio).
@@ -276,7 +299,49 @@ Menú → **Reportes**.
 
 ---
 
-## 14. Buenas prácticas
+## 14. Mi cuenta: verificar el correo y recuperar la contraseña
+
+### Verificar tu correo
+
+Menú → **Mi cuenta**.
+
+1. Tocá **"Enviarme el código"**. El sistema manda un código de **seis dígitos** a
+   la dirección de tu cuenta.
+2. Escribilo en la pantalla y confirmá.
+
+El código **vence a los 15 minutos** y sirve una sola vez. Si lo pedís de nuevo, el
+anterior deja de funcionar. Después de cinco intentos fallidos el código se anula y
+hay que pedir uno nuevo.
+
+> **Por qué conviene hacerlo.** Un correo verificado es lo que te permite recuperar
+> la contraseña sin depender de nadie. Si la dirección tiene un error de tipeo,
+> nadie se entera hasta el día que la necesitás.
+
+### Recuperar la contraseña olvidada
+
+No hace falta estar dentro del sistema.
+
+1. En la pantalla de ingreso, tocá **"¿Olvidaste tu contraseña?"**.
+2. Escribí tu usuario o tu correo.
+3. Revisá tu casilla: llega un código de seis dígitos.
+4. Escribí el código y tu contraseña nueva.
+
+> La pantalla **siempre responde lo mismo**, exista o no la cuenta. Es a propósito:
+> si respondiera distinto, cualquiera podría averiguar qué correos tienen cuenta en
+> el sistema probando direcciones.
+
+### Si el código no llega
+
+- Fijate en la carpeta de correo no deseado.
+- Verificá que la dirección de tu cuenta sea la correcta (pantalla **Mi cuenta**).
+- Si el servidor de correo de la institución está caído, ningún código va a llegar.
+  En ese caso, **pedile al superadmin que te resetee la contraseña a mano** desde la
+  pantalla de Usuarios: ese camino sigue estando disponible.
+- Solo se permiten **cinco pedidos por hora** por cuenta. Si los agotaste, esperá.
+
+---
+
+## 15. Buenas prácticas
 
 ### Registro de docentes nuevos
 1. Crear el docente en **Docentes**.

@@ -7,6 +7,62 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Post-cierre — Revisión, endurecimiento y verificación de correo
+
+**Período:** julio de 2026, posterior al cierre de los sprints.
+
+Etapa de revisión sobre el sistema ya terminado. No agrega alcance funcional
+planificado: corrige lo que la revisión encontró y cierra huecos que el
+relevamiento original no había contemplado.
+
+### Corregido
+
+- **Fuga multi-tenant (TD-007).** El pointcut del aspecto que activa el filtro de
+  Hibernate apuntaba a `..application..`, un paquete que dejó de existir con la
+  reorganización a package-by-layer. El aspecto quedó **silenciosamente inactivo**
+  y los listados devolvían datos de todas las instituciones. Ahora el pointcut va
+  por la anotación `@Service`, para que un futuro renombre de paquetes no lo
+  vuelva a romper.
+- **El reporte mostraba el día equivocado.** La columna que acompaña a la fecha se
+  tomaba del día programado del horario en vez de la fecha de la marca. Con ambos
+  coincidiendo era invisible; al divergir, una asistencia del sábado figuraba como
+  lunes. Afectaba también al CSV exportado.
+- **Faltaba validar la fecha en la carga manual.** Nada impedía registrar una clase
+  de lunes con fecha de sábado, porque ahí la fecha la elige el administrador a
+  mano.
+- **`usuarios.ultimo_login` nunca se escribía.** La columna existía desde la
+  primera migración y se mostraba en pantalla, pero ningún código la actualizaba.
+- **Parpadeo del navbar al navegar.** Cada página se pintaba primero en modo
+  escritorio y recién después colapsaba a menú hamburguesa.
+
+### Agregado
+
+- **Verificación de correo y recuperación de contraseña** mediante código de un
+  solo uso enviado por mail (ADR-0009). Antes, si un administrador olvidaba la
+  contraseña dependía del superadmin, y si la olvidaba el superadmin la
+  institución quedaba sin acceso a su cuenta de gestión.
+- **Tests de integración reales**, que es lo que faltaba para que la fuga
+  multi-tenant no hubiera pasado desapercibida: toda la suite era unitaria con
+  Mockito, que nunca toca Hibernate.
+  - Aislamiento entre instituciones ejercitando el filtro de verdad.
+  - Reglas de rol y CSRF sobre peticiones HTTP.
+  - Ambos verificados por mutación: se reintrodujo cada falla y se comprobó que
+    los tests la detectan.
+- **Encoding UTF-8 fijado en la compilación**, para que el build no dependa del
+  locale de la máquina.
+
+### Cambiado
+
+- **Comentarios unificados en los 128 archivos fuente**: una cabecera de dos
+  oraciones por archivo y una línea por función. En el camino aparecieron
+  comentarios que afirmaban cosas falsas, como que el filtro de tenant "se
+  activará en la Fase B" cuando ya estaba activo.
+- **Documentación consolidada** en `docs/`, en carpetas numeradas por tipo. Los
+  archivos de cátedra estaban duplicados byte por byte en dos ubicaciones.
+- Tests: de 107 a 150.
+
+---
+
 ## Sprint 6 — Cierre del proyecto (sprint-6-cierre)
 
 **Período:** 19 al 24 de junio de 2026.
@@ -15,11 +71,11 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 - **Reportes con exportación a CSV** (`/reportes`). Filtros por rango de fechas,
   docente, materia, estado y método. Descarga UTF-8 con BOM para que abra
   directo en Excel.
-- **Diagramas UML** en formato PlantUML (`docs/uml/`):
+- **Diagramas UML** en formato PlantUML (`docs/5-diagramas/`):
   - Casos de uso.
   - Clases del dominio.
   - Secuencia del pase de asistencia.
-- **Manuales** en Markdown (`docs/manuales/`):
+- **Manuales** en Markdown (`docs/6-manuales/`):
   - Manual del administrador (cómo usar el sistema).
   - Manual técnico (instalación, configuración, backup, troubleshooting).
 - Tests del `ReporteAsistenciaService`.
@@ -57,7 +113,9 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   en cada `Horario`). Antes del `hora_inicio` (dentro de la tolerancia)
   → PRESENTE; después del `hora_inicio` → TARDE.
 - **AUSENTE no se persiste** desde el flujo automático: se calcula al
-  listar.
+  listar. *(Cambiado más adelante: el job de generación de ausencias las
+  materializa, y el cálculo al vuelo quedó cubriendo solo la ventana entre
+  el fin de la clase y la corrida siguiente.)*
 - **Idempotencia tres-niveles**: UNIQUE en BD + verificación en service +
   pausa en frontend.
 - **Defensa contra race condition**: `saveAndFlush` + catch de
