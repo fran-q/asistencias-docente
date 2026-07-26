@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title>Mi cuenta - Asistencias</title>
+</head>
+<body>
+    <section class="mi-cuenta">
+        <header class="page-header">
+            <h1>Mi cuenta</h1>
+            <p class="page-header__subtitle">
+                Confirmá que el correo de tu cuenta es tuyo. Es lo que te va a permitir recuperar
+                el acceso por tus propios medios si olvidás la contraseña.
+            </p>
+        </header>
+
+        <div class="card">
+            <dl class="kv">
+                <dt>Usuario</dt>
+                <dd th:text="${usuario.username}">usuario</dd>
+
+                <dt>Nombre</dt>
+                <dd th:text="${usuario.nombre + ' ' + usuario.apellido}">Nombre Apellido</dd>
+
+                <dt>Correo</dt>
+                <dd th:text="${usuario.email}">correo@ejemplo.com</dd>
+
+                <dt>Estado del correo</dt>
+                <dd>
+                    <span th:if="${verificado}" class="badge badge--success">VERIFICADO</span>
+                    <span th:unless="${verificado}" class="badge badge--neutral">SIN VERIFICAR</span>
+                    <small th:if="${verificado}" class="form-hint"
+                           th:text="'Confirmado el ' + ${#temporals.format(usuario.emailVerificadoEn, 'dd/MM/yyyy HH:mm')}">
+                        Confirmado el ...
+                    </small>
+                </dd>
+            </dl>
+        </div>
+
+        <!-- Todo lo que sigue solo tiene sentido mientras el correo no este confirmado. -->
+        <div class="card" th:unless="${verificado}">
+            <h2>Verificar el correo</h2>
+            <p class="form-hint">
+                Te mandamos un código de 6 dígitos a
+                <strong th:text="${usuario.email}">correo@ejemplo.com</strong>.
+                Vence a los pocos minutos y se usa una sola vez.
+            </p>
+
+            <form th:action="@{/mi-cuenta/enviar-codigo}" method="post" class="form-inline">
+                <button type="submit" class="btn btn--primary">Enviarme el código</button>
+            </form>
+
+            <hr>
+
+            <form th:action="@{/mi-cuenta/verificar}" th:object="${form}" method="post" novalidate>
+                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="codigo">Código recibido</label>
+                    <input type="text" id="codigo" th:field="*{codigo}"
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="10"
+                           th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('codigo')}"
+                          th:errors="*{codigo}">Error</span>
+                </div>
+
+                <button type="submit" class="btn btn--primary">Verificar</button>
+            </form>
+        </div>
+    </section>
+</body>
+</html>

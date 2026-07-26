@@ -26,7 +26,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/css/**", "/js/**", "/img/**", "/webjars/**", "/actuator/health").permitAll()
+                // /recuperar/** va abierto por necesidad: quien perdio la contrasena no puede
+                // autenticarse para pedirla. El flujo se protege con el codigo de un solo uso.
+                .requestMatchers("/login", "/recuperar/**", "/css/**", "/js/**", "/img/**",
+                                 "/webjars/**", "/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

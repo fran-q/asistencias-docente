@@ -141,9 +141,16 @@ code {
     gap: var(--space);
 }
 
+/* El nombre de usuario es el acceso a "mi cuenta"; se subraya solo al pasar por encima
+   para que no compita visualmente con los links de navegacion. */
 .navbar__username {
     color: var(--text-muted);
     font-size: 0.9rem;
+    text-decoration: none;
+}
+.navbar__username:hover {
+    color: var(--primary);
+    text-decoration: underline;
 }
 
 .navbar__logout-form { margin: 0; }
@@ -349,6 +356,19 @@ code {
     color: var(--text-muted);
     margin: 0;
     font-size: 0.95rem;
+}
+
+/* Pie de las tarjetas de login y recuperacion: enlaces secundarios de ayuda. */
+.login-card__ayuda {
+    margin: var(--space) 0 0;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* Formulario de una sola accion (un boton suelto), sin margen de bloque. */
+.form-inline {
+    display: inline-block;
+    margin: 0;
 }
 
 .login-card__hint {

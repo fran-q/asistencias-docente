@@ -71,6 +71,10 @@ public class Usuario extends BaseTenantEntity {
     @Column(nullable = false, length = 120)
     private String email;
 
+    // Cuando la persona confirmo que controla este buzon; NULL mientras no lo haya hecho.
+    @Column(name = "email_verificado_en")
+    private LocalDateTime emailVerificadoEn;
+
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 

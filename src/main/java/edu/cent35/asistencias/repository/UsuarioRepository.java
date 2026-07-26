@@ -31,6 +31,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // porque el username solo es unico dentro de cada institucion.
     List<Usuario> findByUsername(String username);
 
+    // Variante global por email, para la recuperacion de contrasena, que ocurre antes del login.
+    // Devuelve lista por el mismo motivo: el email tampoco es unico entre instituciones.
+    List<Usuario> findByEmailIgnoreCase(String email);
+
     // Indica si el username ya está tomado en esa institución.
     boolean existsByUsernameAndInstitucionId(String username, Long institucionId);
 

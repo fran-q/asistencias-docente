@@ -85,7 +85,7 @@
         </nav>
 
         <div class="navbar__user" sec:authorize="isAuthenticated()">
-            <span class="navbar__username" sec:authentication="name"></span>
+            <a th:href="@{/mi-cuenta}" class="navbar__username" sec:authentication="name"></a>
             <form th:action="@{/logout}" method="post" class="navbar__logout-form">
                 <button type="submit" class="btn btn--ghost">Salir</button>
             </form>
