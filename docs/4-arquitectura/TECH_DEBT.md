@@ -254,3 +254,41 @@ explícitamente todo lo que referencia rutas de paquete como texto.
 
 - Para la pantalla HTML: paginar con `Pageable` (Spring Data).
 - Para el CSV: streaming row-by-row al `HttpServletResponse`, sin cargar todo.
+
+---
+
+## TD-008: Límite de códigos por cuenta, no por origen
+
+**Detectado**: al implementar la verificación de correo (ADR-0009)
+**Severidad**: Baja en despliegue local, Media expuesto a internet
+
+### Síntoma
+
+`CodigoVerificacionService` limita a cinco pedidos por hora **por cuenta**. Eso frena que alguien bombardee el buzón de una persona concreta, pero no frena a quien recorra muchas cuentas distintas: cada una tiene su propio contador.
+
+### Por qué se dejó así
+
+En un despliegue local, dentro de la red de la institución y con un puñado de cuentas administrativas, el escenario no es realista. Sumar un límite por IP implicaría almacenamiento adicional y decidir qué hacer detrás de un proxy o de una IP compartida, que es exactamente donde estos controles empiezan a bloquear usuarios legítimos.
+
+### Próximo paso
+
+Si el sistema se expone a internet: límite por IP además del límite por cuenta, y un retardo creciente entre pedidos consecutivos del mismo origen.
+
+---
+
+## TD-009: La recuperación depende de que haya un SMTP disponible
+
+**Detectado**: al implementar la recuperación de contraseña (ADR-0009)
+**Severidad**: Media
+
+### Síntoma
+
+Sin servidor de correo alcanzable no hay recuperación posible. La aplicación no lo disimula —informa que no se pudo enviar, en vez de decir "revisá tu correo" y dejar a la persona esperando algo que nunca llega— pero el resultado es que queda sin poder recuperar el acceso.
+
+### Mitigación actual
+
+El superadmin conserva la capacidad de resetear contraseñas a mano desde la pantalla de usuarios, así que el camino viejo sigue disponible como respaldo. El hueco real persiste solo para la propia cuenta del superadmin.
+
+### Próximo paso
+
+Un procedimiento de emergencia documentado para recuperar la cuenta institucional sin correo: por ejemplo, un comando de administración que resetee la contraseña desde la consola del servidor, con constancia en el log.

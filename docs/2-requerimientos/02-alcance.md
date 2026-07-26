@@ -1,0 +1,270 @@
+# 02 — Definición del Alcance
+
+| | |
+|---|---|
+| **Proyecto** | Sistema de Asistencias Digital con Reconocimiento Facial |
+| **Documento** | 02 — Definición del Alcance del Proyecto |
+| **Materia** | Prácticas Profesionalizantes III — CENT35 |
+| **Ubicación** | Provincia de Tierra del Fuego, Argentina |
+| **Autor** | Francisco Quiroga |
+| **Versión** | 1.0 |
+| **Fecha** | Junio 2026 |
+
+---
+
+## 1. Contexto y Problema
+
+### 1.1. Situación actual
+
+El control de asistencia de docentes en las instituciones educativas de nivel
+superior de la provincia se realiza de forma manual, mediante planillas en
+papel donde los docentes firman al llegar. Este método presenta:
+
+- **Falta de confiabilidad**: depende de la buena fe del docente y de la
+  verificación manual del personal administrativo.
+- **Posibilidad de falsificación**: las firmas pueden ser adulteradas o
+  registradas por terceros (suplantación de identidad).
+- **Dificultad para generar estadísticas y reportes** en tiempo real.
+- **Proceso lento y propenso a errores** al digitalizar los datos a posteriori.
+
+### 1.2. Solución propuesta
+
+Un sistema web **multi-tenant** que automatiza el registro de asistencia
+docente mediante **reconocimiento facial**, eliminando la suplantación de
+identidad y agilizando el control. Una cámara web fija (sala de profesores o
+secretaría) detecta al docente, lo identifica contra su modelo biométrico
+cifrado y registra la asistencia automáticamente con su estado (presente,
+tarde o ausente).
+
+---
+
+## 2. Objetivos
+
+### 2.1. Objetivo general
+
+Desarrollar un sistema web multi-tenant de registro de asistencia docente con
+reconocimiento facial automático que garantice la veracidad de los registros,
+elimine la suplantación de identidad y provea herramientas de gestión y
+reportes para el personal administrativo de instituciones de nivel superior.
+
+### 2.2. Objetivos específicos
+
+1. Implementar un módulo de reconocimiento facial open source en Java que
+   identifique unívocamente a cada docente sin almacenar fotografías.
+2. Diseñar un flujo de toma de asistencia automatizado que detecte al docente,
+   determine materia/horario y registre el estado con la hora exacta.
+3. Desarrollar la gestión administrativa (CRUD con borrado lógico) de
+   docentes, carreras, materias, comisiones y horarios.
+4. Implementar carga manual de asistencia como respaldo ante fallas del
+   reconocimiento, con registro del responsable y el motivo.
+5. Construir un módulo de reportes con filtros y exportación.
+6. Diseñar una arquitectura multi-tenant con aislamiento total entre
+   instituciones.
+7. Implementar un sistema de roles y permisos jerárquicos.
+8. Garantizar el cumplimiento de la Ley N° 25.326 y la Resolución AAIP
+   255/2022 sobre datos biométricos, incluyendo el consentimiento informado.
+
+---
+
+## 3. Alcance de la Primera Entrega
+
+> **Enfoque metodológico.** Según el requerimiento **RNF-25**, el sistema se
+> desarrolla en **etapas incrementales por prototipos funcionales**. La
+> primera entrega corresponde al **hito inicial** del cronograma (6 sprints:
+> abril–junio 2026). En consecuencia, un subconjunto de requerimientos quedó
+> deliberadamente **planificado para iteraciones siguientes** (backlog), lo
+> cual constituye una decisión de gestión de alcance y no un incumplimiento.
+> La sección 4 detalla la trazabilidad requerimiento por requerimiento.
+
+### 3.1. Dentro del alcance (entregado en el hito 1)
+
+**Núcleo del negocio:**
+- Reconocimiento facial completo: registro del modelo (grabación por webcam,
+  entrenamiento LBPH local, cifrado AES, sin almacenar imágenes), re-registro
+  e identificación en vivo.
+- Pase de asistencia automático: identificación → determinación de
+  comisión/horario en curso → clasificación PRESENTE/TARDE → registro
+  idempotente.
+- Carga manual de asistencia con catálogo de motivos y trazabilidad.
+- Justificación de ausencias.
+- Listado de asistencias del día con AUSENTES calculadas.
+- Reportes filtrables con exportación a CSV (compatible con Excel).
+
+**Gestión y seguridad:**
+- Autenticación con Spring Security (sesión HTTP) y BCrypt.
+- Roles INSTITUCION y ADMIN con control de acceso.
+- Multi-tenancy con aislamiento total entre instituciones (triple defensa).
+- CRUD de usuarios administradores y edición de la institución.
+- CRUD académico completo: carreras, materias, comisiones, horarios + grilla
+  semanal.
+- CRUD de docentes.
+
+**Cumplimiento legal:**
+- Consentimiento biométrico versionado con auditoría forense (IP, User-Agent),
+  otorgamiento y revocación.
+- Datos biométricos cifrados; sin fotografías.
+
+### 3.2. Fuera del alcance del hito 1 (backlog planificado)
+
+Los siguientes requerimientos quedaron planificados para iteraciones
+posteriores:
+
+| Funcionalidad diferida | Requerimiento | Motivo de la postergación |
+|---|---|---|
+| Exportación a **PDF** | RF-31 | Se priorizó CSV (cubre la necesidad inmediata de reportes en Excel). PDF requiere librería adicional (iText/OpenPDF). |
+| Exportación nativa a **Excel .xlsx** | RF-32 | El CSV generado abre correctamente en Excel; el .xlsx nativo se difiere. |
+| **Visualizaciones gráficas** en reportes | RF-33 | Requiere librería de charts; no crítico para el MVP. |
+| **Reporte por carrera** | RF-29 | El reporte filtra por docente, materia, estado y método; el agrupamiento por carrera se difiere. |
+| Módulo de **auditoría** (escritura y consulta) | RF-34, RF-35, RF-36 | La tabla y el diseño existen en la BD; la captura automática de eventos se difiere a la siguiente iteración. |
+| **Dashboard** con métricas en vivo | RF-37 | Existe pantalla de inicio; el dashboard con indicadores del día está diseñado en el prototipo y se difiere su implementación. |
+| **Modo claro** conmutable | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
+| **Alta de nuevas instituciones** por UI | RF-05 | La edición de la institución propia está; el alta de instituciones nuevas se realiza por carga inicial (seed), no por interfaz. |
+
+### 3.3. Exclusiones permanentes (no forman parte del proyecto)
+
+- Aplicación móvil nativa (el sistema es web, optimizado para escritorio —
+  RNF-23).
+- Integración con sistemas externos de RR.HH. o liquidación de sueldos.
+- Reconocimiento facial sin consentimiento previo (prohibido por normativa).
+
+---
+
+## 4. Matriz de Trazabilidad (Requerimiento → Estado)
+
+**Leyenda:** ✅ Implementado · 🟡 Parcial · 🔜 Backlog (planificado)
+
+### 4.1. Requerimientos Funcionales
+
+| ID | Requerimiento | Estado | Observación |
+|---|---|---|---|
+| RF-01 | Inicio de sesión | ✅ | Spring Security, sesión HTTP |
+| RF-02 | Gestión de contraseñas | ✅ | Cambio de contraseña + política de longitud mínima |
+| RF-03 | Control de acceso por rol | ✅ | `@PreAuthorize` por rol |
+| RF-04 | Aislamiento multi-tenant | ✅ | TenantContext + filtro Hibernate + validación en servicios |
+| RF-05 | Alta de institución | 🟡 | Edición de la propia institución sí; alta de nuevas por seed, no por UI |
+| RF-06 | CRUD de administradores | ✅ | Módulo Usuarios |
+| RF-07 | CRUD de docentes | ✅ | Con borrado lógico |
+| RF-08 | Registro del modelo facial | ✅ | Webcam + LBPH + cifrado, sin imágenes |
+| RF-09 | Re-registro facial | ✅ | Da de baja el modelo anterior |
+| RF-10 | Consentimiento informado | ✅ | Versionado, con auditoría forense |
+| RF-11 | Gestión de carreras | ✅ | CRUD con borrado lógico |
+| RF-12 | Gestión de materias | ✅ | Con carrera y docente titular |
+| RF-13 | Gestión de comisiones | ✅ | Con docente asignado |
+| RF-14 | Gestión de horarios | ✅ | Con día, horas y tolerancia |
+| RF-15 | Captura de video en vivo | ✅ | getUserMedia (navegador) |
+| RF-16 | Detección e identificación facial | ✅ | OpenCV/LBPH con umbral configurable |
+| RF-17 | Registro automático de asistencia | ✅ | Idempotente |
+| RF-18 | Determinación automática de materia/horario | ✅ | Cruce hora actual con horarios |
+| RF-19 | Clasificación del estado | ✅ | PRESENTE/TARDE; AUSENTE calculada al listar |
+| RF-20 | Retroalimentación visual | ✅ | Recuadro verde/amarillo/rojo + nombre |
+| RF-21 | Registro de metadatos | ✅ | Fecha, hora, docente, comisión, estado, método, confianza |
+| RF-22 | Carga manual de asistencia | ✅ | Con catálogo de motivos |
+| RF-23 | Motivo de carga manual | ✅ | Opciones predefinidas + texto libre |
+| RF-24 | Trazabilidad de carga manual | ✅ | Usuario + fecha + motivo |
+| RF-25 | Clasificación de ausencias | 🟡 | Derivada: ausencia con justificación = justificada |
+| RF-26 | Justificación de ausencias | ✅ | Sobre ausencias persistidas (las calculadas se cargan manual primero) |
+| RF-27 | Reporte por docente | 🟡 | Vía filtro por docente en el reporte general |
+| RF-28 | Reporte por materia | 🟡 | Vía filtro por materia en el reporte general |
+| RF-29 | Reporte por carrera | 🔜 | No hay filtro/agrupamiento por carrera |
+| RF-30 | Filtros avanzados | 🟡 | Rango de fechas sí; filtro por día/mes específico, diferido |
+| RF-31 | Exportación a PDF | 🔜 | Se entregó CSV |
+| RF-32 | Exportación a Excel (.xlsx) | 🟡 | CSV compatible con Excel; .xlsx nativo diferido |
+| RF-33 | Visualizaciones gráficas | 🔜 | Sin gráficos en esta entrega |
+| RF-34 | Registro de auditoría | 🔜 | Tabla diseñada; escritura diferida |
+| RF-35 | Historial de acciones | 🔜 | Depende de RF-34 |
+| RF-36 | Consulta de auditoría | 🔜 | Depende de RF-34 |
+| RF-37 | Dashboard | 🟡 | Pantalla de inicio sí; métricas en vivo en prototipo, diferidas |
+
+**Resumen RF:** 24 implementados · 7 parciales · 6 backlog (total 37).
+
+### 4.2. Requerimientos No Funcionales
+
+| ID | Requerimiento | Estado | Observación |
+|---|---|---|---|
+| RNF-01 | Tiempo de reconocimiento (≤3 s) | ✅ | Cumple en condiciones normales |
+| RNF-02 | Tiempo de respuesta web (≤2 s) | ✅ | |
+| RNF-03 | Generación de reportes (≤10 s) | ✅ | |
+| RNF-04 | Escalabilidad de usuarios | ✅ | Arquitectura preparada (200-400/inst.) |
+| RNF-05 | Multi-tenancy | ✅ | Discriminador institucion_id |
+| RNF-06 | Cifrado de contraseñas | ✅ | BCrypt |
+| RNF-07 | Protección de datos biométricos | ✅ | AES (Spring Security Crypto) |
+| RNF-08 | No almacenamiento de imágenes | ✅ | Solo embeddings |
+| RNF-09 | Sesiones seguras | ✅ | CSRF + expiración de sesión |
+| RNF-10 | Aislamiento de datos | ✅ | Triple defensa |
+| RNF-11 | Ley N° 25.326 | ✅ | Consentimiento + cifrado + sin fotos |
+| RNF-12 | Resolución AAIP 255/2022 | ✅ | Datos biométricos tratados como sensibles |
+| RNF-13 | Consentimiento informado | ✅ | Versionado y auditable |
+| RNF-14 | Derechos ARCO | 🟡 | Acceso/rectificación (editar docente) y oposición (revocar consentimiento) cubiertos; flujo ARCO formal diferido |
+| RNF-15 | Backend en Spring Boot | ✅ | Java 21 + Spring Boot 3.5 |
+| RNF-16 | Reconocimiento facial en Java | ✅ | JavaCV/OpenCV |
+| RNF-17 | Aplicación web | ✅ | Thymeleaf server-side |
+| RNF-18 | Open source | ✅ | Todo el stack |
+| RNF-19 | Base de datos relacional | ✅ | MariaDB |
+| RNF-20 | Compatibilidad de cámara | ✅ | getUserMedia / cámara USB |
+| RNF-21 | Diseño minimalista | ✅ | |
+| RNF-22 | Modo oscuro y claro | 🔜 | Solo modo oscuro entregado |
+| RNF-23 | Optimización para escritorio | ✅ | |
+| RNF-24 | Retroalimentación clara | ✅ | Toasts + mensajes |
+| RNF-25 | Desarrollo incremental | ✅ | 6 sprints con tags de cierre |
+| RNF-26 | Código documentado | ✅ | ADRs, Javadoc, manuales |
+| RNF-27 | Despliegue local | ✅ | XAMPP/MariaDB local |
+
+**Resumen RNF:** 25 implementados · 1 parcial · 1 backlog (total 27).
+
+### 4.3. Resumen global
+
+| | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
+|---|---|---|---|---|
+| Funcionales | 24 | 7 | 6 | 37 |
+| No funcionales | 25 | 1 | 1 | 27 |
+| **Total** | **49** | **8** | **7** | **64** |
+
+**Cobertura del hito 1:** 49 de 64 requerimientos completamente
+implementados (≈77%), 8 parcialmente cubiertos (≈12%) y 7 en backlog
+planificado (≈11%).
+
+---
+
+## 5. Supuestos y Restricciones
+
+### 5.1. Supuestos
+- Cada institución cuenta con una cámara web USB estándar en sala de
+  profesores o secretaría.
+- Los docentes prestan su consentimiento por escrito antes del registro
+  facial.
+- La iluminación del punto de captura es razonable para el reconocimiento.
+
+### 5.2. Restricciones técnicas (definidas por la cátedra/cliente)
+- Backend obligatorio en **Java + Spring Boot** (RNF-15).
+- Reconocimiento facial **en Java**, open source (RNF-16, RNF-18).
+- Base de datos **relacional** con multi-tenancy (RNF-19).
+- Despliegue **local** en la primera etapa (RNF-27).
+- Interfaz **web** optimizada para escritorio (RNF-17, RNF-23).
+
+---
+
+## 6. Entregables de la Primera Entrega
+
+1. Aplicación web funcional (código fuente en repositorio Git).
+2. Base de datos con esquema versionado (migraciones Flyway V001-V006).
+3. Documentación técnica: ADRs, diagramas UML, manual de administrador y
+   manual técnico, CHANGELOG.
+4. Documentación de análisis (este TP): requerimientos, alcance, DFD, DER,
+   casos de uso, presentación del prototipo.
+5. Prototipo de interfaz (mockups exportables a Figma).
+6. Video demostrativo del flujo principal.
+
+---
+
+## 7. Criterios de Aceptación
+
+- El sistema permite registrar asistencia automática de un docente
+  identificado por reconocimiento facial, clasificando correctamente
+  PRESENTE/TARDE.
+- El aislamiento multi-tenant impide el acceso cruzado entre instituciones
+  (verificado).
+- Los datos biométricos se almacenan cifrados y nunca como imágenes.
+- El consentimiento biométrico se registra y puede revocarse.
+- La carga manual y la justificación de ausencias funcionan como respaldo.
+- Los reportes se generan y exportan a CSV.
+- El build compila y la suite de tests pasa en su totalidad.

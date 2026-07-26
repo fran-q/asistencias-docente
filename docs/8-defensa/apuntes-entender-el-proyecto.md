@@ -241,9 +241,9 @@ recuadro (verde = marcado, azul = ya estaba, amarillo = sin clase, rojo = no rec
 
 ---
 
-## 5. Los cinco mecanismos que tenes que dominar
+## 5. Los seis mecanismos que tenes que dominar
 
-Si entendes estos cinco, entendes el proyecto.
+Si entendes estos seis, entendes el proyecto.
 
 ### 5.1 Multi-tenancy en tres capas
 
@@ -315,6 +315,36 @@ hagan visibles en vez de esconderse"*.
 
 ---
 
+### 5.6 El codigo de un solo uso (OTP)
+
+Sostiene dos cosas: verificar que el correo de una cuenta sea de quien dice, y recuperar la
+contrasena sin depender del superadmin.
+
+| Defensa | Por que existe |
+|---|---|
+| Se guarda **hasheado**, nunca en claro | Mismo criterio que las contrasenas: leer la base no sirve para usarlo |
+| Vence a los 15 minutos | Un codigo filtrado deja de servir enseguida |
+| Se consume en el primer uso | Reutilizarlo no revalida nada |
+| Tope de 5 intentos | Seis digitos son un millon de combinaciones. **Sin tope se prueban por fuerza bruta**; con tope, la probabilidad de acertar es 5 en un millon |
+| Tope de 5 pedidos por hora | Que no sirva de generador de correo no deseado |
+| `SecureRandom`, no `Random` | Un `Random` comun es predecible: con la semilla se anticipa el proximo |
+
+**Las dos preguntas que te pueden hacer:**
+
+*"Por que codigo y no un link, como todo el mundo?"* → Porque la app corre en localhost. Un
+link solo funciona si el correo se abre en la misma maquina; si llega a un telefono, muere.
+El codigo se tipea y no depende de que la URL sea alcanzable.
+
+*"Como evitas que alguien averigue quien tiene cuenta?"* → `/recuperar` responde **exactamente
+lo mismo** exista o no la cuenta: mismo estado, misma redireccion, mismo texto. Si contestara
+distinto, alcanzaria con probar direcciones. Hay un test que compara las dos respuestas.
+
+**Y una tercera, sobre los docentes:** no se les verifica el correo porque **no son usuarios
+del sistema**. No tienen cuenta ni inician sesion: son entidades que el administrativo gestiona.
+Pedirles confirmar una casilla seria exigirles entrar a una app que nunca abren.
+
+---
+
 ## 6. Autoevaluacion (respondelas en voz alta)
 
 Si podes responder estas doce sin mirar, estas listo:
@@ -339,6 +369,7 @@ Si podes responder estas doce sin mirar, estas listo:
 | RF/RNF | Donde vive |
 |---|---|
 | RF-01/02/03 | `config/SecurityConfig`, `config/CustomUserDetailsService`, `service/UsuarioService` |
+| Verificacion y recuperacion (sin RF: mejora agregada) | `service/CodigoVerificacionService`, `VerificacionCuentaService`, `NotificadorEmailService` |
 | RF-04, RNF-05/10 | `model/BaseTenantEntity`, `model/package-info`, `config/Tenant*` |
 | RF-07 | `service/DocenteService` |
 | **RF-08/09** | `service/ModeloFacialService`, `service/MotorLbphService`, `service/DeteccionRostroService` |
@@ -364,6 +395,7 @@ Si podes responder estas doce sin mirar, estas listo:
 | **Embeddings (RF-08)** | LBPH en su lugar | Desviacion formalizada en ADR-0007, con migracion verificada y planificada. |
 | **Export PDF / Excel / graficos** (RF-31/32/33) | Hay CSV | Alcance del prototipo; los datos ya estan listos para cualquier formato. |
 | **Modo claro** (RNF-22) | Solo oscuro | Pendiente menor de UI. |
+| **Dependencia de un SMTP** | Nueva | Sin servidor de correo no hay recuperacion posible. La app avisa del fallo en vez de decir "revisa tu correo". Un OTP por mail tampoco es un segundo factor: si alguien controla el buzon, controla la cuenta. |
 | **Auditoria en runtime** (RF-34/36) | Tabla creada, sin llenar | Estructura lista; el registro automatico quedo fuera del alcance. |
 
 **La frase que cierra bien una defensa:** *"Se exactamente que hace mi sistema, que no

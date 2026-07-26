@@ -72,19 +72,27 @@ asistencias/
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ✅ |
 | **S6** | 19-jun a 24-jun | Cierre: reportes CSV + diagramas UML + manuales + changelog | ✅ |
 
-Detalle completo en `docs/1. Guia Proyecto Sistema Asistencias.docx`.
+Detalle completo en [la guía del proyecto](docs/1-catedra/Guia%20del%20proyecto.docx).
 
 ## Documentación
 
-- 📄 [Guía completa del proyecto](docs/1.%20Guia%20Proyecto%20Sistema%20Asistencias.docx)
-- 🗂️ [Diagrama de Base de Datos](docs/2.%20Diagrama%20BD%20Sistema%20Asistencias.pdf)
-- 📋 [Documento de Requerimientos](docs/3.%20Requerimientos%20Sistema%20Asistencias.docx)
-- 🏛️ [Decisiones arquitectónicas (ADR)](docs/adr/)
-- 📊 [Diagramas UML](docs/uml/) (PlantUML)
-- 📘 [Manual del Administrador](docs/manuales/manual-administrador.md)
-- 🔧 [Manual Técnico](docs/manuales/manual-tecnico.md)
-- 📜 [CHANGELOG por sprint](CHANGELOG.md)
-- 🎬 [Guión sugerido para el video demo](docs/guion-video-demo.md)
+Todo el material escrito vive en **[`docs/`](docs/)**, organizado por tipo. Empezá por su
+[índice](docs/README.md), que explica qué hay en cada carpeta y por dónde conviene entrar
+según lo que necesites.
+
+| | Carpeta | Qué encontrás |
+|---|---|---|
+| 📄 | [1-catedra](docs/1-catedra) | Guía, requerimientos y diagrama de BD originales |
+| 📋 | [2-requerimientos](docs/2-requerimientos) | Alcance, casos de uso, DFD y DER |
+| ⚖️ | [3-legal](docs/3-legal) | Consentimiento biométrico y Ley 25.326 |
+| 🏛️ | [4-arquitectura](docs/4-arquitectura) | Los 9 ADR, referencia técnica y deuda técnica |
+| 📊 | [5-diagramas](docs/5-diagramas) | Diagramas en PlantUML |
+| 📘 | [6-manuales](docs/6-manuales) | Manual del administrador y manual técnico |
+| 📈 | [7-informes](docs/7-informes) | Correcciones y protocolo de calibración |
+| 🎬 | [8-defensa](docs/8-defensa) | Apuntes de estudio y guion del video |
+| 🖨️ | [9-imprimibles](docs/9-imprimibles) | Versiones PDF listas para imprimir |
+
+Además: [CHANGELOG por sprint](CHANGELOG.md).
 
 ## Marco legal
 

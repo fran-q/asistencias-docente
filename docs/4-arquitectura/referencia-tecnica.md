@@ -397,6 +397,8 @@ asistencias/
 | Pase | `/asistencia/pase` | GET, POST `/marcar` (JSON) | INSTITUCION o ADMIN |
 | Asistencias | `/asistencias` | listar, manual/nueva, {id}/justificar | INSTITUCION o ADMIN |
 | Reportes | `/reportes` | GET, GET `/csv` | INSTITUCION o ADMIN |
+| Mi cuenta | `/mi-cuenta` | GET, POST `/enviar-codigo`, POST `/verificar` | autenticado |
+| Recuperación | `/recuperar` | GET, POST, GET/POST `/codigo` | **público** |
 
 **Patrón REST-ish uniforme:** `GET /x` (listar) · `GET /x/nueva` + `POST /x/nueva` (crear)
 · `GET /x/{id}/editar` + `POST /x/{id}/editar` (editar) · `POST /x/{id}/baja` y `/alta`
@@ -506,6 +508,57 @@ Consentimiento OTORGADO ──► Registro facial ──► Uso en reconocimient
 **Ciclo de cada fase:** implementar → compilar → tests → prueba manual del usuario →
 commit con Conventional Commits → siguiente fase. Cada decisión relevante se documenta en
 un ADR; cada límite conocido, en `TECH_DEBT.md`.
+
+---
+
+### 7.6 Verificación de correo y recuperación de contraseña
+
+Los dos flujos se apoyan en el mismo mecanismo: un código de seis dígitos enviado por correo,
+de un solo uso. Se eligió código y no enlace porque la aplicación corre en `localhost`, donde
+un enlace solo funcionaría si el mensaje se abre en la misma máquina (ver ADR-0009).
+
+```
+VERIFICAR MI CORREO (con sesión iniciada)
+  /mi-cuenta ──► "Enviarme el código"
+      │
+      ├─► CodigoVerificacionService.emitir()
+      │       genera con SecureRandom, guarda el HASH, vence en 15 min,
+      │       invalida los códigos pendientes del mismo propósito
+      │
+      ├─► NotificadorEmailService ──► SMTP
+      │
+      └─► la persona tipea el código ──► validar() ──► usuarios.email_verificado_en
+
+RECUPERAR CONTRASEÑA (sin sesión)
+  /recuperar ──► usuario o correo
+      │
+      ├─► ¿existe la cuenta?
+      │      SÍ ──► emite código + envía correo + guarda el id EN LA SESIÓN
+      │      NO ──► no hace nada
+      │
+      └─► en AMBOS casos redirige igual a /recuperar/codigo
+              (si respondiera distinto, se podría averiguar quién tiene cuenta)
+                │
+                └─► código + contraseña nueva ──► validar() ──► nuevo hash BCrypt
+```
+
+**Defensas sobre el código**, todas verificables en la tabla `codigos_verificacion`:
+
+| Defensa | Motivo |
+|---|---|
+| Se guarda hasheado con BCrypt | Quien lea la base no puede usar un código pendiente |
+| Vence a los 15 minutos | Un código filtrado deja de servir enseguida |
+| Se consume en el primer uso | Reutilizarlo no revalida nada |
+| Máximo 5 intentos fallidos | Seis dígitos son un millón de combinaciones: sin tope se prueban por fuerza bruta |
+| Máximo 5 pedidos por hora | Evita que el sistema sirva de generador de correo no deseado |
+| Se genera con `SecureRandom` | Un `Random` común es predecible |
+
+**El id del usuario viaja en la sesión, no en la URL.** Si viajara por parámetro, cualquiera
+podría pedir el cambio de contraseña de otra cuenta escribiendo otro id.
+
+**Los docentes quedan fuera**: no tienen cuenta ni inician sesión, son entidades administradas
+por el personal administrativo. Verificar su correo sería pedirle una acción a alguien que
+nunca abre la aplicación.
 
 ---
 

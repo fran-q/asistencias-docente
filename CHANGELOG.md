@@ -31,7 +31,7 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 ## Sprint 5 — Asistencia automática end-to-end (sprint-5-cierre)
 
 **Período:** 12 al 18 de junio de 2026.
-**ADR:** [0008 - Asistencia automática](docs/adr/0008-asistencia-automatica.md).
+**ADR:** [0008 - Asistencia automática](docs/4-arquitectura/adr/0008-asistencia-automatica.md).
 
 ### Agregado
 - **Pase de asistencia** (`/asistencia/pase`): la pantalla del reconocimiento
@@ -69,7 +69,7 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 ## Sprint 4 — Reconocimiento facial (sprint-4-cierre)
 
 **Período:** 29 de mayo al 11 de junio de 2026.
-**ADR:** [0007 - Reconocimiento facial con JavaCV + LBPH](docs/adr/0007-reconocimiento-facial-lbph.md).
+**ADR:** [0007 - Reconocimiento facial con JavaCV + LBPH](docs/4-arquitectura/adr/0007-reconocimiento-facial-lbph.md).
 
 ### Agregado
 - **JavaCV 1.5.11 + OpenCV 4.10.0** integrados al build.
@@ -100,7 +100,7 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 ## Sprint 3.5 — Reorganización a package-by-layer
 
 **Período:** dentro del Sprint 3, post-cierre del Sprint 3.
-**ADR:** [0006 - Package by layer](docs/adr/0006-organizacion-por-capas.md).
+**ADR:** [0006 - Package by layer](docs/4-arquitectura/adr/0006-organizacion-por-capas.md).
 
 A pedido del docente de Prácticas Profesionalizantes III, se migra el código
 de **package-by-feature** (ADR-0001) a **package-by-layer**:
@@ -117,7 +117,7 @@ ADR-0001 marcada como reemplazada por ADR-0006.
 ## Sprint 3 — Docentes + Consentimiento biométrico (sprint-3-cierre)
 
 **Período:** 7 al 28 de mayo de 2026.
-**ADR:** [0005 - Consentimiento biométrico](docs/adr/0005-consentimiento-biometrico.md).
+**ADR:** [0005 - Consentimiento biométrico](docs/4-arquitectura/adr/0005-consentimiento-biometrico.md).
 
 ### Agregado
 - CRUD completo de **Docentes** (`/docentes`).
@@ -137,7 +137,7 @@ ADR-0001 marcada como reemplazada por ADR-0006.
 ## Sprint 2 — Académico + grilla semanal (sprint-2-cierre)
 
 **Período:** 5 al 6 de mayo de 2026.
-**ADR:** [0004 - Defensa en JOINs](docs/adr/0004-tenant-filter-en-joins.md).
+**ADR:** [0004 - Defensa en JOINs](docs/4-arquitectura/adr/0004-tenant-filter-en-joins.md).
 
 ### Agregado
 - CRUD de **Carreras**, **Materias**, **Comisiones**, **Horarios**.
@@ -169,8 +169,8 @@ ADR-0001 marcada como reemplazada por ADR-0006.
 ## Sprint 0 — Setup inicial (sprint-0-cierre)
 
 **Período:** 24 al 30 de abril de 2026.
-**ADR:** [0001 - Monolito Modular](docs/adr/0001-monolito-modular.md),
-[0002 - Multi-tenancy por discriminator](docs/adr/0002-multi-tenant-discriminator.md).
+**ADR:** [0001 - Monolito Modular](docs/4-arquitectura/adr/0001-monolito-modular.md),
+[0002 - Multi-tenancy por discriminator](docs/4-arquitectura/adr/0002-multi-tenant-discriminator.md).
 
 ### Agregado
 - Setup Spring Boot 3.5 + Gradle + Java 21.
