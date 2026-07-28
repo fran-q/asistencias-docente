@@ -1,7 +1,15 @@
 # Diagramas UML
 
-Diagramas del sistema en formato **PlantUML** (texto plano versionado).
-Cada `.puml` se renderiza a PNG/SVG con cualquier herramienta PlantUML.
+Los diagramas están en dos formatos, y cada uno cumple un propósito:
+
+| Formato | Archivo | Para qué |
+|---|---|---|
+| **Mermaid** | [diagramas.md](./diagramas.md) y [dfd.md](./dfd.md) | **Se ven sin instalar nada**: GitHub los renderiza al abrir el archivo |
+| **PlantUML** | los `.puml` de esta carpeta | Mayor fidelidad y exportación a PNG/SVG, pero requiere herramientas |
+
+Si solo querés *ver* los diagramas, abrí [diagramas.md](./diagramas.md) y listo.
+
+> **Al modificar el modelo hay que actualizar los dos formatos.** Describen lo mismo, y tocar uno solo deja documentación que se contradice a sí misma.
 
 ## Diagramas
 
@@ -11,10 +19,12 @@ Cada `.puml` se renderiza a PNG/SVG con cualquier herramienta PlantUML.
 | `clases-dominio.puml` | Entidades JPA principales con relaciones, enums y `BaseTenantEntity`. | S6 |
 | `secuencia-pase-asistencia.puml` | Flujo completo del pase automático: frame → detección → identificación LBPH → marcado en BD. | S6 |
 
-El **diagrama Entidad-Relación de la BD** ya está hecho y vive en
-`docs/2. Diagrama BD Sistema Asistencias.pdf`.
+El **diagrama Entidad-Relación** tiene dos versiones: la original de la cátedra en
+[1-catedra/Diagrama de base de datos.pdf](../1-catedra/Diagrama%20de%20base%20de%20datos.pdf),
+y la del modelo tal como quedó implementado en
+[2-requerimientos/04-diagrama-entidad-relacion.md](../2-requerimientos/04-diagrama-entidad-relacion.md).
 
-## Cómo renderizar
+## Cómo exportar los `.puml` a imagen
 
 ### Opción A — Servidor PlantUML público (más rápido)
 1. Abrir https://www.plantuml.com/plantuml/uml/

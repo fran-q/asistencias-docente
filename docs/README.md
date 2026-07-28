@@ -12,7 +12,7 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 | [2-requerimientos](./2-requerimientos) | Requerimientos relevados, alcance, DFD, DER y casos de uso | Lo que se definió construir, con sus versiones en Word y PDF |
 | [3-legal](./3-legal) | Consentimiento biométrico y cumplimiento de la Ley 25.326 | El marco que condiciona todo el tratamiento de datos faciales |
 | [4-arquitectura](./4-arquitectura) | Los 9 ADR, la referencia técnica y la deuda técnica | Por qué el sistema es como es, decisión por decisión |
-| [5-diagramas](./5-diagramas) | Casos de uso, clases de dominio, secuencia y DFD | Los diagramas en formato PlantUML, editables |
+| [5-diagramas](./5-diagramas) | Casos de uso, clases de dominio, secuencia y DFD | Se ven directo en [diagramas.md](./5-diagramas/diagramas.md), sin instalar nada |
 | [6-manuales](./6-manuales) | Manual del administrador y manual técnico | Cómo se usa y cómo se instala |
 | [7-informes](./7-informes) | Correcciones aplicadas y protocolo de calibración | El estado del proyecto y lo que queda por medir |
 | [8-defensa](./8-defensa) | Apuntes de estudio y guion del video | Material para preparar la presentación |
@@ -40,7 +40,7 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 | Deuda técnica | Al día |
 | Manuales | Al día |
 | Protocolo de calibración | **Escrito, pero sin ejecutar.** Falta la sesión con cámara: hasta entonces el umbral de reconocimiento es un valor por defecto, no uno medido |
-| Diagramas `.puml` | Escritos, **sin renderizar a imagen** |
+| Diagramas | Al día. Se ven en [diagramas.md](./5-diagramas/diagramas.md) sin instalar nada; los `.puml` siguen sin exportar a imagen |
 | Política de privacidad y procedimiento ARCO | No escritos; ver [3-legal](./3-legal) |
 
 ## Cómo mantenerla
