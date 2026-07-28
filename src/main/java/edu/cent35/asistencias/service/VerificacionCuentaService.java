@@ -118,14 +118,6 @@ public class VerificacionCuentaService {
         return resultado;
     }
 
-    // Correo enmascarado del codigo pendiente, para poder decir a donde se envio sin exponerlo.
-    @Transactional(readOnly = true)
-    public String emailEnmascaradoDeRecuperacion(Long usuarioId) {
-        return codigoService.emailDelUltimoCodigo(usuarioId, PropositoCodigo.RECUPERACION_PASSWORD)
-            .map(VerificacionCuentaService::enmascarar)
-            .orElse("");
-    }
-
     // ========================================================================
     //  helpers
     // ========================================================================
@@ -149,14 +141,5 @@ public class VerificacionCuentaService {
 
         List<Usuario> porEmail = usuarioRepository.findByEmailIgnoreCase(limpio);
         return porEmail.size() == 1 ? Optional.of(porEmail.get(0)) : Optional.empty();
-    }
-
-    // Deja visibles el primer caracter y el dominio: "a****@cent35.edu.ar".
-    static String enmascarar(String email) {
-        int arroba = email.indexOf('@');
-        if (arroba <= 0) {
-            return "****";
-        }
-        return email.charAt(0) + "****" + email.substring(arroba);
     }
 }

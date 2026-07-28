@@ -71,7 +71,6 @@ public class RecuperacionController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new RecuperacionCompletarFormDto());
         }
-        model.addAttribute("emailEnmascarado", emailEnmascarado(session));
         return "auth/recuperar-codigo";
     }
 
@@ -87,7 +86,6 @@ public class RecuperacionController {
             binding.rejectValue("confirmacion", "error.confirmacion", "Las contraseñas no coinciden");
         }
         if (binding.hasErrors()) {
-            model.addAttribute("emailEnmascarado", emailEnmascarado(session));
             return "auth/recuperar-codigo";
         }
 
@@ -95,7 +93,6 @@ public class RecuperacionController {
         if (id == null) {
             // Nunca hubo una cuenta detras de este flujo, o la sesion caduco.
             binding.reject("error.global", "El código no es correcto o el pedido venció. Empezá de nuevo.");
-            model.addAttribute("emailEnmascarado", "");
             return "auth/recuperar-codigo";
         }
 
@@ -111,13 +108,7 @@ public class RecuperacionController {
         }
 
         binding.reject("error.global", CuentaController.mensajeDe(resultado));
-        model.addAttribute("emailEnmascarado", emailEnmascarado(session));
         return "auth/recuperar-codigo";
     }
 
-    // Muestra a donde se envio el codigo sin revelar la direccion entera.
-    private String emailEnmascarado(HttpSession session) {
-        Object id = session.getAttribute(SESION_USUARIO);
-        return id == null ? "" : verificacionService.emailEnmascaradoDeRecuperacion((Long) id);
-    }
 }

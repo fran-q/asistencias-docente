@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -113,6 +114,31 @@ class RecuperacionPublicaIT {
     }
 
     @Test
+    @DisplayName("La pantalla del codigo se ve identica exista o no la cuenta")
+    void laPantallaDelCodigoNoDelataLaCuenta() throws Exception {
+        // Comparar el estado y la redireccion no alcanza: los dos casos redirigen igual y la
+        // diferencia aparece recien en la pantalla siguiente. Aca se sigue el flujo hasta el
+        // HTML renderizado, que es donde se filtraba el correo enmascarado del titular.
+        String conCuentaReal = pantallaDelCodigoTras(USUARIO_REAL);
+        String conCuentaInventada = pantallaDelCodigoTras("no.existe.esta.cuenta");
+
+        assertThat(conCuentaReal)
+            .as("el HTML debe ser identico; cualquier diferencia permite enumerar cuentas")
+            .isEqualTo(conCuentaInventada);
+    }
+
+    @Test
+    @DisplayName("La pantalla del codigo nunca muestra el correo del titular")
+    void laPantallaDelCodigoNoMuestraElCorreo() throws Exception {
+        String pantalla = pantallaDelCodigoTras(USUARIO_REAL);
+
+        assertThat(pantalla).doesNotContain(EMAIL_REAL);
+        assertThat(pantalla)
+            .as("ni siquiera enmascarado: la inicial y el dominio ya confirman la cuenta")
+            .doesNotContain("****");
+    }
+
+    @Test
     @DisplayName("Tambien responde igual buscando por correo")
     void noRevelaPorCorreo() throws Exception {
         MvcResult existente = pedirCodigo(EMAIL_REAL);
@@ -147,6 +173,26 @@ class RecuperacionPublicaIT {
                 .with(csrf())
                 .param("usuarioOEmail", identificador))
             .andReturn();
+    }
+
+    // Recorre el paso 1 y devuelve el HTML del paso 2, arrastrando la sesion: es la sesion la
+    // que sabe si la cuenta existia, asi que sin ella la comparacion no probaria nada.
+    private String pantallaDelCodigoTras(String identificador) throws Exception {
+        MvcResult paso1 = mockMvc.perform(post("/recuperar")
+                .with(csrf())
+                .param("usuarioOEmail", identificador))
+            .andReturn();
+
+        String html = mockMvc.perform(get("/recuperar/codigo")
+                .session((MockHttpSession) paso1.getRequest().getSession()))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        // El token CSRF es distinto en cada sesion por definicion, asi que se normaliza: de
+        // lo contrario las dos paginas nunca serian iguales y el test no probaria nada.
+        return html.replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\" value=\"TOKEN\"");
     }
 
     private void limpiar() {

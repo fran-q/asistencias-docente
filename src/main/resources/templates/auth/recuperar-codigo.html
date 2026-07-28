@@ -11,12 +11,13 @@
         <header class="login-card__header">
             <div class="login-card__logo">A</div>
             <h1>Ingresá el código</h1>
+            <!--
+              El texto es siempre el mismo, exista o no la cuenta. Mostrar acá el correo
+              enmascarado revelaría qué usuarios están registrados: bastaría con probar
+              direcciones y mirar cuál responde distinto (ADR-0009).
+            -->
             <p class="login-card__subtitle">
-                <span th:if="${emailEnmascarado != null and !emailEnmascarado.isEmpty()}"
-                      th:text="'Lo enviamos a ' + ${emailEnmascarado}">Lo enviamos a tu correo</span>
-                <span th:unless="${emailEnmascarado != null and !emailEnmascarado.isEmpty()}">
-                    Si la cuenta existe, el código ya está en su correo
-                </span>
+                Si la cuenta existe, el código ya está en su correo
             </p>
         </header>
 

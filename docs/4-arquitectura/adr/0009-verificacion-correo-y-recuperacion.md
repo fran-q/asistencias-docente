@@ -59,6 +59,10 @@ Se aplica el mismo criterio que a las contraseñas: en la base queda un hash BCr
 
 Si contestara distinto, alcanzaría con probar direcciones para averiguar quién tiene cuenta en el sistema — un ataque de enumeración. La misma lógica se aplica cuando falla el envío del correo o cuando se alcanzó el límite de reenvíos: se registra en el log y se responde igual.
 
+**Tampoco se muestra el correo enmascarado.** Es habitual que estas pantallas digan "lo enviamos a `a****@dominio.com`", y la primera versión de esta implementación lo hacía. Se quitó: aunque la dirección esté tapada, mostrarla **solo cuando la cuenta existe** ya delata su existencia, y de paso confirma la inicial y el dominio. La comodidad de recordarle a la persona a qué casilla mirar no compensa perder la propiedad que esta decisión buscaba.
+
+Se detectó probando el flujo a mano contra un servidor de correo local: los tests comparaban el estado HTTP y la redirección, que eran idénticos en ambos casos, pero la diferencia aparecía recién en el HTML de la pantalla siguiente. El test se reforzó para seguir el flujo hasta la página renderizada y compararla entera, normalizando el token CSRF, que por definición cambia en cada sesión.
+
 El identificador de la persona viaja **en la sesión y no en la URL**. Si viajara por parámetro, cualquiera podría pedir el cambio de contraseña de otra cuenta simplemente escribiendo otro id.
 
 ### 6. Los docentes quedan fuera del alcance
