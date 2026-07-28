@@ -134,7 +134,7 @@ asistencias/
 ├── docs/                              ← documentación versionada
 │   ├── adr/                           (Architectural Decision Records)
 │   ├── manuales/                      (este manual + manual administrador)
-│   ├── uml/                           (diagramas PlantUML)
+│   ├── 5-diagramas/                   (diagramas en Mermaid)
 │   └── legal/                         (textos legales)
 ├── gradle/                            (wrapper de Gradle)
 ├── src/

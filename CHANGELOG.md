@@ -71,7 +71,7 @@ relevamiento original no había contemplado.
 - **Reportes con exportación a CSV** (`/reportes`). Filtros por rango de fechas,
   docente, materia, estado y método. Descarga UTF-8 con BOM para que abra
   directo en Excel.
-- **Diagramas UML** en formato PlantUML (`docs/5-diagramas/`):
+- **Diagramas UML** (`docs/5-diagramas/`, migrados a Mermaid en julio 2026):
   - Casos de uso.
   - Clases del dominio.
   - Secuencia del pase de asistencia.

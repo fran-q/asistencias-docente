@@ -1,8 +1,8 @@
 # Diagramas del sistema
 
-Los mismos diagramas que están en los `.puml`, escritos en **Mermaid** para que se vean sin instalar nada: GitHub los renderiza al abrir este archivo, y VS Code también con su vista previa de Markdown.
+Diagramas del sistema en **Mermaid**, que GitHub renderiza al abrir este archivo. No hace falta instalar nada ni exportar imágenes: se ven acá mismo, y VS Code también los dibuja en su vista previa de Markdown.
 
-> Los `.puml` siguen siendo la versión de mayor fidelidad y son la fuente para exportar a imagen. **Si se modifica el modelo hay que tocar los dos**: describen lo mismo y quedarse a mitad de camino deja documentación que se contradice.
+Esta es la **única fuente** de los diagramas. Antes convivían con una versión en PlantUML que había que renderizar aparte; se eliminó porque tener dos descripciones del mismo modelo garantiza que tarde o temprano digan cosas distintas.
 
 El **diagrama de flujo de datos** vive aparte, en [dfd.md](./dfd.md), y también está en Mermaid.
 
@@ -156,7 +156,7 @@ classDiagram
 **Invariantes que no se ven en el diagrama:**
 
 - `UNIQUE (docente_id, horario_id, fecha)` sobre `asistencias` es lo que garantiza la idempotencia del pase: si el docente se queda frente a la cámara, la marca no se duplica.
-- Una fila `AUSENTE` puede llegar por dos caminos: la calcula el listado al vuelo para los horarios ya terminados sin marca, y el job programado la materializa después (RF-19).
+- **`AUSENTE` es híbrido.** El listado la calcula al vuelo para cubrir la ventana entre el fin de la clase y la próxima corrida del job, y después el job la persiste de verdad (`metodo=AUTOMATICO`, `hora=hora_fin`). **Solo la persistida se puede justificar**, porque una fila calculada no existe todavía en la base.
 - `Comision` y `Horario` **no** son tenant-scoped: su institución se deduce de la materia padre, por eso sus consultas van por JOIN.
 - El código de verificación se guarda **hasheado**; `codigoHash` nunca contiene el valor que viajó por correo.
 
@@ -170,11 +170,19 @@ Mermaid no tiene diagrama de casos de uso, así que se representa como grafo: lo
 flowchart LR
     INST(["Administrador de institución<br/>rol INSTITUCION"])
     ADMIN(["Administrador operativo<br/>rol ADMIN"])
-    DOC(["Docente<br/>(no usa el sistema)"])
+    DOC(["Docente<br/>no tiene cuenta"])
+    SYS[["Reconocimiento facial<br/>JavaCV + LBPH"]]
+    JOB[["Tarea programada<br/>job de ausencias"]]
+    SMTP[["Servidor de correo<br/>SMTP"]]
 
     subgraph GI["Gestión de la institución"]
         UC1["Editar datos de la institución"]
         UC2["Crear y dar de baja administradores"]
+    end
+
+    subgraph CU["Cuenta propia"]
+        UC18["Verificar el correo de mi cuenta"]
+        UC19["Recuperar contraseña olvidada"]
     end
 
     subgraph GA["Gestión académica"]
@@ -190,20 +198,18 @@ flowchart LR
         UC9["Cargar consentimiento"]
         UC10["Revocar consentimiento"]
         UC11["Registrar rostro"]
+        UC11b["Re-registrar rostro"]
         UC12["Suprimir datos biométricos<br/>derecho ARCO"]
     end
 
     subgraph AS["Asistencia"]
         UC13["Pasar asistencia automática"]
+        UC13b["Identificar rostro y marcar"]
         UC14["Cargar asistencia manual"]
+        UC20["Generar ausencias de clases terminadas"]
         UC15["Justificar ausencia"]
         UC16["Ver listado del día"]
         UC17["Exportar reporte CSV"]
-    end
-
-    subgraph CU["Cuenta propia"]
-        UC18["Verificar mi correo"]
-        UC19["Recuperar contraseña"]
     end
 
     INST --> GI
@@ -215,16 +221,27 @@ flowchart LR
     ADMIN --> DB
     ADMIN --> AS
     ADMIN --> CU
-    DOC -. presenta su rostro .-> UC13
 
+    DOC -. presenta su rostro .-> UC13
+    JOB -- corre cada 30 min --> UC20
+    SYS -. ejecuta LBPH .-> UC13b
+    UC18 -. envía el código .-> SMTP
+    UC19 -. envía el código .-> SMTP
+
+    UC13 -. incluye .-> UC13b
     UC11 -. requiere consentimiento activo .-> UC9
-    UC13 -. requiere modelo facial .-> UC11
+    UC13 -. requiere modelo facial activo .-> UC11
+    UC12 -. destruye todos los modelos<br/>incluidos los históricos .-> UC11
+    UC15 -. requiere una AUSENTE persistida .-> UC20
+    UC14 -. o la crea a mano .-> UC20
 ```
 
-**Dos cosas que conviene señalar al presentarlo:**
+**Lo que conviene señalar al presentarlo:**
 
 - El **docente es sujeto pasivo**: no tiene cuenta ni inicia sesión. Aparece porque presenta su rostro, no porque opere el sistema. Por eso tampoco se le verifica el correo.
 - Solo el rol INSTITUCION accede a la gestión de la institución y de los usuarios; todo lo demás lo comparten los dos roles.
+- Hay **tres actores que no son personas**: el motor de reconocimiento, el job que genera las ausencias cada 30 minutos y el servidor de correo. Reconocerlos como actores es lo que deja ver que el sistema hace cosas sin que nadie las pida.
+- Para **justificar** una ausencia hace falta que exista como fila persistida, y a eso se llega por dos caminos: la genera el job, o la carga un administrador a mano.
 
 ---
 

@@ -40,7 +40,7 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 | Deuda técnica | Al día |
 | Manuales | Al día |
 | Protocolo de calibración | **Escrito, pero sin ejecutar.** Falta la sesión con cámara: hasta entonces el umbral de reconocimiento es un valor por defecto, no uno medido |
-| Diagramas | Al día. Se ven en [diagramas.md](./5-diagramas/diagramas.md) sin instalar nada; los `.puml` siguen sin exportar a imagen |
+| Diagramas | Al día y visibles sin instalar nada, en [diagramas.md](./5-diagramas/diagramas.md) |
 | Política de privacidad y procedimiento ARCO | No escritos; ver [3-legal](./3-legal) |
 
 ## Cómo mantenerla

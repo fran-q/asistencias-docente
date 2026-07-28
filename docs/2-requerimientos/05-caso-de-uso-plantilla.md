@@ -60,7 +60,7 @@ de negocio.
 | CU-13 | Generar y exportar reportes | Administrador | RF-27 a RF-32 |
 
 > El diagrama UML de casos de uso completo está disponible en el repositorio
-> (`asistencias/docs/uml/casos-de-uso.puml`), renderizable con PlantUML.
+> ([`docs/5-diagramas/diagramas.md`](../5-diagramas/diagramas.md)), que GitHub renderiza al abrirlo.
 
 ---
 

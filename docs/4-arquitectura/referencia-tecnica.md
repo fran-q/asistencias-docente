@@ -300,7 +300,7 @@ asistencias/
 ├── docs/
 │   ├── adr/                     8 decisiones arquitectónicas
 │   ├── manuales/                Manual de administrador + técnico
-│   ├── uml/                     3 diagramas PlantUML
+│   ├── 5-diagramas/             diagramas en Mermaid (se ven en GitHub)
 │   ├── apuntes-entender-el-proyecto.md
 │   ├── calibracion-umbral.md    Protocolo de calibración
 │   ├── guion-video-demo.md

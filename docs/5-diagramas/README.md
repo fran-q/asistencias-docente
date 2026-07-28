@@ -1,57 +1,36 @@
-# Diagramas UML
+# Diagramas
 
-Los diagramas están en dos formatos, y cada uno cumple un propósito:
+Todos los diagramas están en **Mermaid**, dentro de archivos Markdown. Eso quiere decir que **se ven sin instalar nada**: GitHub los dibuja al abrir el archivo, y VS Code también en su vista previa.
 
-| Formato | Archivo | Para qué |
-|---|---|---|
-| **Mermaid** | [diagramas.md](./diagramas.md) y [dfd.md](./dfd.md) | **Se ven sin instalar nada**: GitHub los renderiza al abrir el archivo |
-| **PlantUML** | los `.puml` de esta carpeta | Mayor fidelidad y exportación a PNG/SVG, pero requiere herramientas |
+| Archivo | Qué contiene |
+|---|---|
+| [diagramas.md](./diagramas.md) | Clases del dominio, casos de uso y secuencia del pase de asistencia |
+| [dfd.md](./dfd.md) | Diagramas de flujo de datos en tres niveles: contexto, procesos y explosión del registro automático |
 
-Si solo querés *ver* los diagramas, abrí [diagramas.md](./diagramas.md) y listo.
+El **diagrama Entidad-Relación** tiene dos versiones: la original de la cátedra en [1-catedra/Diagrama de base de datos.pdf](../1-catedra/Diagrama%20de%20base%20de%20datos.pdf), y la del modelo tal como quedó implementado en [2-requerimientos/04-diagrama-entidad-relacion.md](../2-requerimientos/04-diagrama-entidad-relacion.md).
 
-> **Al modificar el modelo hay que actualizar los dos formatos.** Describen lo mismo, y tocar uno solo deja documentación que se contradice a sí misma.
+## Por qué Mermaid y no PlantUML
 
-## Diagramas
+Los diagramas estuvieron en PlantUML hasta julio de 2026. El formato es más expresivo —tiene diagrama de casos de uso propio, que Mermaid no— pero exige instalar herramientas para verlos, y en la práctica eso significaba que nadie los abría: en el repositorio se veían como texto plano.
 
-| Archivo | Qué muestra | Sprint |
-|---|---|---|
-| `casos-de-uso.puml` | Actores y casos de uso del sistema, agrupados por dominio. | S6 |
-| `clases-dominio.puml` | Entidades JPA principales con relaciones, enums y `BaseTenantEntity`. | S6 |
-| `secuencia-pase-asistencia.puml` | Flujo completo del pase automático: frame → detección → identificación LBPH → marcado en BD. | S6 |
+Se migraron a Mermaid y **se eliminaron los `.puml`** en vez de mantener ambos. Convivir dos descripciones del mismo modelo garantiza que tarde o temprano digan cosas distintas, y una documentación que se contradice a sí misma es peor que tener una sola versión algo menos vistosa.
 
-El **diagrama Entidad-Relación** tiene dos versiones: la original de la cátedra en
-[1-catedra/Diagrama de base de datos.pdf](../1-catedra/Diagrama%20de%20base%20de%20datos.pdf),
-y la del modelo tal como quedó implementado en
-[2-requerimientos/04-diagrama-entidad-relacion.md](../2-requerimientos/04-diagrama-entidad-relacion.md).
+Lo único que se pierde es la notación de casos de uso: en Mermaid se representa como un grafo con los actores y los casos agrupados por dominio. A cambio, el diagrama se ve al abrir el archivo.
 
-## Cómo exportar los `.puml` a imagen
+## Cómo obtener una imagen
 
-### Opción A — Servidor PlantUML público (más rápido)
-1. Abrir https://www.plantuml.com/plantuml/uml/
-2. Copiar el contenido del `.puml`.
-3. Descargar el PNG generado.
+Si hace falta un PNG para imprimir o pegar en un documento:
 
-### Opción B — IntelliJ IDEA
-1. Settings → Plugins → instalar **"PlantUML integration"**.
-2. Abrir cualquier `.puml`: la vista previa aparece a la derecha.
-3. Botón derecho sobre el preview → "Save Diagram" → PNG.
+1. **Desde GitHub** — abrir el archivo, y sobre el diagrama ya renderizado usar el botón de copiar imagen del navegador.
+2. **Desde VS Code** — vista previa del Markdown (`Ctrl+Shift+V`), botón derecho sobre el diagrama, guardar imagen.
+3. **mermaid.live** — pegar el bloque y exportar a PNG o SVG.
 
-### Opción C — CLI con Java
-```bash
-# Descargar plantuml.jar de https://plantuml.com/download
-java -jar plantuml.jar docs/uml/*.puml
-# Genera un .png al lado de cada .puml
-```
+## Convenciones de notación
 
-### Opción D — VS Code
-1. Instalar la extensión **"PlantUML"** (jebbs).
-2. Abrir el `.puml` → `Alt+D` → vista previa.
-3. Comando "PlantUML: Export Current Diagram" → PNG.
+- **`<<tenant>>`** en una clase marca que extiende `BaseTenantEntity`, es decir que lleva columna `institucion_id` y queda alcanzada por el filtro de Hibernate.
+- Los actores con borde doble en el diagrama de casos de uso son **procesos automáticos**, no personas: el motor de reconocimiento, el job de ausencias y el servidor de correo.
+- Lo que un diagrama no puede expresar —invariantes, constraints, criterios de desempate— va escrito en prosa debajo de cada uno.
 
-## Convenciones de notación usadas
+## Al modificar el modelo
 
-- **`<<tenant>>`** en una clase marca que extiende `BaseTenantEntity`
-  (tiene columna `institucion_id`).
-- **`<<system>>`** en un actor marca un componente automatizado.
-- Las notas `note` describen invariantes o decisiones de diseño
-  relevantes (idempotencia, constraints, etc.).
+Los diagramas describen el código: si cambian las entidades, las reglas de acceso o el flujo del pase, hay que actualizarlos en el mismo cambio. Un diagrama desactualizado no es neutro, **afirma algo falso** sobre el sistema.

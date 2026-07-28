@@ -39,7 +39,7 @@ de administrador y técnico, changelog por sprint.
 asistencias/
 ├── docs/                              ← documentación versionada
 │   ├── adr/                           (decisiones arquitectónicas)
-│   ├── uml/                           (diagramas .puml + .png)
+│   ├── 5-diagramas/                   (diagramas en Mermaid)
 │   └── legal/                         (textos de consentimiento)
 ├── src/
 │   ├── main/
@@ -86,7 +86,7 @@ según lo que necesites.
 | 📋 | [2-requerimientos](docs/2-requerimientos) | Alcance, casos de uso, DFD y DER |
 | ⚖️ | [3-legal](docs/3-legal) | Consentimiento biométrico y Ley 25.326 |
 | 🏛️ | [4-arquitectura](docs/4-arquitectura) | Los 9 ADR, referencia técnica y deuda técnica |
-| 📊 | [5-diagramas](docs/5-diagramas) | Diagramas en PlantUML |
+| 📊 | [5-diagramas](docs/5-diagramas) | Diagramas en Mermaid, se ven directo en GitHub |
 | 📘 | [6-manuales](docs/6-manuales) | Manual del administrador y manual técnico |
 | 📈 | [7-informes](docs/7-informes) | Correcciones y protocolo de calibración |
 | 🎬 | [8-defensa](docs/8-defensa) | Apuntes de estudio y guion del video |
