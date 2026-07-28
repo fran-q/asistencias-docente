@@ -42,7 +42,10 @@ public class InstitucionFormDto {
     @Size(max = 120, message = "El email no puede superar 120 caracteres")
     private String emailContacto;
 
+    // Mismo criterio que el teléfono del docente: permisivo con el formato, pero sin letras.
     @Size(max = 30, message = "El telefono no puede superar 30 caracteres")
+    @Pattern(regexp = "^$|^[0-9+()\\s-]{6,30}$",
+             message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefonoContacto;
 
     // Precarga el formulario con los datos actuales de la institución.

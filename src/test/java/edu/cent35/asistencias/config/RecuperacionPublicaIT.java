@@ -7,6 +7,7 @@ import edu.cent35.asistencias.repository.CodigoVerificacionRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.service.NotificadorEmailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.mock.web.MockHttpSession;
@@ -21,6 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -46,6 +51,10 @@ class RecuperacionPublicaIT {
     @Autowired private RolRepository rolRepository;
     @Autowired private CodigoVerificacionRepository codigoRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+
+    // Se reemplaza el notificador real para poder afirmar que NO se lo llama. Con el real solo
+    // se sabria que el envio fallo por no haber SMTP, que no es lo mismo que no haberlo pedido.
+    @MockBean private NotificadorEmailService notificador;
 
     // Una cuenta real contra la cual comparar el comportamiento con una inexistente.
     @BeforeEach
@@ -160,6 +169,25 @@ class RecuperacionPublicaIT {
         assertThat(codigoRepository.count())
             .as("la cuenta real si genera su codigo, aunque el envio falle")
             .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Un identificador que no es de nadie no dispara ningun correo")
+    void noSeMandaCorreoACuentasInexistentes() throws Exception {
+        pedirCodigo("no.existe.esta.cuenta");
+        pedirCodigo("desconocido@otrodominio.com");
+
+        verify(notificador, never()).enviarCodigo(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("El correo va a la direccion registrada, no a la que se escribio")
+    void elCorreoVaALaDireccionRegistrada() throws Exception {
+        // Se busca por usuario, asi que la direccion de destino la pone el sistema. Si saliera
+        // hacia lo tipeado, cualquiera podria hacer que el sistema le escriba a un tercero.
+        pedirCodigo(USUARIO_REAL);
+
+        verify(notificador).enviarCodigo(any(), any(), org.mockito.ArgumentMatchers.eq(EMAIL_REAL), any());
     }
 
     // ========================================================================

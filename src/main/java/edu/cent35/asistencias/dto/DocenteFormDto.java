@@ -47,7 +47,10 @@ public class DocenteFormDto {
     @Size(max = 120)
     private String email;
 
+    // Patrón permisivo a propósito: acepta prefijos, paréntesis y separadores, pero no letras.
     @Size(max = 30)
+    @Pattern(regexp = "^$|^[0-9+()\\s-]{6,30}$",
+             message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefono;
 
     @NotNull(message = "La fecha de alta es obligatoria")
