@@ -185,6 +185,7 @@ if __name__ == '__main__':
         '04-diagrama-entidad-relacion',
         '05-caso-de-uso-plantilla',
         '06-caso-de-uso-asistencia-automatica',
+        '07-presentacion-prototipo',
     ]
     for d in docs:
         md = os.path.join(base, d + '.md')
