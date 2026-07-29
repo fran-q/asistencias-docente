@@ -1,0 +1,71 @@
+package edu.cent35.asistencias.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+/**
+ * Datos del alta de una institución nueva junto con su primera cuenta. Es el único formulario
+ * que pide la clave de instalación, porque dar de alta una institución es una operación de
+ * despliegue y no una función de la aplicación: ocurre antes de que exista ningún tenant.
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AltaInstitucionFormDto {
+
+    // No se valida el formato: es un secreto de configuración y su forma la elige quien
+    // despliega. Solo se acota el largo para no aceptar un envío enorme.
+    @NotBlank(message = "Ingresá la clave de instalación")
+    @Size(max = 200, message = "La clave de instalación es más corta que eso")
+    private String claveInstalacion;
+
+    // ---- Institución ----
+
+    @NotBlank(message = "El nombre de la institución es obligatorio")
+    @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
+    private String nombreInstitucion;
+
+    @Pattern(regexp = "^$|^[0-9]{2}-[0-9]{8}-[0-9]$",
+             message = "El CUIT debe tener el formato 30-12345678-9")
+    @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
+    private String cuit;
+
+    // ---- Primera cuenta (rol INSTITUCION) ----
+
+    @NotBlank(message = "El usuario es obligatorio")
+    @Size(min = 3, max = 60, message = "El usuario debe tener entre 3 y 60 caracteres")
+    @Pattern(regexp = "^[a-zA-Z0-9._-]+$",
+             message = "El usuario solo admite letras, números, punto, guion y guion bajo")
+    private String username;
+
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "El correo debe ser válido")
+    @Size(max = 120, message = "El correo no puede superar los 120 caracteres")
+    private String email;
+
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
+    private String password;
+
+    @NotBlank(message = "Repetí la contraseña")
+    @Size(max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
+    private String confirmacion;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    @Size(max = 80, message = "El nombre no puede superar los 80 caracteres")
+    private String nombre;
+
+    @NotBlank(message = "El apellido es obligatorio")
+    @Size(max = 80, message = "El apellido no puede superar los 80 caracteres")
+    private String apellido;
+
+    // Indica si la contraseña y su repetición son iguales.
+    public boolean coincide() {
+        return password != null && password.equals(confirmacion);
+    }
+}

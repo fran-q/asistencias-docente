@@ -9,19 +9,30 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Configuración de Spring MVC. Registra el TenantInterceptor para que corra en cada request
- * y publique el tenant del usuario autenticado, salteando los estáticos y actuator.
+ * Configuración de Spring MVC. Registra los dos interceptores que corren en cada request: el
+ * que publica el tenant del usuario autenticado y el que impide operar sin haber verificado
+ * el correo, salteando en ambos casos los estáticos y actuator.
  */
 @Configuration
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final TenantInterceptor tenantInterceptor;
+    private static final String[] SIN_INTERCEPTAR = {
+        "/css/**", "/js/**", "/img/**", "/webjars/**", "/actuator/**"
+    };
 
-    // Aplica el interceptor a todo salvo estáticos y actuator, que no necesitan tenant.
+    private final TenantInterceptor tenantInterceptor;
+    private final VerificacionInterceptor verificacionInterceptor;
+
+    // El orden importa: el tenant se publica primero, porque el bloqueo por verificacion
+    // consulta la base y esa consulta tiene que correr con la institucion ya en contexto.
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tenantInterceptor)
-                .excludePathPatterns("/css/**", "/js/**", "/img/**", "/webjars/**", "/actuator/**");
+                .excludePathPatterns(SIN_INTERCEPTAR)
+                .order(1);
+        registry.addInterceptor(verificacionInterceptor)
+                .excludePathPatterns(SIN_INTERCEPTAR)
+                .order(2);
     }
 }

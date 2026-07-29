@@ -1224,3 +1224,29 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     .pase__acciones                       { margin-top: 0.6rem; }
     .pase .card                           { padding: 0.9rem; }
 }
+
+/* ============================================================================
+ *  ALTA DE INSTITUCION
+ *  Usa la tarjeta del login, pero con mas ancho: son tres bloques de datos
+ *  (clave, institucion y primera cuenta) y a 380 px quedaba muy angosta.
+ * ========================================================================== */
+
+.login-card--ancha {
+    max-width: 560px;
+}
+
+/* Separa los bloques del formulario sin cargar la pantalla con recuadros. */
+.separador {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: var(--space-lg) 0 var(--space);
+}
+
+.form-seccion {
+    margin: 0 0 var(--space);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}

@@ -40,6 +40,12 @@
         <p class="login-card__ayuda">
             <a th:href="@{/recuperar}">¿Olvidaste tu contraseña?</a>
         </p>
+        <!-- Enlace discreto: el alta de institucion es una operacion de instalacion, no algo
+             que un usuario del dia a dia necesite. Exponerlo no es un riesgo porque el
+             formulario exige la clave de instalacion. -->
+        <p class="login-card__ayuda">
+            <a th:href="@{/alta-institucion}">Registrar una institución nueva</a>
+        </p>
     </main>
 
     <!-- Flash data: convierte ?error y ?logout en toasts -->

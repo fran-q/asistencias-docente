@@ -95,6 +95,10 @@ reportes para el personal administrativo de instituciones de nivel superior.
 - Roles INSTITUCION y ADMIN con control de acceso.
 - Multi-tenancy con aislamiento total entre instituciones (triple defensa).
 - CRUD de usuarios administradores y edición de la institución.
+- Alta de instituciones nuevas desde la aplicación, protegida por clave de
+  instalación, con su cuenta inicial creada en el mismo acto.
+- Verificación obligatoria del correo de cada cuenta y recuperación autónoma
+  de la contraseña, ambas por código de un solo uso.
 - CRUD académico completo: carreras, materias, comisiones, horarios + grilla
   semanal.
 - CRUD de docentes.
@@ -118,7 +122,7 @@ posteriores:
 | Módulo de **auditoría** (escritura y consulta) | RF-34, RF-35, RF-36 | La tabla y el diseño existen en la BD; la captura automática de eventos se difiere a la siguiente iteración. |
 | **Dashboard** con métricas en vivo | RF-37 | Existe pantalla de inicio; el dashboard con indicadores del día está diseñado en el prototipo y se difiere su implementación. |
 | **Modo claro** conmutable | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
-| **Alta de nuevas instituciones** por UI | RF-05 | La edición de la institución propia está; el alta de instituciones nuevas se realiza por carga inicial (seed), no por interfaz. |
+| **Detección de vivacidad** | RF-38 | El pase acepta hoy una fotografía sostenida frente a la cámara. La limitación está declarada y el control compensatorio es la presencia del administrador durante el pase. |
 
 ### 3.3. Exclusiones permanentes (no forman parte del proyecto)
 
@@ -141,7 +145,7 @@ posteriores:
 | RF-02 | Gestión de contraseñas | ✅ | Cambio de contraseña + política de longitud mínima |
 | RF-03 | Control de acceso por rol | ✅ | `@PreAuthorize` por rol |
 | RF-04 | Aislamiento multi-tenant | ✅ | TenantContext + filtro Hibernate + validación en servicios |
-| RF-05 | Alta de institución | 🟡 | Edición de la propia institución sí; alta de nuevas por seed, no por UI |
+| RF-05 | Alta de institución | ✅ | Pantalla pública `/alta-institucion`; crea institución y cuenta inicial en una transacción |
 | RF-06 | CRUD de administradores | ✅ | Módulo Usuarios |
 | RF-07 | CRUD de docentes | ✅ | Con borrado lógico |
 | RF-08 | Registro del modelo facial | ✅ | Webcam + LBPH + cifrado, sin imágenes |
@@ -174,8 +178,16 @@ posteriores:
 | RF-35 | Historial de acciones | 🔜 | Depende de RF-34 |
 | RF-36 | Consulta de auditoría | 🔜 | Depende de RF-34 |
 | RF-37 | Dashboard | 🟡 | Pantalla de inicio sí; métricas en vivo en prototipo, diferidas |
+| RF-38 | Detección de vivacidad | 🔜 | El pase acepta hoy una fotografía; limitación declarada en ADR-0007 |
+| RF-39 | Verificación del correo | ✅ | Código de 6 dígitos, hasheado, vence a los 15 min |
+| RF-40 | Recuperación autónoma de contraseña | ✅ | Sin revelar si la cuenta existe |
+| RF-41 | Registro automático de ausencias | ✅ | Tarea programada con propagación manual del tenant |
+| RF-42 | Verificación obligatoria para operar | ✅ | `VerificacionInterceptor` con lista blanca; desbloqueo en la misma sesión |
+| RF-43 | Identidad reutilizable entre instituciones | ✅ | Unicidad de usuario y correo acotada a la institución |
+| RF-44 | Autorización del alta de institución | ✅ | Clave de instalación por variable de entorno, comparada en tiempo constante |
+| RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
 
-**Resumen RF:** 24 implementados · 7 parciales · 6 backlog (total 37).
+**Resumen RF:** 31 implementados · 7 parciales · 7 backlog (total 45).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -208,19 +220,20 @@ posteriores:
 | RNF-25 | Desarrollo incremental | ✅ | 6 sprints con tags de cierre |
 | RNF-26 | Código documentado | ✅ | ADRs, Javadoc, manuales |
 | RNF-27 | Despliegue local | ✅ | XAMPP/MariaDB local |
+| RNF-28 | Conservación del registro administrativo | ✅ | La supresión biométrica no toca las asistencias |
 
-**Resumen RNF:** 25 implementados · 1 parcial · 1 backlog (total 27).
+**Resumen RNF:** 26 implementados · 1 parcial · 1 backlog (total 28).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 24 | 7 | 6 | 37 |
-| No funcionales | 25 | 1 | 1 | 27 |
-| **Total** | **49** | **8** | **7** | **64** |
+| Funcionales | 31 | 7 | 7 | 45 |
+| No funcionales | 26 | 1 | 1 | 28 |
+| **Total** | **57** | **8** | **8** | **73** |
 
-**Cobertura del hito 1:** 49 de 64 requerimientos completamente
-implementados (≈77%), 8 parcialmente cubiertos (≈12%) y 7 en backlog
+**Cobertura del hito 1:** 57 de 73 requerimientos completamente
+implementados (≈78%), 8 parcialmente cubiertos (≈11%) y 8 en backlog
 planificado (≈11%).
 
 ---

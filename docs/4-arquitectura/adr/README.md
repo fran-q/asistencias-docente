@@ -32,3 +32,4 @@ Cada ADR contiene:
 | 0007 | Reconocimiento facial con JavaCV + LBPH | Aceptada |
 | 0008 | Modelo de asistencia automática | Aceptada |
 | 0009 | Verificación de correo y recuperación de contraseña | Aceptada |
+| 0010 | Alta de institución y bloqueo por verificación | Aceptada |

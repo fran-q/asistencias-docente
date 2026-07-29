@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alta de institución - Asistencias</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="login-body">
+    <main class="login-card login-card--ancha">
+        <header class="login-card__header">
+            <div class="login-card__logo">A</div>
+            <h1>Nueva institución</h1>
+            <p class="login-card__subtitle">Crea la institución y su primera cuenta de gestión</p>
+        </header>
+
+        <form th:action="@{/alta-institucion}" th:object="${form}" method="post" class="login-form" novalidate>
+
+            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+            </div>
+
+            <div class="form-group">
+                <label for="claveInstalacion">Clave de instalación <span class="required">*</span></label>
+                <input type="password" id="claveInstalacion" th:field="*{claveInstalacion}" required autofocus
+                       autocomplete="off"
+                       th:classappend="${#fields.hasErrors('claveInstalacion')} ? 'is-invalid'">
+                <span class="form-error" th:if="${#fields.hasErrors('claveInstalacion')}"
+                      th:errors="*{claveInstalacion}">Error</span>
+                <small class="form-hint">
+                    La define quien instala el sistema. Dar de alta una institución es una
+                    operación de despliegue, no una función del uso diario.
+                </small>
+            </div>
+
+            <hr class="separador">
+            <h2 class="form-seccion">Datos de la institución</h2>
+
+            <div class="form-group">
+                <label for="nombreInstitucion">Nombre <span class="required">*</span></label>
+                <input type="text" id="nombreInstitucion" th:field="*{nombreInstitucion}" required
+                       maxlength="150"
+                       th:classappend="${#fields.hasErrors('nombreInstitucion')} ? 'is-invalid'">
+                <span class="form-error" th:if="${#fields.hasErrors('nombreInstitucion')}"
+                      th:errors="*{nombreInstitucion}">Error</span>
+                <small class="form-hint">No puede repetirse con el de otra institución del sistema.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="cuit">CUIT</label>
+                <input type="text" id="cuit" th:field="*{cuit}" placeholder="30-12345678-9" maxlength="13"
+                       th:classappend="${#fields.hasErrors('cuit')} ? 'is-invalid'">
+                <span class="form-error" th:if="${#fields.hasErrors('cuit')}" th:errors="*{cuit}">Error</span>
+            </div>
+
+            <hr class="separador">
+            <h2 class="form-seccion">Primera cuenta de gestión</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nombre">Nombre <span class="required">*</span></label>
+                    <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
+                           th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">Error</span>
+                </div>
+                <div class="form-group">
+                    <label for="apellido">Apellido <span class="required">*</span></label>
+                    <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                           th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
+                    <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">Error</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="username">Usuario <span class="required">*</span></label>
+                <input type="text" id="username" th:field="*{username}" required maxlength="60"
+                       autocomplete="username"
+                       th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+                <span class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Error</span>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo <span class="required">*</span></label>
+                <input type="email" id="email" th:field="*{email}" required maxlength="120"
+                       th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</span>
+                <small class="form-hint">
+                    Esta cuenta queda verificada desde el arranque; las que crees después
+                    tendrán que confirmar su correo con un código.
+                </small>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="password">Contraseña <span class="required">*</span></label>
+                    <div class="password-input">
+                        <input type="password" id="password" th:field="*{password}" required
+                               autocomplete="new-password"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                        <button type="button" class="password-toggle" aria-label="Mostrar contraseña"></button>
+                    </div>
+                    <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</span>
+                </div>
+                <div class="form-group">
+                    <label for="confirmacion">Repetir contraseña <span class="required">*</span></label>
+                    <div class="password-input">
+                        <input type="password" id="confirmacion" th:field="*{confirmacion}" required
+                               autocomplete="new-password"
+                               th:classappend="${#fields.hasErrors('confirmacion')} ? 'is-invalid'">
+                        <button type="button" class="password-toggle" aria-label="Mostrar contraseña"></button>
+                    </div>
+                    <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
+                          th:errors="*{confirmacion}">Error</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full">Crear institución</button>
+        </form>
+
+        <p class="login-card__ayuda">
+            <a th:href="@{/login}">Volver al inicio de sesión</a>
+        </p>
+    </main>
+
+    <script th:src="@{/js/toast.js}" defer></script>
+    <script th:src="@{/js/password-ui.js}" defer></script>
+</body>
+</html>

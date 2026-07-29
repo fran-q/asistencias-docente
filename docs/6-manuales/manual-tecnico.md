@@ -111,12 +111,35 @@ Y en `[mysql]` y `[client]` si aparecen, también ponerlo en `64M`.
 
 Reiniciar MySQL en XAMPP.
 
-### 3.5 Levantar la app
+### 3.5 Definir la clave de instalación
+
+Es la clave que habilita el alta de instituciones nuevas desde
+`http://localhost:8080/alta-institucion`. Sale de una variable de entorno, no
+del código ni de un archivo versionado:
+
+```bash
+export INSTALACION_CLAVE="una-clave-larga-propia-de-esta-instalacion"
+```
+
+En Windows, desde PowerShell:
+
+```powershell
+$env:INSTALACION_CLAVE = "una-clave-larga-propia-de-esta-instalacion"
+```
+
+> Si la variable no está definida, el alta de instituciones queda
+> **deshabilitada** y el formulario lo informa. Es deliberado: preferimos que
+> no funcione antes que dejarla abierta con una clave vacía.
+
+Quien conozca esta clave puede crear una institución y su cuenta inicial, así
+que se trata con el mismo cuidado que la contraseña de la base.
+
+### 3.6 Levantar la app
 ```bash
 ./gradlew bootRun
 ```
 
-Activa el perfil `local` automáticamente. Flyway aplica V001..V006 al
+Activa el perfil `local` automáticamente. Flyway aplica V001..V007 al
 arrancar por primera vez.
 
 **Login inicial**: se crea con una migración seed (`V002__seed_test_data.sql`).
@@ -124,6 +147,20 @@ Usuario y contraseña están en `Documentacion/credenciales_proyecto.txt` (no
 versionado).
 
 Acceder en `http://localhost:8080`.
+
+### 3.7 Verificar el correo de las cuentas
+
+Las cuentas sembradas por `V002` nacen **sin verificar**, y una cuenta sin
+verificar no puede operar el sistema: al iniciar sesión queda retenida en
+`/mi-cuenta` hasta confirmar su correo con el código de 6 dígitos.
+
+Para que ese código llegue hace falta un servidor SMTP. En desarrollo alcanza
+con uno de captura local, que muestra los mensajes en una interfaz web sin
+mandarlos a internet (Mailpit o MailHog en el puerto 1025, ya configurado en
+`application.properties`).
+
+Si el SMTP no está disponible, ver *Troubleshooting → Una cuenta quedó
+bloqueada sin poder verificar*.
 
 ---
 
@@ -177,6 +214,11 @@ Propiedades clave:
 | `app.biometria.umbral-confianza` | `100.0` | Distancia máxima LBPH para considerar match. |
 | `app.biometria.tamano-rostro` | `200` | Lado en px del rostro normalizado. |
 | `app.biometria.duracion-grabacion-seg` | `30` | Duración de la grabación de registro facial. |
+| `app.instalacion.clave` | `${INSTALACION_CLAVE:}` | Habilita el alta de instituciones. Vacía = alta deshabilitada. Ver sección 3.5. |
+| `app.verificacion.minutos-validez` | `15` | Cuánto vive el código de 6 dígitos. |
+| `app.verificacion.max-intentos` | `5` | Intentos fallidos antes de invalidar el código. |
+| `app.verificacion.max-por-hora` | `5` | Tope de pedidos de código por cuenta y por hora. |
+| `spring.mail.host` / `port` | `localhost` / `1025` | SMTP de captura en desarrollo. En producción, el servidor real. |
 
 ### 5.2 `application-local.properties` (NO versionado)
 
@@ -362,6 +404,44 @@ Para que sean útiles en el destino, la clave `app.biometria.clave-cifrado`
 
 ### Reconocimiento muy permisivo o muy estricto
 - Ajustar `app.biometria.umbral-confianza`. Ver sección 7.2.
+
+### Una cuenta quedó bloqueada sin poder verificar
+
+Síntoma: al iniciar sesión, todas las pantallas rebotan a
+`/mi-cuenta?verificacion-requerida` y el código nunca llega al correo.
+
+Antes que nada conviene descartar la causa habitual, que es el SMTP:
+
+```bash
+# ¿Hay algo escuchando en el puerto de correo configurado?
+netstat -ano | findstr :1025
+```
+
+Si el servidor de correo no está disponible y hay urgencia operativa, se puede
+verificar la cuenta directamente en la base:
+
+```sql
+UPDATE usuarios SET email_verificado_en = NOW() WHERE username = 'el.usuario';
+```
+
+El desbloqueo es inmediato y **no hace falta cerrar sesión**: el interceptor
+relee el estado de la base cuando el principal figura sin verificar.
+
+Para desbloquear de una sola vez todas las cuentas sembradas, en un despliegue
+de demostración:
+
+```sql
+UPDATE usuarios SET email_verificado_en = NOW() WHERE email_verificado_en IS NULL;
+```
+
+> Esto saltea la comprobación de que la casilla existe y es de esa persona,
+> que es exactamente lo que el mecanismo garantiza. Se registra como
+> intervención manual y se usa solo con el SMTP caído. La solución correcta es
+> levantar el servidor de correo.
+
+### El alta de institución dice que está deshabilitada
+- Falta la variable `INSTALACION_CLAVE`. Ver sección 3.5. Después de definirla
+  hay que reiniciar la app: se lee al arrancar.
 
 ---
 

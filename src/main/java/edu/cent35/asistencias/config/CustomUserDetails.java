@@ -27,6 +27,11 @@ public class CustomUserDetails implements UserDetails {
     private final boolean activo;
     private final Collection<? extends GrantedAuthority> authorities;
 
+    // Solo puede pasar de false a true, y dentro de la misma sesion: es una foto del momento
+    // del login que VerificacionInterceptor refresca cuando la persona valida su codigo, para
+    // no obligarla a volver a entrar. Nunca se desverifica una cuenta.
+    private boolean emailVerificado;
+
     public CustomUserDetails(Usuario usuario) {
         this.usuarioId = usuario.getId();
         this.institucionId = usuario.getInstitucionId();
@@ -34,9 +39,20 @@ public class CustomUserDetails implements UserDetails {
         this.passwordHash = usuario.getPasswordHash();
         this.nombreCompleto = usuario.getNombre() + " " + usuario.getApellido();
         this.activo = Boolean.TRUE.equals(usuario.getActivo());
+        this.emailVerificado = usuario.getEmailVerificadoEn() != null;
         this.authorities = List.of(
             new SimpleGrantedAuthority("ROLE_" + usuario.getRol().getCodigo())
         );
+    }
+
+    // Indica si la cuenta ya confirmo su correo.
+    public boolean isEmailVerificado() {
+        return emailVerificado;
+    }
+
+    // La marca como verificada en la sesion en curso, tras confirmarlo contra la base.
+    public void marcarEmailVerificado() {
+        this.emailVerificado = true;
     }
 
     // Spring Security compara contra este hash BCrypt al autenticar.

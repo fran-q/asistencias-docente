@@ -179,6 +179,9 @@ class AutorizacionPorRolIT {
             .apellido(rol)
             .activo(true)
             .rol(r)
+            // Verificada: estos tests miran los permisos por rol, y una cuenta sin verificar
+            // queda retenida antes por VerificacionInterceptor, que es otra regla distinta.
+            .emailVerificadoEn(java.time.LocalDateTime.now())
             .build();
         u.setInstitucionId(tenantId);
         return new CustomUserDetails(u);

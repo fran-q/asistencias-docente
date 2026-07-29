@@ -31,7 +31,23 @@
    (o la URL donde esté desplegada la instalación).
 2. Cargar **usuario y contraseña**. El sistema no permite recordar contraseñas
    ni copiar/pegar en el campo (seguridad RNF-06).
-3. Si tu cuenta queda inactiva, el SUPERADMIN de la institución puede reactivarla.
+3. La primera vez, el sistema te va a llevar a **Mi cuenta** para que confirmes
+   tu correo. Hasta que lo hagas no vas a poder usar el resto de las pantallas.
+   El paso a paso está en la sección 14.
+4. Si tu cuenta queda inactiva, la cuenta institucional puede reactivarla.
+
+### Registrar una institución nueva
+
+En el pie de la pantalla de login hay un enlace **"Registrar una institución
+nueva"**. Es un paso de instalación, no algo de uso diario: pide una **clave de
+instalación** que solo conoce quien puso el sistema en funcionamiento.
+
+Al completarlo se crean de una sola vez la institución y su primera cuenta, que
+es la que después da de alta al resto del personal. Esa primera cuenta **no
+necesita confirmar el correo**: ya demostró tener la clave de instalación.
+
+El nombre y el CUIT de la institución no se pueden repetir con los de otra ya
+registrada.
 
 > **Consejo**: la primera vez que ingreses, asegurate de que la cámara funcione
 > en el navegador. El sistema te va a pedir permiso para usarla en la pantalla
@@ -303,19 +319,26 @@ Menú → **Reportes**.
 
 ### Verificar tu correo
 
+**Es obligatorio.** Mientras tu cuenta no tenga el correo confirmado, el sistema te
+devuelve a esta pantalla cada vez que intentes entrar a cualquier otra. Lo único que
+podés hacer es verificar o salir.
+
 Menú → **Mi cuenta**.
 
 1. Tocá **"Enviarme el código"**. El sistema manda un código de **seis dígitos** a
    la dirección de tu cuenta.
 2. Escribilo en la pantalla y confirmá.
 
+Listo: el sistema se desbloquea **al instante**, sin necesidad de volver a iniciar
+sesión.
+
 El código **vence a los 15 minutos** y sirve una sola vez. Si lo pedís de nuevo, el
 anterior deja de funcionar. Después de cinco intentos fallidos el código se anula y
 hay que pedir uno nuevo.
 
-> **Por qué conviene hacerlo.** Un correo verificado es lo que te permite recuperar
-> la contraseña sin depender de nadie. Si la dirección tiene un error de tipeo,
-> nadie se entera hasta el día que la necesitás.
+> **Por qué es obligatorio.** Un correo verificado es lo que te permite recuperar la
+> contraseña sin depender de nadie. Si la dirección tiene un error de tipeo, nadie se
+> entera hasta el día que la necesitás — y ese día ya es tarde.
 
 ### Recuperar la contraseña olvidada
 
@@ -334,10 +357,14 @@ No hace falta estar dentro del sistema.
 
 - Fijate en la carpeta de correo no deseado.
 - Verificá que la dirección de tu cuenta sea la correcta (pantalla **Mi cuenta**).
-- Si el servidor de correo de la institución está caído, ningún código va a llegar.
-  En ese caso, **pedile al superadmin que te resetee la contraseña a mano** desde la
-  pantalla de Usuarios: ese camino sigue estando disponible.
 - Solo se permiten **cinco pedidos por hora** por cuenta. Si los agotaste, esperá.
+- Si el servidor de correo de la institución está caído, ningún código va a llegar.
+  Según lo que necesites:
+  - **Olvidaste la contraseña**: pedile a la cuenta institucional que te la resetee
+    a mano desde la pantalla de Usuarios. Ese camino sigue disponible.
+  - **Tu cuenta quedó bloqueada sin verificar**: el reseteo de contraseña *no*
+    desbloquea. Hay que avisarle a quien administra el servidor, que tiene un
+    procedimiento de desbloqueo manual (Manual Técnico, sección 12).
 
 ---
 

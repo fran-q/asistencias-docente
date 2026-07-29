@@ -53,12 +53,16 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-04 | Aislamiento multi-tenant | Un administrador de la institución A no debe poder acceder, consultar ni modificar datos de la institución B bajo ninguna circunstancia. |
 | RF-39 | Verificación del correo de la cuenta | El sistema debe permitir a cada cuenta confirmar que controla la dirección de correo declarada, mediante un código de un solo uso enviado a esa dirección. Una dirección sin verificar no ofrece garantía de ser alcanzable. |
 | RF-40 | Recuperación autónoma de contraseña | Una cuenta que olvidó su contraseña debe poder fijar una nueva sin intervención de otro usuario, acreditando el control de su correo. El sistema no debe revelar si una cuenta existe al responder a estas solicitudes. |
+| RF-42 | Verificación obligatoria para operar | Una cuenta que no verificó su correo no debe poder acceder a ninguna funcionalidad del sistema, salvo la pantalla donde se verifica y el cierre de sesión. La verificación debe surtir efecto de inmediato, sin exigir un nuevo inicio de sesión: un bloqueo que persista después de cumplir la condición deja a la persona sin acceso a su propia cuenta. |
+| RF-43 | Identidad reutilizable entre instituciones | Una misma persona debe poder tener cuenta en más de una institución con la misma dirección de correo, y esa dirección debe poder coincidir con la de un docente registrado. La unicidad del usuario y del correo rige dentro de cada institución, no en todo el sistema. |
 
 ### 3.2. Módulo de Gestión de Instituciones
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
-| RF-05 | Alta de institución | El sistema debe permitir registrar nuevas instituciones educativas con sus datos básicos (nombre, dirección, contacto). |
+| RF-05 | Alta de institución | El sistema debe permitir registrar nuevas instituciones educativas con sus datos básicos (nombre, dirección, contacto), creando en el mismo acto la cuenta con la cual esa institución accede. Una institución sin cuenta de acceso es inutilizable y bloquea el nombre para futuros intentos. |
+| RF-44 | Autorización del alta de institución | El alta de una institución debe exigir una credencial de instalación conocida por quien despliega el sistema. No puede exigir un rol, porque se ejecuta antes de que exista ningún usuario de esa institución, y no puede quedar abierta, porque permitiría crear cuentas con acceso al sistema sin autorización alguna. |
+| RF-45 | Unicidad de la institución | El nombre y el CUIT de una institución deben ser únicos en todo el sistema. Dos instituciones homónimas serían indistinguibles para quien administra el despliegue, y un CUIT repetido indica un dato mal cargado. |
 | RF-06 | CRUD de administradores | La institución (superadministrador) debe poder crear, consultar, modificar y dar de baja (lógica) a los administradores de su institución. |
 
 ### 3.3. Módulo de Gestión de Docentes
@@ -207,9 +211,9 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 37 |
-| Requerimientos no funcionales (RNF) | 27 |
-| **Total** | **64** |
+| Requerimientos funcionales (RF) | 45 |
+| Requerimientos no funcionales (RNF) | 28 |
+| **Total** | **73** |
 
 > El cumplimiento de cada requerimiento en la primera entrega se documenta en
 > **02 — Definición del Alcance** (matriz de trazabilidad).
