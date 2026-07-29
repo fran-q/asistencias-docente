@@ -23,14 +23,13 @@
     const btnPase    = document.getElementById('pa-btn-pase');
     const mensajeEl  = document.getElementById('pa-estado-mensaje');
     const claseEl    = document.getElementById('pa-clase');
-    const distanciaEl = document.getElementById('pa-distancia');
 
     if (!video || !btnCamara) return;
 
     /** Tiempo entre frames enviados al servidor. */
     const INTERVALO_MS = 1000;
     /** Pausa tras marcar (nueva o ya estaba) — evita ruido continuo. */
-    const PAUSA_TRAS_MARCAR_MS = 5000;
+    const PAUSA_TRAS_MARCAR_MS = 3000;
 
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -40,6 +39,11 @@
     let enVuelo = false;
     let pausaTimeoutId = null;
     let cuentaRegresivaId = null;
+
+    // Si el pase esta activo o no. Es un estado propio y no se deduce de loopId ni del texto
+    // del boton: durante la pausa posterior a una marca loopId queda en null aunque el pase
+    // sigue activo, y con esa confusion el boton "Detener" terminaba arrancando otro loop.
+    let paseActivo = false;
 
     // ---- Cámara: toggle ---------------------------------------------------
 
@@ -68,7 +72,6 @@
             btnPase.disabled      = false;
             mostrarMensaje('Cámara encendida. Apretá "Iniciar pase" para comenzar.', 'info');
             claseEl.textContent = '';
-            distanciaEl.textContent = '';
         } catch (err) {
             mostrarMensaje('No se pudo acceder a la cámara: ' + traducirError(err), 'error');
         }
@@ -87,17 +90,15 @@
         btnPase.disabled      = true;
         mostrarMensaje('Cámara apagada', 'info');
         claseEl.textContent = '';
-        distanciaEl.textContent = '';
     }
 
     // ---- Pase: toggle -----------------------------------------------------
 
     function togglePase() {
-        if (loopId) {
+        if (paseActivo) {
             detenerLoop();
             mostrarMensaje('Pase detenido.', 'info');
             claseEl.textContent = '';
-            distanciaEl.textContent = '';
             limpiarOverlay();
         } else {
             arrancarLoop();
@@ -105,14 +106,18 @@
     }
 
     function arrancarLoop() {
-        if (!stream || loopId) return;
+        if (!stream || paseActivo) return;
+        paseActivo = true;
         btnPase.textContent = 'Detener pase';
         mostrarMensaje('Buscando rostros…', 'info');
         marcarFrame();
         loopId = setInterval(marcarFrame, INTERVALO_MS);
     }
 
+    // Deja el pase completamente frenado: el envio de frames y tambien la pausa pendiente, que
+    // de no cancelarse volveria a arrancar el loop unos segundos despues.
     function detenerLoop() {
+        paseActivo = false;
         if (loopId) {
             clearInterval(loopId);
             loopId = null;
@@ -122,15 +127,17 @@
     }
 
     /**
-     * Pausa el envío de frames por unos segundos tras una marca exitosa.
-     * Durante la pausa, el botón "Detener pase" sigue activo (el loop NO
-     * se detiene del todo), pero no se mandan más frames al servidor.
+     * Pausa el envío de frames por unos segundos tras una marca exitosa, para no bombardear
+     * al servidor con el mismo docente ya marcado. El pase sigue ACTIVO durante la pausa:
+     * lo que se frena es el envío, y al terminar la cuenta regresiva se reanuda solo.
      */
     function pausarLoopTrasMarcar(claseLabel) {
         cancelarPausa();
-        if (!loopId) return;             // ya estaba detenido manualmente
-        clearInterval(loopId);           // freno el envío
-        loopId = null;
+        if (!paseActivo) return;         // ya estaba detenido manualmente
+        if (loopId) {
+            clearInterval(loopId);       // freno el envío, pero el pase sigue activo
+            loopId = null;
+        }
 
         let restante = Math.round(PAUSA_TRAS_MARCAR_MS / 1000);
         actualizarCuentaRegresiva(restante, claseLabel);
@@ -143,8 +150,9 @@
 
         pausaTimeoutId = setTimeout(function () {
             cancelarPausa();
-            // Reanudar el loop si la cámara sigue prendida y el botón sigue activo
-            if (stream && btnPase.textContent === 'Detener pase') {
+            // Se reanuda solo si el pase sigue activo. Antes esto miraba el TEXTO del boton,
+            // que es estado de presentacion y no de la logica.
+            if (stream && paseActivo) {
                 marcarFrame();
                 loopId = setInterval(marcarFrame, INTERVALO_MS);
             }
@@ -181,7 +189,11 @@
                 body: JSON.stringify({ imagen: dataUrl })
             });
             if (!resp.ok) return;
-            renderizar(await resp.json());
+            const datos = await resp.json();
+            // Si mientras viajaba el pedido se detuvo el pase, esta respuesta ya no interesa:
+            // pintarla dejaria un recuadro y un mensaje en pantalla despues de haber frenado.
+            if (!paseActivo) return;
+            renderizar(datos);
         } catch (err) {
             // Error de red transitorio: no molestamos.
         } finally {
@@ -194,7 +206,6 @@
             limpiarOverlay();
             mostrarMensaje('No se detecta ningún rostro.', 'info');
             claseEl.textContent = '';
-            distanciaEl.textContent = '';
             return;
         }
 
@@ -203,9 +214,6 @@
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e57373', null);
             mostrarMensaje(data.mensaje, 'error');
             claseEl.textContent = '';
-            distanciaEl.textContent = data.distancia
-                ? 'Distancia más cercana: ' + data.distancia.toFixed(1)
-                : '';
             return;
         }
 
@@ -215,9 +223,6 @@
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, color, data.docenteNombre);
             mostrarMensaje(data.mensaje, data.yaEstaba ? 'info' : 'success');
             claseEl.textContent = data.claseLabel || '';
-            distanciaEl.textContent = data.distancia
-                ? 'Distancia: ' + data.distancia.toFixed(1) + ' (menor = más parecido)'
-                : '';
             // Pausa breve para no bombardear el server con frames del mismo
             // docente que ya está marcado. Backend igual es idempotente.
             pausarLoopTrasMarcar(data.claseLabel);
@@ -228,9 +233,6 @@
         dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#ffc107', data.docenteNombre);
         mostrarMensaje(data.mensaje, 'warn');
         claseEl.textContent = '';
-        distanciaEl.textContent = data.distancia
-            ? 'Distancia: ' + data.distancia.toFixed(1)
-            : '';
     }
 
     // ---- Overlay ----------------------------------------------------------

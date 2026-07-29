@@ -1133,3 +1133,94 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     font-family: var(--font-mono);
     color: var(--text-muted);
 }
+
+/* ============================================================================
+ *  PASE DE ASISTENCIA
+ *  La camara ocupa el ancho disponible en vez de quedar clavada a 480 px, que
+ *  es lo que la hacia verse chica en pantallas grandes. El alto se limita con
+ *  la altura de la ventana para que la caja entre completa sin scrollear: en
+ *  esta pantalla hay que ver el video Y el mensaje de resultado al mismo tiempo.
+ * ========================================================================== */
+
+.pase {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.pase__header {
+    text-align: center;
+}
+
+.pase__card {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+/* Caja del video: el canvas del recuadro se superpone encima, por eso relative. */
+.pase__camara {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    line-height: 0;              /* saca el espacio fantasma debajo del video */
+}
+
+.pase__video {
+    width: 100%;
+    /* Medido a 1280x800: con 55vh la tarjeta quedaba cortada 11 px abajo. Con 50vh entra
+       completa, con el resultado y los botones, y el video sigue siendo grande. */
+    max-height: 50vh;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;           /* llena la caja sin deformar la imagen */
+    border-radius: var(--radius);
+    background: #000;
+    display: block;
+}
+
+/* El overlay se estira sobre el video; el JS le fija el tamanio interno en
+   pixeles del fotograma, y el CSS lo escala visualmente para que coincidan. */
+.pase__overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.pase__estado {
+    margin-top: var(--space);
+    min-height: 3.5rem;
+    line-height: normal;
+}
+
+.pase__mensaje {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.pase__clase {
+    margin: 0.25rem 0 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.pase__acciones {
+    margin-top: var(--space);
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+/* Pantallas bajas o apaisadas: medido en 1600x600, la pagina se desbordaba 118 px y los
+   botones quedaban abajo del pliegue. Se recorta el video y se saca el texto explicativo,
+   que en esa altura estorba mas de lo que ayuda: lo que hay que ver es la camara, el
+   resultado y los botones, los tres a la vez. */
+@media (max-height: 700px) {
+    .pase__video                          { max-height: 40vh; }
+    .pase__header .page-header__subtitle  { display: none; }
+    .pase__header                         { margin-bottom: 0.5rem; }
+    .pase__estado                         { min-height: 2.75rem; margin-top: 0.6rem; }
+    .pase__acciones                       { margin-top: 0.6rem; }
+    .pase .card                           { padding: 0.9rem; }
+}
