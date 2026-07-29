@@ -820,6 +820,35 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     line-height: 1.45;
 }
 
+/* Campo opcional dentro del modal (por ejemplo, la fecha de baja de un docente).
+   Va entre el detalle y los botones, para que se lea la pregunta antes de responderla. */
+.modal__campo {
+    margin: 0 0 var(--space-lg);
+}
+.modal__campo[hidden] { display: none; }
+
+.modal__campo-label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.modal__campo-input {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+.modal__campo-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
 .modal__actions {
     display: flex;
     gap: var(--space-sm);

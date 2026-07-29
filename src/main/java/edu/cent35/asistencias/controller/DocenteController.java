@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
@@ -52,6 +54,9 @@ public class DocenteController {
                 estados.getOrDefault(d.getId(), EstadoConsentimiento.NUNCA_OTORGADO)))
             .toList();
         model.addAttribute("docentes", items);
+        // Tope del selector de fecha de baja: se resuelve en el servidor porque la fecha de
+        // la maquina del cliente puede estar corrida.
+        model.addAttribute("hoy", LocalDate.now());
         return "docente/list";
     }
 
@@ -59,9 +64,7 @@ public class DocenteController {
     @GetMapping("/nuevo")
     public String formNuevo(Model model) {
         if (!model.containsAttribute("form")) {
-            model.addAttribute("form", DocenteFormDto.builder()
-                .fechaAlta(LocalDate.now())
-                .build());
+            model.addAttribute("form", DocenteFormDto.builder().build());
         }
         model.addAttribute("modo", "crear");
         return "docente/form";
@@ -80,7 +83,7 @@ public class DocenteController {
         }
         try {
             Docente d = service.crear(form.getDni(), form.getLegajo(), form.getNombre(),
-                form.getApellido(), form.getEmail(), form.getTelefono(), form.getFechaAlta());
+                form.getApellido(), form.getEmail(), form.getTelefono());
             redirect.addFlashAttribute("flashMensaje",
                 "Docente '" + d.getNombreCompleto() + "' creado correctamente.");
             return "redirect:/docentes";
@@ -116,7 +119,7 @@ public class DocenteController {
         }
         try {
             service.actualizar(id, form.getDni(), form.getLegajo(), form.getNombre(),
-                form.getApellido(), form.getEmail(), form.getTelefono(), form.getFechaAlta());
+                form.getApellido(), form.getEmail(), form.getTelefono());
             redirect.addFlashAttribute("flashMensaje", "Docente actualizado correctamente.");
             return "redirect:/docentes";
         } catch (IllegalArgumentException ex) {
@@ -142,11 +145,15 @@ public class DocenteController {
         model.addAttribute("tieneModelosBiometricos", modeloFacialService.tieneModelos(id));
     }
 
-    // Da de baja el docente y vuelve al listado con el resultado.
+    // Da de baja el docente en la fecha indicada y vuelve al listado con el resultado.
+    // Si el campo no llega, se asume hoy: el formulario lo manda, pero un POST directo no.
     @PostMapping("/{id}/baja")
-    public String darDeBaja(@PathVariable Long id, RedirectAttributes redirect) {
+    public String darDeBaja(@PathVariable Long id,
+                            @RequestParam(required = false)
+                            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBaja,
+                            RedirectAttributes redirect) {
         try {
-            service.darDeBaja(id);
+            service.darDeBaja(id, fechaBaja != null ? fechaBaja : LocalDate.now());
             redirect.addFlashAttribute("flashMensaje", "Docente dado de baja.");
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("flashError", ex.getMessage());

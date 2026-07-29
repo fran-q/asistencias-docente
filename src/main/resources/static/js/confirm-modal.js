@@ -21,6 +21,21 @@
  *   data-confirm-style   (opcional)     "danger" para tono rojo, default neutro
  *
  *  ----------------------------------------------------------------------------
+ *  Campo de fecha opcional: cuando la acción necesita que la persona elija una
+ *  fecha (la baja de un docente, por ejemplo), el modal la pide ahí mismo en
+ *  vez de mandarla a otra pantalla.
+ *
+ *  data-confirm-date        nombre del parámetro que se manda al servidor
+ *  data-confirm-date-label  etiqueta visible del campo
+ *  data-confirm-date-value  valor inicial (formato aaaa-mm-dd)
+ *  data-confirm-date-min    fecha mínima aceptada
+ *  data-confirm-date-max    fecha máxima aceptada
+ *
+ *  El valor viaja como <input hidden> agregado al form antes de enviarlo, así
+ *  que el servidor lo recibe como un parámetro más y no necesita saber que
+ *  vino de un modal.
+ *
+ *  ----------------------------------------------------------------------------
  *  Uso programático:
  *    const ok = await Confirm.ask({
  *        title: '¿Eliminar usuario?',
@@ -66,6 +81,9 @@
     var iconEl    = null;
     var titleEl   = null;
     var detailEl  = null;
+    var campoEl   = null;
+    var campoLbl  = null;
+    var campoInp  = null;
     var cancelBtn = null;
     var okBtn     = null;
     var lastFocused = null;
@@ -82,6 +100,10 @@
                 '<div class="modal__icon"></div>' +
                 '<h2 class="modal__title"></h2>' +
                 '<p class="modal__detail"></p>' +
+                '<div class="modal__campo" hidden>' +
+                    '<label class="modal__campo-label" for="modal-campo-fecha"></label>' +
+                    '<input type="date" id="modal-campo-fecha" class="modal__campo-input">' +
+                '</div>' +
                 '<div class="modal__actions">' +
                     '<button type="button" class="btn btn--ghost modal__cancel">Cancelar</button>' +
                     '<button type="button" class="btn btn--primary modal__ok">Confirmar</button>' +
@@ -93,23 +115,49 @@
         iconEl    = overlay.querySelector('.modal__icon');
         titleEl   = overlay.querySelector('.modal__title');
         detailEl  = overlay.querySelector('.modal__detail');
+        campoEl   = overlay.querySelector('.modal__campo');
+        campoLbl  = overlay.querySelector('.modal__campo-label');
+        campoInp  = overlay.querySelector('.modal__campo-input');
         cancelBtn = overlay.querySelector('.modal__cancel');
         okBtn     = overlay.querySelector('.modal__ok');
 
         cancelBtn.addEventListener('click', function () { close(false); });
-        okBtn.addEventListener('click',     function () { close(true);  });
+        okBtn.addEventListener('click',     function () { confirmar();  });
         overlay.addEventListener('click',   function (e) {
             if (e.target === overlay) close(false);
         });
-        // Trap del foco entre los dos botones
+        // Trap del foco entre los elementos visibles del modal
         overlay.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') { e.preventDefault(); close(false); return; }
             if (e.key === 'Tab') {
                 e.preventDefault();
-                if (document.activeElement === okBtn) cancelBtn.focus();
-                else okBtn.focus();
+                var focusables = enfocables();
+                var i = focusables.indexOf(document.activeElement);
+                var paso = e.shiftKey ? -1 : 1;
+                var siguiente = (i + paso + focusables.length) % focusables.length;
+                focusables[siguiente].focus();
             }
         });
+    }
+
+    // Los elementos que reciben foco, en el orden en que aparecen. El campo entra solo
+    // cuando esta visible, para que Tab no caiga en un control escondido.
+    function enfocables() {
+        var lista = [];
+        if (!campoEl.hidden) lista.push(campoInp);
+        lista.push(cancelBtn, okBtn);
+        return lista;
+    }
+
+    // Un campo vacio o fuera de rango no puede confirmar: si dejaramos pasar, el error
+    // recien aparecerian despues de recargar la pantalla.
+    function confirmar() {
+        if (!campoEl.hidden && !campoInp.checkValidity()) {
+            campoInp.reportValidity();
+            campoInp.focus();
+            return;
+        }
+        close(true);
     }
 
     function ask(opts) {
@@ -132,11 +180,21 @@
         }
         okBtn.textContent = opts.action || 'Confirmar';
 
+        var pideFecha = !!opts.dateName;
+        campoEl.hidden = !pideFecha;
+        if (pideFecha) {
+            campoLbl.textContent = opts.dateLabel || 'Fecha';
+            campoInp.value = opts.dateValue || '';
+            campoInp.min   = opts.dateMin   || '';
+            campoInp.max   = opts.dateMax   || '';
+            campoInp.required = true;
+        }
+
         lastFocused = document.activeElement;
         overlay.setAttribute('aria-hidden', 'false');
         overlay.classList.add('modal-overlay--in');
-        // Focus inicial en OK (Enter por default confirma; Esc cancela)
-        setTimeout(function () { okBtn.focus(); }, 50);
+        // Foco inicial: en el campo si hay que completarlo, si no en OK (Enter confirma).
+        setTimeout(function () { (pideFecha ? campoInp : okBtn).focus(); }, 50);
 
         return new Promise(function (resolve) { resolvePromise = resolve; });
     }
@@ -163,14 +221,38 @@
         if (!msg) return;
 
         ev.preventDefault();
+        var nombreCampo = form.dataset.confirmDate;
+
         ask({
             title:  msg,
             detail: form.dataset.confirmDetail,
             action: form.dataset.confirmAction,
-            style:  form.dataset.confirmStyle
+            style:  form.dataset.confirmStyle,
+            dateName:  nombreCampo,
+            dateLabel: form.dataset.confirmDateLabel,
+            dateValue: form.dataset.confirmDateValue,
+            dateMin:   form.dataset.confirmDateMin,
+            dateMax:   form.dataset.confirmDateMax
         }).then(function (ok) {
-            if (ok) form.submit();   // submit() programatico NO dispara el event 'submit' otra vez
+            if (!ok) return;
+            // El valor se lee recien aca porque solo importa si confirmo. Es seguro
+            // leerlo con el modal ya cerrado: no se limpia hasta el proximo ask(), y
+            // no puede haber dos abiertos a la vez.
+            if (nombreCampo) agregarCampoOculto(form, nombreCampo, campoInp.value);
+            form.submit();   // submit() programatico NO dispara el event 'submit' otra vez
         });
+    }
+
+    // Mete el valor elegido en el form como un input mas, reemplazando el de un intento
+    // anterior para no mandar el parametro dos veces.
+    function agregarCampoOculto(form, nombre, valor) {
+        var previo = form.querySelector('input[type="hidden"][name="' + nombre + '"]');
+        if (previo) previo.remove();
+        var input = document.createElement('input');
+        input.type  = 'hidden';
+        input.name  = nombre;
+        input.value = valor;
+        form.appendChild(input);
     }
 
     document.addEventListener('DOMContentLoaded', function () {

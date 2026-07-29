@@ -22,6 +22,9 @@ public class DocenteListItemDto {
     String email;
     String telefono;
     LocalDate fechaAlta;
+    // NULL cuando el docente sigue activo, o cuando fue dado de baja antes de que el
+    // sistema registrara la fecha.
+    LocalDate fechaBaja;
     boolean activo;
     // Estado del consentimiento biometrico (Sprint 3 Fase D).
     EstadoConsentimiento estadoConsentimiento;
@@ -36,6 +39,7 @@ public class DocenteListItemDto {
             .email(d.getEmail())
             .telefono(d.getTelefono())
             .fechaAlta(d.getFechaAlta())
+            .fechaBaja(d.getFechaBaja())
             .activo(Boolean.TRUE.equals(d.getActivo()))
             .estadoConsentimiento(estadoConsentimiento)
             .build();

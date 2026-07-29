@@ -74,13 +74,8 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="max-width: 280px;">
-                    <label for="fechaAlta">Fecha de alta <span class="required">*</span></label>
-                    <input type="date" id="fechaAlta" th:field="*{fechaAlta}" required
-                           th:classappend="${#fields.hasErrors('fechaAlta')} ? 'is-invalid'">
-                    <small class="form-hint">No puede ser futura.</small>
-                    <span class="form-error" th:if="${#fields.hasErrors('fechaAlta')}" th:errors="*{fechaAlta}">err</span>
-                </div>
+                <!-- La fecha de alta no se pide: la registra el sistema al crear el docente.
+                     La de baja se elige al darlo de baja, desde el listado. -->
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
@@ -98,6 +93,18 @@
                     <span th:if="${docente.activo}"   class="badge badge--success">Activo</span>
                     <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>
                 </dd>
+                <dt>Fecha de alta</dt>
+                                 <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">-</dd>
+                <th:block th:if="${!docente.activo}">
+                    <dt>Fecha de baja</dt>
+                    <dd>
+                        <span th:if="${docente.fechaBaja}"
+                              th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</span>
+                        <span th:unless="${docente.fechaBaja}" class="text-muted">
+                            Sin registrar (baja anterior a que el sistema la guardara)
+                        </span>
+                    </dd>
+                </th:block>
                 <dt>Última actualización</dt>
                                  <dd th:text="${#temporals.format(docente.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
             </dl>

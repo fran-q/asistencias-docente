@@ -29,6 +29,7 @@
                             <th>Email</th>
                             <th>Teléfono</th>
                             <th>Alta</th>
+                            <th>Baja</th>
                             <th>Estado</th>
                             <th>Consentimiento</th>
                             <th class="table__actions">Acciones</th>
@@ -52,6 +53,11 @@
                             </td>
                             <td th:text="${#temporals.format(d.fechaAlta, 'dd/MM/yyyy')}">01/01/2026</td>
                             <td>
+                                <span th:if="${d.fechaBaja}"
+                                      th:text="${#temporals.format(d.fechaBaja, 'dd/MM/yyyy')}">01/01/2026</span>
+                                <span th:unless="${d.fechaBaja}" class="text-muted">—</span>
+                            </td>
+                            <td>
                                 <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
                                 <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
                             </td>
@@ -67,13 +73,21 @@
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
+                                <!-- La fecha se pide en el modal porque la baja suele cargarse
+                                     dias despues del hecho: forzar "hoy" falsearia el registro.
+                                     El rango la acota entre el alta del docente y hoy. -->
                                 <form th:if="${d.activo}"
                                       th:action="@{/docentes/{id}/baja(id=${d.id})}" method="post"
                                       class="inline-form"
                                       th:data-confirm="|¿Dar de baja a ${d.nombreCompleto}?|"
                                       data-confirm-detail="Si es titular de materias o está asignado a comisiones activas, no se va a poder. Reasignalas primero."
                                       data-confirm-action="Dar de baja"
-                                      data-confirm-style="danger">
+                                      data-confirm-style="danger"
+                                      data-confirm-date="fechaBaja"
+                                      data-confirm-date-label="Último día en funciones"
+                                      th:data-confirm-date-value="${hoy}"
+                                      th:data-confirm-date-min="${d.fechaAlta}"
+                                      th:data-confirm-date-max="${hoy}">
                                     <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
                                 </form>
 
@@ -85,7 +99,7 @@
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(docentes)}">
-                            <td colspan="9" class="table__empty">
+                            <td colspan="10" class="table__empty">
                                 Todavía no cargaste ningún docente.
                                 <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
                             </td>

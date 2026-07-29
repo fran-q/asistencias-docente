@@ -138,10 +138,32 @@ carrera, día y franja horaria. Útil para detectar superposiciones visualmente.
 
 Menú → **Docentes**.
 
-- **+ Nuevo docente**: DNI, legajo (opcional), nombre, apellido, email, teléfono, fecha de alta.
-- **Editar**: actualizar datos personales o reactivar.
+- **+ Nuevo docente**: DNI, legajo (opcional), nombre, apellido, email y teléfono.
+- **Editar**: actualizar datos personales.
 - **Dar de baja**: marca al docente como inactivo. Sus modelos faciales y
   consentimientos quedan en el historial.
+- **Reactivar**: vuelve a ponerlo en funciones y borra la fecha de baja.
+
+### Las dos fechas
+
+**La fecha de alta la pone el sistema solo**, el día que cargás al docente. No
+aparece en el formulario y tampoco se edita: es el registro de cuándo ingresó al
+sistema, no un campo más del legajo.
+
+**La fecha de baja sí la elegís vos**, en el cuadro que aparece al dar de baja.
+El campo se llama *Último día en funciones* y viene con la fecha de hoy puesta,
+pero se puede correr hacia atrás.
+
+> **Por qué la diferencia.** El alta ocurre mientras estás ahí cargando al
+> docente: pedirte que además tipees la fecha solo agrega la posibilidad de
+> equivocarte. La baja, en cambio, casi siempre se carga después del hecho —el
+> docente dejó de prestar servicios el viernes y vos lo cargás el lunes—, así que
+> forzar "hoy" falsearía el registro.
+
+El sistema no acepta una fecha de baja futura ni anterior al alta del docente.
+
+Si un docente fue dado de baja antes de que el sistema guardara esta fecha, su
+ficha lo dice: *"Sin registrar"*. Es preferible a mostrar una fecha inventada.
 
 En la ficha del docente (modo editar) hay dos tarjetas adicionales:
 
@@ -388,6 +410,14 @@ No hace falta estar dentro del sistema.
   (manual técnico).
 - Si pasaron días sin clase y aparecen muchos AUSENTE → es esperable; podés
   cargarlos manualmente con motivo *OTRO + detalle*.
+- Si al guardar aparece que un dato "ya existe" → hay otro registro con ese
+  mismo valor. El mensaje dice cuál es y en qué ámbito no se puede repetir:
+  algunos datos son únicos dentro de tu institución (DNI y legajo de un docente,
+  usuario y correo de una cuenta, códigos de carrera y materia) y otros lo son
+  en todo el sistema (nombre y CUIT de la institución).
+- Si no se puede dar de baja a un docente → todavía es titular de alguna materia
+  o está asignado a comisiones activas. El mensaje dice cuántas. Reasignalas
+  primero y volvé a intentar.
 
 ### Backups
 - La BD MariaDB debe respaldarse periódicamente. Ver **manual técnico**.

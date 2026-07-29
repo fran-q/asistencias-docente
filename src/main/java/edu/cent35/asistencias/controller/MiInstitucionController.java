@@ -62,9 +62,10 @@ public class MiInstitucionController {
         try {
             service.actualizar(form);
         } catch (DataIntegrityViolationException ex) {
+            // Se atrapa aca en vez de dejarlo subir al manejador global para no perder lo que
+            // la persona ya habia tipeado: el formulario se vuelve a dibujar con sus valores.
             log.warn("Conflicto al actualizar mi institucion: {}", ex.getMostSpecificCause().getMessage());
-            binding.reject("error.global",
-                "El nombre o CUIT ya esta en uso por otra institucion. Cambialo y volve a guardar.");
+            binding.reject("error.global", ManejadorDeColisiones.traducir(ex));
             model.addAttribute(ENTIDAD_ATTR, service.getMiInstitucion());
             model.addAttribute(FORM_ATTR, form);
             return VIEW;

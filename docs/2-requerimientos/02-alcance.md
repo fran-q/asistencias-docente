@@ -186,8 +186,9 @@ posteriores:
 | RF-43 | Identidad reutilizable entre instituciones | ✅ | Unicidad de usuario y correo acotada a la institución |
 | RF-44 | Autorización del alta de institución | ✅ | Clave de instalación por variable de entorno, comparada en tiempo constante |
 | RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
+| RF-46 | Registro del período en funciones | ✅ | Alta automática al cargar; baja elegible, acotada entre el alta y hoy |
 
-**Resumen RF:** 31 implementados · 7 parciales · 7 backlog (total 45).
+**Resumen RF:** 32 implementados · 7 parciales · 7 backlog (total 46).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -221,20 +222,21 @@ posteriores:
 | RNF-26 | Código documentado | ✅ | ADRs, Javadoc, manuales |
 | RNF-27 | Despliegue local | ✅ | XAMPP/MariaDB local |
 | RNF-28 | Conservación del registro administrativo | ✅ | La supresión biométrica no toca las asistencias |
+| RNF-29 | Errores de integridad legibles | ✅ | Validación en cada servicio + manejador global que traduce cada restricción |
 
-**Resumen RNF:** 26 implementados · 1 parcial · 1 backlog (total 28).
+**Resumen RNF:** 27 implementados · 1 parcial · 1 backlog (total 29).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 31 | 7 | 7 | 45 |
-| No funcionales | 26 | 1 | 1 | 28 |
-| **Total** | **57** | **8** | **8** | **73** |
+| Funcionales | 32 | 7 | 7 | 46 |
+| No funcionales | 27 | 1 | 1 | 29 |
+| **Total** | **59** | **8** | **8** | **75** |
 
-**Cobertura del hito 1:** 57 de 73 requerimientos completamente
-implementados (≈78%), 8 parcialmente cubiertos (≈11%) y 8 en backlog
-planificado (≈11%).
+**Cobertura del hito 1:** 59 de 75 requerimientos completamente
+implementados (≈79%), 8 parcialmente cubiertos (≈11%) y 8 en backlog
+planificado (≈10%).
 
 ---
 

@@ -29,7 +29,7 @@
 - **Gradle** (Groovy DSL) — build, dependencias, ejecución.
 - **MariaDB 10.4+** (en desarrollo: XAMPP en Windows).
 - **Spring Data JPA** + **Hibernate 6** — ORM y validación de esquema.
-- **Flyway** — migraciones versionadas (V001 a V006).
+- **Flyway** — migraciones versionadas (V001 a V008).
 - **Spring Security** — autenticación con sesión HTTP (cookie clásica, ver ADR-0003).
 - **Thymeleaf** — server-side rendering.
 - **JavaCV 1.5.11 + OpenCV 4.10** — reconocimiento facial.
@@ -139,7 +139,7 @@ que se trata con el mismo cuidado que la contraseña de la base.
 ./gradlew bootRun
 ```
 
-Activa el perfil `local` automáticamente. Flyway aplica V001..V007 al
+Activa el perfil `local` automáticamente. Flyway aplica V001..V008 al
 arrancar por primera vez.
 
 **Login inicial**: se crea con una migración seed (`V002__seed_test_data.sql`).
@@ -168,11 +168,16 @@ bloqueada sin poder verificar*.
 
 ```
 asistencias/
-├── docs/                              ← documentación versionada
-│   ├── adr/                           (Architectural Decision Records)
-│   ├── manuales/                      (este manual + manual administrador)
+├── docs/                              ← toda la documentación, numerada
+│   ├── 1-catedra/                     (consignas y material de la materia)
+│   ├── 2-requerimientos/              (requerimientos, alcance, casos de uso)
+│   ├── 3-legal/                       (Ley 25.326, consentimiento, AAIP)
+│   ├── 4-arquitectura/adr/            (Architectural Decision Records)
 │   ├── 5-diagramas/                   (diagramas en Mermaid)
-│   └── legal/                         (textos legales)
+│   ├── 6-manuales/                    (este manual + manual del administrador)
+│   ├── 7-informes/                    (calibración del umbral, correcciones)
+│   ├── 8-defensa/                     (material para la defensa)
+│   └── 9-imprimibles/                 (versiones listas para imprimir)
 ├── gradle/                            (wrapper de Gradle)
 ├── src/
 │   ├── main/
@@ -185,7 +190,7 @@ asistencias/
 │   │   │   ├── dto/                   (transporte UI ↔ controller)
 │   │   │   └── config/                (security, multi-tenancy, web/JPA)
 │   │   └── resources/
-│   │       ├── db/migration/          (V001..V006 Flyway)
+│   │       ├── db/migration/          (V001..V008 Flyway)
 │   │       ├── opencv/                (haarcascade XML)
 │   │       ├── static/                (CSS / JS)
 │   │       ├── templates/             (Thymeleaf)
@@ -253,9 +258,16 @@ Las migraciones viven en `src/main/resources/db/migration/`:
 | `V004__comisiones_docente_nullable.sql` | Hace `docente_asignado_id` nullable mientras se construía el módulo de docentes. |
 | `V005__consentimientos_biometricos_audit.sql` | Agrega columnas de auditoría forense (IP, UA, motivo de revocación, timestamps). |
 | `V006__modelos_faciales_mediumblob.sql` | Cambia `embedding_cifrado` de BLOB a LONGBLOB. |
+| `V007__codigos_verificacion_email.sql` | Tabla de códigos de un solo uso (verificación de correo y recuperación) y marca `email_verificado_en` en usuarios. |
+| `V008__docentes_fecha_baja.sql` | Agrega `fecha_baja` con el CHECK de que no sea anterior al alta. |
 
-Cualquier cambio futuro de esquema = nueva V007__... No se editan migraciones
+Cualquier cambio futuro de esquema = nueva V009__... No se editan migraciones
 ya aplicadas.
+
+> **Los nombres de los índices únicos son parte del contrato.** `ManejadorDeColisiones`
+> los usa para traducir un choque contra la base al mensaje que ve el usuario.
+> Renombrar uno en una migración sin actualizar ese mapa degrada el mensaje al
+> genérico, sin ningún error que lo señale. Ver ADR-0011.
 
 ---
 
@@ -340,9 +352,17 @@ Reportes en `build/reports/tests/test/index.html`.
 Cobertura:
 - Services con Mockito (lógica de negocio).
 - `OpenCvSmokeTest` valida que los binarios nativos de OpenCV cargan.
-- Tests integradores con MockMvc (Sprint 6 Fase D).
+- Tests integradores con MockMvc, que son los que levantan el contexto completo
+  y ejercitan seguridad, interceptores y aislamiento:
+  `AislamientoMultiTenantIT`, `AutorizacionPorRolIT`, `AltaInstitucionIT`,
+  `VerificacionObligatoriaIT`, `RecuperacionPublicaIT`, `ManejadorDeColisionesIT`.
 
 Los tests usan el perfil `test` (H2 en memoria).
+
+> **Cada test nuevo se verifica por mutación**: se reintroduce a propósito el
+> error que debería atrapar y se comprueba que falla, y que falla *solo* el que
+> corresponde. Un test que pasa en verde tanto con el error como sin él no está
+> probando nada, y eso no se nota hasta que hace falta.
 
 ---
 

@@ -71,6 +71,10 @@ public class Docente extends BaseTenantEntity {
     @Column(name = "fecha_alta", nullable = false)
     private LocalDate fechaAlta;
 
+    // NULL significa que el docente no fue dado de baja; no es un dato faltante.
+    @Column(name = "fecha_baja")
+    private LocalDate fechaBaja;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

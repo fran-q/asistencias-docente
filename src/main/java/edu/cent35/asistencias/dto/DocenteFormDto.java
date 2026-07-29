@@ -4,18 +4,12 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.model.Docente;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.LocalDate;
 
 /**
  * Datos que viajan entre el formulario de el docente y el controlador. Lleva las anotaciones de
@@ -53,10 +47,8 @@ public class DocenteFormDto {
              message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefono;
 
-    @NotNull(message = "La fecha de alta es obligatoria")
-    @PastOrPresent(message = "La fecha de alta no puede ser futura")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate fechaAlta;
+    // La fecha de alta no viaja en el formulario: la fija el sistema al crear el docente y
+    // despues no se edita. Ver DocenteService.crear.
 
     // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static DocenteFormDto from(Docente d) {
@@ -67,7 +59,6 @@ public class DocenteFormDto {
             .apellido(d.getApellido())
             .email(d.getEmail())
             .telefono(d.getTelefono())
-            .fechaAlta(d.getFechaAlta())
             .build();
     }
 }

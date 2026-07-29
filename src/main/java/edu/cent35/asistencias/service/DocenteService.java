@@ -59,10 +59,9 @@ public class DocenteService {
     @Transactional
     // Da de alta un docente, exigiendo DNI y legajo sin repetir dentro de la institución.
     public Docente crear(String dni, String legajo, String nombre, String apellido,
-                         String email, String telefono, LocalDate fechaAlta) {
+                         String email, String telefono) {
 
         Long tenantId = TenantContext.getRequired();
-        validarFechaAlta(fechaAlta);
 
         String dniNorm    = blankToNull(dni);
         String legajoNorm = blankToNull(legajo);
@@ -82,7 +81,9 @@ public class DocenteService {
             .apellido(apellido.trim())
             .email(blankToNull(email))
             .telefono(blankToNull(telefono))
-            .fechaAlta(fechaAlta)
+            // La fecha de alta es el momento en que se carga, no un dato a tipear: quien
+            // esta cargando al docente esta aca ahora, y pedirsela solo habilita el error.
+            .fechaAlta(LocalDate.now())
             .activo(true)
             .build();
         d.setInstitucionId(tenantId);
@@ -95,10 +96,9 @@ public class DocenteService {
     @Transactional
     // Edita los datos del docente, cuidando que DNI y legajo no choquen con otro.
     public Docente actualizar(Long id, String dni, String legajo, String nombre, String apellido,
-                              String email, String telefono, LocalDate fechaAlta) {
+                              String email, String telefono) {
 
         Docente d = buscarPorId(id);
-        validarFechaAlta(fechaAlta);
 
         String dniNuevo    = blankToNull(dni);
         String legajoNuevo = blankToNull(legajo);
@@ -118,7 +118,8 @@ public class DocenteService {
         d.setApellido(apellido.trim());
         d.setEmail(blankToNull(email));
         d.setTelefono(blankToNull(telefono));
-        d.setFechaAlta(fechaAlta);
+        // La fecha de alta no se toca en la edicion: es el registro de cuando ingreso, no
+        // un campo mas del legajo. Se corrige en la base si hiciera falta, y queda asentado.
 
         Docente saved = docenteRepository.save(d);
         log.info("Docente actualizado: id={}", id);
@@ -126,12 +127,14 @@ public class DocenteService {
     }
 
     @Transactional
-    // Baja lógica; se bloquea si sigue siendo titular o está asignado a comisiones activas.
-    public void darDeBaja(Long id) {
+    // Baja lógica con la fecha en que dejó de prestar servicios; se bloquea si sigue
+    // siendo titular o está asignado a comisiones activas.
+    public void darDeBaja(Long id, LocalDate fechaBaja) {
         Docente d = buscarPorId(id);
         if (Boolean.FALSE.equals(d.getActivo())) {
             throw new IllegalArgumentException("El docente ya está inactivo.");
         }
+        validarFechaBaja(fechaBaja, d.getFechaAlta());
 
         long materiasComoTitular = materiaRepository.countByDocenteTitularIdAndActivoTrue(id);
         long comisionesAsignadas = comisionRepository.countByDocenteAsignadoIdAndActivoTrue(id);
@@ -144,8 +147,9 @@ public class DocenteService {
         }
 
         d.setActivo(false);
+        d.setFechaBaja(fechaBaja);
         docenteRepository.save(d);
-        log.info("Docente dado de baja: id={}", id);
+        log.info("Docente dado de baja: id={}, fecha_baja={}", id, fechaBaja);
     }
 
     @Transactional
@@ -156,15 +160,26 @@ public class DocenteService {
             throw new IllegalArgumentException("El docente ya está activo.");
         }
         d.setActivo(true);
+        // Se borra la fecha de baja: dejarla puesta describiria a un docente activo que
+        // ademas figura como desvinculado, que es una contradiccion.
+        d.setFechaBaja(null);
         docenteRepository.save(d);
         log.info("Docente reactivado: id={}", id);
     }
 
-    // Exige fecha de alta y que no sea futura.
-    private void validarFechaAlta(LocalDate fecha) {
-        if (fecha == null) throw new IllegalArgumentException("La fecha de alta es obligatoria.");
-        if (fecha.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("La fecha de alta no puede ser futura.");
+    // La baja se carga despues del hecho, asi que puede ser anterior a hoy pero nunca
+    // futura ni anterior al ingreso del docente.
+    private void validarFechaBaja(LocalDate fechaBaja, LocalDate fechaAlta) {
+        if (fechaBaja == null) {
+            throw new IllegalArgumentException("La fecha de baja es obligatoria.");
+        }
+        if (fechaBaja.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("La fecha de baja no puede ser futura.");
+        }
+        if (fechaAlta != null && fechaBaja.isBefore(fechaAlta)) {
+            throw new IllegalArgumentException(
+                "La fecha de baja no puede ser anterior a la de alta (" +
+                fechaAlta.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ").");
         }
     }
 

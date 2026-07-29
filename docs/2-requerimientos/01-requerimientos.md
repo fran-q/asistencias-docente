@@ -69,6 +69,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
+| RF-46 | Registro del período en funciones | El sistema debe dejar constancia de desde y hasta cuándo un docente prestó servicios. La fecha de alta la registra el sistema en el momento de la carga, sin pedirla; la de baja la indica el administrador, porque la baja se carga después del hecho y forzar la fecha del día falsearía el registro. No se admite una baja futura ni anterior al alta. |
 | RF-07 | CRUD de docentes | El administrador debe poder dar de alta, consultar, modificar y dar de baja (lógica) docentes, incluyendo datos personales, de contacto y asignación a materias. |
 | RF-08 | Registro del modelo facial | El sistema debe capturar múltiples fotogramas del docente, generar los datos biométricos (embeddings) y almacenar exclusivamente esa información, descartando las imágenes originales. |
 | RF-09 | Re-registro facial | El sistema debe permitir actualizar el modelo facial de un docente. El modelo anterior se da de baja lógica y se activa el nuevo. |
@@ -196,6 +197,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RNF-22 | Modo oscuro y claro | El sistema debe ofrecer modo oscuro (por defecto) y modo claro conmutable. |
 | RNF-23 | Optimización para escritorio | La interfaz está diseñada para PC de escritorio; no se requiere adaptación móvil en esta etapa. |
 | RNF-24 | Retroalimentación clara | El sistema debe dar mensajes claros sobre el resultado de cada acción (confirmaciones, errores, advertencias). |
+| RNF-29 | Errores de integridad legibles | Un dato que choca con una restricción de la base debe explicarse en los términos del usuario, indicando qué campo se repite y en qué ámbito. Nunca debe mostrarse el mensaje del motor de base de datos, que expone nombres de tablas e índices y valores concretos, ni una pantalla de error genérica. |
 
 ### 4.7. Mantenibilidad y Despliegue
 
@@ -211,9 +213,9 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 45 |
-| Requerimientos no funcionales (RNF) | 28 |
-| **Total** | **73** |
+| Requerimientos funcionales (RF) | 46 |
+| Requerimientos no funcionales (RNF) | 29 |
+| **Total** | **75** |
 
 > El cumplimiento de cada requerimiento en la primera entrega se documenta en
 > **02 — Definición del Alcance** (matriz de trazabilidad).
