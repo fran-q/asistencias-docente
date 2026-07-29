@@ -103,7 +103,9 @@ Cosas no obvias que surgieron y se documentan acá para que no se repitan:
 
 7. **Cache de recognizers**: descifrar + descomprimir + deserializar un LBPH por cada llamada hace inviable el loop continuo. `IdentificacionFacialService` mantiene un `ConcurrentHashMap` de recognizers cargados, sincronizado por cada llamada (el `JOIN FETCH` ya trae los activos del tenant; los desaparecidos se evictan).
 
-8. **Calibración del umbral**: LBPH devuelve "distancia" (menor = más parecido). Por default usamos `app.biometria.umbral-confianza=100.0`. Suele dar match decente para una persona registrada con 10-15 capturas y reconocida en condiciones de iluminación similares. Se puede subir/bajar según calibración.
+8. **Calibración del umbral**: LBPH devuelve "distancia" (menor = más parecido). El valor por defecto es `app.biometria.umbral-confianza=100.0`, y es **una suposición, no una medición**: suele dar match decente para una persona registrada con 10-15 capturas en condiciones de iluminación similares, pero el número correcto depende de la cámara, la luz y la sala. El protocolo para reemplazarlo por un valor medido está en [7-informes/calibracion-umbral.md](../../7-informes/calibracion-umbral.md).
+
+   Al calibrar no alcanza con contar aciertos. La identificación registra también el **margen**: la diferencia entre la distancia al mejor candidato y al segundo. Un acierto con margen chico significa que dos docentes quedaron casi empatados y que un fotograma con peor luz los confundiría — el riesgo existe aunque la lectura haya salido bien, y sin esa métrica es invisible.
 
 ## Desviación aceptada del RF-08 (decisión formal, post-cierre)
 

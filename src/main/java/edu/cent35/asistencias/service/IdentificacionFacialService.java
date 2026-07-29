@@ -75,8 +75,14 @@ public class IdentificacionFacialService {
             }
             sincronizarCache(modelos);
 
+            // Se guarda el mejor Y el segundo mejor. La diferencia entre ambos es el MARGEN, y
+            // es lo unico que permite ver si el sistema estuvo cerca de confundir a dos
+            // docentes: un acierto con margen de 3 puntos esta a un frame de convertirse en un
+            // falso positivo, y mirando solo la mejor distancia eso no se nota.
             double mejorDistancia = Double.MAX_VALUE;
             ModeloFacial mejorMatch = null;
+            double segundaDistancia = Double.MAX_VALUE;
+            ModeloFacial segundoMatch = null;
 
             for (ModeloFacial m : modelos) {
                 LBPHFaceRecognizer recognizer = cache.get(m.getId());
@@ -87,8 +93,13 @@ public class IdentificacionFacialService {
                     recognizer.predict(extraido.rostro(), label, confidence);
                     double distancia = confidence.get(0);
                     if (distancia < mejorDistancia) {
+                        segundaDistancia = mejorDistancia;
+                        segundoMatch = mejorMatch;
                         mejorDistancia = distancia;
                         mejorMatch = m;
+                    } else if (distancia < segundaDistancia) {
+                        segundaDistancia = distancia;
+                        segundoMatch = m;
                     }
                 }
             }
@@ -99,10 +110,23 @@ public class IdentificacionFacialService {
             long msTotal       = (finComparacionNs - inicioNs) / 1_000_000;
 
             boolean reconocido = mejorMatch != null && mejorDistancia <= umbralConfianza;
-            log.info("CALIBRACION reconocido={} docenteId={} distancia={} umbral={} modelosComparados={} msDeteccion={} msComparacion={} msTotal={}",
+
+            // El mejor candidato se registra SIEMPRE, se lo haya aceptado o no: cuando el
+            // sistema rechaza a alguien que si estaba, saber contra quien se acerco es lo que
+            // permite entender por que fallo.
+            String margen = segundoMatch == null
+                ? "-"                                   // habia un solo modelo: no hay con que comparar
+                : String.format("%.1f", segundaDistancia - mejorDistancia);
+
+            log.info("CALIBRACION reconocido={} mejorDocente={} mejorDistancia={} "
+                     + "segundoDocente={} segundaDistancia={} margen={} "
+                     + "umbral={} modelosComparados={} msDeteccion={} msComparacion={} msTotal={}",
                      reconocido,
-                     reconocido ? mejorMatch.getDocente().getId() : "-",
-                     String.format("%.1f", mejorDistancia),
+                     mejorMatch == null ? "-" : mejorMatch.getDocente().getId(),
+                     mejorMatch == null ? "-" : String.format("%.1f", mejorDistancia),
+                     segundoMatch == null ? "-" : segundoMatch.getDocente().getId(),
+                     segundoMatch == null ? "-" : String.format("%.1f", segundaDistancia),
+                     margen,
                      umbralConfianza, modelos.size(),
                      msDeteccion, msComparacion, msTotal);
 

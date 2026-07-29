@@ -1,8 +1,9 @@
 # Protocolo de calibración del umbral de confianza (RF-16) y medición de tiempos (RNF-01)
 
 **Objetivo:** reemplazar el valor por defecto `app.biometria.umbral-confianza=100.0`
-por un valor **calibrado con datos reales**, y obtener los tiempos medidos que
-piden las preguntas 4 y 18 del dossier de defensa.
+por un valor **calibrado con datos reales**, comprobar que **dos docentes registrados
+no se confundan entre sí**, y obtener los tiempos medidos que piden las preguntas 4 y
+18 del dossier de defensa.
 
 ## Por qué se calibra así (el concepto)
 
@@ -16,13 +17,29 @@ En la práctica eso significa: el umbral se elige **por debajo de la distancia
 mínima que produce un impostor**, con margen. Los falsos negativos que eso
 genere los absorbe la carga manual — está diseñado para eso.
 
+### Los dos errores no valen lo mismo
+
+| Error | Qué pasa | Gravedad |
+|---|---|---|
+| **Falso positivo** | Reconoce a Juan como María | **Grave**: dato falso en un registro legal, y afecta a dos personas reales |
+| **Falso negativo** | No reconoce a Juan, que sí está | Molesto: no registra y deriva a carga manual (RF-22 a RF-24) |
+
+### Por qué no alcanza con mirar si acertó
+
+Que el sistema acierte no significa que esté funcionando bien. Si Juan da distancia 45
+contra su propio modelo y 48 contra el de María, **acertó por 3 puntos**: un fotograma
+con peor luz y se equivoca. Esa diferencia se llama **margen**, y es lo que distingue un
+sistema que separa personas de uno que tuvo suerte.
+
+Por eso el protocolo mide el margen además de la distancia.
+
 ## Instrumentación disponible
 
 Cada intento de identificación con rostro detectado escribe en el log de la app
 una línea así:
 
 ```
-CALIBRACION reconocido=true docenteId=2 distancia=62.3 umbral=100.0 modelosComparados=2 msDeteccion=45 msComparacion=12 msTotal=57
+CALIBRACION reconocido=true mejorDocente=1 mejorDistancia=42.3 segundoDocente=2 segundaDistancia=88.7 margen=46.4 umbral=100.0 modelosComparados=3 msDeteccion=45 msComparacion=12 msTotal=57
 ```
 
 Y cada marca de asistencia creada escribe:
@@ -31,9 +48,14 @@ Y cada marca de asistencia creada escribe:
 RNF01 pase completo: docente=2 estado=PRESENTE yaEstaba=false msTotal=61
 ```
 
-- `distancia` — el dato de calibración del umbral.
-- `msTotal` de `CALIBRACION` — detección + comparación (núcleo del RNF-01).
-- `msTotal` de `RNF01` — el ciclo completo incluyendo el registro en BD.
+| Campo | Para qué sirve |
+|---|---|
+| `mejorDocente` | **Quién cree el sistema que es.** Se registra siempre, aunque lo rechace |
+| `mejorDistancia` | El dato para calibrar el umbral |
+| `segundoDocente` / `segundaDistancia` | Contra quién estuvo cerca de confundirse |
+| `margen` | `segundaDistancia - mejorDistancia`. **La métrica que dice si separa bien** |
+| `msTotal` de `CALIBRACION` | Detección + comparación (núcleo del RNF-01) |
+| `msTotal` de `RNF01` | El ciclo completo incluyendo el registro en BD |
 
 > **Ojo con el cache frío:** la PRIMERA identificación tras arrancar la app
 > incluye descifrar y deserializar todos los modelos. Descartá esa medición;
@@ -42,63 +64,129 @@ RNF01 pase completo: docente=2 estado=PRESENTE yaEstaba=false msTotal=61
 ## Protocolo (una sesión de ~1 hora)
 
 ### Preparación
-1. `./gradlew bootRun` con al menos 1 docente con rostro registrado.
-2. Abrir el **Pase de asistencia**, encender cámara, iniciar pase.
-3. Tener a mano el log de la consola (las líneas `CALIBRACION`).
 
-### Serie A — Rostros genuinos (deberían reconocerse)
-Con el docente registrado frente a la cámara, tomar **20 lecturas** variando:
-- distancia a la cámara (cerca / lejos),
-- ángulo (frente / leve perfil),
-- iluminación (luz normal / contraluz / luz lateral),
-- accesorios (con y sin lentes si aplica).
+1. **Registrar al menos 3 docentes** con rostro. Con uno solo no se puede medir el
+   margen: hace falta un segundo modelo contra el cual comparar.
+2. Si se puede, elegir personas **parecidas entre sí** (mismo sexo, edad similar,
+   todas con lentes o ninguna). Suena contraintuitivo, pero se calibra para el peor
+   caso: si separa bien a dos personas parecidas, con el resto sobra.
+3. `./gradlew bootRun` y abrir el **Pase de asistencia**.
+4. Tener a mano el log de la consola (las líneas `CALIBRACION`).
 
-Anotar la columna `distancia` de cada línea `CALIBRACION`.
+En las tres series, **variar las condiciones**: distancia a la cámara, ángulo (frente
+y leve perfil), iluminación (normal, contraluz, lateral) y accesorios. Medir todo en
+condiciones ideales produce un umbral que falla el día de la demostración.
 
-### Serie B — Impostores (NO deberían reconocerse)
-Con **2 o 3 personas NO registradas** frente a la cámara, tomar **20 lecturas**
-en condiciones similares. Anotar las distancias.
+### Serie A — Genuinos (deberían reconocerse)
+
+Cada docente registrado frente a la cámara, contra su propio modelo. **20 lecturas**
+repartidas entre los tres. Anotar `mejorDistancia`.
+
+### Serie B — Impostores externos (NO deberían reconocerse)
+
+**2 o 3 personas no registradas** frente a la cámara. **20 lecturas**. Anotar
+`mejorDistancia`: es la distancia del desconocido al modelo que más se le parece.
+
+### Serie C — Cruce entre registrados (el más importante)
+
+Esta serie responde la pregunta que de verdad importa: **¿puede el sistema confundir a
+dos docentes registrados entre sí?**
+
+Es el error más grave del sistema, peor que dejar entrar a un desconocido: si Juan es
+reconocido como María, **María queda con una asistencia falsa y Juan pierde la suya**.
+Dos registros corrompidos, y ambos de personas reales con consecuencias laborales.
+
+Cada docente registrado se para frente a la cámara y se observan **dos cosas** en el log:
+
+1. **`mejorDocente` tiene que ser quien realmente está.** Si alguna vez no lo es, hay un
+   falso positivo de cruce. **Con que ocurra una sola vez en 20, el umbral no alcanza** y
+   hay que atacar el problema de fondo (ver más abajo).
+2. **El `margen`**, aunque haya acertado.
+
+**20 lecturas.** Anotar `mejorDocente`, quién estaba realmente, y el `margen`.
+
+### Cómo leer el margen
+
+| Margen | Interpretación |
+|---|---|
+| **> 30** | Separación cómoda. El sistema distingue bien a esas personas |
+| **10 a 30** | Zona de riesgo: anda, pero un cambio de luz puede darlo vuelta |
+| **< 10** | **Alarma.** Están casi empatados; es cuestión de tiempo que se confundan |
+
+Un acierto con margen de 3 no es un acierto: es suerte.
 
 ### Planilla
 
-| # | Serie | Distancia | ¿Reconocido con umbral actual? | Nota (luz/ángulo) |
-|---|---|---|---|---|
-| 1 | A (genuino) | | | |
-| … | | | | |
-| 21 | B (impostor) | | | |
-| … | | | | |
+| # | Serie | Quién estaba | `mejorDocente` | `mejorDistancia` | `margen` | ¿Correcto? | Nota (luz/ángulo) |
+|---|---|---|---|---|---|---|---|
+| 1 | A | | | | | | |
+| … | | | | | | | |
+| 21 | B | (no registrado) | | | — | | |
+| … | | | | | | | |
+| 41 | C | | | | | | |
+| … | | | | | | | |
 
-### Análisis y decisión
+## Análisis y decisión
 
-1. **Distancia máxima genuina** (el peor caso en que sí sos vos): `D_gen_max`.
-2. **Distancia mínima impostora** (el impostor que más se acercó): `D_imp_min`.
-3. **Caso sano** (`D_imp_min` claramente mayor que `D_gen_max`): elegir el
-   umbral entre ambos, más cerca del lado genuino:
-   `umbral = D_gen_max + (D_imp_min - D_gen_max) * 0.25`
-4. **Caso solapado** (algún impostor por debajo de algún genuino): priorizar
-   los falsos positivos → `umbral = D_imp_min * 0.9`, aceptando que algunas
-   lecturas genuinas fallen (van a carga manual). Anotar cuántas.
+### 1. El umbral
+
+1. **`D_gen_max`** — la distancia más alta de una lectura genuina (Serie A).
+2. **`D_imp_min`** — la distancia más baja de un impostor (Series B **y C**: un cruce
+   entre registrados cuenta como impostor).
+3. **Caso sano** (`D_imp_min` claramente mayor que `D_gen_max`): elegir el umbral entre
+   ambos, más cerca del lado genuino:
+
+   ```
+   umbral = D_gen_max + (D_imp_min - D_gen_max) * 0.25
+   ```
+
+   El `0.25` es deliberado: deja el 75 % del colchón como margen de seguridad contra
+   falsos positivos.
+
+4. **Caso solapado** (algún impostor por debajo de algún genuino): priorizar los falsos
+   positivos → `umbral = D_imp_min * 0.9`, aceptando que algunas lecturas genuinas
+   fallen y vayan a carga manual. **Anotar cuántas**: es la tasa de falsos negativos.
 
 Actualizar en `application.properties`:
+
 ```properties
 app.biometria.umbral-confianza=<valor elegido>
 ```
 
-### Métricas para el dossier
+### 2. Qué hacer si la Serie C falla
 
-Con las 40 lecturas, completar:
+Si hubo cruces o los márgenes son chicos, **no bajar el umbral para tapar el problema**:
+eso solo cambia falsos positivos por falsos negativos. Atacar las causas, en este orden:
+
+1. **Más y mejores capturas al registrar.** El mínimo son 5 fotogramas válidos de una
+   grabación de 30 segundos. Si el docente se registró quieto y de frente, el modelo es
+   frágil: que se mueva y varíe el ángulo durante la grabación.
+2. **Iluminación.** LBPH es sensible a la luz — es su debilidad conocida. Luz frontal
+   difusa, nunca contraluz. Es gratis y suele ser lo que más mejora.
+3. **Si aun así no separa, es el límite del algoritmo.** LBPH compara patrones de
+   textura, no entiende de rostros. La respuesta correcta no es ajustar el umbral sino
+   la **migración a embeddings** documentada en el ADR-0007, con el camino ya verificado:
+   `FaceRecognizerSF` (SFace) está en el classpath y solo falta el modelo ONNX.
+
+## Métricas para el dossier
+
+Con las 60 lecturas, completar:
 
 | Métrica | Valor |
 |---|---|
+| Umbral elegido y criterio aplicado (sano / solapado) | __ |
 | Intentos genuinos / reconocidos (con el umbral final) | __ / 20 |
-| Intentos impostores / rechazados (con el umbral final) | __ / 20 |
-| **Falsos positivos** | __ (objetivo: 0) |
+| Impostores externos / rechazados | __ / 20 |
+| **Cruces entre registrados (Serie C) / correctos** | __ / 20 |
+| **Falsos positivos totales** | __ (objetivo: 0) |
 | **Falsos negativos** | __ (aceptables: los absorbe la carga manual) |
+| **Margen mínimo observado en la Serie C** | __ |
+| **Margen mediano en la Serie C** | __ |
 | Mediana de `msTotal` (CALIBRACION, cache caliente) | __ ms |
 | Máximo de `msTotal` (RNF01, ciclo completo) | __ ms |
 | ¿Cumple el presupuesto de 3 s del RNF-01? | Sí / No |
 
-### Dónde volcar los resultados
+## Dónde volcar los resultados
 
 - `application.properties` → el nuevo umbral.
 - Dossier de defensa → sección 4.2 (valor + método) y preguntas 4 y 18 del
@@ -106,10 +194,15 @@ Con las 40 lecturas, completar:
 - Si el umbral cambió respecto de 100.0, dejar una línea en el ADR-0007
   (sección de calibración) con el valor, la fecha y el tamaño de la muestra.
 
-## Limitación conocida (para decir en la defensa)
+## Limitaciones conocidas (para decir en la defensa)
 
-Una calibración con 1-3 personas es una **muestra chica**: valida el método,
-no generaliza a 400 docentes. La respuesta madura en la defensa es: *"calibré
-con N personas siguiendo un protocolo documentado; en un despliegue real la
-calibración se repetiría con una muestra representativa de la institución, y
-el criterio de minimizar falsos positivos se mantiene"*.
+**La muestra es chica.** Una calibración con 3 personas valida el método, no generaliza
+a 400 docentes. La respuesta madura es: *"calibré con N personas siguiendo un protocolo
+documentado; en un despliegue real la calibración se repetiría con una muestra
+representativa de la institución, y el criterio de minimizar falsos positivos se
+mantiene"*.
+
+**El margen depende de quiénes estén registrados.** Con 3 docentes el margen va a ser
+más generoso que con 400: cuantos más rostros hay en el padrón, más probable es que
+alguno se parezca. Es una propiedad del reconocimiento 1:N, no un defecto de esta
+implementación, y conviene decirlo antes de que lo pregunten.
