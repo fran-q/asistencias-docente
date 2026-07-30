@@ -14,7 +14,7 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 | [4-arquitectura](./4-arquitectura) | Los 9 ADR, la referencia técnica y la deuda técnica | Por qué el sistema es como es, decisión por decisión |
 | [5-diagramas](./5-diagramas) | Casos de uso, clases de dominio, secuencia y DFD | Se ven directo en [diagramas.md](./5-diagramas/diagramas.md), sin instalar nada |
 | [6-manuales](./6-manuales) | Manual del administrador y manual técnico | Cómo se usa y cómo se instala |
-| [7-informes](./7-informes) | Correcciones aplicadas y protocolo de calibración | El estado del proyecto y lo que queda por medir |
+| [7-informes](./7-informes) | Correcciones aplicadas, guía de prueba y protocolo de calibración | El estado del proyecto y lo que queda por medir |
 | [8-defensa](./8-defensa) | Apuntes de estudio y guion del video | Material para preparar la presentación |
 | [9-imprimibles](./9-imprimibles) | Versiones PDF listas para imprimir | Para entregar en papel |
 
@@ -30,11 +30,13 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 
 **Si vas a usar el sistema** → [6-manuales/manual-administrador.md](./6-manuales/manual-administrador.md).
 
+**Si querés verificar que las correcciones funcionan** → [7-informes/guia-de-prueba-correcciones.md](./7-informes/guia-de-prueba-correcciones.md). Doce puntos, cada uno con qué hacer y qué tiene que pasar.
+
 ## Qué está al día y qué no
 
 | Documento | Estado |
 |---|---|
-| ADR 0001 a 0009 | Al día |
+| ADR 0001 a 0011 | Al día |
 | Referencia técnica | Al día |
 | Apuntes de estudio | Al día |
 | Deuda técnica | Al día |
