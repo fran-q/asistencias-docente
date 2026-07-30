@@ -11,55 +11,85 @@
             <div>
                 <h1>Usuarios de la institución</h1>
                 <p class="page-header__subtitle">
-                    Gestión de admins y superadmins de tu institución. Solo vos como
-                    superadmin podés administrar estos usuarios.
+                    Cuentas que administran el sistema en tu institución. Solo la cuenta
+                    institucional puede darlas de alta y de baja.
                 </p>
             </div>
             <a th:href="@{/usuarios/nuevo}" class="btn btn--primary">+ Nuevo usuario</a>
         </header>
 
+        <div class="filtro" data-filtro-tabla="#tabla-usuarios">
+            <input type="search" class="filtro__texto" aria-label="Buscar usuario"
+                   placeholder="Buscar por usuario, nombre o correo...">
+            <select class="filtro__estado" aria-label="Filtrar por estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Solo activos</option>
+                <option value="inactivo">Solo inactivos</option>
+            </select>
+            <span class="filtro__resultado"></span>
+        </div>
+
         <div class="card card--no-padding">
           <div class="table-wrap">
-            <table class="table">
+            <table class="table" id="tabla-usuarios">
                 <thead>
                     <tr>
-                        <th>Username</th>
+                        <th>Usuario</th>
                         <th>Nombre completo</th>
-                        <th>Email</th>
+                        <th>Correo</th>
                         <th>Rol</th>
                         <th>Estado</th>
-                        <th>Ultimo login</th>
+                        <th>Correo verificado</th>
+                        <th>Último acceso</th>
                         <th class="table__actions">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="u : ${usuarios}" th:classappend="${!u.activo} ? 'row--inactive'">
+                    <tr th:each="u : ${usuarios}" data-fila
+                        th:attr="data-estado=${u.activo} ? 'activo' : 'inactivo'"
+                        th:classappend="${!u.activo} ? 'row--inactive'">
                         <td>
-                            <code th:text="${u.username}">user</code>
+                            <code th:text="${u.username}">usuario</code>
                         </td>
                         <td th:text="${u.nombreCompleto}">Nombre Apellido</td>
-                        <td th:text="${u.email}">email</td>
+                        <td th:text="${u.email}">correo</td>
                         <td>
                             <span class="badge"
                                   th:classappend="${u.rolCodigo == 'INSTITUCION'} ? 'badge--accent' : 'badge--neutral'"
-                                  th:text="${u.rolCodigo}">ROL</span>
+                                  th:text="${u.rolCodigo == 'INSTITUCION'} ? 'Institución' : 'Administrador'">Rol</span>
                         </td>
                         <td>
                             <span th:if="${u.activo}"   class="badge badge--success">Activo</span>
                             <span th:unless="${u.activo}" class="badge badge--danger">Inactivo</span>
                         </td>
+                        <!-- Una cuenta sin verificar no puede operar el sistema (ADR-0010):
+                             conviene verlo de un vistazo y no recien cuando la persona avisa
+                             que no puede entrar a ningun lado. -->
+                        <td>
+                            <span th:if="${u.emailVerificado}" class="badge badge--success">Sí</span>
+                            <span th:unless="${u.emailVerificado}" class="badge badge--warning"
+                                  title="Esta cuenta no puede usar el sistema hasta confirmar su correo">Pendiente</span>
+                        </td>
                         <td>
                             <span th:if="${u.ultimoLogin}"
                                   th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yy HH:mm')}">-</span>
-                            <span th:unless="${u.ultimoLogin}" class="text-muted">-</span>
+                            <span th:unless="${u.ultimoLogin}" class="text-muted">Nunca</span>
                         </td>
+                        <!-- Cambiar la contraseña se hace desde la ficha del usuario, no desde
+                             acá: es una acción sobre esa cuenta en particular y conviene tener
+                             a la vista de quién se trata antes de tocarla. -->
                         <td class="table__actions">
-                            <a th:href="@{/usuarios/{id}/editar(id=${u.id})}" class="btn btn--ghost btn--sm">Editar</a>
-                            <a th:href="@{/usuarios/{id}/password(id=${u.id})}" class="btn btn--ghost btn--sm">Cambiar pass</a>
+                            <a th:href="@{/usuarios/{id}/editar(id=${u.id})}"
+                               class="btn btn--ghost btn--sm">Editar</a>
+                        </td>
+                    </tr>
+                    <tr class="table__empty-fila" hidden>
+                        <td colspan="8" class="table__empty">
+                            Ningún usuario coincide con la búsqueda.
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(usuarios)}">
-                        <td colspan="7" class="table__empty">No hay usuarios cargados todavia.</td>
+                        <td colspan="8" class="table__empty">Todavía no hay usuarios cargados.</td>
                     </tr>
                 </tbody>
             </table>

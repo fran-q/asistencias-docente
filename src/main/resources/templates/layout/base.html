@@ -57,31 +57,59 @@
             </a>
         </div>
 
+        <!-- Navegacion agrupada por lo que la persona viene a hacer, no por el orden en
+             que se construyeron los modulos: preparar el cursado (Academico), tomar y
+             consultar asistencia (Asistencias), administrar quienes participan (Personal).
+             Con doce enlaces sueltos la barra ya no entraba y todos pesaban igual. -->
         <nav class="navbar__menu" id="navbar-menu" sec:authorize="isAuthenticated()">
-            <a th:href="@{/}" class="navbar__link">Inicio</a>
-            <a th:href="@{/mi-institucion}" class="navbar__link"
-               sec:authorize="hasRole('INSTITUCION')">Mi Institución</a>
-            <a th:href="@{/usuarios}" class="navbar__link"
-               sec:authorize="hasRole('INSTITUCION')">Usuarios</a>
-            <a th:href="@{/docentes}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Docentes</a>
-            <a th:href="@{/carreras}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Carreras</a>
-            <a th:href="@{/materias}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Materias</a>
-            <a th:href="@{/comisiones}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Comisiones</a>
-            <a th:href="@{/horarios}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Horarios</a>
-            <a th:href="@{/grilla}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Grilla</a>
-            <a th:href="@{/asistencia/pase}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Pase de asistencia</a>
-            <a th:href="@{/asistencias}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Asistencias</a>
-            <a th:href="@{/reportes}" class="navbar__link"
-               sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">Reportes</a>
-            <!-- Aca se iran sumando los modulos a medida que se desarrollen -->
+
+            <a th:href="@{/}" class="navbar__link">
+                <svg th:replace="~{layout/iconos :: casa}"></svg>
+                <span>Inicio</span>
+            </a>
+
+            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
+                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                    <svg th:replace="~{layout/iconos :: libro}"></svg>
+                    <span>Académico</span>
+                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
+                </button>
+                <div class="navbar__submenu">
+                    <a th:href="@{/carreras}"   class="navbar__sublink">Carreras</a>
+                    <a th:href="@{/materias}"   class="navbar__sublink">Materias</a>
+                    <a th:href="@{/comisiones}" class="navbar__sublink">Comisiones</a>
+                    <a th:href="@{/horarios}"   class="navbar__sublink">Horarios</a>
+                    <a th:href="@{/grilla}"     class="navbar__sublink">Grilla semanal</a>
+                </div>
+            </div>
+
+            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
+                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                    <svg th:replace="~{layout/iconos :: tilde}"></svg>
+                    <span>Asistencias</span>
+                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
+                </button>
+                <div class="navbar__submenu">
+                    <a th:href="@{/asistencia/pase}" class="navbar__sublink">Pase de asistencia</a>
+                    <a th:href="@{/asistencias}"     class="navbar__sublink">Listado del día</a>
+                    <a th:href="@{/reportes}"        class="navbar__sublink">Reportes</a>
+                </div>
+            </div>
+
+            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
+                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                    <svg th:replace="~{layout/iconos :: personas}"></svg>
+                    <span>Personal</span>
+                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
+                </button>
+                <div class="navbar__submenu">
+                    <a th:href="@{/docentes}" class="navbar__sublink">Docentes</a>
+                    <a th:href="@{/usuarios}" class="navbar__sublink"
+                       sec:authorize="hasRole('INSTITUCION')">Usuarios del sistema</a>
+                    <a th:href="@{/mi-institucion}" class="navbar__sublink"
+                       sec:authorize="hasRole('INSTITUCION')">Mi institución</a>
+                </div>
+            </div>
         </nav>
 
         <div class="navbar__user" sec:authorize="isAuthenticated()">
@@ -123,5 +151,6 @@
     <script th:src="@{/js/table-scroll.js}" defer></script>
     <script th:src="@{/js/confirm-modal.js}" defer></script>
     <script th:src="@{/js/navbar.js}" defer></script>
+    <script th:src="@{/js/filtro-tabla.js}" defer></script>
 </body>
 </html>

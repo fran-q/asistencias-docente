@@ -55,6 +55,38 @@ registrada.
 
 ---
 
+### Cómo está organizado el menú
+
+La barra de arriba agrupa las pantallas por lo que vas a hacer, no por módulo:
+
+| Grupo | Qué hay adentro |
+|---|---|
+| **Inicio** | Pantalla principal |
+| **Académico** | Carreras, Materias, Comisiones, Horarios, Grilla semanal |
+| **Asistencias** | Pase de asistencia, Listado del día, Reportes |
+| **Personal** | Docentes, Usuarios del sistema, Mi institución |
+
+El grupo donde estás parado queda subrayado, así no perdés la referencia aunque
+el menú esté cerrado. En pantallas chicas la barra se convierte en un cajón
+lateral con el botón de las tres rayas, y ahí los grupos se ven abiertos.
+
+### Buscar dentro de un listado
+
+Todos los listados de catálogo —docentes, usuarios, carreras, materias,
+comisiones y horarios— tienen arriba una caja de búsqueda y un selector de
+estado. Filtran **mientras escribís**, sin recargar la página, y a la derecha te
+dicen cuántos registros quedaron a la vista.
+
+La búsqueda no distingue tildes ni mayúsculas: escribir `garcia` encuentra a
+*García*. Mira todas las columnas de la fila, así que podés buscar por DNI,
+legajo, correo o nombre indistintamente.
+
+> Los filtros de **Asistencias** y **Reportes** funcionan distinto: tienen un
+> botón *Aplicar* porque filtran por fecha contra la base, no sobre lo que ya
+> está en pantalla.
+
+---
+
 ## 2. Roles
 
 | Rol | Qué puede hacer |
@@ -79,12 +111,19 @@ Los cambios se guardan al hacer clic en **"Guardar cambios"**.
 
 (Solo rol INSTITUCION)
 
-Menú → **Usuarios**.
+Menú → **Personal → Usuarios del sistema**.
 
-- **Listado** con badge de estado (activo/inactivo).
-- **+ Nuevo usuario**: completar username, email, contraseña, nombre, apellido y rol.
-- **Editar**: actualizar datos. La contraseña se cambia desde el botón
-  **"Cambiar contraseña"** en la edición.
+- **Listado** con el estado de cada cuenta, si ya confirmó su correo y cuándo
+  entró por última vez. La columna **Correo verificado** en *Pendiente* explica
+  por qué una persona dice que "no la deja entrar a nada": hasta que confirme,
+  el sistema la retiene en su cuenta.
+- **+ Nuevo usuario**: nombre de usuario, correo, contraseña inicial, nombre,
+  apellido y rol.
+- **Editar**: actualizar datos. Dentro de la ficha, abajo, está la tarjeta
+  **Acciones sobre la cuenta**, con el estado del correo, el último acceso y el
+  botón **Cambiar contraseña**. Está ahí y no en el listado a propósito: es una
+  acción sobre una cuenta concreta y conviene ver de quién se trata antes de
+  tocarla.
 - **Dar de baja**: marca al usuario como inactivo. La cuenta deja de poder
   loguearse pero no se elimina (mantiene historial).
 - **Reactivar**: vuelve a habilitar la cuenta.

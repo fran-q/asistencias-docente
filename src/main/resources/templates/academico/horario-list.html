@@ -17,9 +17,20 @@
             <a th:href="@{/horarios/nuevo}" class="btn btn--primary">+ Nuevo horario</a>
         </header>
 
+        <div class="filtro" data-filtro-tabla="#tabla-horarios">
+            <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
+                   placeholder="Buscar por día, comisión o materia...">
+            <select class="filtro__estado" aria-label="Filtrar por estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Solo activos</option>
+                <option value="inactivo">Solo inactivos</option>
+            </select>
+            <span class="filtro__resultado"></span>
+        </div>
+
         <div class="card card--no-padding">
             <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="tabla-horarios">
                     <thead>
                         <tr>
                             <th>Día</th>
@@ -33,7 +44,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="h : ${horarios}" th:classappend="${!h.activo} ? 'row--inactive'">
+                        <tr th:each="h : ${horarios}" data-fila th:attr="data-estado=${h.activo} ? 'activo' : 'inactivo'"
+                            th:classappend="${!h.activo} ? 'row--inactive'">
                             <td><strong th:text="${h.diaEtiqueta}">Día</strong></td>
                             <td>
                                 <span th:text="${#temporals.format(h.horaInicio, 'HH:mm')}">08:00</span>
@@ -83,6 +95,11 @@
                                       class="inline-form">
                                     <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
                                 </form>
+                            </td>
+                        </tr>
+                        <tr class="table__empty-fila" hidden>
+                            <td colspan="8" class="table__empty">
+                                Ningún horario coincide con la búsqueda.
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(horarios)}">

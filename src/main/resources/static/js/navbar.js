@@ -50,7 +50,9 @@
             }
         });
 
-        menu.querySelectorAll('a, button').forEach(function (el) {
+        // Solo los links cierran el drawer. Los botones de grupo NO: sirven para
+        // desplegar, y si cerraran el drawer nunca se llegaria a ver el submenu.
+        menu.querySelectorAll('a').forEach(function (el) {
             el.addEventListener('click', function () {
                 // Cerramos el drawer SIN animar: como el link navega a otra
                 // pagina, no queremos ver el drawer deslizandose mientras carga.
@@ -60,6 +62,57 @@
                 setOpen(false);
             });
         });
+
+        // --- Grupos desplegables ---
+        var grupos = [].slice.call(menu.querySelectorAll('.navbar__grupo'));
+
+        function cerrarGrupos(excepto) {
+            grupos.forEach(function (g) {
+                if (g === excepto) return;
+                g.classList.remove('navbar__grupo--abierto');
+                g.querySelector('.navbar__grupo-boton').setAttribute('aria-expanded', 'false');
+            });
+        }
+
+        grupos.forEach(function (grupo) {
+            var boton = grupo.querySelector('.navbar__grupo-boton');
+            boton.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var abierto = grupo.classList.toggle('navbar__grupo--abierto');
+                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+                // Un solo grupo abierto a la vez: dos submenus superpuestos en la
+                // barra se tapan entre si.
+                if (abierto) cerrarGrupos(grupo);
+            });
+        });
+
+        // Click en cualquier otro lado cierra lo que este abierto, que es lo que
+        // uno espera de un desplegable.
+        document.addEventListener('click', function () { cerrarGrupos(null); });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') cerrarGrupos(null);
+        });
+
+        // Marca el grupo que contiene la pantalla actual, para no perder de vista
+        // donde uno esta parado ahora que los enlaces viven adentro del desplegable.
+        (function marcarActivo() {
+            var aqui = window.location.pathname;
+            menu.querySelectorAll('.navbar__sublink, .navbar__link').forEach(function (a) {
+                var destino = a.getAttribute('href');
+                if (!destino) return;
+                // Coincidencia exacta, o prefijo para las pantallas hijas
+                // (/docentes/7/editar sigue siendo la seccion Docentes).
+                var esAqui = destino === '/'
+                    ? aqui === '/'
+                    : aqui === destino || aqui.indexOf(destino + '/') === 0;
+                if (!esAqui) return;
+
+                a.classList.add('navbar__link--activo');
+                var grupo = a.closest('.navbar__grupo');
+                if (grupo) grupo.classList.add('navbar__grupo--activo');
+            });
+        })();
 
         // --- Deteccion de overflow ---
         function evaluateLayout() {

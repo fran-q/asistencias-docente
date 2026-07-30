@@ -21,6 +21,9 @@ public class UsuarioListItemDto {
     String nombreCompleto;
     String rolCodigo;
     boolean activo;
+    // Una cuenta sin verificar no puede operar el sistema, asi que el listado lo muestra:
+    // de lo contrario se descubre recien cuando la persona avisa que no entra a ningun lado.
+    boolean emailVerificado;
     LocalDateTime ultimoLogin;
 
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
@@ -32,6 +35,7 @@ public class UsuarioListItemDto {
             .nombreCompleto(u.getNombre() + " " + u.getApellido())
             .rolCodigo(u.getRol().getCodigo())
             .activo(Boolean.TRUE.equals(u.getActivo()))
+            .emailVerificado(u.getEmailVerificadoEn() != null)
             .ultimoLogin(u.getUltimoLogin())
             .build();
     }

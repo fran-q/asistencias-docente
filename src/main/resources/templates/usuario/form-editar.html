@@ -9,8 +9,8 @@
         <header class="page-header">
             <h1>Editar usuario</h1>
             <p class="page-header__subtitle">
-                Cambia datos basicos. El username no se puede modificar.
-                Para cambiar la contraseña usá el botón "Cambiar pass".
+                Datos de la cuenta. El nombre de usuario no se puede modificar:
+                es lo que identifica a la persona en el historial del sistema.
             </p>
         </header>
 
@@ -23,11 +23,11 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Username (no editable)</label>
+                        <label>Usuario (no editable)</label>
                         <input type="text" th:value="${usuario.username}" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email <span class="required">*</span></label>
+                        <label for="email">Correo <span class="required">*</span></label>
                         <input type="email" id="email" th:field="*{email}" required maxlength="120"
                                th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
                         <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</span>
@@ -53,15 +53,16 @@
                     <div class="form-group">
                         <label for="rol">Rol</label>
                         <select id="rol" th:field="*{rol}">
-                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROL</option>
+                            <option th:each="r : ${roles}" th:value="${r}"
+                                    th:text="${r.name() == 'INSTITUCION'} ? 'Institución' : 'Administrador'">Rol</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="checkbox-label">
                             <input type="checkbox" th:field="*{activo}">
-                            <span>Usuario activo</span>
+                            <span>Cuenta activa</span>
                         </label>
-                        <small class="form-hint">Si lo desactivas, no podra iniciar sesion.</small>
+                        <small class="form-hint">Si la desactivás, no va a poder iniciar sesión.</small>
                     </div>
                 </div>
 
@@ -70,6 +71,37 @@
                     <a th:href="@{/usuarios}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
+        </div>
+
+        <!-- Acciones sobre la cuenta, separadas del formulario de datos: no se guardan
+             con "Guardar cambios" sino que abren su propio paso, y conviene que se vea
+             de quién es la cuenta antes de tocarle la contraseña. -->
+        <div class="card">
+            <h2>Acciones sobre la cuenta</h2>
+
+            <dl class="kv">
+                <dt>Estado del correo</dt>
+                <dd>
+                    <span th:if="${usuario.emailVerificadoEn != null}" class="badge badge--success">Verificado</span>
+                    <span th:if="${usuario.emailVerificadoEn == null}" class="badge badge--warning">Sin verificar</span>
+                </dd>
+                <dt>Último acceso</dt>
+                <dd>
+                    <span th:if="${usuario.ultimoLogin}"
+                          th:text="${#temporals.format(usuario.ultimoLogin, 'dd/MM/yyyy HH:mm')}">-</span>
+                    <span th:unless="${usuario.ultimoLogin}" class="text-muted">Nunca inició sesión</span>
+                </dd>
+            </dl>
+
+            <p class="text-muted" th:if="${usuario.emailVerificadoEn == null}">
+                Esta cuenta no puede usar el sistema hasta confirmar su correo. Lo hace
+                la propia persona desde <em>Mi cuenta</em> al iniciar sesión.
+            </p>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <a th:href="@{/usuarios/{id}/password(id=${usuario.id})}"
+                   class="btn btn--ghost">Cambiar contraseña</a>
+            </div>
         </div>
     </section>
 </body>

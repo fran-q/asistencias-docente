@@ -18,15 +18,26 @@
             <a th:href="@{/docentes/nuevo}" class="btn btn--primary">+ Nuevo docente</a>
         </header>
 
+        <div class="filtro" data-filtro-tabla="#tabla-docentes">
+            <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
+                   placeholder="Buscar por DNI, legajo, nombre o correo...">
+            <select class="filtro__estado" aria-label="Filtrar por estado">
+                <option value="">Todos los estados</option>
+                <option value="activo">Solo activos</option>
+                <option value="inactivo">Solo inactivos</option>
+            </select>
+            <span class="filtro__resultado"></span>
+        </div>
+
         <div class="card card--no-padding">
             <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="tabla-docentes">
                     <thead>
                         <tr>
                             <th>DNI</th>
                             <th>Legajo</th>
                             <th>Apellido, Nombre</th>
-                            <th>Email</th>
+                            <th>Correo</th>
                             <th>Teléfono</th>
                             <th>Alta</th>
                             <th>Baja</th>
@@ -36,7 +47,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="d : ${docentes}" th:classappend="${!d.activo} ? 'row--inactive'">
+                        <tr th:each="d : ${docentes}" data-fila th:attr="data-estado=${d.activo} ? 'activo' : 'inactivo'"
+                            th:classappend="${!d.activo} ? 'row--inactive'">
                             <td><code th:text="${d.dni}">DNI</code></td>
                             <td>
                                 <code th:if="${d.legajo}" th:text="${d.legajo}">L</code>
@@ -96,6 +108,11 @@
                                       class="inline-form">
                                     <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
                                 </form>
+                            </td>
+                        </tr>
+                        <tr class="table__empty-fila" hidden>
+                            <td colspan="10" class="table__empty">
+                                Ningún docente coincide con la búsqueda.
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(docentes)}">

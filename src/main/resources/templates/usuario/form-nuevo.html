@@ -9,9 +9,10 @@
         <header class="page-header">
             <h1>Nuevo usuario</h1>
             <p class="page-header__subtitle">
-                Creá un usuario INSTITUCION o ADMIN para tu institución. La
-                contraseña inicial la elegís vos; se recomienda que el usuario
-                la cambie en su primer ingreso.
+                Creá una cuenta de Institución o de Administrador. La contraseña
+                inicial la elegís vos y conviene que la persona la cambie en su
+                primer ingreso. Antes de poder usar el sistema va a tener que
+                confirmar su correo con el código que le llega.
             </p>
         </header>
 
@@ -24,15 +25,15 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="username">Username <span class="required">*</span></label>
+                        <label for="username">Nombre de usuario <span class="required">*</span></label>
                         <input type="text" id="username" th:field="*{username}" required
                                minlength="3" maxlength="60" autocomplete="off"
                                th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
-                        <small class="form-hint">Letras, numeros, puntos, guiones y guion bajo. Inmutable despues.</small>
+                        <small class="form-hint">Letras, números, puntos, guiones y guión bajo. Después no se puede cambiar.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">err</span>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email <span class="required">*</span></label>
+                        <label for="email">Correo <span class="required">*</span></label>
                         <input type="email" id="email" th:field="*{email}" required maxlength="120"
                                th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
                         <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">err</span>
@@ -71,10 +72,11 @@
                         <label for="rol">Rol <span class="required">*</span></label>
                         <select id="rol" th:field="*{rol}" required
                                 th:classappend="${#fields.hasErrors('rol')} ? 'is-invalid'">
-                            <option value="">-- Elegir rol --</option>
-                            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}">ROL</option>
+                            <option value="">Elegí un rol</option>
+                            <option th:each="r : ${roles}" th:value="${r}"
+                                    th:text="${r.name() == 'INSTITUCION'} ? 'Institución' : 'Administrador'">Rol</option>
                         </select>
-                        <small class="form-hint">INSTITUCION puede gestionar usuarios; ADMIN no.</small>
+                        <small class="form-hint">Institución administra las cuentas; Administrador no.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}">err</span>
                     </div>
                 </div>
