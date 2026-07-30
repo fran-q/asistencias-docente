@@ -113,8 +113,11 @@ class IdentificacionFacialServiceTest {
     //  helpers
     // ------------------------------------------------------------------------
 
+    // La calidad va en null: al identificar en el pase no se exige, porque un docente
+    // apurado en la puerta del aula no puede repetir la pose. La calidad se exige al
+    // REGISTRAR, que es cuando se construye el modelo contra el que se compara.
     private DeteccionRostroService.RostroExtraido rostroExtraidoValido() {
-        return new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100);
+        return new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100, null);
     }
 
     // Modelo facial activo del docente indicado.

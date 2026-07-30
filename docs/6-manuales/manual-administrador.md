@@ -246,17 +246,42 @@ consentimiento vigente.
 
 1. Ficha del docente → tarjeta **"Modelo facial"** → **"Registrar rostro"** (o **"Actualizar rostro"** si ya tenía uno).
 2. **"Encender cámara"** → el navegador pide permiso.
-3. **"Iniciar grabación"** → se graban 30 segundos del rostro del docente
-   (configurable). Durante la grabación:
-   - Indicador **REC** parpadeante en la cámara.
-   - Recuadro amarillo en vivo sobre el rostro detectado (feedback).
-4. Al finalizar, el sistema entrena el modelo LBPH con los frames válidos
-   (descarta los borrosos o sin rostro), lo cifra con AES, y lo guarda.
-5. Si éxito: badge **Registrado** en la ficha. Si error: leer el mensaje
-   y volver a grabar.
+3. El sistema pide **cinco poses**, una por vez, y toma tres capturas de cada una:
+   mirar de frente, girar apenas a un lado, apenas al otro, levantar un poco el
+   mentón y acercarse un paso.
+4. **No hay botón de grabar.** La cámara captura sola cuando la imagen sirve. El
+   recuadro sobre la cara es **amarillo** mientras falta corregir algo y **verde**
+   cuando ya está bien, y debajo dice qué corregir: *"acercate un poco"*,
+   *"quedate quieto"*, *"hay poca luz"*.
+5. La lista de abajo muestra en qué paso va. Termina cuando están las cinco
+   etapas, no cuando pasa un tiempo determinado.
+6. Al finalizar, el sistema entrena el modelo LBPH, lo cifra con AES y lo guarda.
+   Si algo falla, el mensaje dice **qué** falló: falta de luz, imágenes movidas, o
+   poses demasiado parecidas entre sí.
+
+> **Los giros tienen que ser suaves**, de apenas unos grados. No hay que ponerse
+> de perfil: el sistema detecta rostros de frente, así que con un perfil marcado
+> directamente no encuentra la cara y la etapa no avanza.
+
+> **Por qué cinco poses y no una sola.** Un modelo entrenado con la misma pose
+> repetida solo reconoce a la persona parada exactamente igual que el día del
+> registro. Basta que después incline la cabeza o se pare un poco más lejos para
+> que falle. Las variaciones son las que le dan tolerancia.
 
 > Las imágenes **no se persisten**. Solo se guarda el modelo entrenado
 > (cifrado). Cumple RF-08, RNF-07/08.
+
+### Si el registro no avanza
+
+| Qué dice la pantalla | Qué hacer |
+|---|---|
+| *Acercate un poco más* | La cara ocupa muy poco del cuadro |
+| *Hay poca luz* | Buscar un lugar más iluminado; la luz de frente, no detrás |
+| *Estás a contraluz* | Correrse de la ventana o apagar la luz que queda atrás |
+| *La imagen sale plana* | Misma causa: hay una fuente de luz fuerte detrás |
+| *Quedate quieto* | Esperar un segundo sin moverse antes de cada captura |
+| *Hay N personas en cuadro* | Tiene que quedar una sola persona frente a la cámara |
+| No detecta la cara | Sin gorra ni barbijo, mirando de frente |
 
 ### Re-registro (RF-09)
 Hacer clic en **"Actualizar rostro"** repite el proceso. El modelo anterior

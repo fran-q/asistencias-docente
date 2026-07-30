@@ -218,7 +218,13 @@ Propiedades clave:
 | `app.biometria.salt` | hex | Salt PBKDF2. |
 | `app.biometria.umbral-confianza` | `100.0` | Distancia máxima LBPH para considerar match. |
 | `app.biometria.tamano-rostro` | `200` | Lado en px del rostro normalizado. |
-| `app.biometria.duracion-grabacion-seg` | `30` | Duración de la grabación de registro facial. |
+| `app.biometria.captura.etapas` | `5` | Poses que pide la captura guiada (ADR-0012). |
+| `app.biometria.captura.capturas-por-etapa` | `3` | Capturas que toma de cada pose. |
+| `app.biometria.calidad.nitidez-minima` | `45.0` | Varianza del Laplaciano. Por debajo, la captura está movida. |
+| `app.biometria.calidad.brillo-minimo` / `-maximo` | `55` / `205` | Brillo medio del rostro, sobre 255. |
+| `app.biometria.calidad.contraste-minimo` | `22.0` | Desvío estándar del recorte; detecta el contraluz. |
+| `app.biometria.calidad.porcentaje-cuadro-minimo` / `-maximo` | `6` / `55` | Cuánto del cuadro ocupa el rostro. Es lo que sostiene "acercate" y "alejate". |
+| `app.biometria.calidad.diferencia-minima` | `8.0` | Diferencia media entre dos recortes para contarlos como poses distintas. |
 | `app.instalacion.clave` | `${INSTALACION_CLAVE:}` | Habilita el alta de instituciones. Vacía = alta deshabilitada. Ver sección 3.5. |
 | `app.verificacion.minutos-validez` | `15` | Cuánto vive el código de 6 dígitos. |
 | `app.verificacion.max-intentos` | `5` | Intentos fallidos antes de invalidar el código. |

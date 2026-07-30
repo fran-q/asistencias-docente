@@ -2,6 +2,7 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.dto.DeteccionRostroDto;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.opencv.opencv_core.Mat;
@@ -31,8 +32,11 @@ import static org.bytedeco.opencv.global.opencv_imgproc.resize;
  * coordenadas": no identifica de quién es ni persiste nada.
  */
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class DeteccionRostroService {
+
+    private final CalidadCapturaService calidadService;
 
     // Lado mínimo (px) de un rostro para considerarlo válido; descarta ruido.
     private static final int LADO_MINIMO_ROSTRO = 80;
@@ -72,6 +76,7 @@ public class DeteccionRostroService {
         Mat codificada = null;
         Mat imagen = null;
         Mat gris = null;
+        Mat grisOriginal = null;
         try (RectVector rostros = new RectVector()) {
             codificada = new Mat(new BytePointer(imagenBytes));
             imagen = imdecode(codificada, IMREAD_COLOR);
@@ -80,9 +85,14 @@ public class DeteccionRostroService {
                     "La imagen no se pudo procesar. Probá sacar otra foto.");
             }
 
-            gris = new Mat();
-            cvtColor(imagen, gris, COLOR_BGR2GRAY);
-            equalizeHist(gris, gris);   // mejora el contraste para la detección
+            // Dos copias del gris a proposito: la ecualizada es la que ve el detector
+            // (le mejora el contraste), y la original es sobre la que se mide la calidad.
+            // Medir el brillo sobre la ecualizada no serviria de nada: ecualizar aplana el
+            // histograma, asi que una cara a oscuras y una bien iluminada darian parecido.
+            grisOriginal = new Mat();
+            cvtColor(imagen, grisOriginal, COLOR_BGR2GRAY);
+            gris = grisOriginal.clone();
+            equalizeHist(gris, gris);
 
             clasificadorRostro.detectMultiScale(
                 gris, rostros,
@@ -100,23 +110,41 @@ public class DeteccionRostroService {
             }
 
             Rect masGrande = rostroMasGrande(rostros);
+
+            // Con dos personas en cuadro no tiene sentido medir nada: no sabemos a quien
+            // estariamos entrenando.
+            if (cantidad > 1) {
+                return new DeteccionRostroDto(
+                    true, (int) cantidad,
+                    masGrande.x(), masGrande.y(), masGrande.width(), masGrande.height(),
+                    false,
+                    "Hay " + cantidad + " personas en cuadro. Tiene que quedar una sola.",
+                    null, null, null, null);
+            }
+
+            CalidadCapturaService.Medicion m = calidadService.evaluar(grisOriginal, masGrande);
             return new DeteccionRostroDto(
-                true,
-                (int) cantidad,
+                true, 1,
                 masGrande.x(), masGrande.y(), masGrande.width(), masGrande.height(),
-                cantidad == 1
-                    ? "Rostro detectado correctamente."
-                    : "Se detectaron " + cantidad + " rostros. Debe haber solo una persona en cuadro."
+                m.apta(),
+                m.apta() ? "Así está bien, no te muevas." : m.motivo(),
+                m.nitidez(), m.brillo(), m.contraste(), m.porcentajeCuadro()
             );
         } finally {
-            if (gris != null)       gris.close();
-            if (imagen != null)     imagen.close();
-            if (codificada != null) codificada.close();
+            if (gris != null)          gris.close();
+            if (grisOriginal != null)  grisOriginal.close();
+            if (imagen != null)        imagen.close();
+            if (codificada != null)    codificada.close();
         }
     }
 
-    // Rostro ya normalizado más sus coordenadas dentro de la imagen original.
-    public record RostroExtraido(Mat rostro, int x, int y, int ancho, int alto) {}
+    /**
+     * Rostro ya normalizado, sus coordenadas y la calidad medida sobre el recorte original.
+     *
+     * @param calidad null cuando no se pudo medir; el que llama decide si eso lo descalifica
+     */
+    public record RostroExtraido(Mat rostro, int x, int y, int ancho, int alto,
+                                 CalidadCapturaService.Medicion calidad) {}
 
     // Devuelve el rostro en gris y escalado a tamaño fijo; exige exactamente uno, si no null.
     // El que llama se tiene que encargar de cerrar el Mat.
@@ -127,14 +155,16 @@ public class DeteccionRostroService {
         Mat codificada = null;
         Mat imagen = null;
         Mat gris = null;
+        Mat grisOriginal = null;
         try (RectVector rostros = new RectVector()) {
             codificada = new Mat(new BytePointer(imagenBytes));
             imagen = imdecode(codificada, IMREAD_COLOR);
             if (imagen == null || imagen.empty()) {
                 return null;
             }
-            gris = new Mat();
-            cvtColor(imagen, gris, COLOR_BGR2GRAY);
+            grisOriginal = new Mat();
+            cvtColor(imagen, grisOriginal, COLOR_BGR2GRAY);
+            gris = grisOriginal.clone();
             equalizeHist(gris, gris);
 
             clasificadorRostro.detectMultiScale(
@@ -148,15 +178,22 @@ public class DeteccionRostroService {
             }
 
             Rect r = rostros.get(0);
+            // La calidad se mide sobre el gris SIN ecualizar, por lo mismo que en detectar().
+            CalidadCapturaService.Medicion calidad = calidadService.evaluar(grisOriginal, r);
+
+            // El recorte que entrena si sale del gris ecualizado: es lo que estabiliza al
+            // LBPH frente a los cambios de iluminacion entre el registro y el pase.
             Mat rostroNormalizado = new Mat();
             try (Mat roi = new Mat(gris, r)) {
                 resize(roi, rostroNormalizado, new Size(tamano, tamano));
             }
-            return new RostroExtraido(rostroNormalizado, r.x(), r.y(), r.width(), r.height());
+            return new RostroExtraido(
+                rostroNormalizado, r.x(), r.y(), r.width(), r.height(), calidad);
         } finally {
-            if (gris != null)       gris.close();
-            if (imagen != null)     imagen.close();
-            if (codificada != null) codificada.close();
+            if (gris != null)          gris.close();
+            if (grisOriginal != null)  grisOriginal.close();
+            if (imagen != null)        imagen.close();
+            if (codificada != null)    codificada.close();
         }
     }
 

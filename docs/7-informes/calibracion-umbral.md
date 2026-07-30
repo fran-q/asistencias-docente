@@ -158,9 +158,11 @@ app.biometria.umbral-confianza=<valor elegido>
 Si hubo cruces o los márgenes son chicos, **no bajar el umbral para tapar el problema**:
 eso solo cambia falsos positivos por falsos negativos. Atacar las causas, en este orden:
 
-1. **Más y mejores capturas al registrar.** El mínimo son 5 fotogramas válidos de una
-   grabación de 30 segundos. Si el docente se registró quieto y de frente, el modelo es
-   frágil: que se mueva y varíe el ángulo durante la grabación.
+1. **Volver a registrar el rostro con la captura guiada.** Desde ADR-0012 el registro
+   pide cinco poses y verifica que las capturas sean distintas entre sí, justamente
+   porque un modelo entrenado con una sola pose repetida es frágil ante cualquier
+   variación. Un docente registrado con el flujo viejo —treinta segundos quieto de
+   frente— tiene un modelo pobre: **volver a registrarlo es lo primero a probar**.
 2. **Iluminación.** LBPH es sensible a la luz — es su debilidad conocida. Luz frontal
    difusa, nunca contraluz. Es gratis y suele ser lo que más mejora.
 3. **Si aun así no separa, es el límite del algoritmo.** LBPH compara patrones de

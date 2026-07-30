@@ -40,6 +40,7 @@ public class ModeloFacialService {
     private final UsuarioRepository usuarioRepository;
     private final ConsentimientoBiometricoService consentimientoService;
     private final DeteccionRostroService deteccionRostroService;
+    private final CalidadCapturaService calidadService;
     private final MotorLbphService motorLbph;
     private final CifradoBiometricoService cifradoService;
     private final IdentificacionFacialService identificacionFacialService;
@@ -50,25 +51,17 @@ public class ModeloFacialService {
     @Value("${app.biometria.tamano-rostro}")
     private int tamanoRostro;
 
-    @Value("${app.biometria.duracion-grabacion-seg}")
-    private int duracionGrabacionSeg;
-
-    @Value("${app.biometria.intervalo-captura-ms}")
-    private int intervaloCapturaMs;
+    @Value("${app.biometria.captura.capturas-por-etapa}")
+    private int capturasPorEtapa;
 
     // Cuántos frames válidos como mínimo hace falta para entrenar.
     public int getMinimoCapturasValidas() {
         return minimoCapturasValidas;
     }
 
-    // Duración (segundos) de la grabación que pide la UI.
-    public int getDuracionGrabacionSeg() {
-        return duracionGrabacionSeg;
-    }
-
-    // Intervalo (ms) entre frames durante la grabación.
-    public int getIntervaloCapturaMs() {
-        return intervaloCapturaMs;
+    // Cuantas capturas se toman de cada pose de la secuencia guiada.
+    public int getCapturasPorEtapa() {
+        return capturasPorEtapa;
     }
 
     // Modelo facial activo del docente, si tiene uno.
@@ -146,30 +139,44 @@ public class ModeloFacialService {
                 "No se recibió ninguna captura. Repetí la grabación.");
         }
 
-        // De TODAS las capturas, nos quedamos solo con las que tienen un
-        // rostro claro y único. El resto se descarta sin fallar (la grabación
-        // continua de 30s suele incluir frames con la cara borrosa o parcial).
+        // El navegador ya filtro con estos mismos criterios antes de mandar, pero se
+        // revalida igual: el cliente decide CUANDO capturar, no si la captura sirve.
+        // Ademas se exige que los recortes sean distintos entre si, que es lo unico que
+        // convierte a la secuencia guiada en algo mas que cinco veces la misma pose.
         List<Mat> rostros = new ArrayList<>();
         try {
-            int descartadas = 0;
+            int sinRostro = 0;
+            int malaCalidad = 0;
+            int repetidas = 0;
+
             for (byte[] cap : capturas) {
                 DeteccionRostroService.RostroExtraido extraido = deteccionRostroService
                     .extraerRostroNormalizado(cap, tamanoRostro);
                 if (extraido == null) {
-                    descartadas++;
-                } else {
-                    rostros.add(extraido.rostro());
+                    sinRostro++;
+                    continue;
                 }
+                if (extraido.calidad() != null && !extraido.calidad().apta()) {
+                    malaCalidad++;
+                    extraido.rostro().close();
+                    continue;
+                }
+                if (!calidadService.esNovedoso(extraido.rostro(), rostros)) {
+                    repetidas++;
+                    extraido.rostro().close();
+                    continue;
+                }
+                rostros.add(extraido.rostro());
             }
-            log.info("Registro facial docente {}: {} frames recibidos, {} válidos, {} descartados.",
-                     docenteId, capturas.size(), rostros.size(), descartadas);
+
+            log.info("Registro facial docente {}: {} recibidas, {} aceptadas "
+                     + "({} sin rostro, {} de mala calidad, {} repetidas).",
+                     docenteId, capturas.size(), rostros.size(),
+                     sinRostro, malaCalidad, repetidas);
 
             if (rostros.size() < minimoCapturasValidas) {
-                throw new IllegalArgumentException(
-                    "No se detectó tu cara de forma estable durante la grabación. "
-                    + "Necesitamos al menos " + minimoCapturasValidas
-                    + " capturas válidas y solo conseguimos " + rostros.size()
-                    + ". Volvé a intentar mirando de frente y con buena luz.");
+                throw new IllegalArgumentException(explicarPorQueNoAlcanza(
+                    rostros.size(), sinRostro, malaCalidad, repetidas));
             }
 
             byte[] modeloSerializado = motorLbph.entrenar(rostros);
@@ -220,6 +227,33 @@ public class ModeloFacialService {
     }
 
     // ------------------------------------------------------------------------
+
+    // Explica por que fallo segun cual haya sido el descarte dominante. Antes el mensaje
+    // era siempre el mismo ("no se detecto tu cara de forma estable"), que no le decia a
+    // nadie que corregir y obligaba a repetir a ciegas.
+    private String explicarPorQueNoAlcanza(int aceptadas, int sinRostro,
+                                           int malaCalidad, int repetidas) {
+        String base = "Quedaron " + aceptadas + " capturas utiles y hacen falta al menos "
+                    + minimoCapturasValidas + ". ";
+
+        int peor = Math.max(sinRostro, Math.max(malaCalidad, repetidas));
+        if (peor == 0) {
+            return base + "Volvé a intentarlo.";
+        }
+        if (peor == repetidas) {
+            return base + "La mayoría salieron casi idénticas entre sí: hay que moverse "
+                 + "de verdad entre una etapa y la siguiente, aunque sea poco. Un modelo "
+                 + "entrenado con la misma pose repetida después no reconoce a nadie que "
+                 + "se pare distinto.";
+        }
+        if (peor == malaCalidad) {
+            return base + "La mayoría salieron borrosas o mal iluminadas. Buscá un lugar "
+                 + "con luz pareja, sin ventana ni lámpara fuerte detrás, y esperá a estar "
+                 + "quieto antes de cada captura.";
+        }
+        return base + "En la mayoría no se llegó a detectar la cara. Mirá de frente a la "
+             + "cámara, sin barbijo ni gorra, y que no haya otra persona en cuadro.";
+    }
 
     private Docente obtenerDocenteValidado(Long docenteId) {
         Long tenantId = TenantContext.getRequired();

@@ -1,64 +1,98 @@
-/*
- * registro-facial.js
+/* =============================================================================
+ *  registro-facial.js
+ *  Captura guiada del modelo facial.
  *
- * Pantalla de registro del modelo facial:
- *  - botón único Encender/Apagar cámara (toggle, cambia de texto),
- *  - mientras la cámara está encendida, un loop manda un frame al servidor
- *    cada ~700 ms y dibuja un recuadro amarillo SOBRE el rostro detectado
- *    (mismo Haar Cascade que se usa para entrenar — feedback fiel),
- *  - botón único Iniciar/Cancelar grabación (toggle): graba N segundos,
- *    captura un frame cada intervalo configurado, y al terminar manda todo
- *    al servidor, que descarta frames sin rostro válido y entrena el modelo.
+ *  ----------------------------------------------------------------------------
+ *  Qué cambió y por qué. Antes esto grababa 30 segundos y mandaba todos los
+ *  frames; el servidor descartaba los malos y entrenaba con lo que quedara. El
+ *  problema no eran los frames descartados sino los aceptados: alguien quieto
+ *  30 segundos produce veinte fotos casi iguales, y un LBPH entrenado con eso
+ *  aprende una sola pose. Después, en el pase, basta que la persona incline la
+ *  cabeza para que la distancia se dispare.
  *
- * Ningún video ni foto se persiste.
- */
+ *  Ahora la secuencia va por etapas. Cada una pide una pose, muestra en vivo
+ *  qué corregir, y captura sola cuando la imagen sirve. Termina cuando están
+ *  todas las etapas, no cuando se acaba un reloj: si por la luz alguien tarda
+ *  el doble, tarda el doble y sale un modelo bueno.
+ *
+ *  ----------------------------------------------------------------------------
+ *  Quién decide qué. El navegador decide CUÁNDO capturar; el servidor decide si
+ *  la captura sirve. Toda evaluación es una llamada a /reconocimiento/detectar,
+ *  que corre el mismo Haar Cascade que después entrena y reconoce. Se podría
+ *  evaluar acá y sería más rápido, pero con otro detector: el recuadro diría
+ *  "perfecto" y el entrenamiento después descartaría el frame. El feedback
+ *  tiene que venir del mismo motor que toma la decisión final.
+ *
+ *  Ningún video ni foto se persiste.
+ * ========================================================================== */
 (function () {
     'use strict';
 
     const seccion = document.querySelector('.registro-facial');
     if (!seccion) return;
 
-    const video        = document.getElementById('rf-video');
-    const canvas       = document.getElementById('rf-canvas');
-    const overlay      = document.getElementById('rf-overlay');
-    const btnCamara    = document.getElementById('rf-btn-camara');
-    const btnGrabar    = document.getElementById('rf-btn-grabar');
-    const estadoEl     = document.getElementById('rf-estado');
-    const contadorEl   = document.getElementById('rf-contador');
-    const recIndicator = document.getElementById('rf-rec-indicator');
-    const resultado    = document.getElementById('rf-resultado');
-    const mensajeEl    = document.getElementById('rf-resultado-mensaje');
+    const video       = document.getElementById('rf-video');
+    const canvas      = document.getElementById('rf-canvas');
+    const overlay     = document.getElementById('rf-overlay');
+    const btnCamara   = document.getElementById('rf-btn-camara');
+    const btnReiniciar= document.getElementById('rf-btn-reiniciar');
+    const pasoEl      = document.getElementById('rf-paso');
+    const instrEl     = document.getElementById('rf-instruccion');
+    const detalleEl   = document.getElementById('rf-detalle');
+    const feedbackEl  = document.getElementById('rf-feedback');
+    const listaEtapas = document.getElementById('rf-etapas');
+    const resultado   = document.getElementById('rf-resultado');
+    const mensajeEl   = document.getElementById('rf-resultado-mensaje');
 
     if (!video || !btnCamara) return;
 
-    const docenteId     = seccion.dataset.docenteId;
-    const duracionSeg   = parseInt(seccion.dataset.duracionSeg, 10);
-    const intervaloMs   = parseInt(seccion.dataset.intervaloMs, 10);
-    const minimoValidas = parseInt(seccion.dataset.minimoValidas, 10);
+    const docenteId        = seccion.dataset.docenteId;
+    const capturasPorEtapa = parseInt(seccion.dataset.capturasPorEtapa, 10) || 3;
 
-    /** Cada cuánto pedirle al server que detecte la cara para dibujar el overlay. */
-    const INTERVALO_DETECCION_MS = 700;
+    const etapas = [].slice.call(listaEtapas.querySelectorAll('.captura__etapa'))
+        .map(function (li) {
+            return {
+                nodo: li,
+                instruccion: li.dataset.instruccion,
+                detalle: li.dataset.detalle
+            };
+        });
+
+    /** Cada cuánto se le pide al servidor que evalúe el cuadro. */
+    const INTERVALO_EVALUACION_MS = 600;
+
+    /**
+     * Cuántas lecturas buenas seguidas hacen falta para capturar. Con una sola
+     * alcanzaría, pero dos evitan pescar el instante exacto en que la persona
+     * pasa por la pose de camino a otra cosa.
+     */
+    const LECTURAS_BUENAS_SEGUIDAS = 2;
+
+    /**
+     * Pausa después de capturar. Sin esto las 3 capturas de una etapa saldrían
+     * en menos de dos segundos y serían prácticamente la misma foto — justo el
+     * problema que esta pantalla vino a resolver.
+     */
+    const PAUSA_ENTRE_CAPTURAS_MS = 900;
 
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
     let stream = null;
-    let grabando = false;
-    let capturas = [];
-    let tickInterval = null;
-    let countdownInterval = null;
-    let deteccionInterval = null;
-    let deteccionEnVuelo = false;
-    let segundosRestantes = 0;
+    let evaluando = false;
+    let loopId = null;
+    let enPausa = false;
 
-    // ---- Cámara: toggle ---------------------------------------------------
+    let etapaActual = 0;
+    let capturasDeLaEtapa = 0;
+    let buenasSeguidas = 0;
+    let capturas = [];
+    let enviando = false;
+
+    // ---- Cámara -----------------------------------------------------------
 
     async function toggleCamara() {
-        if (stream) {
-            apagarCamara();
-        } else {
-            await encenderCamara();
-        }
+        if (stream) apagarCamara(); else await encenderCamara();
     }
 
     async function encenderCamara() {
@@ -74,34 +108,93 @@
             video.srcObject = stream;
             await video.play().catch(function () {});
             ajustarOverlay();
-            iniciarLoopDeteccion();
 
             btnCamara.textContent = 'Apagar cámara';
-            btnGrabar.disabled    = false;
-            estadoEl.textContent  = 'Cámara encendida — listo para grabar';
+            btnReiniciar.hidden = false;
             ocultarMensaje();
+            reiniciarSecuencia();
+            arrancarLoop();
         } catch (err) {
             mostrarMensaje('No se pudo acceder a la cámara: ' + traducirError(err), 'error');
         }
     }
 
     function apagarCamara() {
-        if (grabando) cancelarGrabacion();
-        detenerLoopDeteccion();
+        detenerLoop();
         limpiarOverlay();
         if (stream) {
             stream.getTracks().forEach(function (t) { t.stop(); });
             stream = null;
         }
         video.srcObject = null;
-        btnCamara.textContent   = 'Encender cámara';
-        btnGrabar.textContent   = 'Iniciar grabación';
-        btnGrabar.disabled      = true;
-        estadoEl.textContent    = 'Cámara apagada';
-        contadorEl.textContent  = '';
+        btnCamara.textContent = 'Encender cámara';
+        btnReiniciar.hidden = true;
+        feedbackEl.textContent = 'Cámara apagada';
+        feedbackEl.className = 'captura__feedback';
     }
 
-    // ---- Detección en vivo: recuadro amarillo sobre el rostro -------------
+    // ---- Secuencia --------------------------------------------------------
+
+    function reiniciarSecuencia() {
+        etapaActual = 0;
+        capturasDeLaEtapa = 0;
+        buenasSeguidas = 0;
+        capturas = [];
+        enPausa = false;
+        etapas.forEach(function (e) {
+            e.nodo.classList.remove('captura__etapa--lista', 'captura__etapa--activa');
+            e.nodo.querySelector('.captura__etapa-marca').textContent = '';
+        });
+        pintarEtapa();
+    }
+
+    function pintarEtapa() {
+        etapas.forEach(function (e, i) {
+            e.nodo.classList.toggle('captura__etapa--activa', i === etapaActual);
+        });
+        const etapa = etapas[etapaActual];
+        if (!etapa) return;
+
+        pasoEl.textContent = 'Paso ' + (etapaActual + 1) + ' de ' + etapas.length;
+        instrEl.textContent = etapa.instruccion;
+        detalleEl.textContent = etapa.detalle;
+        actualizarMarca();
+    }
+
+    function actualizarMarca() {
+        const etapa = etapas[etapaActual];
+        if (!etapa) return;
+        etapa.nodo.querySelector('.captura__etapa-marca').textContent =
+            capturasDeLaEtapa + '/' + capturasPorEtapa;
+    }
+
+    function completarEtapa() {
+        const etapa = etapas[etapaActual];
+        etapa.nodo.classList.remove('captura__etapa--activa');
+        etapa.nodo.classList.add('captura__etapa--lista');
+        etapa.nodo.querySelector('.captura__etapa-marca').textContent = 'listo';
+
+        etapaActual++;
+        capturasDeLaEtapa = 0;
+        buenasSeguidas = 0;
+
+        if (etapaActual >= etapas.length) {
+            enviar();
+        } else {
+            pintarEtapa();
+        }
+    }
+
+    // ---- Loop de evaluación ----------------------------------------------
+
+    function arrancarLoop() {
+        if (loopId) return;
+        loopId = setInterval(evaluar, INTERVALO_EVALUACION_MS);
+    }
+
+    function detenerLoop() {
+        if (loopId) { clearInterval(loopId); loopId = null; }
+    }
 
     function ajustarOverlay() {
         if (video.videoWidth > 0 && video.videoHeight > 0) {
@@ -110,53 +203,84 @@
         }
     }
 
-    function iniciarLoopDeteccion() {
-        if (deteccionInterval) return;
-        deteccionInterval = setInterval(detectarYDibujar, INTERVALO_DETECCION_MS);
-    }
-
-    function detenerLoopDeteccion() {
-        if (deteccionInterval) {
-            clearInterval(deteccionInterval);
-            deteccionInterval = null;
-        }
-    }
-
-    async function detectarYDibujar() {
-        if (!stream || deteccionEnVuelo) return;
-        ajustarOverlay();
+    function cuadroActual(calidad) {
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        return canvas.toDataURL('image/jpeg', calidad);
+    }
 
-        deteccionEnVuelo = true;
+    async function evaluar() {
+        if (!stream || evaluando || enPausa || enviando) return;
+        ajustarOverlay();
+
+        // Calidad baja para evaluar (viaja cada 600 ms) y alta para lo que se
+        // guarda: el frame que entrena se vuelve a sacar en capturar().
+        const dataUrl = cuadroActual(0.6);
+
+        evaluando = true;
         try {
             const headers = { 'Content-Type': 'application/json' };
             if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
             const resp = await fetch('/reconocimiento/detectar', {
-                method: 'POST',
-                headers: headers,
+                method: 'POST', headers: headers,
                 body: JSON.stringify({ imagen: dataUrl })
             });
             if (!resp.ok) return;
-            const data = await resp.json();
-            if (data.rostroDetectado && data.cantidadRostros === 1) {
-                dibujarRecuadro(data.x, data.y, data.ancho, data.alto);
+            const datos = await resp.json();
+
+            // La respuesta pudo tardar más que un apagado o un reinicio.
+            if (!stream || enPausa || enviando) return;
+
+            if (datos.rostroDetectado) {
+                dibujarRecuadro(datos.x, datos.y, datos.ancho, datos.alto, datos.apta);
             } else {
                 limpiarOverlay();
             }
+
+            feedbackEl.textContent = datos.mensaje || '';
+            feedbackEl.className = 'captura__feedback captura__feedback--'
+                + (datos.apta ? 'ok' : 'corregir');
+
+            if (datos.apta) {
+                buenasSeguidas++;
+                if (buenasSeguidas >= LECTURAS_BUENAS_SEGUIDAS) capturar();
+            } else {
+                buenasSeguidas = 0;
+            }
         } catch (err) {
-            // Errores de red transitorios: no dibujamos, no molestamos.
+            // Error de red pasajero: no molestamos, la próxima vuelta reintenta.
         } finally {
-            deteccionEnVuelo = false;
+            evaluando = false;
         }
     }
 
-    function dibujarRecuadro(x, y, ancho, alto) {
+    function capturar() {
+        capturas.push(cuadroActual(0.85));
+        capturasDeLaEtapa++;
+        buenasSeguidas = 0;
+        actualizarMarca();
+
+        if (capturasDeLaEtapa >= capturasPorEtapa) {
+            completarEtapa();
+            return;
+        }
+
+        // Respiro entre capturas de la misma etapa, para que no salgan clonadas.
+        enPausa = true;
+        feedbackEl.textContent = 'Capturada. Sostené la pose…';
+        feedbackEl.className = 'captura__feedback captura__feedback--ok';
+        setTimeout(function () { enPausa = false; }, PAUSA_ENTRE_CAPTURAS_MS);
+    }
+
+    // ---- Overlay ----------------------------------------------------------
+
+    function dibujarRecuadro(x, y, ancho, alto, apta) {
         const ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
-        ctx.strokeStyle = '#ffc107';
+        // Verde cuando ya sirve, amarillo cuando falta corregir algo: el color
+        // dice lo mismo que el texto, para no tener que leerlo cada vez.
+        ctx.strokeStyle = apta ? '#2e8b57' : '#ffc107';
         ctx.lineWidth   = Math.max(3, Math.round(overlay.width / 160));
         ctx.lineJoin    = 'round';
         ctx.strokeRect(x, y, ancho, alto);
@@ -168,107 +292,54 @@
         }
     }
 
-    // ---- Grabación: toggle ------------------------------------------------
+    // ---- Envío ------------------------------------------------------------
 
-    function toggleGrabacion() {
-        if (grabando) {
-            cancelarGrabacion();
-        } else {
-            iniciarGrabacion();
-        }
-    }
-
-    function iniciarGrabacion() {
-        if (!stream || grabando) return;
-        capturas = [];
-        grabando = true;
-        segundosRestantes = duracionSeg;
-
-        recIndicator.style.display = 'inline-flex';
-        btnGrabar.textContent = 'Cancelar grabación';
-        btnCamara.disabled    = true; // no se puede apagar mientras graba
-        estadoEl.textContent  = 'Grabando…';
-        ocultarMensaje();
-        actualizarContador();
-
-        capturarFrame();
-        tickInterval = setInterval(capturarFrame, intervaloMs);
-        countdownInterval = setInterval(tickSegundo, 1000);
-    }
-
-    function capturarFrame() {
-        if (!stream) return;
-        canvas.width  = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        capturas.push(canvas.toDataURL('image/jpeg', 0.85));
-    }
-
-    function tickSegundo() {
-        segundosRestantes--;
-        if (segundosRestantes <= 0) {
-            finalizarGrabacion();
-        } else {
-            actualizarContador();
-        }
-    }
-
-    function actualizarContador() {
-        contadorEl.textContent = 'Quedan ' + segundosRestantes + ' s — '
-            + capturas.length + ' frames capturados';
-    }
-
-    function cancelarGrabacion() {
-        pararIntervalosDeGrabacion();
-        grabando = false;
-        capturas = [];
-        recIndicator.style.display = 'none';
-        btnGrabar.textContent = 'Iniciar grabación';
-        btnCamara.disabled    = false;
-        estadoEl.textContent  = 'Grabación cancelada';
-        contadorEl.textContent = '';
-    }
-
-    function pararIntervalosDeGrabacion() {
-        if (tickInterval)      { clearInterval(tickInterval);      tickInterval = null; }
-        if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
-    }
-
-    async function finalizarGrabacion() {
-        pararIntervalosDeGrabacion();
-        grabando = false;
-        recIndicator.style.display = 'none';
-        btnGrabar.disabled    = true;
-        btnGrabar.textContent = 'Iniciar grabación';
-        estadoEl.textContent  = 'Procesando ' + capturas.length + ' frames…';
-        mostrarMensaje('Entrenando el modelo facial… esto puede tardar unos segundos.', 'info');
+    async function enviar() {
+        enviando = true;
+        detenerLoop();
+        limpiarOverlay();
+        pasoEl.textContent = 'Listo';
+        instrEl.textContent = 'Entrenando el modelo facial…';
+        detalleEl.textContent = '';
+        feedbackEl.textContent = capturas.length + ' capturas tomadas';
+        feedbackEl.className = 'captura__feedback';
+        mostrarMensaje('Esto puede tardar unos segundos.', 'info');
 
         try {
             const headers = { 'Content-Type': 'application/json' };
             if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
             const resp = await fetch('/docentes/' + docenteId + '/rostro/registrar', {
-                method: 'POST',
-                headers: headers,
+                method: 'POST', headers: headers,
                 body: JSON.stringify({ capturas: capturas })
             });
             if (!resp.ok) throw new Error('El servidor respondió ' + resp.status);
-            const data = await resp.json();
-            if (data.exito) {
+            const datos = await resp.json();
+
+            if (datos.exito) {
                 apagarCamara();
-                mostrarMensaje(data.mensaje + ' Redirigiendo…', 'success');
+                mostrarMensaje(datos.mensaje + ' Redirigiendo…', 'success');
                 setTimeout(function () {
                     window.location.href = '/docentes/' + docenteId + '/editar';
-                }, 1200);
+                }, 1400);
             } else {
-                mostrarMensaje(data.mensaje, 'error');
-                btnGrabar.disabled = false;
-                btnCamara.disabled = false;
-                estadoEl.textContent = 'Listo para volver a grabar';
+                // El servidor revalida y puede rechazar lo que acá pasó. Su
+                // mensaje dice qué falló, asi que se muestra tal cual.
+                mostrarMensaje(datos.mensaje, 'error');
+                prepararReintento();
             }
         } catch (err) {
             mostrarMensaje('No se pudo registrar: ' + err.message, 'error');
-            btnGrabar.disabled = false;
-            btnCamara.disabled = false;
+            prepararReintento();
+        }
+    }
+
+    function prepararReintento() {
+        enviando = false;
+        reiniciarSecuencia();
+        if (stream) {
+            arrancarLoop();
+        } else {
+            feedbackEl.textContent = 'Encendé la cámara para volver a intentar';
         }
     }
 
@@ -280,9 +351,7 @@
         resultado.hidden = false;
     }
 
-    function ocultarMensaje() {
-        resultado.hidden = true;
-    }
+    function ocultarMensaje() { resultado.hidden = true; }
 
     function traducirError(err) {
         switch (err && err.name) {
@@ -303,6 +372,10 @@
     // ---- Eventos ----------------------------------------------------------
 
     btnCamara.addEventListener('click', toggleCamara);
-    btnGrabar.addEventListener('click', toggleGrabacion);
+    btnReiniciar.addEventListener('click', function () {
+        ocultarMensaje();
+        reiniciarSecuencia();
+        if (stream && !loopId) arrancarLoop();
+    });
     window.addEventListener('pagehide', apagarCamara);
 })();

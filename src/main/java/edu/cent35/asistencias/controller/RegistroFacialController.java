@@ -60,9 +60,11 @@ public class RegistroFacialController {
         model.addAttribute("docente", docente);
         model.addAttribute("consentimientoActivo", consentimientoActivo);
         model.addAttribute("yaRegistrado", modeloFacialService.tieneModeloActivo(docenteId));
-        model.addAttribute("duracionGrabacionSeg", modeloFacialService.getDuracionGrabacionSeg());
-        model.addAttribute("intervaloCapturaMs", modeloFacialService.getIntervaloCapturaMs());
         model.addAttribute("minimoCapturasValidas", modeloFacialService.getMinimoCapturasValidas());
+        // La secuencia guiada se arma desde el servidor para que la pantalla y el
+        // entrenamiento hablen de las mismas etapas.
+        model.addAttribute("etapas", EtapaCaptura.values());
+        model.addAttribute("capturasPorEtapa", modeloFacialService.getCapturasPorEtapa());
         return "reconocimiento/registrar-rostro";
     }
 

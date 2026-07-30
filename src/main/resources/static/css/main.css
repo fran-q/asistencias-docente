@@ -681,6 +681,140 @@ code {
 
 .text-muted { color: var(--text-muted); }
 
+/* ========== CAPTURA GUIADA DEL ROSTRO ==========
+   La instrucción va arriba del video y el motivo debajo: es el orden en que se
+   miran las cosas. El progreso es por etapas, no por tiempo. */
+.captura { max-width: 620px; margin: 0 auto; }
+
+.captura__card { text-align: center; }
+
+.captura__guia { margin-bottom: var(--space); }
+
+.captura__paso {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.captura__instruccion {
+    margin: var(--space-xs) 0 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.captura__detalle {
+    margin: var(--space-xs) 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.captura__camara {
+    position: relative;
+    display: block;
+    margin: 0 auto;
+    line-height: 0;
+}
+
+.captura__video {
+    width: 100%;
+    max-height: 42vh;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius);
+    background: #000;
+}
+
+.captura__overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* El motivo por el que todavía no captura. Alto fijo para que la tarjeta no
+   salte cada vez que cambia el texto. */
+.captura__feedback {
+    min-height: 2.6rem;
+    margin: var(--space) 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+.captura__feedback--ok       { color: #6cdfa6; font-weight: 600; }
+.captura__feedback--corregir { color: #f7c26b; font-weight: 600; }
+
+.captura__etapas {
+    margin: var(--space) 0 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.captura__etapa {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.captura__etapa-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-size: 0.75rem;
+}
+
+.captura__etapa-nombre { flex: 1; }
+
+.captura__etapa-marca {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+}
+
+.captura__etapa--activa {
+    background: var(--bg-elev-2);
+    color: var(--text);
+}
+.captura__etapa--activa .captura__etapa-num {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.captura__etapa--lista { color: var(--success); }
+.captura__etapa--lista .captura__etapa-num {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+
+.captura__acciones {
+    margin-top: var(--space);
+    justify-content: center;
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+/* En pantallas bajas el video cede espacio antes que la lista de etapas: sin
+   ver en qué paso va, la guía no sirve de nada. */
+@media (max-height: 760px) {
+    .captura__video   { max-height: 32vh; }
+    .captura__detalle { display: none; }
+}
+
 /* ========== FILTRO DE LISTADOS ==========
    Barra de búsqueda instantánea que va arriba de las tablas de catálogo.
    Ver filtro-tabla.js para por qué estos filtran en el navegador y los de

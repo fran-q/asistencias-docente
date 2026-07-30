@@ -6,25 +6,21 @@
 </head>
 <body>
     <section class="registro-facial"
-             style="text-align:center; max-width: 720px; margin: 0 auto;"
              th:data-docente-id="${docente.id}"
-             th:data-duracion-seg="${duracionGrabacionSeg}"
-             th:data-intervalo-ms="${intervaloCapturaMs}"
-             th:data-minimo-validas="${minimoCapturasValidas}">
-        <header class="page-header" style="text-align:center;">
+             th:data-capturas-por-etapa="${capturasPorEtapa}">
+        <header class="page-header">
             <h1>Registrar rostro</h1>
             <p class="page-header__subtitle">
                 Modelo facial de
                 <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
                 (DNI <span th:text="${docente.dni}">12345678</span>).
-                Grabación de <span th:text="${duracionGrabacionSeg}">30</span> s mirando a la cámara.
-                Las imágenes no se guardan.
+                Te vamos a pedir unas poses y la cámara captura sola cuando la imagen sirve.
+                Las fotos no se guardan: solo queda el modelo entrenado y cifrado.
             </p>
         </header>
 
         <!-- Bloqueo: sin consentimiento no se puede registrar -->
-        <div th:unless="${consentimientoActivo}" class="alert alert--error" role="alert"
-             style="max-width: 560px; margin: 0 auto;">
+        <div th:unless="${consentimientoActivo}" class="alert alert--error" role="alert">
             <p><strong>No se puede registrar el rostro.</strong>
                Falta el consentimiento biométrico vigente.</p>
             <p>
@@ -34,70 +30,62 @@
         </div>
 
         <!-- Aviso de re-registro -->
-        <div th:if="${consentimientoActivo and yaRegistrado}" class="alert alert--info"
-             role="note" style="max-width: 560px; margin: 0 auto;">
+        <div th:if="${consentimientoActivo and yaRegistrado}" class="alert alert--info" role="note">
             <p>Este docente ya tiene un modelo facial registrado. Si completás un
                registro nuevo, el anterior se da de baja automáticamente.</p>
         </div>
 
-        <!-- Captura: solo si hay consentimiento activo -->
-        <div th:if="${consentimientoActivo}" class="card" style="max-width: 560px; margin: 0 auto;">
-            <div class="reconocimiento__camara"
-                 style="position:relative; display:inline-block; max-width:480px; margin:0 auto;">
-                <video id="rf-video" autoplay playsinline muted
-                       style="width:100%; max-width:480px; border-radius:8px;
-                              background:#000; display:block;"></video>
+        <div th:if="${consentimientoActivo}" class="captura">
+            <div class="card captura__card">
 
-                <canvas id="rf-overlay"
-                        style="position:absolute; top:0; left:0;
-                               width:100%; height:100%;
-                               pointer-events:none;"></canvas>
-
-                <!-- Indicador "REC" durante la grabación -->
-                <div id="rf-rec-indicator"
-                     style="position:absolute; top:10px; left:10px;
-                            background:#ffc107; color:#000;
-                            font-weight:700; font-size:.85rem;
-                            padding:3px 8px; border-radius:4px;
-                            display:none; align-items:center; gap:6px;">
-                    <span style="display:inline-block; width:10px; height:10px;
-                                 border-radius:50%; background:#d32f2f;
-                                 animation: rf-blink 1s infinite;"></span>
-                    REC
+                <!-- Instruccion de la etapa actual: es lo primero que hay que leer, asi que
+                     va arriba del video y no debajo, donde competiria con los botones. -->
+                <div class="captura__guia">
+                    <p class="captura__paso" id="rf-paso">Encendé la cámara para empezar</p>
+                    <p class="captura__instruccion" id="rf-instruccion">
+                        Vamos a tomar unas capturas de distintas poses.
+                    </p>
+                    <p class="captura__detalle" id="rf-detalle"></p>
                 </div>
 
-                <canvas id="rf-canvas" hidden></canvas>
-            </div>
+                <div class="captura__camara">
+                    <video id="rf-video" class="captura__video" autoplay playsinline muted></video>
+                    <canvas id="rf-overlay" class="captura__overlay"></canvas>
+                    <canvas id="rf-canvas" hidden></canvas>
+                </div>
 
-            <style>
-                @keyframes rf-blink { 50% { opacity: .25; } }
-            </style>
+                <!-- Por que TODAVIA no captura. Es el reemplazo del contador regresivo:
+                     antes se veia cuanto faltaba, ahora se ve que hay que corregir. -->
+                <p class="captura__feedback" id="rf-feedback">Cámara apagada</p>
 
-            <div style="margin-top:1rem; min-height: 3rem;">
-                <p style="margin:0;">
-                    Estado:
-                    <strong id="rf-estado">Cámara apagada</strong>
-                </p>
-                <p id="rf-contador" style="margin:0.25rem 0 0; font-variant-numeric: tabular-nums;
-                                           font-size:0.9rem; opacity:0.8;"></p>
-            </div>
+                <!-- Progreso por etapas, no por segundos -->
+                <ol class="captura__etapas" id="rf-etapas">
+                    <li th:each="e, it : ${etapas}"
+                        class="captura__etapa"
+                        th:data-etapa="${it.index}"
+                        th:data-instruccion="${e.instruccion}"
+                        th:data-detalle="${e.detalle}">
+                        <span class="captura__etapa-num" th:text="${it.count}">1</span>
+                        <span class="captura__etapa-nombre" th:text="${e.instruccion}">Pose</span>
+                        <span class="captura__etapa-marca" aria-hidden="true"></span>
+                    </li>
+                </ol>
 
-            <!-- Botones toggle -->
-            <div class="form-actions"
-                 style="margin-top:1rem; justify-content:center; display:flex; gap:0.6rem; flex-wrap:wrap;">
-                <button type="button" id="rf-btn-camara" class="btn btn--primary">
-                    Encender cámara
-                </button>
-                <button type="button" id="rf-btn-grabar" class="btn btn--primary" disabled>
-                    Iniciar grabación
-                </button>
-                <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">
-                    Volver
-                </a>
-            </div>
+                <div class="form-actions captura__acciones">
+                    <button type="button" id="rf-btn-camara" class="btn btn--primary">
+                        Encender cámara
+                    </button>
+                    <button type="button" id="rf-btn-reiniciar" class="btn btn--ghost" hidden>
+                        Empezar de nuevo
+                    </button>
+                    <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">
+                        Volver
+                    </a>
+                </div>
 
-            <div id="rf-resultado" style="margin-top:1rem;" hidden>
-                <p id="rf-resultado-mensaje"></p>
+                <div id="rf-resultado" hidden>
+                    <p id="rf-resultado-mensaje"></p>
+                </div>
             </div>
         </div>
 

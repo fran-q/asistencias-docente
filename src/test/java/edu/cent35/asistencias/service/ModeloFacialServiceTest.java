@@ -49,6 +49,7 @@ class ModeloFacialServiceTest {
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private ConsentimientoBiometricoService consentimientoService;
     @Mock private DeteccionRostroService deteccionRostroService;
+    @Mock private CalidadCapturaService calidadService;
     @Mock private MotorLbphService motorLbph;
     @Mock private CifradoBiometricoService cifradoService;
     @Mock private IdentificacionFacialService identificacionFacialService;
@@ -60,8 +61,7 @@ class ModeloFacialServiceTest {
         TenantContext.set(TENANT_A);
         ReflectionTestUtils.setField(service, "minimoCapturasValidas", 5);
         ReflectionTestUtils.setField(service, "tamanoRostro", 200);
-        ReflectionTestUtils.setField(service, "duracionGrabacionSeg", 30);
-        ReflectionTestUtils.setField(service, "intervaloCapturaMs", 1500);
+        ReflectionTestUtils.setField(service, "capturasPorEtapa", 3);
     }
 
     @AfterEach
@@ -79,6 +79,7 @@ class ModeloFacialServiceTest {
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
             .thenReturn(rostroExtraidoValido());
+        when(calidadService.esNovedoso(any(), any())).thenReturn(true);
         when(motorLbph.entrenar(anyList())).thenReturn(new byte[]{1, 2, 3});
         when(cifradoService.cifrar(any())).thenReturn(new byte[]{9, 8, 7});
         when(modeloFacialRepository.findByDocenteIdAndActivoTrue(DOCENTE_ID))
@@ -153,6 +154,7 @@ class ModeloFacialServiceTest {
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
             .thenReturn(rostroExtraidoValido());
+        when(calidadService.esNovedoso(any(), any())).thenReturn(true);
         when(motorLbph.entrenar(anyList())).thenReturn(new byte[]{1, 2, 3});
         when(cifradoService.cifrar(any())).thenReturn(new byte[]{9, 8, 7});
 
@@ -179,6 +181,59 @@ class ModeloFacialServiceTest {
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
             .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // ========================================================================
+    //  Calidad y variedad de las capturas (ADR-0012)
+    // ========================================================================
+
+    @Test
+    @DisplayName("registrar: descarta las capturas que no cumplen la calidad medida")
+    void registrar_descartaMalaCalidad() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
+        // Se detecta la cara en todas, pero ninguna pasa los umbrales.
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(rostroDeMalaCalidad("Quedate quieto, la imagen sale movida."));
+
+        assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
+            .isInstanceOf(IllegalArgumentException.class)
+            .as("el mensaje tiene que decir QUE corregir, no solo que fallo")
+            .hasMessageContaining("borrosas o mal iluminadas");
+
+        // Nunca se entrena con capturas que no sirven: es el punto de todo esto.
+        verify(motorLbph, never()).entrenar(anyList());
+        verify(modeloFacialRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("registrar: rechaza si todas las capturas son la misma pose repetida")
+    void registrar_rechazaPosesRepetidas() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(rostroExtraidoValido());
+        // La primera entra; de ahi en mas todas salen demasiado parecidas a las ya aceptadas.
+        when(calidadService.esNovedoso(any(), any())).thenReturn(false);
+
+        assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(15), USUARIO_ACTUAL_ID))
+            .isInstanceOf(IllegalArgumentException.class)
+            .as("es el fallo que el registro viejo no detectaba: 20 fotos de la misma pose "
+                + "entrenaban igual, y el modelo despues no toleraba ninguna variacion")
+            .hasMessageContaining("casi idénticas");
+
+        verify(motorLbph, never()).entrenar(anyList());
+    }
+
+    @Test
+    @DisplayName("registrar: si no se detecta la cara, el mensaje habla de eso y no de la luz")
+    void registrar_mensajeSegunElDescarteDominante() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt())).thenReturn(null);
+
+        assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
+            .hasMessageContaining("no se llegó a detectar la cara");
     }
 
     // ========================================================================
@@ -276,8 +331,19 @@ class ModeloFacialServiceTest {
         return List.of(arr);
     }
 
-    // Stub de RostroExtraido con un Mat vacío. El servicio no inspecciona la imagen.
+    // Stub de RostroExtraido con un Mat vacio. El servicio no inspecciona la imagen.
     private DeteccionRostroService.RostroExtraido rostroExtraidoValido() {
-        return new DeteccionRostroService.RostroExtraido(new Mat(), 0, 0, 200, 200);
+        return new DeteccionRostroService.RostroExtraido(
+            new Mat(), 0, 0, 200, 200, medicion(true, null));
+    }
+
+    // Rostro que se detecta bien pero que no cumple los umbrales de calidad.
+    private DeteccionRostroService.RostroExtraido rostroDeMalaCalidad(String motivo) {
+        return new DeteccionRostroService.RostroExtraido(
+            new Mat(), 0, 0, 200, 200, medicion(false, motivo));
+    }
+
+    private CalidadCapturaService.Medicion medicion(boolean apta, String motivo) {
+        return new CalidadCapturaService.Medicion(apta, motivo, 120.0, 130.0, 45.0, 20.0);
     }
 }
