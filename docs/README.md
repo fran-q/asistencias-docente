@@ -22,6 +22,8 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 
 **Si querés entender el proyecto desde cero** → [8-defensa/apuntes-entender-el-proyecto.md](./8-defensa/apuntes-entender-el-proyecto.md). Está escrito para leerse de corrido junto al código fuente.
 
+**Si querés entender cómo está organizado el código** → [4-arquitectura/como-esta-armado-el-proyecto.md](./4-arquitectura/como-esta-armado-el-proyecto.md). Explica en qué carpeta va cada cosa y cómo funciona el reconocimiento facial, sin entrar en el detalle línea por línea. Es el punto de partida antes de abrir el código.
+
 **Si necesitás el detalle técnico** → [4-arquitectura/referencia-tecnica.md](./4-arquitectura/referencia-tecnica.md). Es la radiografía completa: capas, flujos, esquema de base de datos.
 
 **Si te preguntás por qué algo está hecho de determinada manera** → [4-arquitectura/adr](./4-arquitectura/adr). Cada decisión no obvia tiene su registro, con las alternativas que se descartaron y por qué.
