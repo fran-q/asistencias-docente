@@ -12,10 +12,6 @@ Notación: **Gane-Sarson**.
 > **draw.io los importa** vía `Extras → Insertar → Mermaid…` para dejarlos
 > prolijos. Cada nivel incluye una **tabla de especificación** para
 > reconstruirlo a mano si se prefiere control total del layout.
->
-> Nota de alcance: el módulo de **Auditoría** existe en el modelo de datos
-> pero su escritura no está implementada en esta primera entrega, por lo
-> que **no figura como proceso** en estos DFD (ver Documento de Alcance).
 
 ---
 

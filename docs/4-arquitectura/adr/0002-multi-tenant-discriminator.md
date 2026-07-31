@@ -30,10 +30,13 @@ El aislamiento se garantiza con **defensa en profundidad** en cinco capas:
 
 ## Excepciones
 
-Tres tablas son globales (sin `institucion_id`):
+Dos tablas son globales (sin `institucion_id`):
 - `roles`: catálogo de roles del sistema.
 - `motivos_carga_manual`: catálogo de motivos.
-- `auditoria`: incluye `institucion_id` pero como columna nullable.
+
+> Cuando se tomó esta decisión había una tercera, `auditoria`, que llevaba
+> `institucion_id` nullable. Esa tabla se eliminó en la migración V009 junto con
+> el módulo que la iba a usar, que quedó fuera del alcance del proyecto.
 
 ## Consecuencias
 

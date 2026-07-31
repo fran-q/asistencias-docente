@@ -32,6 +32,7 @@ public class VerificacionInterceptor implements HandlerInterceptor {
 
     private final UsuarioRepository usuarioRepository;
 
+    // Deja pasar solo si la cuenta ya confirmo su correo; si no, la manda a verificarlo.
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws Exception {

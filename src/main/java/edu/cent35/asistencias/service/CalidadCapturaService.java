@@ -127,6 +127,7 @@ public class CalidadCapturaService {
         return true;
     }
 
+    // Umbral a partir del cual dos recortes cuentan como poses distintas.
     public double getDiferenciaMinima() {
         return diferenciaMinima;
     }

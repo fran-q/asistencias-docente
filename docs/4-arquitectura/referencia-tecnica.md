@@ -220,8 +220,6 @@ charset `utf8mb4_unicode_ci`.
    asistencias_manuales          justificaciones_ausencia
         │
    motivos_carga_manual
-
-   auditoria (transversal: usuario + institución + entidad afectada)
 ```
 
 ### 4.2 Las tablas, agrupadas
@@ -259,7 +257,6 @@ charset `utf8mb4_unicode_ci`.
 | `motivos_carga_manual` | Catálogo: FALLA_CAMARA, FALLA_RECONOCIMIENTO, NO_REGISTRADO, OTRO | Seed en V001 |
 | `asistencias_manuales` | Detalle 1:1 de una carga manual | Quién la cargó, motivo, detalle libre |
 | `justificaciones_ausencia` | Detalle 1:1 de una ausencia justificada | Motivo (texto), URL de documento opcional |
-| `auditoria` | Log de acciones administrativas | `valores_anteriores`/`valores_nuevos` en JSON. *Tabla creada; registro automático fuera de alcance* |
 
 ### 4.3 Detalles de diseño que conviene conocer
 
@@ -634,7 +631,6 @@ De los **37 RF**: la gran mayoría implementados. Pendientes o parciales:
 |---|---|
 | RF-08 | LBPH en lugar de embeddings — **desviación formalizada** (ADR-0007) con migración verificada |
 | RF-31/32/33 | Export PDF, Excel y gráficos → hay **CSV** |
-| RF-34/35/36 | Auditoría: tabla creada, registro automático fuera de alcance |
 | RF-37 | Dashboard con métricas del día: parcial |
 | RNF-22 | Modo claro conmutable: solo oscuro |
 | RF-38 | **Vivacidad / anti-spoofing**: especificado, no implementado |

@@ -36,7 +36,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | Rol | Descripción | Acceso |
 |---|---|---|
 | **Institución (Superadministrador)** | Cuenta raíz de la entidad educativa. | Crear, modificar y dar de baja administradores de su institución. Acceso total a los datos de su institución. |
-| **Administrador** | Personal designado para operar el sistema día a día. | CRUD de docentes, registro facial, gestión académica, carga manual de asistencia, reportes y auditoría. |
+| **Administrador** | Personal designado para operar el sistema día a día. | CRUD de docentes, registro facial, gestión académica, carga manual de asistencia y reportes. |
 | **Docente** | Sujeto pasivo. No interactúa con la interfaz. | Sin acceso. Solo se posiciona frente a la cámara; su perfil existe para vincular asistencias. |
 
 ---
@@ -125,15 +125,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-32 | Exportación a Excel | El sistema debe permitir exportar cualquier reporte en formato Excel (.xlsx). |
 | RF-33 | Visualizaciones gráficas | Los reportes deben incluir gráficos que faciliten la interpretación de los datos. |
 
-### 3.9. Módulo de Auditoría
-
-| ID | Requerimiento | Descripción |
-|---|---|---|
-| RF-34 | Registro de auditoría | El sistema debe registrar las acciones administrativas relevantes: altas/bajas/modificaciones de docentes, cargas manuales, modificaciones de asistencias y cambios académicos. |
-| RF-35 | Historial de acciones | Cada registro debe incluir: acción, usuario responsable, fecha/hora y datos modificados (valores anteriores y nuevos). |
-| RF-36 | Consulta de auditoría | Los administradores deben poder consultar el historial con filtros por tipo de acción, usuario, fecha y entidad. |
-
-### 3.10. Dashboard
+### 3.9. Dashboard
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
@@ -213,9 +205,13 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 46 |
+| Requerimientos funcionales (RF) | 43 |
 | Requerimientos no funcionales (RNF) | 29 |
-| **Total** | **75** |
+| **Total** | **72** |
+
+> Los identificadores RF-34 a RF-36 correspondían al módulo de auditoría, que se
+> retiró del alcance del proyecto. No se reutilizan: renumerar rompería las
+> referencias de los ADR y de los documentos ya entregados.
 
 > El cumplimiento de cada requerimiento en la primera entrega se documenta en
 > **02 — Definición del Alcance** (matriz de trazabilidad).

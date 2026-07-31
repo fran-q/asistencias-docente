@@ -111,6 +111,8 @@ public class AltaInstitucionService {
         }
     }
 
+    // Deja null si el campo opcional vino vacio: asi el UNIQUE del CUIT no choca entre
+    // dos instituciones que no lo declararon, porque en SQL un NULL no repite a otro.
     private String vacioANulo(String s) {
         if (s == null) return null;
         String t = s.trim();

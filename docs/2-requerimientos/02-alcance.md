@@ -119,7 +119,6 @@ posteriores:
 | Exportación nativa a **Excel .xlsx** | RF-32 | El CSV generado abre correctamente en Excel; el .xlsx nativo se difiere. |
 | **Visualizaciones gráficas** en reportes | RF-33 | Requiere librería de charts; no crítico para el MVP. |
 | **Reporte por carrera** | RF-29 | El reporte filtra por docente, materia, estado y método; el agrupamiento por carrera se difiere. |
-| Módulo de **auditoría** (escritura y consulta) | RF-34, RF-35, RF-36 | La tabla y el diseño existen en la BD; la captura automática de eventos se difiere a la siguiente iteración. |
 | **Dashboard** con métricas en vivo | RF-37 | Existe pantalla de inicio; el dashboard con indicadores del día está diseñado en el prototipo y se difiere su implementación. |
 | **Modo claro** conmutable | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
 | **Detección de vivacidad** | RF-38 | El pase acepta hoy una fotografía sostenida frente a la cámara. La limitación está declarada y el control compensatorio es la presencia del administrador durante el pase. |
@@ -174,9 +173,6 @@ posteriores:
 | RF-31 | Exportación a PDF | 🔜 | Se entregó CSV |
 | RF-32 | Exportación a Excel (.xlsx) | 🟡 | CSV compatible con Excel; .xlsx nativo diferido |
 | RF-33 | Visualizaciones gráficas | 🔜 | Sin gráficos en esta entrega |
-| RF-34 | Registro de auditoría | 🔜 | Tabla diseñada; escritura diferida |
-| RF-35 | Historial de acciones | 🔜 | Depende de RF-34 |
-| RF-36 | Consulta de auditoría | 🔜 | Depende de RF-34 |
 | RF-37 | Dashboard | 🟡 | Pantalla de inicio sí; métricas en vivo en prototipo, diferidas |
 | RF-38 | Detección de vivacidad | 🔜 | El pase acepta hoy una fotografía; limitación declarada en ADR-0007 |
 | RF-39 | Verificación del correo | ✅ | Código de 6 dígitos, hasheado, vence a los 15 min |
@@ -188,7 +184,7 @@ posteriores:
 | RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
 | RF-46 | Registro del período en funciones | ✅ | Alta automática al cargar; baja elegible, acotada entre el alta y hoy |
 
-**Resumen RF:** 32 implementados · 7 parciales · 7 backlog (total 46).
+**Resumen RF:** 33 implementados · 6 parciales · 4 backlog (total 43).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -230,13 +226,19 @@ posteriores:
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 32 | 7 | 7 | 46 |
+| Funcionales | 33 | 6 | 4 | 43 |
 | No funcionales | 27 | 1 | 1 | 29 |
-| **Total** | **59** | **8** | **8** | **75** |
+| **Total** | **60** | **7** | **5** | **72** |
 
-**Cobertura del hito 1:** 59 de 75 requerimientos completamente
-implementados (≈79%), 8 parcialmente cubiertos (≈11%) y 8 en backlog
-planificado (≈10%).
+**Cobertura del hito 1:** 60 de 72 requerimientos completamente
+implementados (≈83%), 7 parcialmente cubiertos (≈10%) y 5 en backlog
+planificado (≈7%).
+
+> El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
+> proyecto. Su tabla existía en la base sin que ningún punto del código
+> escribiera en ella, y una tabla de auditoría vacía es peor que ninguna: quien
+> la consulte encuentra el registro en blanco y concluye que no pasó nada.
+> Los identificadores no se reutilizan.
 
 ---
 

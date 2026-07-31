@@ -119,6 +119,7 @@
         }
     }
 
+    // Corta el loop, libera la camara y deja la pantalla como al principio.
     function apagarCamara() {
         detenerLoop();
         limpiarOverlay();
@@ -148,6 +149,7 @@
         pintarEtapa();
     }
 
+    // Muestra la instruccion de la etapa actual y la marca como activa en la lista.
     function pintarEtapa() {
         etapas.forEach(function (e, i) {
             e.nodo.classList.toggle('captura__etapa--activa', i === etapaActual);
@@ -161,6 +163,7 @@
         actualizarMarca();
     }
 
+    // Refresca el contador de capturas de la etapa en curso.
     function actualizarMarca() {
         const etapa = etapas[etapaActual];
         if (!etapa) return;
@@ -168,6 +171,7 @@
             capturasDeLaEtapa + '/' + capturasPorEtapa;
     }
 
+    // Da la etapa por cumplida y pasa a la siguiente, o envia si era la ultima.
     function completarEtapa() {
         const etapa = etapas[etapaActual];
         etapa.nodo.classList.remove('captura__etapa--activa');
@@ -192,10 +196,12 @@
         loopId = setInterval(evaluar, INTERVALO_EVALUACION_MS);
     }
 
+    // Frena la evaluacion periodica.
     function detenerLoop() {
         if (loopId) { clearInterval(loopId); loopId = null; }
     }
 
+    // Iguala el tamano del canvas al del video, que recien se conoce al reproducir.
     function ajustarOverlay() {
         if (video.videoWidth > 0 && video.videoHeight > 0) {
             overlay.width  = video.videoWidth;
@@ -203,6 +209,7 @@
         }
     }
 
+    // Saca el cuadro que se esta viendo, con la calidad de compresion que se pida.
     function cuadroActual(calidad) {
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -255,6 +262,7 @@
         }
     }
 
+    // Guarda la captura, avanza el contador y hace una pausa para que la proxima salga distinta.
     function capturar() {
         capturas.push(cuadroActual(0.85));
         capturasDeLaEtapa++;
@@ -286,6 +294,7 @@
         ctx.strokeRect(x, y, ancho, alto);
     }
 
+    // Borra el recuadro dibujado sobre el video.
     function limpiarOverlay() {
         if (overlay.getContext) {
             overlay.getContext('2d').clearRect(0, 0, overlay.width, overlay.height);
@@ -333,6 +342,7 @@
         }
     }
 
+    // Deja la pantalla lista para volver a empezar despues de un rechazo.
     function prepararReintento() {
         enviando = false;
         reiniciarSecuencia();
@@ -351,8 +361,10 @@
         resultado.hidden = false;
     }
 
+    // Esconde el cartel de resultado.
     function ocultarMensaje() { resultado.hidden = true; }
 
+    // Convierte el error de getUserMedia en una explicacion que se entienda.
     function traducirError(err) {
         switch (err && err.name) {
             case 'NotAllowedError':

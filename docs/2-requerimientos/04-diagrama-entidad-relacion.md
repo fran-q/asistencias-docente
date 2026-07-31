@@ -36,7 +36,6 @@ erDiagram
     instituciones ||--o{ carreras : tiene
     instituciones ||--o{ materias : tiene
     instituciones ||--o{ asistencias : tiene
-    instituciones |o--o{ auditoria : registra
     roles ||--o{ usuarios : clasifica
 
     carreras ||--o{ materias : agrupa
@@ -53,7 +52,6 @@ erDiagram
     usuarios ||--o{ modelos_faciales : registra
     usuarios ||--o{ asistencias_manuales : carga
     usuarios ||--o{ justificaciones_ausencia : justifica
-    usuarios ||--o{ auditoria : ejecuta
     usuarios ||--o{ codigos_verificacion : "recibe códigos"
 
     comisiones ||--o{ asistencias : "ocurre en"
@@ -180,15 +178,6 @@ erDiagram
         text motivo
         varchar documento_url
     }
-    auditoria {
-        bigint id PK
-        bigint institucion_id FK
-        bigint usuario_id FK
-        varchar accion
-        varchar entidad
-        json valores_anteriores
-        json valores_nuevos
-    }
 ```
 
 ---
@@ -235,11 +224,6 @@ erDiagram
   cargó y por qué.
 - **justificaciones_ausencia** — Detalle 1:1 de la justificación de una
   ausencia.
-
-### Dominio Auditoría
-- **auditoria** — Tabla de log de acciones administrativas. *Su estructura
-  está definida en la BD; la captura automática de eventos está planificada
-  para una iteración posterior (ver documento 02).*
 
 ---
 

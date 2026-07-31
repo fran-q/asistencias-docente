@@ -1,0 +1,24 @@
+-- =============================================================================
+--  V009__baja_tabla_auditoria.sql
+--
+--  Elimina la tabla auditoria, que se creo en V001 previendo los RF-34 a RF-36
+--  y nunca se llego a usar: quedo con el esquema completo y cero filas, porque
+--  ningun punto del codigo escribia en ella.
+--
+--  Por que se saca en vez de dejarla. Una tabla vacia que nadie escribe es lo
+--  peor de los dos mundos: no aporta trazabilidad —quien la consulte va a
+--  encontrar el registro en blanco y sacar la conclusion equivocada— y ademas
+--  sugiere una funcionalidad que no existe. El modulo de auditoria se pospone
+--  sin fecha, asi que el esquema tampoco tiene por que quedar reservado: cuando
+--  se retome habra que disenarlo con los requerimientos de ese momento, que no
+--  tienen por que coincidir con los que se anticiparon en V001.
+--
+--  Que NO toca esta migracion. La auditoria forense del consentimiento
+--  biometrico —IP y User-Agent del otorgamiento y de la revocacion, en
+--  consentimientos_biometricos— se queda intacta. Se llama parecido pero es
+--  otra cosa: la exige la Ley 25.326 para poder acreditar ante la AAIP que
+--  hubo una sesion concreta en la que esa persona presto su consentimiento.
+--  Lo mismo con codigos_verificacion.ip_solicitud.
+-- =============================================================================
+
+DROP TABLE IF EXISTS auditoria;

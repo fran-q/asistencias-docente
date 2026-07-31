@@ -38,6 +38,7 @@
     // que es lo que evita que el regex dependa del encoding con que se guardo.
     var DIACRITICOS = /\p{Diacritic}/gu;
 
+    // Pasa a minusculas y saca las tildes, para que el texto tipeado y el de la tabla comparen igual.
     function normalizar(texto) {
         return texto
             .toLowerCase()
@@ -45,6 +46,7 @@
             .replace(DIACRITICOS, '');
     }
 
+    // Engancha una caja de filtro con su tabla y deja todo listo para filtrar.
     function conectar(caja) {
         var tabla = document.querySelector(caja.dataset.filtroTabla);
         if (!tabla) return;
@@ -58,6 +60,7 @@
         // El texto de cada fila se calcula una sola vez: no cambia mientras se filtra.
         var textoDeFila = filas.map(function (f) { return normalizar(f.textContent); });
 
+        // Esconde las filas que no coinciden y actualiza el contador de resultados.
         function aplicar() {
             var buscado = texto ? normalizar(texto.value.trim()) : '';
             var estadoBuscado = estado ? estado.value : '';

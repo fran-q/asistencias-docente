@@ -36,10 +36,6 @@ se procesa y sale del sistema, en niveles de detalle crecientes:
 > GitHub, en [mermaid.live](https://mermaid.live) o se importan a
 > [draw.io](https://app.diagrams.net) vía *Extras → Insertar → Mermaid*).
 > Cada nivel incluye una tabla de especificación para reconstruirlo a mano.
->
-> **Nota de alcance:** el módulo de Auditoría existe en el modelo de datos
-> pero su escritura no está implementada en el hito 1 (ver documento 02),
-> por lo que no figura como proceso en estos DFD.
 
 ---
 

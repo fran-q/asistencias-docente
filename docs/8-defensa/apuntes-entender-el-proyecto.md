@@ -396,7 +396,6 @@ Si podes responder estas doce sin mirar, estas listo:
 | **Export PDF / Excel / graficos** (RF-31/32/33) | Hay CSV | Alcance del prototipo; los datos ya estan listos para cualquier formato. |
 | **Modo claro** (RNF-22) | Solo oscuro | Pendiente menor de UI. |
 | **Dependencia de un SMTP** | Nueva | Sin servidor de correo no hay recuperacion posible. La app avisa del fallo en vez de decir "revisa tu correo". Un OTP por mail tampoco es un segundo factor: si alguien controla el buzon, controla la cuenta. |
-| **Auditoria en runtime** (RF-34/36) | Tabla creada, sin llenar | Estructura lista; el registro automatico quedo fuera del alcance. |
 
 **La frase que cierra bien una defensa:** *"Se exactamente que hace mi sistema, que no
 hace, y por que tome cada decision. Los limites que tiene estan documentados con su
