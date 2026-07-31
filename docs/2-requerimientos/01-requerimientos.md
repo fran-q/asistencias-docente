@@ -55,6 +55,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-40 | Recuperación autónoma de contraseña | Una cuenta que olvidó su contraseña debe poder fijar una nueva sin intervención de otro usuario, acreditando el control de su correo. El sistema no debe revelar si una cuenta existe al responder a estas solicitudes. |
 | RF-42 | Verificación obligatoria para operar | Una cuenta que no verificó su correo no debe poder acceder a ninguna funcionalidad del sistema, salvo la pantalla donde se verifica y el cierre de sesión. La verificación debe surtir efecto de inmediato, sin exigir un nuevo inicio de sesión: un bloqueo que persista después de cumplir la condición deja a la persona sin acceso a su propia cuenta. |
 | RF-43 | Identidad reutilizable entre instituciones | Una misma persona debe poder tener cuenta en más de una institución con la misma dirección de correo, y esa dirección debe poder coincidir con la de un docente registrado. La unicidad del usuario y del correo rige dentro de cada institución, no en todo el sistema. |
+| RF-56 | Registro del último acceso | El sistema debe registrar la fecha y hora del último inicio de sesión de cada cuenta, y mostrarla en la administración de usuarios. Permite detectar cuentas que quedaron sin usar y dar contexto ante cualquier revisión posterior. |
 
 ### 3.2. Módulo de Gestión de Instituciones
 
@@ -71,8 +72,12 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 |---|---|---|
 | RF-46 | Registro del período en funciones | El sistema debe dejar constancia de desde y hasta cuándo un docente prestó servicios. La fecha de alta la registra el sistema en el momento de la carga, sin pedirla; la de baja la indica el administrador, porque la baja se carga después del hecho y forzar la fecha del día falsearía el registro. No se admite una baja futura ni anterior al alta. |
 | RF-07 | CRUD de docentes | El administrador debe poder dar de alta, consultar, modificar y dar de baja (lógica) docentes, incluyendo datos personales, de contacto y asignación a materias. |
-| RF-08 | Registro del modelo facial | El sistema debe capturar múltiples fotogramas del docente, generar los datos biométricos (embeddings) y almacenar exclusivamente esa información, descartando las imágenes originales. |
+| RF-08 | Registro del modelo facial | El sistema debe capturar múltiples fotogramas del docente, generar los datos biométricos y almacenar exclusivamente esa información, descartando las imágenes originales. |
+| RF-47 | Captura guiada por poses | El registro del rostro debe conducir a la persona por una secuencia de poses definida, capturando cuando la imagen cumple los criterios de aceptación y no cuando se agota un tiempo fijo. Un modelo entrenado con una única pose repetida no tolera después ninguna variación de ángulo o distancia, de modo que la duración de la captura no es garantía de nada: lo es la variedad obtenida. |
+| RF-48 | Criterios de aceptación de cada captura | Cada fotograma candidato debe evaluarse por nitidez, iluminación y proporción del cuadro ocupada por el rostro, y descartarse si no los cumple. Cuando se descarta, el sistema debe indicar **qué corregir** en términos accionables, no limitarse a informar el fallo. |
+| RF-49 | Variedad entre las capturas de entrenamiento | Antes de entrenar, el sistema debe verificar que las capturas sean suficientemente distintas entre sí y descartar las redundantes. Sin esta verificación, una secuencia guiada completada sin moverse produce el mismo modelo pobre que una grabación continua. |
 | RF-09 | Re-registro facial | El sistema debe permitir actualizar el modelo facial de un docente. El modelo anterior se da de baja lógica y se activa el nuevo. |
+| RF-50 | Bloqueo del registro sin consentimiento | El sistema no debe permitir registrar ni actualizar el modelo facial de un docente que no tenga consentimiento biométrico vigente. La comprobación debe realizarse en el servidor, no solo ocultando la acción en la interfaz. |
 | RF-10 | Consentimiento informado | El sistema debe registrar el consentimiento libre, expreso e informado del docente para el tratamiento de sus datos biométricos (Ley N° 25.326). |
 
 ### 3.4. Módulo de Gestión Académica
@@ -90,7 +95,10 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 |---|---|---|
 | RF-15 | Captura de video en vivo | El sistema debe acceder a la cámara web a través del navegador y transmitir los fotogramas al servidor. |
 | RF-16 | Detección e identificación facial | El servidor debe detectar un rostro, compararlo contra los modelos biométricos y determinar la identidad con un umbral de confianza definido. |
-| RF-17 | Registro automático de asistencia | Confirmada la identidad (dentro de 2-3 s de exposición), el sistema debe registrar automáticamente la asistencia sin confirmación adicional. |
+| RF-17 | Registro automático de asistencia | Confirmada la identidad, el sistema debe registrar la asistencia sin pedirle ninguna acción al docente ni al operador. |
+| RF-51 | Confirmación sostenida de la identidad | El sistema no debe registrar asistencia a partir de un único fotograma: la misma identidad debe sostenerse durante un lapso mínimo continuo, y la aparición de una identidad distinta debe reiniciar ese conteo. Bajo iluminación cambiante el reconocimiento oscila entre personas parecidas, y sin esta condición el primer fotograma que resulte ganador escribe el registro. |
+| RF-52 | Margen respecto del segundo candidato | Cada intento de identificación debe registrar la distancia del mejor candidato **y la del segundo**. La diferencia entre ambas es lo único que permite detectar que el sistema estuvo cerca de confundir a dos docentes: un acierto con margen escaso es un error que todavía no ocurrió, y observando solo la mejor distancia resulta indistinguible de un acierto holgado. |
+| RF-53 | Idempotencia del registro | Un mismo docente en una misma clase y fecha no puede generar más de un registro de asistencia, independientemente de cuántas veces pase frente a la cámara. La condición debe garantizarse en la base de datos y no únicamente en la aplicación. |
 | RF-18 | Determinación automática de materia y horario | El sistema debe cruzar la hora del registro con los horarios cargados para determinar la materia/comisión correspondiente. |
 | RF-19 | Clasificación del estado de asistencia | El sistema debe clasificar la asistencia en Presente (dentro de la tolerancia), Llegada Tarde (pasada la tolerancia) o Ausente (sin registro). |
 | RF-20 | Retroalimentación visual | El sistema debe mostrar una notificación clara indicando si el reconocimiento fue exitoso (nombre + materia) o si no fue posible identificar. |
@@ -131,6 +139,15 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 |---|---|---|
 | RF-37 | Panel de inicio | El sistema debe presentar un dashboard con información del día: asistencias registradas, docentes presentes/ausentes/tarde, próximos horarios y alertas. |
 
+### 3.10. Funciones transversales de gestión
+
+Aplican a todos los módulos de administración por igual, así que no pertenecen a ninguno en particular.
+
+| ID | Requerimiento | Descripción |
+|---|---|---|
+| RF-54 | Integridad referencial en las bajas | El sistema no debe permitir dar de baja un elemento del que dependan otros activos: un docente que sea titular de materias o esté asignado a comisiones, una carrera con materias vigentes, una materia con comisiones vigentes. El rechazo debe indicar **cuántas dependencias existen**, para que se sepa qué reasignar. |
+| RF-55 | Búsqueda y filtrado en los listados | Todo listado de catálogo —docentes, usuarios, carreras, materias, comisiones y horarios— debe permitir buscar por texto sobre cualquiera de sus columnas y filtrar por estado. La búsqueda debe ser insensible a mayúsculas y a acentos, e informar cuántos registros quedaron a la vista. |
+
 ---
 
 ## 4. Requerimientos No Funcionales
@@ -139,7 +156,8 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
-| RNF-01 | Tiempo de reconocimiento | La detección, identificación y registro deben completarse en un máximo de 3 segundos desde que el docente se posiciona. |
+| RNF-01 | Tiempo de procesamiento por fotograma | La detección, la identificación contra todos los modelos y el registro deben completarse en menos de 3 segundos de **procesamiento** por fotograma, de modo que el sistema pueda sostener el ritmo del bucle de la cámara. |
+| RNF-30 | Tiempo total del pase | Desde que el docente se posiciona hasta que su asistencia queda registrada no deben transcurrir más de 8 segundos en condiciones normales. Este límite es distinto del RNF-01 y **lo supera necesariamente**: incluye los segundos que la identidad debe sostenerse antes de marcar (RF-51), que no son tiempo de cómputo sino una espera deliberada. Separarlos evita que una mejora de rendimiento se confunda con un recorte de esa verificación. |
 | RNF-02 | Tiempo de respuesta web | Las páginas de consulta y gestión deben cargar en menos de 2 segundos en condiciones normales. |
 | RNF-03 | Generación de reportes | Los reportes deben generarse en no más de 10 segundos, incluso con grandes volúmenes. |
 
@@ -159,6 +177,8 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RNF-08 | No almacenamiento de imágenes | El sistema no debe almacenar las fotografías capturadas; solo los vectores biométricos derivados. |
 | RNF-09 | Sesiones seguras | Las sesiones deben tener expiración configurable y protección contra CSRF y XSS. |
 | RNF-10 | Aislamiento de datos | Ningún usuario de una institución debe acceder a datos de otra, ni desde la interfaz ni desde la capa de datos. |
+| RNF-31 | Respuestas que no revelan existencia | Ante un identificador de otra institución, o ante una cuenta inexistente en la recuperación de contraseña, el sistema debe responder exactamente igual que ante un caso legítimo negativo. Distinguir "no existe" de "no tenés permiso" confirma que el registro existe, y es suficiente para enumerar los datos ajenos probando identificadores. |
+| RNF-32 | Protección de los códigos de un solo uso | Los códigos de verificación y de recuperación deben almacenarse hasheados, vencer en pocos minutos, consumirse en el primer uso, invalidarse al emitirse uno nuevo, y estar acotados tanto en intentos fallidos como en emisiones por hora. Seis dígitos son un millón de combinaciones: sin tope de intentos se agotan por fuerza bruta. |
 
 ### 4.4. Cumplimiento Legal y Normativo
 
@@ -190,14 +210,18 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RNF-23 | Optimización para escritorio | La interfaz está diseñada para PC de escritorio; no se requiere adaptación móvil en esta etapa. |
 | RNF-24 | Retroalimentación clara | El sistema debe dar mensajes claros sobre el resultado de cada acción (confirmaciones, errores, advertencias). |
 | RNF-29 | Errores de integridad legibles | Un dato que choca con una restricción de la base debe explicarse en los términos del usuario, indicando qué campo se repite y en qué ámbito. Nunca debe mostrarse el mensaje del motor de base de datos, que expone nombres de tablas e índices y valores concretos, ni una pantalla de error genérica. |
+| RNF-33 | Interfaz íntegramente en español | Todo el texto visible —etiquetas, encabezados de tabla, botones, mensajes y opciones— debe estar en español. Los identificadores internos no deben aparecer en pantalla: un rol se muestra como "Institución", no como `INSTITUCION`. |
 
 ### 4.7. Mantenibilidad y Despliegue
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
 | RNF-25 | Desarrollo incremental | El sistema debe desarrollarse en etapas incrementales (prototipos funcionales) con validaciones tempranas. |
-| RNF-26 | Código documentado | El código debe estar documentado y seguir convenciones estándar de Java/Spring Boot. |
+| RNF-26 | Código documentado | El código debe estar documentado y seguir convenciones estándar de Java/Spring Boot. Cada archivo lleva un encabezado que explica su propósito y cada función una línea que describe qué hace, en español. |
 | RNF-27 | Despliegue local | En su primera etapa debe poder desplegarse localmente, con arquitectura preparada para migrar a la nube. |
+| RNF-34 | Parámetros de reconocimiento configurables | El umbral de confianza, los criterios de calidad de captura y la ventana de confirmación deben poder ajustarse por configuración, sin recompilar. Sus valores dependen de la cámara y de la iluminación de cada instalación, de modo que un valor fijo en el código sería correcto en un lugar e inservible en otro. |
+| RNF-35 | Esquema versionado e inmutable | Todo cambio en la base debe entregarse como una migración numerada. Una migración ya aplicada no se edita: para revertir algo se agrega una nueva. La herramienta valida la huella de cada una e impide arrancar si alguna fue alterada. |
+| RNF-36 | Pruebas automatizadas de las reglas críticas | El aislamiento entre instituciones, la autorización por rol, las reglas de asistencia y los mecanismos de seguridad deben estar cubiertos por pruebas automatizadas que corran con el build. Cada prueba escrita para un defecto debe verificarse reintroduciendo el defecto y comprobando que efectivamente falla. |
 
 ---
 
@@ -205,9 +229,9 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 43 |
-| Requerimientos no funcionales (RNF) | 29 |
-| **Total** | **72** |
+| Requerimientos funcionales (RF) | 53 |
+| Requerimientos no funcionales (RNF) | 36 |
+| **Total** | **89** |
 
 > Los identificadores RF-34 a RF-36 correspondían al módulo de auditoría, que se
 > retiró del alcance del proyecto. No se reutilizan: renumerar rompería las

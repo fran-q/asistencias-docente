@@ -79,12 +79,14 @@ reportes para el personal administrativo de instituciones de nivel superior.
 ### 3.1. Dentro del alcance (entregado en el hito 1)
 
 **Núcleo del negocio:**
-- Reconocimiento facial completo: registro del modelo (grabación por webcam,
-  entrenamiento LBPH local, cifrado AES, sin almacenar imágenes), re-registro
-  e identificación en vivo.
-- Pase de asistencia automático: identificación → determinación de
-  comisión/horario en curso → clasificación PRESENTE/TARDE → registro
-  idempotente.
+- Reconocimiento facial completo: registro del modelo mediante **captura
+  guiada por poses**, con control de nitidez, iluminación y encuadre de cada
+  fotograma y verificación de que las capturas sean distintas entre sí;
+  entrenamiento LBPH local, cifrado AES, sin almacenar imágenes; re-registro
+  conservando el modelo anterior como histórico.
+- Pase de asistencia automático: identificación → **confirmación sostenida de
+  la identidad** → determinación de comisión/horario en curso → clasificación
+  PRESENTE/TARDE → registro idempotente.
 - Carga manual de asistencia con catálogo de motivos y trazabilidad.
 - Justificación de ausencias.
 - Listado de asistencias del día con AUSENTES calculadas.
@@ -147,7 +149,7 @@ posteriores:
 | RF-05 | Alta de institución | ✅ | Pantalla pública `/alta-institucion`; crea institución y cuenta inicial en una transacción |
 | RF-06 | CRUD de administradores | ✅ | Módulo Usuarios |
 | RF-07 | CRUD de docentes | ✅ | Con borrado lógico |
-| RF-08 | Registro del modelo facial | ✅ | Webcam + LBPH + cifrado, sin imágenes |
+| RF-08 | Registro del modelo facial | ✅ | Captura guiada + LBPH + cifrado, sin imágenes |
 | RF-09 | Re-registro facial | ✅ | Da de baja el modelo anterior |
 | RF-10 | Consentimiento informado | ✅ | Versionado, con auditoría forense |
 | RF-11 | Gestión de carreras | ✅ | CRUD con borrado lógico |
@@ -183,8 +185,18 @@ posteriores:
 | RF-44 | Autorización del alta de institución | ✅ | Clave de instalación por variable de entorno, comparada en tiempo constante |
 | RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
 | RF-46 | Registro del período en funciones | ✅ | Alta automática al cargar; baja elegible, acotada entre el alta y hoy |
+| RF-47 | Captura guiada por poses | ✅ | 5 poses × 3 capturas; termina por calidad, no por tiempo |
+| RF-48 | Criterios de aceptación de cada captura | ✅ | Nitidez, luz y encuadre, con el motivo del descarte en pantalla |
+| RF-49 | Variedad entre las capturas | ✅ | Comparación entre recortes antes de entrenar |
+| RF-50 | Bloqueo del registro sin consentimiento | ✅ | Verificado en el servicio, no solo en la interfaz |
+| RF-51 | Confirmación sostenida de la identidad | ✅ | 3 s continuos; otra identidad reinicia el conteo |
+| RF-52 | Margen respecto del segundo candidato | ✅ | Se registra en el log de calibración de cada intento |
+| RF-53 | Idempotencia del registro | ✅ | Restricción única (docente, horario, fecha) en la base |
+| RF-54 | Integridad referencial en las bajas | ✅ | Informa cuántas dependencias activas impiden la baja |
+| RF-55 | Búsqueda y filtrado en los listados | ✅ | Los 6 catálogos; insensible a mayúsculas y acentos |
+| RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 
-**Resumen RF:** 33 implementados · 6 parciales · 4 backlog (total 43).
+**Resumen RF:** 43 implementados · 6 parciales · 4 backlog (total 53).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -219,20 +231,27 @@ posteriores:
 | RNF-27 | Despliegue local | ✅ | XAMPP/MariaDB local |
 | RNF-28 | Conservación del registro administrativo | ✅ | La supresión biométrica no toca las asistencias |
 | RNF-29 | Errores de integridad legibles | ✅ | Validación en cada servicio + manejador global que traduce cada restricción |
+| RNF-30 | Tiempo total del pase | ✅ | ~4-5 s medidos: procesamiento más la ventana de confirmación |
+| RNF-31 | Respuestas que no revelan existencia | ✅ | "No encontrado" ante otro tenant; recuperación uniforme |
+| RNF-32 | Protección de los códigos de un solo uso | ✅ | Hasheados, 15 min, un solo uso, 5 intentos, 5 por hora |
+| RNF-33 | Interfaz íntegramente en español | ✅ | Barrido sobre los 33 templates |
+| RNF-34 | Parámetros de reconocimiento configurables | ✅ | Umbral, calidad y ventana en `application.properties` |
+| RNF-35 | Esquema versionado e inmutable | ✅ | Flyway V001–V009; migración aplicada no se edita |
+| RNF-36 | Pruebas automatizadas de las reglas críticas | ✅ | 216 pruebas; las de defectos verificadas por mutación |
 
-**Resumen RNF:** 27 implementados · 1 parcial · 1 backlog (total 29).
+**Resumen RNF:** 34 implementados · 1 parcial · 1 backlog (total 36).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 33 | 6 | 4 | 43 |
-| No funcionales | 27 | 1 | 1 | 29 |
-| **Total** | **60** | **7** | **5** | **72** |
+| Funcionales | 43 | 6 | 4 | 53 |
+| No funcionales | 34 | 1 | 1 | 36 |
+| **Total** | **77** | **7** | **5** | **89** |
 
-**Cobertura del hito 1:** 60 de 72 requerimientos completamente
-implementados (≈83%), 7 parcialmente cubiertos (≈10%) y 5 en backlog
-planificado (≈7%).
+**Cobertura del hito 1:** 77 de 89 requerimientos completamente
+implementados (≈87%), 7 parcialmente cubiertos (≈8%) y 5 en backlog
+planificado (≈5%).
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
 > proyecto. Su tabla existía en la base sin que ningún punto del código
