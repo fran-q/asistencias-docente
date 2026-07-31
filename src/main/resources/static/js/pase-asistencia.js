@@ -217,7 +217,19 @@
             return;
         }
 
-        // 2) reconocido + marcado (o ya estaba) → VERDE
+        // 2) reconocido pero todavia sosteniendo la identidad → CIAN, sin nombre
+        //    El nombre no se muestra a proposito: si el reconocimiento esta oscilando entre
+        //    dos personas parecidas, mostrarlo haria aparecer y desaparecer el nombre
+        //    equivocado en pantalla, que es justo lo que este paso viene a evitar.
+        if (data.confirmando) {
+            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#00acc1', null);
+            var faltan = Math.max(0, Math.ceil((data.objetivoMs - data.progresoMs) / 1000));
+            mostrarMensaje('Sostené la posición… ' + faltan + ' s', 'info');
+            claseEl.textContent = '';
+            return;
+        }
+
+        // 3) reconocido + marcado (o ya estaba) → VERDE
         if (data.asistenciaMarcada) {
             const color = data.yaEstaba ? '#1976d2' : '#2e7d32';
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, color, data.docenteNombre);
@@ -229,7 +241,7 @@
             return;
         }
 
-        // 3) reconocido pero NO hay clase ahora → AMARILLO
+        // 4) reconocido pero NO hay clase ahora → AMARILLO
         dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#ffc107', data.docenteNombre);
         mostrarMensaje(data.mensaje, 'warn');
         claseEl.textContent = '';

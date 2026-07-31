@@ -35,3 +35,4 @@ Cada ADR contiene:
 | 0010 | Alta de institución y bloqueo por verificación | Aceptada |
 | 0011 | Errores de integridad legibles | Aceptada |
 | 0012 | Captura guiada del rostro, por calidad y no por tiempo | Aceptada |
+| 0013 | Ventana de confirmacion antes de marcar asistencia | Aceptada |

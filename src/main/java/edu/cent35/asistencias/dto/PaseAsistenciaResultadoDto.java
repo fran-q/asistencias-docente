@@ -17,6 +17,9 @@ package edu.cent35.asistencias.dto;
  * @param yaEstaba           true si la marca ya existía (idempotente)
  * @param estadoAsistencia   "PRESENTE" o "TARDE" (null si no se marcó)
  * @param claseLabel         "Comisión A - Matemática (18:00-20:00)" o similar (null si no se marcó)
+ * @param confirmando        true mientras se sostiene la identidad y todavía no se marcó
+ * @param progresoMs         milisegundos ya sostenidos, para dibujar el avance
+ * @param objetivoMs         milisegundos que hay que sostener en total
  * @param mensaje            texto para mostrar al operador
  */
 public record PaseAsistenciaResultadoDto(
@@ -33,6 +36,9 @@ public record PaseAsistenciaResultadoDto(
     boolean yaEstaba,
     String estadoAsistencia,
     String claseLabel,
+    boolean confirmando,
+    Long progresoMs,
+    Long objetivoMs,
     String mensaje
 ) {
 
@@ -42,6 +48,7 @@ public record PaseAsistenciaResultadoDto(
             false, false, null, null, null,
             null, null, null, null,
             false, false, null, null,
+            false, null, null,
             "No se detectó ningún rostro.");
     }
 
@@ -52,6 +59,7 @@ public record PaseAsistenciaResultadoDto(
             true, false, null, null, distancia,
             x, y, ancho, alto,
             false, false, null, null,
+            false, null, null,
             "Rostro no reconocido.");
     }
 
@@ -64,7 +72,22 @@ public record PaseAsistenciaResultadoDto(
             true, true, docenteId, nombre, distancia,
             x, y, ancho, alto,
             false, false, null, null,
+            false, null, null,
             motivo);
+    }
+
+    // Se identificó al docente pero todavía no se sostuvo lo suficiente como para marcar.
+    // No se devuelve el nombre a propósito: mostrarlo antes de confirmar es justamente lo
+    // que hace que alguien vea el nombre equivocado en pantalla durante un parpadeo.
+    public static PaseAsistenciaResultadoDto confirmando(double distancia,
+                                                         int x, int y, int ancho, int alto,
+                                                         long progresoMs, long objetivoMs) {
+        return new PaseAsistenciaResultadoDto(
+            true, true, null, null, distancia,
+            x, y, ancho, alto,
+            false, false, null, null,
+            true, progresoMs, objetivoMs,
+            "Sostené la posición…");
     }
 
     // Se identificó al docente y quedó registrada su asistencia.
@@ -76,6 +99,7 @@ public record PaseAsistenciaResultadoDto(
             true, true, docenteId, nombre, distancia,
             x, y, ancho, alto,
             true, yaEstaba, estado, claseLabel,
+            false, null, null,
             prefijo + estado + " en " + claseLabel);
     }
 }

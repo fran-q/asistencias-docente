@@ -29,7 +29,7 @@
 - **Gradle** (Groovy DSL) — build, dependencias, ejecución.
 - **MariaDB 10.4+** (en desarrollo: XAMPP en Windows).
 - **Spring Data JPA** + **Hibernate 6** — ORM y validación de esquema.
-- **Flyway** — migraciones versionadas (V001 a V008).
+- **Flyway** — migraciones versionadas (V001 a V009).
 - **Spring Security** — autenticación con sesión HTTP (cookie clásica, ver ADR-0003).
 - **Thymeleaf** — server-side rendering.
 - **JavaCV 1.5.11 + OpenCV 4.10** — reconocimiento facial.
@@ -139,7 +139,7 @@ que se trata con el mismo cuidado que la contraseña de la base.
 ./gradlew bootRun
 ```
 
-Activa el perfil `local` automáticamente. Flyway aplica V001..V008 al
+Activa el perfil `local` automáticamente. Flyway aplica V001..V009 al
 arrancar por primera vez.
 
 **Login inicial**: se crea con una migración seed (`V002__seed_test_data.sql`).
@@ -190,7 +190,7 @@ asistencias/
 │   │   │   ├── dto/                   (transporte UI ↔ controller)
 │   │   │   └── config/                (security, multi-tenancy, web/JPA)
 │   │   └── resources/
-│   │       ├── db/migration/          (V001..V008 Flyway)
+│   │       ├── db/migration/          (V001..V009 Flyway)
 │   │       ├── opencv/                (haarcascade XML)
 │   │       ├── static/                (CSS / JS)
 │   │       ├── templates/             (Thymeleaf)
@@ -225,6 +225,9 @@ Propiedades clave:
 | `app.biometria.calidad.contraste-minimo` | `22.0` | Desvío estándar del recorte; detecta el contraluz. |
 | `app.biometria.calidad.porcentaje-cuadro-minimo` / `-maximo` | `6` / `55` | Cuánto del cuadro ocupa el rostro. Es lo que sostiene "acercate" y "alejate". |
 | `app.biometria.calidad.diferencia-minima` | `8.0` | Diferencia media entre dos recortes para contarlos como poses distintas. |
+| `app.biometria.confirmacion.ventana-ms` | `3000` | Cuanto debe sostenerse la misma identidad antes de marcar (ADR-0013). |
+| `app.biometria.confirmacion.lecturas-minimas` | `3` | Piso de lecturas para dar por cumplida la ventana. |
+| `app.biometria.confirmacion.hueco-maximo-ms` | `2500` | Hueco a partir del cual se considera que la persona se fue del cuadro. |
 | `app.instalacion.clave` | `${INSTALACION_CLAVE:}` | Habilita el alta de instituciones. Vacía = alta deshabilitada. Ver sección 3.5. |
 | `app.verificacion.minutos-validez` | `15` | Cuánto vive el código de 6 dígitos. |
 | `app.verificacion.max-intentos` | `5` | Intentos fallidos antes de invalidar el código. |
