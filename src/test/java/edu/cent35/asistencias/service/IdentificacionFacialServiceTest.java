@@ -45,7 +45,8 @@ class IdentificacionFacialServiceTest {
     void setUp() {
         TenantContext.set(TENANT_A);
         ReflectionTestUtils.setField(service, "tamanoRostro", 200);
-        ReflectionTestUtils.setField(service, "umbralConfianza", 100.0);
+        ReflectionTestUtils.setField(service, "umbralConfianza", 65.0);
+        ReflectionTestUtils.setField(service, "margenMinimo", 12.0);
     }
 
     @AfterEach
@@ -107,6 +108,75 @@ class IdentificacionFacialServiceTest {
         assertThat(r.y()).isNull();
         assertThat(r.ancho()).isNull();
         assertThat(r.alto()).isNull();
+    }
+
+    // ========================================================================
+    //  La regla que decide si se acepta (falso positivo de 2026-08-01)
+    //
+    //  Las distancias de estos casos salen del log de una sesion real, cuando el
+    //  sistema le adjudico el mismo docente a dos personas distintas.
+    // ========================================================================
+
+    @Test
+    @DisplayName("Un rostro claramente parecido y sin competencia se acepta")
+    void decidir_aceptaLoQueEsClaro() {
+        // Caso real: mejor 48,0 contra segundo 62,2. Margen 14,2.
+        assertThat(service.decidir(48.0, 62.2))
+            .isEqualTo(IdentificacionFacialService.Veredicto.ACEPTADO);
+    }
+
+    @Test
+    @DisplayName("Un rostro que no esta registrado se rechaza por distancia")
+    void decidir_rechazaAlDesconocido() {
+        // Con el umbral viejo de 100 esto entraba: es el agujero que se cerro.
+        assertThat(service.decidir(84.8, 88.6))
+            .isEqualTo(IdentificacionFacialService.Veredicto.NO_REGISTRADO);
+        assertThat(service.decidir(108.8, null))
+            .isEqualTo(IdentificacionFacialService.Veredicto.NO_REGISTRADO);
+    }
+
+    @Test
+    @DisplayName("Dos modelos empatados se rechazan aunque entren en el umbral")
+    void decidir_rechazaElEmpate() {
+        // Caso real: 55,0 contra 56,0. Ambos comodos bajo el umbral, pero separados
+        // por un punto: cual gana lo decide una sombra, no la cara.
+        assertThat(service.decidir(55.0, 56.0))
+            .as("un empate no es una identificacion")
+            .isEqualTo(IdentificacionFacialService.Veredicto.AMBIGUO);
+
+        // Y el peor caso medido: margen de 0,3.
+        assertThat(service.decidir(52.3, 52.6))
+            .isEqualTo(IdentificacionFacialService.Veredicto.AMBIGUO);
+    }
+
+    @Test
+    @DisplayName("El margen se exige justo, no de mas ni de menos")
+    void decidir_bordeDelMargen() {
+        // Margen exacto de 12: alcanza.
+        assertThat(service.decidir(50.0, 62.0))
+            .isEqualTo(IdentificacionFacialService.Veredicto.ACEPTADO);
+        // Un decimo menos: no.
+        assertThat(service.decidir(50.0, 61.9))
+            .isEqualTo(IdentificacionFacialService.Veredicto.AMBIGUO);
+    }
+
+    @Test
+    @DisplayName("La distancia manda sobre el margen: lejos se rechaza aunque no haya competencia")
+    void decidir_laDistanciaMandaPrimero() {
+        // Nadie cerca en el segundo puesto, pero el mejor esta lejisimos igual.
+        assertThat(service.decidir(90.0, 200.0))
+            .as("sin esto, alguien sin registrar entra solo por no parecerse a nadie mas")
+            .isEqualTo(IdentificacionFacialService.Veredicto.NO_REGISTRADO);
+    }
+
+    @Test
+    @DisplayName("Con un solo modelo cargado no hay margen que exigir")
+    void decidir_unSoloModelo() {
+        assertThat(service.decidir(48.0, null))
+            .isEqualTo(IdentificacionFacialService.Veredicto.ACEPTADO);
+        // Pero el umbral sigue aplicando.
+        assertThat(service.decidir(70.0, null))
+            .isEqualTo(IdentificacionFacialService.Veredicto.NO_REGISTRADO);
     }
 
     // ------------------------------------------------------------------------

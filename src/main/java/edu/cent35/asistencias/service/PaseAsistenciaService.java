@@ -41,6 +41,7 @@ public class PaseAsistenciaService {
             ventanaConfirmacion.cortar(confirmacion);
             return PaseAsistenciaResultadoDto.noReconocido(
                 id.distancia() == null ? 0.0 : id.distancia(),
+                id.mensaje(),
                 id.x(), id.y(), id.ancho(), id.alto());
         }
 

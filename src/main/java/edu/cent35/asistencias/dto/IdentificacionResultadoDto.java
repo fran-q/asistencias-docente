@@ -51,10 +51,25 @@ public record IdentificacionResultadoDto(
             x, y, ancho, alto, "Rostro presente: " + nombre);
     }
 
-    // Se detectó una cara pero ningún modelo quedó dentro del umbral.
+    // Se detectó una cara pero ningún modelo quedó dentro del umbral: no está registrada.
     public static IdentificacionResultadoDto noReconocido(double mejorDistancia,
                                                           int x, int y, int ancho, int alto) {
         return new IdentificacionResultadoDto(true, false, null, null, null, mejorDistancia,
-            x, y, ancho, alto, "Rostro no reconocido.");
+            x, y, ancho, alto, "Rostro no registrado.");
+    }
+
+    /**
+     * El mejor candidato entró en el umbral, pero el segundo quedó demasiado cerca.
+     *
+     * <p>Se rechaza a propósito. LBPH no sabe decir "no conozco a esta persona": compara
+     * contra cada modelo y devuelve el más parecido, aunque el parecido sea pobre. Cuando
+     * dos modelos quedan empatados, cuál gana lo decide el ruido —un cambio de luz, una
+     * sombra— y no la identidad. Marcar en esas condiciones es tirar una moneda.
+     */
+    public static IdentificacionResultadoDto ambiguo(double mejorDistancia,
+                                                     int x, int y, int ancho, int alto) {
+        return new IdentificacionResultadoDto(true, false, null, null, null, mejorDistancia,
+            x, y, ancho, alto,
+            "No se pudo distinguir entre dos rostros parecidos. Acercate y volvé a intentar.");
     }
 }

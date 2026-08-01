@@ -209,9 +209,12 @@
             return;
         }
 
-        // 1) rostro detectado pero no se reconoce ningún docente registrado
+        // 1) rostro detectado pero RECHAZADO → ROJO, con el motivo
+        //    Puede ser porque no esta registrado o porque no se lo pudo distinguir de
+        //    otro parecido. El servidor manda cual de los dos, asi que se muestra tal
+        //    cual: se corrigen de forma distinta.
         if (!data.reconocido) {
-            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e57373', null);
+            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e53935', 'No reconocido');
             mostrarMensaje(data.mensaje, 'error');
             claseEl.textContent = '';
             return;

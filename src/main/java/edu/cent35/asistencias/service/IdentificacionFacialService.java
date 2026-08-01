@@ -47,6 +47,9 @@ public class IdentificacionFacialService {
     @Value("${app.biometria.tamano-rostro}")
     private int tamanoRostro;
 
+    @Value("${app.biometria.margen-minimo}")
+    private double margenMinimo;
+
     @Value("${app.biometria.umbral-confianza}")
     private double umbralConfianza;
 
@@ -109,7 +112,10 @@ public class IdentificacionFacialService {
             long msComparacion = (finComparacionNs - finDeteccionNs) / 1_000_000;
             long msTotal       = (finComparacionNs - inicioNs) / 1_000_000;
 
-            boolean reconocido = mejorMatch != null && mejorDistancia <= umbralConfianza;
+            Veredicto veredicto = mejorMatch == null
+                ? Veredicto.NO_REGISTRADO
+                : decidir(mejorDistancia, segundoMatch == null ? null : segundaDistancia);
+            boolean reconocido = veredicto == Veredicto.ACEPTADO;
 
             // El mejor candidato se registra SIEMPRE, se lo haya aceptado o no: cuando el
             // sistema rechaza a alguien que si estaba, saber contra quien se acerco es lo que
@@ -137,12 +143,54 @@ public class IdentificacionFacialService {
                     mejorMatch.getId(), mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }
+            // Se distingue por que se rechazo: "no estas registrado" y "no puedo
+            // distinguirte de otro" son problemas distintos y se resuelven distinto.
+            if (veredicto == Veredicto.AMBIGUO) {
+                log.warn("Identificacion ambigua: docentes {} y {} quedaron a {} de distancia "
+                         + "entre si (minimo exigido {})",
+                         mejorMatch.getDocente().getId(),
+                         segundoMatch.getDocente().getId(),
+                         String.format("%.1f", segundaDistancia - mejorDistancia), margenMinimo);
+                return IdentificacionResultadoDto.ambiguo(mejorDistancia,
+                    extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
+            }
             return IdentificacionResultadoDto.noReconocido(mejorDistancia,
                 extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
 
         } finally {
             extraido.rostro().close();
         }
+    }
+
+    /** Qué se resolvió sobre el mejor candidato. */
+    enum Veredicto { ACEPTADO, NO_REGISTRADO, AMBIGUO }
+
+    /**
+     * Decide si el mejor candidato se acepta, aplicando las dos condiciones.
+     *
+     * <p>Está aparte del resto para poder probarla sin levantar OpenCV: es la regla que
+     * separa un reconocimiento válido de un falso positivo, así que conviene poder fijarla
+     * con casos concretos.
+     *
+     * @param segundaDistancia distancia del segundo mejor, o null si solo había un modelo
+     */
+    Veredicto decidir(double mejorDistancia, Double segundaDistancia) {
+        // LBPH siempre devuelve el mas parecido, aunque el parecido sea pesimo: no existe
+        // la respuesta "no conozco a esta persona". El umbral es lo unico que la construye.
+        if (mejorDistancia > umbralConfianza) {
+            return Veredicto.NO_REGISTRADO;
+        }
+        // Con un solo modelo cargado no hay segundo contra quien medir. Vale la pena saber
+        // que en ese caso el sistema esta en su punto mas debil: la unica defensa es el
+        // umbral, y cualquiera que se le parezca lo suficiente entra.
+        if (segundaDistancia == null) {
+            return Veredicto.ACEPTADO;
+        }
+        // Un empate no es una identificacion: cual gana lo decide una sombra, no la cara.
+        if (segundaDistancia - mejorDistancia < margenMinimo) {
+            return Veredicto.AMBIGUO;
+        }
+        return Veredicto.ACEPTADO;
     }
 
     // Saca el recognizer del cache y libera su memoria nativa; sin esto, tras un borrado ARCO

@@ -234,7 +234,8 @@ Propiedades clave:
 | `server.tomcat.max-http-form-post-size` | `20MB` | Permite POSTs grandes con frames base64. |
 | `app.biometria.clave-cifrado` | `${BIOMETRIA_CLAVE:dev-...}` | Clave AES para los modelos. Override por env var en producción. |
 | `app.biometria.salt` | hex | Salt PBKDF2. |
-| `app.biometria.umbral-confianza` | `100.0` | Distancia máxima LBPH para considerar match. |
+| `app.biometria.umbral-confianza` | `65.0` | Distancia máxima LBPH para aceptar el mejor candidato. |
+| `app.biometria.margen-minimo` | `12.0` | Cuánto debe ganarle el mejor al segundo. Un empate se rechaza: LBPH nunca dice "no lo conozco", solo devuelve el más parecido. |
 | `app.biometria.tamano-rostro` | `200` | Lado en px del rostro normalizado. |
 | `app.biometria.captura.etapas` | `5` | Poses que pide la captura guiada (ADR-0012). |
 | `app.biometria.captura.capturas-por-etapa` | `3` | Capturas que toma de cada pose. |
@@ -313,16 +314,55 @@ ya aplicadas.
 - `service/PaseAsistenciaService` — fachada para Sprint 5 (identificación
   + marcado de asistencia).
 
-### 7.2 Calibración del umbral
+### 7.2 Los dos controles que deciden si se reconoce
 
-Si el sistema rechaza rostros reales, **subí** `app.biometria.umbral-confianza`
-de 100 a 130 o 150. Si confunde caras (falsos positivos), bajalo a 70-80.
+**Lo primero que hay que entender: LBPH nunca dice "no conozco a esta persona".**
+`predict()` compara el rostro contra cada modelo cargado y devuelve el más parecido,
+aunque el parecido sea pésimo. Con tres modelos en memoria, cualquier cara —esté
+registrada o no— sale asignada a uno de los tres.
 
-Valores típicos LBPH (distancia menor = match):
-- `< 50` — match muy seguro.
-- `50-100` — match razonable.
-- `100-130` — match dudoso.
-- `> 130` — probablemente no es la misma persona.
+Esa respuesta "no lo conozco" hay que construirla, y por eso hay **dos** condiciones:
+
+| Parámetro | Qué controla | Si falla |
+|---|---|---|
+| `umbral-confianza` | Distancia máxima del mejor candidato | Se responde *no registrado* |
+| `margen-minimo` | Cuánto le gana el mejor al segundo | Se responde *no se pudo distinguir* |
+
+**Por qué el margen.** Si dos modelos quedan a un punto de distancia entre sí, cuál
+gana lo decide una sombra y no la cara. Un empate no es una identificación.
+
+#### Cómo calibrarlos con datos
+
+Cada intento deja una línea en el log:
+
+```
+CALIBRACION reconocido=true mejorDocente=5 mejorDistancia=48,0
+            segundoDocente=6 segundaDistancia=62,2 margen=14,2 umbral=65.0 ...
+```
+
+El procedimiento honesto es este:
+
+1. Pasá **varias veces cada docente registrado** y anotá las distancias. Ese es tu
+   rango de aciertos.
+2. Pasá **gente que NO esté registrada**. Ese es tu rango de falsos.
+3. El umbral va **entre los dos rangos**. Si se superponen, el problema no es el
+   umbral: son los modelos, y hay que volver a registrarlos con la captura guiada.
+4. El margen se lee de la columna `margen` en los aciertos: poné el mínimo por
+   debajo del más chico que hayas visto en un acierto real.
+
+> **Lo que NO hay que hacer** es subir el umbral porque "rechaza mucho". En esta
+> instalación estaba en 100 y aceptaba el **98 % de los intentos**, incluidas
+> personas sin registrar. Un umbral alto no reconoce mejor: reconoce a cualquiera.
+
+#### Valores de referencia, medidos en esta instalación
+
+Sobre 85 mediciones reales con tres modelos cargados:
+
+- Aciertos: distancia **28 a 55**, margen **9 a 32**.
+- Confusiones: distancia **73 a 90**, margen **0,3 a 6,5**.
+
+De ahí salen los valores por defecto (umbral 65, margen 12). **Dependen de la cámara
+y de la luz**, así que en otra instalación hay que repetir la medición.
 
 ### 7.3 Memoria nativa
 

@@ -52,15 +52,21 @@ public record PaseAsistenciaResultadoDto(
             "No se detectó ningún rostro.");
     }
 
-    // Se detectó una cara pero no coincide con ningún docente registrado.
-    public static PaseAsistenciaResultadoDto noReconocido(double distancia,
+    /**
+     * Se detectó una cara pero no se aceptó la identificación.
+     *
+     * <p>El motivo viaja tal cual lo dio la identificación en vez de un texto fijo, porque
+     * "no estás registrado" y "no puedo distinguirte de otro" son problemas distintos: el
+     * primero se resuelve registrando el rostro y el segundo, acercándose a la cámara.
+     */
+    public static PaseAsistenciaResultadoDto noReconocido(double distancia, String motivo,
                                                           int x, int y, int ancho, int alto) {
         return new PaseAsistenciaResultadoDto(
             true, false, null, null, distancia,
             x, y, ancho, alto,
             false, false, null, null,
             false, null, null,
-            "Rostro no reconocido.");
+            motivo);
     }
 
     // Se identificó al docente, pero en este momento no tiene ninguna clase en curso.
