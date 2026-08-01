@@ -214,7 +214,14 @@
         //    otro parecido. El servidor manda cual de los dos, asi que se muestra tal
         //    cual: se corrigen de forma distinta.
         if (!data.reconocido) {
-            dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e53935', 'No reconocido');
+            // Sin coordenadas el rechazo no apunta a nadie en particular: es el caso de
+            // varias personas en cuadro. Recuadrar a una sola daria a entender que el
+            // sistema la eligio, que es justo lo contrario de lo que dice el mensaje.
+            if (data.x === null || data.x === undefined) {
+                limpiarOverlay();
+            } else {
+                dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e53935', 'No reconocido');
+            }
             mostrarMensaje(data.mensaje, 'error');
             claseEl.textContent = '';
             return;
@@ -244,8 +251,12 @@
             return;
         }
 
-        // 4) reconocido pero NO hay clase ahora → AMARILLO
-        dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#ffc107', data.docenteNombre);
+        // 4) reconocido pero NO hay clase ahora → VERDE igual
+        //    El recuadro responde a UNA sola pregunta: si el sistema reconocio a la
+        //    persona. Y la reconocio. Que no haya clase en curso es otra cosa, y lo dice
+        //    el mensaje; pintarlo de amarillo hacia parecer que el reconocimiento habia
+        //    fallado, cuando el unico que fallo era el horario.
+        dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#2e7d32', data.docenteNombre);
         mostrarMensaje(data.mensaje, 'warn');
         claseEl.textContent = '';
     }

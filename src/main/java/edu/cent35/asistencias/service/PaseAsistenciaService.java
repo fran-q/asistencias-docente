@@ -39,6 +39,12 @@ public class PaseAsistenciaService {
         }
         if (!id.reconocido()) {
             ventanaConfirmacion.cortar(confirmacion);
+            // Cuando hay varias personas no viene recuadro: dibujarlo sobre una sola de
+            // ellas daria a entender que el sistema eligio a esa, que es justo lo contrario
+            // de lo que esta diciendo.
+            if (id.x() == null) {
+                return PaseAsistenciaResultadoDto.rechazadoSinRecuadro(id.mensaje());
+            }
             return PaseAsistenciaResultadoDto.noReconocido(
                 id.distancia() == null ? 0.0 : id.distancia(),
                 id.mensaje(),

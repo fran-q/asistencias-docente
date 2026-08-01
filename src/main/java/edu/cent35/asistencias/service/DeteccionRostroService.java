@@ -118,7 +118,8 @@ public class DeteccionRostroService {
                     true, (int) cantidad,
                     masGrande.x(), masGrande.y(), masGrande.width(), masGrande.height(),
                     false,
-                    "Hay " + cantidad + " personas en cuadro. Tiene que quedar una sola.",
+                    "Hay " + cantidad + " personas en cuadro. No se puede registrar más de un "
+                    + "rostro a la vez: que quede una sola frente a la cámara.",
                     null, null, null, null);
             }
 
@@ -146,11 +147,33 @@ public class DeteccionRostroService {
     public record RostroExtraido(Mat rostro, int x, int y, int ancho, int alto,
                                  CalidadCapturaService.Medicion calidad) {}
 
-    // Devuelve el rostro en gris y escalado a tamaño fijo; exige exactamente uno, si no null.
+    /**
+     * Resultado de intentar extraer un rostro utilizable.
+     *
+     * <p>Lleva la cantidad detectada además del recorte porque "no había nadie" y "había dos
+     * personas" son situaciones distintas para quien está frente a la cámara, y con solo un
+     * null no se pueden distinguir: el pase terminaba avisando que no se detectaba ningún
+     * rostro justo cuando había dos.
+     *
+     * @param rostro el recorte listo para comparar, o null si no había exactamente uno
+     */
+    public record Extraccion(int cantidadRostros, RostroExtraido rostro) {
+
+        public boolean hayVarios() {
+            return cantidadRostros > 1;
+        }
+
+        // true si quedo un recorte utilizable, es decir si habia exactamente un rostro.
+        public boolean sirve() {
+            return rostro != null;
+        }
+    }
+
+    // Devuelve el rostro en gris y escalado a tamaño fijo; exige exactamente uno.
     // El que llama se tiene que encargar de cerrar el Mat.
-    public RostroExtraido extraerRostroNormalizado(byte[] imagenBytes, int tamano) {
+    public Extraccion extraerRostroNormalizado(byte[] imagenBytes, int tamano) {
         if (imagenBytes == null || imagenBytes.length == 0) {
-            return null;
+            return new Extraccion(0, null);
         }
         Mat codificada = null;
         Mat imagen = null;
@@ -160,7 +183,7 @@ public class DeteccionRostroService {
             codificada = new Mat(new BytePointer(imagenBytes));
             imagen = imdecode(codificada, IMREAD_COLOR);
             if (imagen == null || imagen.empty()) {
-                return null;
+                return new Extraccion(0, null);
             }
             grisOriginal = new Mat();
             cvtColor(imagen, grisOriginal, COLOR_BGR2GRAY);
@@ -173,8 +196,9 @@ public class DeteccionRostroService {
                 new Size(LADO_MINIMO_ROSTRO, LADO_MINIMO_ROSTRO),
                 new Size()
             );
-            if (rostros.size() != 1) {
-                return null;
+            int cantidad = (int) rostros.size();
+            if (cantidad != 1) {
+                return new Extraccion(cantidad, null);
             }
 
             Rect r = rostros.get(0);
@@ -187,8 +211,8 @@ public class DeteccionRostroService {
             try (Mat roi = new Mat(gris, r)) {
                 resize(roi, rostroNormalizado, new Size(tamano, tamano));
             }
-            return new RostroExtraido(
-                rostroNormalizado, r.x(), r.y(), r.width(), r.height(), calidad);
+            return new Extraccion(1, new RostroExtraido(
+                rostroNormalizado, r.x(), r.y(), r.width(), r.height(), calidad));
         } finally {
             if (gris != null)          gris.close();
             if (grisOriginal != null)  grisOriginal.close();

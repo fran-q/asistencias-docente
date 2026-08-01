@@ -146,12 +146,18 @@ public class ModeloFacialService {
         List<Mat> rostros = new ArrayList<>();
         try {
             int sinRostro = 0;
+            int variasPersonas = 0;
             int malaCalidad = 0;
             int repetidas = 0;
 
             for (byte[] cap : capturas) {
-                DeteccionRostroService.RostroExtraido extraido = deteccionRostroService
+                DeteccionRostroService.Extraccion extraccion = deteccionRostroService
                     .extraerRostroNormalizado(cap, tamanoRostro);
+                if (extraccion.hayVarios()) {
+                    variasPersonas++;
+                    continue;
+                }
+                DeteccionRostroService.RostroExtraido extraido = extraccion.rostro();
                 if (extraido == null) {
                     sinRostro++;
                     continue;
@@ -170,13 +176,13 @@ public class ModeloFacialService {
             }
 
             log.info("Registro facial docente {}: {} recibidas, {} aceptadas "
-                     + "({} sin rostro, {} de mala calidad, {} repetidas).",
+                     + "({} sin rostro, {} con varias personas, {} de mala calidad, {} repetidas).",
                      docenteId, capturas.size(), rostros.size(),
-                     sinRostro, malaCalidad, repetidas);
+                     sinRostro, variasPersonas, malaCalidad, repetidas);
 
             if (rostros.size() < minimoCapturasValidas) {
                 throw new IllegalArgumentException(explicarPorQueNoAlcanza(
-                    rostros.size(), sinRostro, malaCalidad, repetidas));
+                    rostros.size(), sinRostro, variasPersonas, malaCalidad, repetidas));
             }
 
             byte[] modeloSerializado = motorLbph.entrenar(rostros);
@@ -231,14 +237,19 @@ public class ModeloFacialService {
     // Explica por que fallo segun cual haya sido el descarte dominante. Antes el mensaje
     // era siempre el mismo ("no se detecto tu cara de forma estable"), que no le decia a
     // nadie que corregir y obligaba a repetir a ciegas.
-    private String explicarPorQueNoAlcanza(int aceptadas, int sinRostro,
+    private String explicarPorQueNoAlcanza(int aceptadas, int sinRostro, int variasPersonas,
                                            int malaCalidad, int repetidas) {
         String base = "Quedaron " + aceptadas + " capturas utiles y hacen falta al menos "
                     + minimoCapturasValidas + ". ";
 
-        int peor = Math.max(sinRostro, Math.max(malaCalidad, repetidas));
+        int peor = Math.max(Math.max(sinRostro, variasPersonas),
+                            Math.max(malaCalidad, repetidas));
         if (peor == 0) {
             return base + "Volvé a intentarlo.";
+        }
+        if (peor == variasPersonas) {
+            return base + "En la mayoría había más de una persona en cuadro. El registro es "
+                 + "de un docente por vez: pedile al resto que se corra de la cámara.";
         }
         if (peor == repetidas) {
             return base + "La mayoría salieron casi idénticas entre sí: hay que moverse "

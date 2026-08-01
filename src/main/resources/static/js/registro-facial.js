@@ -239,7 +239,10 @@
             // La respuesta pudo tardar más que un apagado o un reinicio.
             if (!stream || enPausa || enviando) return;
 
-            if (datos.rostroDetectado) {
+            // Con varias personas en cuadro no se dibuja nada: el servidor manda el
+            // recuadro del rostro mas grande, y pintarlo daria a entender que ese es el
+            // que se va a registrar, cuando justamente el mensaje dice que no se puede.
+            if (datos.rostroDetectado && datos.cantidadRostros === 1) {
                 dibujarRecuadro(datos.x, datos.y, datos.ancho, datos.alto, datos.apta);
             } else {
                 limpiarOverlay();

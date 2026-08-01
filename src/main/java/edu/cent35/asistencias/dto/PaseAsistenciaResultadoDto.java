@@ -69,6 +69,20 @@ public record PaseAsistenciaResultadoDto(
             motivo);
     }
 
+    /**
+     * Se rechazó sin poder señalar a nadie en particular: es el caso de varias personas
+     * en cuadro. Va sin recuadro a propósito, porque marcar a una de ellas sugeriría que
+     * el sistema la eligió.
+     */
+    public static PaseAsistenciaResultadoDto rechazadoSinRecuadro(String motivo) {
+        return new PaseAsistenciaResultadoDto(
+            true, false, null, null, null,
+            null, null, null, null,
+            false, false, null, null,
+            false, null, null,
+            motivo);
+    }
+
     // Se identificó al docente, pero en este momento no tiene ninguna clase en curso.
     public static PaseAsistenciaResultadoDto reconocidoSinClase(Long docenteId, String nombre,
                                                                 double distancia,

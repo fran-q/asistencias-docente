@@ -63,11 +63,15 @@ public class IdentificacionFacialService {
         Long tenantId = TenantContext.getRequired();
         long inicioNs = System.nanoTime();
 
-        DeteccionRostroService.RostroExtraido extraido =
+        DeteccionRostroService.Extraccion extraccion =
             deteccionRostroService.extraerRostroNormalizado(imagenBytes, tamanoRostro);
-        if (extraido == null) {
+        if (extraccion.hayVarios()) {
+            return IdentificacionResultadoDto.variosRostros(extraccion.cantidadRostros());
+        }
+        if (!extraccion.sirve()) {
             return IdentificacionResultadoDto.sinRostro();
         }
+        DeteccionRostroService.RostroExtraido extraido = extraccion.rostro();
         long finDeteccionNs = System.nanoTime();
 
         try {

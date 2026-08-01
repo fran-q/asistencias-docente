@@ -928,10 +928,13 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     outline-offset: 2px;
 }
 
-/* ========== Toasts ========== */
+/* ========== Toasts ==========
+   Arriba a la derecha, no abajo: es donde queda la vista despues de apretar un
+   boton o guardar un formulario, asi que el aviso aparece donde ya se esta
+   mirando. Abajo competia ademas con la barra de estado del navegador. */
 #toast-container {
     position: fixed;
-    bottom: 24px;
+    top: 24px;
     right: 24px;
     z-index: 9999;
     display: flex;

@@ -36,6 +36,20 @@ public record IdentificacionResultadoDto(
             null, null, null, null, "No se detectó ningún rostro.");
     }
 
+    /**
+     * Hay más de una cara en el cuadro.
+     *
+     * <p>Se distingue de "no hay ninguna" porque para quien está frente a la cámara son cosas
+     * opuestas, y avisar que no se detecta ningún rostro cuando hay dos personas mirando la
+     * pantalla no ayuda a nadie a corregir.
+     */
+    public static IdentificacionResultadoDto variosRostros(int cantidad) {
+        return new IdentificacionResultadoDto(true, false, null, null, null, null,
+            null, null, null, null,
+            "Hay " + cantidad + " personas en cuadro. Solo se puede marcar de a una: "
+            + "que quede una sola frente a la cámara.");
+    }
+
     // La institución todavía no tiene ningún rostro registrado contra el cual comparar.
     public static IdentificacionResultadoDto noHayModelos(int x, int y, int ancho, int alto) {
         return new IdentificacionResultadoDto(true, false, null, null, null, null,

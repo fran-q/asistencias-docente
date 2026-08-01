@@ -55,7 +55,8 @@ class IdentificacionFacialServiceTest {
     @Test
     @DisplayName("identificar: sin rostro detectado -> sinRostro")
     void identificar_sinRostro() {
-        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt())).thenReturn(null);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(sinRostro());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
 
@@ -68,7 +69,7 @@ class IdentificacionFacialServiceTest {
     @DisplayName("identificar: hay rostro pero ningún docente con modelo -> noHayModelos")
     void identificar_sinModelos() {
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroExtraidoValido());
+            .thenReturn(unRostro());
         when(modeloFacialRepository.findActivosDelTenant(TENANT_A)).thenReturn(List.of());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
@@ -86,7 +87,7 @@ class IdentificacionFacialServiceTest {
     @DisplayName("identificar: devuelve bbox del rostro detectado siempre que haya rostro")
     void identificar_incluyeBbox() {
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroExtraidoValido());
+            .thenReturn(unRostro());
         when(modeloFacialRepository.findActivosDelTenant(TENANT_A)).thenReturn(List.of());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
@@ -100,7 +101,8 @@ class IdentificacionFacialServiceTest {
     @Test
     @DisplayName("identificar: sinRostro tiene todas las coords null")
     void identificar_sinRostro_sinCoords() {
-        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt())).thenReturn(null);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(sinRostro());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
 
@@ -108,6 +110,23 @@ class IdentificacionFacialServiceTest {
         assertThat(r.y()).isNull();
         assertThat(r.ancho()).isNull();
         assertThat(r.alto()).isNull();
+    }
+
+    @Test
+    @DisplayName("identificar: con dos rostros avisa que hay dos, y sin recuadro")
+    void identificar_variosRostros() {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(new DeteccionRostroService.Extraccion(2, null));
+
+        IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
+
+        assertThat(r.rostroDetectado())
+            .as("hay rostros: decir que no hay ninguno manda a corregir justo lo contrario")
+            .isTrue();
+        assertThat(r.reconocido()).isFalse();
+        assertThat(r.mensaje()).contains("2 personas en cuadro");
+        // Sin recuadro a proposito: pintar a una de las dos sugeriria que el sistema la eligio.
+        assertThat(r.x()).isNull();
     }
 
     // ========================================================================
@@ -186,8 +205,15 @@ class IdentificacionFacialServiceTest {
     // La calidad va en null: al identificar en el pase no se exige, porque un docente
     // apurado en la puerta del aula no puede repetir la pose. La calidad se exige al
     // REGISTRAR, que es cuando se construye el modelo contra el que se compara.
-    private DeteccionRostroService.RostroExtraido rostroExtraidoValido() {
-        return new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100, null);
+    // Extraccion con un unico rostro utilizable, que es el caso normal.
+    private DeteccionRostroService.Extraccion unRostro() {
+        return new DeteccionRostroService.Extraccion(1,
+            new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100, null));
+    }
+
+    // Extraccion sin ningun rostro en el cuadro.
+    private DeteccionRostroService.Extraccion sinRostro() {
+        return new DeteccionRostroService.Extraccion(0, null);
     }
 
     // Modelo facial activo del docente indicado.

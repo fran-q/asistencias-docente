@@ -78,7 +78,7 @@ class ModeloFacialServiceTest {
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroExtraidoValido());
+            .thenReturn(unRostro());
         when(calidadService.esNovedoso(any(), any())).thenReturn(true);
         when(motorLbph.entrenar(anyList())).thenReturn(new byte[]{1, 2, 3});
         when(cifradoService.cifrar(any())).thenReturn(new byte[]{9, 8, 7});
@@ -139,7 +139,8 @@ class ModeloFacialServiceTest {
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         // todas las capturas se descartan (no detectó rostro en ninguna)
-        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt())).thenReturn(null);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(sinRostro());
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
             .isInstanceOf(IllegalArgumentException.class);
@@ -153,7 +154,7 @@ class ModeloFacialServiceTest {
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroExtraidoValido());
+            .thenReturn(unRostro());
         when(calidadService.esNovedoso(any(), any())).thenReturn(true);
         when(motorLbph.entrenar(anyList())).thenReturn(new byte[]{1, 2, 3});
         when(cifradoService.cifrar(any())).thenReturn(new byte[]{9, 8, 7});
@@ -194,7 +195,7 @@ class ModeloFacialServiceTest {
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         // Se detecta la cara en todas, pero ninguna pasa los umbrales.
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroDeMalaCalidad("Quedate quieto, la imagen sale movida."));
+            .thenReturn(unRostroDeMalaCalidad("Quedate quieto, la imagen sale movida."));
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
             .isInstanceOf(IllegalArgumentException.class)
@@ -212,7 +213,7 @@ class ModeloFacialServiceTest {
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
-            .thenReturn(rostroExtraidoValido());
+            .thenReturn(unRostro());
         // La primera entra; de ahi en mas todas salen demasiado parecidas a las ya aceptadas.
         when(calidadService.esNovedoso(any(), any())).thenReturn(false);
 
@@ -230,10 +231,29 @@ class ModeloFacialServiceTest {
     void registrar_mensajeSegunElDescarteDominante() {
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
-        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt())).thenReturn(null);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(sinRostro());
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
             .hasMessageContaining("no se llegó a detectar la cara");
+    }
+
+    @Test
+    @DisplayName("registrar: con varias personas en cuadro el mensaje lo dice, "
+                 + "en vez de hablar de que no se detecto la cara")
+    void registrar_variasPersonasEnCuadro() {
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenReturn(variasPersonas(2));
+
+        assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(10), USUARIO_ACTUAL_ID))
+            .as("decirle que no se detecto ninguna cara a alguien que tiene dos en pantalla "
+                + "no le da ninguna pista de que corregir")
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("más de una persona en cuadro");
+
+        verify(motorLbph, never()).entrenar(anyList());
     }
 
     // ========================================================================
@@ -332,15 +352,28 @@ class ModeloFacialServiceTest {
     }
 
     // Stub de RostroExtraido con un Mat vacio. El servicio no inspecciona la imagen.
-    private DeteccionRostroService.RostroExtraido rostroExtraidoValido() {
-        return new DeteccionRostroService.RostroExtraido(
-            new Mat(), 0, 0, 200, 200, medicion(true, null));
+    // Extraccion con un unico rostro utilizable, que es el caso normal.
+    private DeteccionRostroService.Extraccion unRostro() {
+        return new DeteccionRostroService.Extraccion(1,
+            new DeteccionRostroService.RostroExtraido(
+                new Mat(), 0, 0, 200, 200, medicion(true, null)));
     }
 
-    // Rostro que se detecta bien pero que no cumple los umbrales de calidad.
-    private DeteccionRostroService.RostroExtraido rostroDeMalaCalidad(String motivo) {
-        return new DeteccionRostroService.RostroExtraido(
-            new Mat(), 0, 0, 200, 200, medicion(false, motivo));
+    // Un solo rostro, que se detecta bien pero no cumple los umbrales de calidad.
+    private DeteccionRostroService.Extraccion unRostroDeMalaCalidad(String motivo) {
+        return new DeteccionRostroService.Extraccion(1,
+            new DeteccionRostroService.RostroExtraido(
+                new Mat(), 0, 0, 200, 200, medicion(false, motivo)));
+    }
+
+    // Extraccion sin ningun rostro en el cuadro.
+    private DeteccionRostroService.Extraccion sinRostro() {
+        return new DeteccionRostroService.Extraccion(0, null);
+    }
+
+    // Extraccion descartada porque habia mas de una persona en cuadro.
+    private DeteccionRostroService.Extraccion variasPersonas(int cuantas) {
+        return new DeteccionRostroService.Extraccion(cuantas, null);
     }
 
     private CalidadCapturaService.Medicion medicion(boolean apta, String motivo) {
