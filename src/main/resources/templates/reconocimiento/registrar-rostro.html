@@ -11,11 +11,8 @@
         <header class="page-header">
             <h1>Registrar rostro</h1>
             <p class="page-header__subtitle">
-                Modelo facial de
                 <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
-                (DNI <span th:text="${docente.dni}">12345678</span>).
-                Te vamos a pedir unas poses y la cámara captura sola cuando la imagen sirve.
-                Las fotos no se guardan: solo queda el modelo entrenado y cifrado.
+                &middot; DNI <span th:text="${docente.dni}">12345678</span>
             </p>
         </header>
 
@@ -29,64 +26,85 @@
             </p>
         </div>
 
-        <!-- Aviso de re-registro -->
-        <div th:if="${consentimientoActivo and yaRegistrado}" class="alert alert--info" role="note">
-            <p>Este docente ya tiene un modelo facial registrado. Si completás un
-               registro nuevo, el anterior se da de baja automáticamente.</p>
-        </div>
+        <div th:if="${consentimientoActivo}" class="camara-layout">
 
-        <div th:if="${consentimientoActivo}" class="captura">
-            <div class="card captura__card">
+            <!-- Izquierda: la cámara y, encima, la pose que hay que hacer ahora.
+                 La instrucción va pegada al video y no en la columna lateral porque
+                 es lo que se mira mientras uno se acomoda frente a la cámara. -->
+            <div class="camara-layout__principal">
+                <div class="card captura__card">
+                    <div class="captura__guia">
+                        <p class="captura__paso" id="rf-paso">Encendé la cámara para empezar</p>
+                        <p class="captura__instruccion" id="rf-instruccion">
+                            Vamos a tomar unas capturas de distintas poses.
+                        </p>
+                        <p class="captura__detalle" id="rf-detalle"></p>
+                    </div>
 
-                <!-- Instruccion de la etapa actual: es lo primero que hay que leer, asi que
-                     va arriba del video y no debajo, donde competiria con los botones. -->
-                <div class="captura__guia">
-                    <p class="captura__paso" id="rf-paso">Encendé la cámara para empezar</p>
-                    <p class="captura__instruccion" id="rf-instruccion">
-                        Vamos a tomar unas capturas de distintas poses.
-                    </p>
-                    <p class="captura__detalle" id="rf-detalle"></p>
+                    <div class="camara-caja">
+                        <video id="rf-video" class="camara-video" autoplay playsinline muted></video>
+                        <canvas id="rf-overlay" class="camara-overlay"></canvas>
+                        <canvas id="rf-canvas" hidden></canvas>
+                    </div>
+
+                    <!-- Por que TODAVIA no captura. Va debajo del video, que es donde se
+                         mira cuando el recuadro sigue amarillo. -->
+                    <p class="captura__feedback" id="rf-feedback">Cámara apagada</p>
+                </div>
+            </div>
+
+            <!-- Derecha: en qué paso va y los controles -->
+            <aside class="camara-layout__lateral">
+
+                <!-- El aviso de re-registro va acá y no a todo el ancho: es contexto, no
+                     una alerta que deba frenar a nadie, y arriba empujaba el video fuera
+                     de la pantalla. -->
+                <div th:if="${yaRegistrado}" class="alert alert--info" role="note">
+                    <p>Ya tiene un modelo registrado. Si completás uno nuevo, el anterior
+                       se da de baja automáticamente.</p>
                 </div>
 
-                <div class="captura__camara">
-                    <video id="rf-video" class="captura__video" autoplay playsinline muted></video>
-                    <canvas id="rf-overlay" class="captura__overlay"></canvas>
-                    <canvas id="rf-canvas" hidden></canvas>
+                <div class="card">
+                    <h2 class="captura__titulo-lateral">Poses</h2>
+                    <ol class="captura__etapas" id="rf-etapas">
+                        <li th:each="e, it : ${etapas}"
+                            class="captura__etapa"
+                            th:data-etapa="${it.index}"
+                            th:data-instruccion="${e.instruccion}"
+                            th:data-detalle="${e.detalle}">
+                            <span class="captura__etapa-num" th:text="${it.count}">1</span>
+                            <span class="captura__etapa-nombre" th:text="${e.instruccion}">Pose</span>
+                            <span class="captura__etapa-marca" aria-hidden="true"></span>
+                        </li>
+                    </ol>
                 </div>
 
-                <!-- Por que TODAVIA no captura. Es el reemplazo del contador regresivo:
-                     antes se veia cuanto faltaba, ahora se ve que hay que corregir. -->
-                <p class="captura__feedback" id="rf-feedback">Cámara apagada</p>
-
-                <!-- Progreso por etapas, no por segundos -->
-                <ol class="captura__etapas" id="rf-etapas">
-                    <li th:each="e, it : ${etapas}"
-                        class="captura__etapa"
-                        th:data-etapa="${it.index}"
-                        th:data-instruccion="${e.instruccion}"
-                        th:data-detalle="${e.detalle}">
-                        <span class="captura__etapa-num" th:text="${it.count}">1</span>
-                        <span class="captura__etapa-nombre" th:text="${e.instruccion}">Pose</span>
-                        <span class="captura__etapa-marca" aria-hidden="true"></span>
-                    </li>
-                </ol>
-
-                <div class="form-actions captura__acciones">
-                    <button type="button" id="rf-btn-camara" class="btn btn--primary">
-                        Encender cámara
-                    </button>
-                    <button type="button" id="rf-btn-reiniciar" class="btn btn--ghost" hidden>
-                        Empezar de nuevo
-                    </button>
-                    <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">
-                        Volver
-                    </a>
+                <div class="card">
+                    <div class="captura__acciones">
+                        <button type="button" id="rf-btn-camara" class="btn btn--primary">
+                            Encender cámara
+                        </button>
+                        <button type="button" id="rf-btn-reiniciar" class="btn btn--ghost" hidden>
+                            Empezar de nuevo
+                        </button>
+                        <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">
+                            Volver
+                        </a>
+                    </div>
                 </div>
 
                 <div id="rf-resultado" hidden>
                     <p id="rf-resultado-mensaje"></p>
                 </div>
-            </div>
+
+                <p class="captura__ayuda">
+                    La cámara captura sola cuando la imagen sirve. Los giros son suaves,
+                    de unos pocos grados: si te ponés de perfil el sistema deja de
+                    encontrar la cara.
+                    <br><br>
+                    Las fotos no se guardan: solo queda el modelo entrenado y cifrado.
+                </p>
+            </aside>
         </div>
 
         <script th:src="@{/js/registro-facial.js}" defer></script>

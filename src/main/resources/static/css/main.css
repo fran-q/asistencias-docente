@@ -682,9 +682,10 @@ code {
 .text-muted { color: var(--text-muted); }
 
 /* ========== CAPTURA GUIADA DEL ROSTRO ==========
-   La instrucción va arriba del video y el motivo debajo: es el orden en que se
-   miran las cosas. El progreso es por etapas, no por tiempo. */
-.captura { max-width: 620px; margin: 0 auto; }
+   Comparte el esqueleto de dos columnas con el pase (ver "PANTALLAS CON CAMARA").
+   La instruccion va pegada al video y no en la columna lateral: es lo que se mira
+   mientras uno se acomoda. La lista de poses si va al costado, porque se consulta
+   de reojo para saber cuanto falta. */
 
 .captura__card { text-align: center; }
 
@@ -710,30 +711,6 @@ code {
     font-size: 0.9rem;
 }
 
-.captura__camara {
-    position: relative;
-    display: block;
-    margin: 0 auto;
-    line-height: 0;
-}
-
-.captura__video {
-    width: 100%;
-    max-height: 42vh;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: var(--radius);
-    background: #000;
-}
-
-.captura__overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
-
 /* El motivo por el que todavía no captura. Alto fijo para que la tarjeta no
    salte cada vez que cambia el texto. */
 .captura__feedback {
@@ -748,8 +725,16 @@ code {
 .captura__feedback--ok       { color: #6cdfa6; font-weight: 600; }
 .captura__feedback--corregir { color: #f7c26b; font-weight: 600; }
 
+.captura__titulo-lateral {
+    margin: 0 0 var(--space-sm);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
 .captura__etapas {
-    margin: var(--space) 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
     text-align: left;
@@ -759,10 +744,10 @@ code {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    padding: var(--space-sm) var(--space);
+    padding: var(--space-sm);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
 }
 
 .captura__etapa-num {
@@ -800,19 +785,26 @@ code {
     color: #fff;
 }
 
+/* Botones a lo ancho de la columna, igual que en el pase. */
 .captura__acciones {
-    margin-top: var(--space);
-    justify-content: center;
     display: flex;
+    flex-direction: column;
     gap: var(--space-sm);
-    flex-wrap: wrap;
+}
+.captura__acciones .btn { width: 100%; }
+
+.captura__ayuda {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
 }
 
-/* En pantallas bajas el video cede espacio antes que la lista de etapas: sin
-   ver en qué paso va, la guía no sirve de nada. */
+/* En pantallas bajas cede primero el texto explicativo, no la lista de poses:
+   sin ver en que paso va, la guia no sirve de nada. */
 @media (max-height: 760px) {
-    .captura__video   { max-height: 32vh; }
     .captura__detalle { display: none; }
+    .captura__ayuda   { display: none; }
 }
 
 /* ========== FILTRO DE LISTADOS ==========
@@ -1476,41 +1468,69 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
 }
 
 /* ============================================================================
- *  PASE DE ASISTENCIA
- *  La camara ocupa el ancho disponible en vez de quedar clavada a 480 px, que
- *  es lo que la hacia verse chica en pantallas grandes. El alto se limita con
- *  la altura de la ventana para que la caja entre completa sin scrollear: en
- *  esta pantalla hay que ver el video Y el mensaje de resultado al mismo tiempo.
+ *  PANTALLAS CON CAMARA: DISPOSICION EN DOS COLUMNAS
+ *
+ *  Las dos pantallas que usan camara -el pase y el registro del rostro- comparten
+ *  el mismo esqueleto: la camara a la izquierda y todo lo demas a la derecha.
+ *
+ *  Por que dos columnas y no una centrada. Antes todo iba apilado y centrado, asi
+ *  que en un monitor de escritorio quedaban dos franjas vacias a los costados y el
+ *  video mas chico de lo que podia ser. Peor: el resultado caia DEBAJO del video,
+ *  con lo cual habia que bajar la vista para leerlo. Al costado, la camara y el
+ *  mensaje se miran de un vistazo, que es lo que hace falta cuando alguien esta
+ *  parado enfrente esperando.
+ *
+ *  La camara manda: se lleva 1.6 de las 2.6 fracciones -algo mas del 60 %- porque
+ *  es lo unico que el administrador necesita mirar con detalle.
  * ========================================================================== */
 
-.pase {
-    max-width: 900px;
-    margin: 0 auto;
-    text-align: center;
+.camara-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: var(--space-lg);
+    align-items: start;
 }
 
-.pase__header {
-    text-align: center;
+/* La columna del video no debe encogerse por debajo de su contenido: minmax con
+   el minimo en 0 es lo que evita el desborde clasico de CSS Grid. */
+.camara-layout__principal { min-width: 0; }
+
+.camara-layout__lateral {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space);
+    min-width: 0;
 }
 
-.pase__card {
-    max-width: 760px;
-    margin: 0 auto;
+/* El panel lateral acompaña a la camara mientras se hace scroll en pantallas
+   altas: si el video queda arriba y el mensaje se va de vista, no sirve de nada. */
+@media (min-height: 800px) {
+    .camara-layout__lateral { position: sticky; top: var(--space-lg); }
+}
+
+/* Una sola columna cuando el ancho no alcanza. El limite no es un tamaño de
+   dispositivo sino el punto en que la columna lateral bajaria de 280 px y el
+   texto empezaria a cortarse. */
+@media (max-width: 900px) {
+    .camara-layout          { grid-template-columns: 1fr; }
+    .camara-layout__lateral { position: static; }
+
+    /* Apilado, el video se lleva todo el ancho y crece tanto que el estado y los
+       botones quedan debajo del pliegue. Acá el video cede: de nada sirve verlo
+       enorme si hay que scrollear para saber si marco o no. */
+    .camara-video           { max-height: 45vh; }
+
 }
 
 /* Caja del video: el canvas del recuadro se superpone encima, por eso relative. */
-.pase__camara {
+.camara-caja {
     position: relative;
     width: 100%;
-    margin: 0 auto;
     line-height: 0;              /* saca el espacio fantasma debajo del video */
 }
 
-.pase__video {
+.camara-video {
     width: 100%;
-    /* Medido a 1280x800: con 55vh la tarjeta quedaba cortada 11 px abajo. Con 50vh entra
-       completa, con el resultado y los botones, y el video sigue siendo grande. */
-    max-height: 50vh;
     aspect-ratio: 4 / 3;
     object-fit: cover;           /* llena la caja sin deformar la imagen */
     border-radius: var(--radius);
@@ -1518,9 +1538,9 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     display: block;
 }
 
-/* El overlay se estira sobre el video; el JS le fija el tamanio interno en
-   pixeles del fotograma, y el CSS lo escala visualmente para que coincidan. */
-.pase__overlay {
+/* El overlay se estira sobre el video; el JS le fija el tamaño interno en pixeles
+   del fotograma, y el CSS lo escala para que el recuadro caiga sobre la cara. */
+.camara-overlay {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -1528,42 +1548,78 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     pointer-events: none;
 }
 
+/* En pantallas bajas el video cede altura para que el panel lateral y los botones
+   entren sin scrollear. Medido en 1600x600, que es donde peor se veia. */
+@media (max-height: 760px) {
+    .camara-video { max-height: 56vh; }
+}
+@media (max-height: 620px) {
+    .camara-video { max-height: 46vh; }
+}
+
+/* ============================================================================
+ *  PASE DE ASISTENCIA
+ * ========================================================================== */
+
+.pase__header { margin-bottom: var(--space); }
+
+/* El resultado es lo segundo mas importante de la pantalla, asi que ocupa el tope
+   de la columna y con cuerpo grande: se tiene que poder leer de reojo. */
 .pase__estado {
-    margin-top: var(--space);
-    min-height: 3.5rem;
+    min-height: 5.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     line-height: normal;
 }
 
 .pase__mensaje {
     margin: 0;
-    font-size: 1.05rem;
+    font-size: 1.15rem;
+    font-weight: 600;
 }
 
 .pase__clase {
-    margin: 0.25rem 0 0;
+    margin: 0.35rem 0 0;
     font-size: 0.9rem;
     color: var(--text-muted);
 }
 
+/* Botones a lo ancho de la columna: son los dos unicos de la pantalla y se usan
+   todo el dia, asi que conviene que sean grandes y esten siempre en el mismo lugar. */
 .pase__acciones {
-    margin-top: var(--space);
     display: flex;
-    justify-content: center;
-    gap: 0.6rem;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.pase__acciones .btn { width: 100%; }
+
+/* Ayuda breve al pie del panel, para quien opera por primera vez. */
+.pase__ayuda {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.45;
 }
 
-/* Pantallas bajas o apaisadas: medido en 1600x600, la pagina se desbordaba 118 px y los
-   botones quedaban abajo del pliegue. Se recorta el video y se saca el texto explicativo,
-   que en esa altura estorba mas de lo que ayuda: lo que hay que ver es la camara, el
-   resultado y los botones, los tres a la vez. */
 @media (max-height: 700px) {
-    .pase__video                          { max-height: 40vh; }
-    .pase__header .page-header__subtitle  { display: none; }
-    .pase__header                         { margin-bottom: 0.5rem; }
-    .pase__estado                         { min-height: 2.75rem; margin-top: 0.6rem; }
-    .pase__acciones                       { margin-top: 0.6rem; }
-    .pase .card                           { padding: 0.9rem; }
+    .pase__header .page-header__subtitle { display: none; }
+    .pase__header                        { margin-bottom: 0.5rem; }
+    .pase__estado                        { min-height: 4rem; }
+    .pase__ayuda                         { display: none; }
+}
+
+/* Apilado, los botones pasan a una fila: a lo ancho de la pantalla se ven
+   desproporcionados y encima empujan otros 50 px hacia abajo, justo lo que hace
+   que queden fuera de la vista.
+   Va acá, al final, porque estas reglas tienen que ganarle por orden de cascada a
+   las de una sola columna definidas más arriba: misma especificidad, gana la
+   última. */
+@media (max-width: 900px) {
+    .pase__acciones,
+    .captura__acciones      { flex-direction: row; }
+    .pase__acciones .btn,
+    .captura__acciones .btn { flex: 1; width: auto; }
 }
 
 /* ============================================================================

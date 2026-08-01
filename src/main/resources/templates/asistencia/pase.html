@@ -14,30 +14,48 @@
             </p>
         </header>
 
-        <div class="card pase__card">
-            <!-- El video y el recuadro comparten caja: el canvas se superpone al video y
-                 ambos escalan juntos, asi el recuadro cae siempre sobre la cara. -->
-            <div class="pase__camara">
-                <video id="pa-video" class="pase__video" autoplay playsinline muted></video>
-                <canvas id="pa-overlay" class="pase__overlay"></canvas>
-                <canvas id="pa-canvas" hidden></canvas>
+        <div class="camara-layout">
+
+            <!-- Izquierda: la cámara, que es lo único que hay que mirar con detalle -->
+            <div class="camara-layout__principal">
+                <div class="card card--no-padding">
+                    <!-- El video y el recuadro comparten caja: el canvas se superpone al
+                         video y ambos escalan juntos, asi el recuadro cae sobre la cara. -->
+                    <div class="camara-caja">
+                        <video id="pa-video" class="camara-video" autoplay playsinline muted></video>
+                        <canvas id="pa-overlay" class="camara-overlay"></canvas>
+                        <canvas id="pa-canvas" hidden></canvas>
+                    </div>
+                </div>
             </div>
 
-            <!-- Resultado -->
-            <div id="pa-estado-box" class="pase__estado">
-                <p id="pa-estado-mensaje" class="pase__mensaje">Cámara apagada</p>
-                <p id="pa-clase" class="pase__clase"></p>
-            </div>
+            <!-- Derecha: resultado y controles, a la altura de los ojos -->
+            <aside class="camara-layout__lateral">
 
-            <!-- Botones toggle -->
-            <div class="pase__acciones">
-                <button type="button" id="pa-btn-camara" class="btn btn--primary">
-                    Encender cámara
-                </button>
-                <button type="button" id="pa-btn-pase" class="btn btn--primary" disabled>
-                    Iniciar pase
-                </button>
-            </div>
+                <div class="card">
+                    <div id="pa-estado-box" class="pase__estado">
+                        <p id="pa-estado-mensaje" class="pase__mensaje">Cámara apagada</p>
+                        <p id="pa-clase" class="pase__clase"></p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="pase__acciones">
+                        <button type="button" id="pa-btn-camara" class="btn btn--primary">
+                            Encender cámara
+                        </button>
+                        <button type="button" id="pa-btn-pase" class="btn btn--primary" disabled>
+                            Iniciar pase
+                        </button>
+                    </div>
+                </div>
+
+                <p class="pase__ayuda">
+                    El docente tiene que sostener la posición unos segundos: la asistencia
+                    se marca recién cuando el sistema confirma la misma identidad varias
+                    veces seguidas.
+                </p>
+            </aside>
         </div>
 
         <script th:src="@{/js/pase-asistencia.js}" defer></script>
