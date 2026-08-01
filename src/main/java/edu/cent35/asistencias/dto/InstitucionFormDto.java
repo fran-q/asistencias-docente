@@ -28,9 +28,10 @@ public class InstitucionFormDto {
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String nombre;
 
+    // Mismas dos formas que en el alta de institución, por la misma razón.
     @Pattern(
-        regexp = "^$|^\\d{2}-\\d{8}-\\d{1}$",
-        message = "El CUIT debe tener el formato XX-XXXXXXXX-X (ej: 30-12345678-9)"
+        regexp = "^$|^\\d{11}$|^\\d{2}-\\d{8}-\\d{1}$",
+        message = "El CUIT tiene que ser 11 dígitos: 30-12345678-9 o 30123456789"
     )
     @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
     private String cuit;

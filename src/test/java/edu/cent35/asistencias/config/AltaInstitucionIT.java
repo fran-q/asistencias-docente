@@ -132,6 +132,38 @@ class AltaInstitucionIT {
     }
 
     @Test
+    @DisplayName("El mismo CUIT escrito de otra forma se detecta como repetido")
+    void elCuitSeComparaNormalizado() throws Exception {
+        MultiValueMap<String, String> conGuiones = datos();
+        conGuiones.set("cuit", "30-44445555-6");
+        crearConDatos(conGuiones, new MockHttpSession());
+
+        // Mismo numero, escrito de corrido. Sin normalizar entraria como si fuera otro.
+        MultiValueMap<String, String> deCorrido = datos();
+        deCorrido.set("cuit", "30444455556");
+        deCorrido.set("nombreInstitucion", "Otro Instituto");
+        deCorrido.set("username", "otro.jefe");
+
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(deCorrido))
+            .andExpect(status().isOk());          // vuelve al formulario con el error
+
+        assertThat(institucionRepository.count())
+            .as("el CUIT es unico en todo el sistema: dos formas del mismo numero son uno solo")
+            .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("El CUIT se guarda siempre con guiones, se haya escrito como se haya escrito")
+    void elCuitSeGuardaCanonico() throws Exception {
+        MultiValueMap<String, String> p = datos();
+        p.set("cuit", "30777788889");          // de corrido
+        crearConDatos(p, new MockHttpSession());
+
+        assertThat(institucionRepository.findAll().get(0).getCuit())
+            .isEqualTo("30-77778888-9");
+    }
+
+    @Test
     @DisplayName("Sin token CSRF el alta se rechaza igual que en el resto del sistema")
     void exigeCsrf() throws Exception {
         mockMvc.perform(post("/alta-institucion").params(datos()))
@@ -253,7 +285,13 @@ class AltaInstitucionIT {
 
     // Recorre el alta completa: formulario, lectura del codigo enviado y confirmacion.
     private void crearInstitucionCompleta(MockHttpSession sesion) throws Exception {
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(sesion))
+        crearConDatos(datos(), sesion);
+    }
+
+    // Igual que la anterior pero con datos propios, para los casos del CUIT.
+    private void crearConDatos(MultiValueMap<String, String> p, MockHttpSession sesion)
+            throws Exception {
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(p).session(sesion))
             .andExpect(status().is3xxRedirection());
         mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
                         .param("codigo", codigoEnviado()).session(sesion))

@@ -24,8 +24,11 @@ public class AltaInstitucionFormDto {
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String nombreInstitucion;
 
-    @Pattern(regexp = "^$|^[0-9]{2}-[0-9]{8}-[0-9]$",
-             message = "El CUIT debe tener el formato 30-12345678-9")
+    // Se aceptan las dos formas en que la gente lo escribe: con guiones o de corrido.
+    // Exigir una sola era rechazar un dato correcto por un detalle de tipeo. Antes de
+    // guardarlo se lleva siempre a la forma con guiones (ver Cuit.normalizar).
+    @Pattern(regexp = "^$|^[0-9]{11}$|^[0-9]{2}-[0-9]{8}-[0-9]$",
+             message = "El CUIT tiene que ser 11 dígitos: 30-12345678-9 o 30123456789")
     @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
     private String cuit;
 

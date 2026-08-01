@@ -1,6 +1,7 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
+import edu.cent35.asistencias.model.Cuit;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.RolCodigo;
@@ -126,7 +127,7 @@ public class AltaInstitucionService {
         Institucion institucion = institucionRepository.save(
             Institucion.builder()
                 .nombre(form.getNombreInstitucion().trim())
-                .cuit(vacioANulo(form.getCuit()))
+                .cuit(Cuit.normalizar(form.getCuit()))
                 .emailContacto(form.getEmail().trim())
                 .activo(true)
                 .build());
@@ -157,7 +158,9 @@ public class AltaInstitucionService {
     // distintos no pueden llamarse igual ni compartir CUIT.
     private void verificarQueNoExista(AltaInstitucionFormDto form) {
         String nombre = form.getNombreInstitucion().trim();
-        String cuit = vacioANulo(form.getCuit());
+        // Normalizado antes de comparar: si no, '30123456789' y '30-12345678-9'
+        // pasarian como dos CUIT distintos siendo el mismo numero.
+        String cuit = Cuit.normalizar(form.getCuit());
 
         if (institucionRepository.existsByNombre(nombre)) {
             throw new IllegalArgumentException("Ya hay una institución registrada con ese nombre.");

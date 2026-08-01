@@ -43,7 +43,7 @@ public class MiInstitucionService {
                 "Institucion no encontrada para tenantId=" + tenantId));
 
         inst.setNombre(dto.getNombre().trim());
-        inst.setCuit(blankToNull(dto.getCuit()));
+        inst.setCuit(edu.cent35.asistencias.model.Cuit.normalizar(dto.getCuit()));
         inst.setDireccion(blankToNull(dto.getDireccion()));
         inst.setEmailContacto(blankToNull(dto.getEmailContacto()));
         inst.setTelefonoContacto(blankToNull(dto.getTelefonoContacto()));

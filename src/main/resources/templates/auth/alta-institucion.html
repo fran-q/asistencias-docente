@@ -41,8 +41,10 @@
             <div class="form-group">
                 <label for="cuit">CUIT</label>
                 <input type="text" id="cuit" th:field="*{cuit}" placeholder="30-12345678-9" maxlength="13"
+                       inputmode="numeric"
                        th:classappend="${#fields.hasErrors('cuit')} ? 'is-invalid'">
                 <span class="form-error" th:if="${#fields.hasErrors('cuit')}" th:errors="*{cuit}">Error</span>
+                <small class="form-hint">Con guiones o de corrido, como te resulte más cómodo.</small>
             </div>
 
             <hr class="separador">
