@@ -97,10 +97,12 @@ reportes para el personal administrativo de instituciones de nivel superior.
 - Roles INSTITUCION y ADMIN con control de acceso.
 - Multi-tenancy con aislamiento total entre instituciones (triple defensa).
 - CRUD de usuarios administradores y edición de la institución.
-- Alta de instituciones nuevas desde la aplicación, protegida por clave de
-  instalación, con su cuenta inicial creada en el mismo acto.
-- Verificación obligatoria del correo de cada cuenta y recuperación autónoma
-  de la contraseña, ambas por código de un solo uso.
+- Alta de instituciones nuevas desde la aplicación, validada por código enviado
+  al correo: nada se crea hasta que ese código se confirma, y la cuenta inicial
+  nace con su dirección ya comprobada.
+- Verificación obligatoria del correo de cada cuenta y recuperación autónoma de
+  la contraseña. Las tres cosas —alta, verificación y recuperación— usan el
+  **mismo mecanismo** de código de un solo uso.
 - CRUD académico completo: carreras, materias, comisiones, horarios + grilla
   semanal.
 - CRUD de docentes.
@@ -182,7 +184,7 @@ posteriores:
 | RF-41 | Registro automático de ausencias | ✅ | Tarea programada con propagación manual del tenant |
 | RF-42 | Verificación obligatoria para operar | ✅ | `VerificacionInterceptor` con lista blanca; desbloqueo en la misma sesión |
 | RF-43 | Identidad reutilizable entre instituciones | ✅ | Unicidad de usuario y correo acotada a la institución |
-| RF-44 | Autorización del alta de institución | ✅ | Clave de instalación por variable de entorno, comparada en tiempo constante |
+| RF-44 | Validación del alta de institución | ✅ | Código al correo; la institución se crea recién al validarlo |
 | RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
 | RF-46 | Registro del período en funciones | ✅ | Alta automática al cargar; baja elegible, acotada entre el alta y hoy |
 | RF-47 | Captura guiada por poses | ✅ | 5 poses × 3 capturas; termina por calidad, no por tiempo |
@@ -195,8 +197,9 @@ posteriores:
 | RF-54 | Integridad referencial en las bajas | ✅ | Informa cuántas dependencias activas impiden la baja |
 | RF-55 | Búsqueda y filtrado en los listados | ✅ | Los 6 catálogos; insensible a mayúsculas y acentos |
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
+| RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 43 implementados · 6 parciales · 4 backlog (total 53).
+**Resumen RF:** 44 implementados · 6 parciales · 4 backlog (total 54).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -237,19 +240,20 @@ posteriores:
 | RNF-33 | Interfaz íntegramente en español | ✅ | Barrido sobre los 33 templates |
 | RNF-34 | Parámetros de reconocimiento configurables | ✅ | Umbral, calidad y ventana en `application.properties` |
 | RNF-35 | Esquema versionado e inmutable | ✅ | Flyway V001–V009; migración aplicada no se edita |
-| RNF-36 | Pruebas automatizadas de las reglas críticas | ✅ | 216 pruebas; las de defectos verificadas por mutación |
+| RNF-36 | Pruebas automatizadas de las reglas críticas | ✅ | 222 pruebas; las de defectos verificadas por mutación |
+| RNF-37 | Tope de envíos por dirección de destino | ✅ | 3 por hora en el alta pública de institución |
 
-**Resumen RNF:** 34 implementados · 1 parcial · 1 backlog (total 36).
+**Resumen RNF:** 35 implementados · 1 parcial · 1 backlog (total 37).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 43 | 6 | 4 | 53 |
-| No funcionales | 34 | 1 | 1 | 36 |
-| **Total** | **77** | **7** | **5** | **89** |
+| Funcionales | 44 | 6 | 4 | 54 |
+| No funcionales | 35 | 1 | 1 | 37 |
+| **Total** | **79** | **7** | **5** | **91** |
 
-**Cobertura del hito 1:** 77 de 89 requerimientos completamente
+**Cobertura del hito 1:** 79 de 91 requerimientos completamente
 implementados (≈87%), 7 parcialmente cubiertos (≈8%) y 5 en backlog
 planificado (≈5%).
 

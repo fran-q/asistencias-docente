@@ -1,7 +1,7 @@
-# ADR-0010: Alta de institución con clave de instalación y bloqueo de cuentas sin verificar
+# ADR-0010: Alta de institución por código y bloqueo de cuentas sin verificar
 
 **Estado**: Aceptada
-**Fecha**: 2026-07-29
+**Fecha**: 2026-07-29 · **Revisada**: 2026-07-31
 **Decisor**: Francisco Quiroga (fran-q)
 
 ## Contexto
@@ -10,22 +10,21 @@
 
 En paralelo apareció un segundo problema, detectado al intentar dar de alta usuarios reales durante las pruebas: **no había forma de crear una institución desde la aplicación**. Las dos existentes venían sembradas por la migración `V002`. Para sumar una tercera había que escribir `INSERT` a mano contra la base, y después crear su primer usuario también a mano, con el hash BCrypt calculado por fuera. Eso no es un procedimiento que pueda documentarse en un manual de instalación.
 
-Los dos problemas están enlazados por una pregunta: **¿quién tiene derecho a crear la primera cuenta de una institución?** No puede ser un rol, porque el alta ocurre antes de que exista nadie con ese rol. Y si esa primera cuenta tuviera que verificarse por correo, una institución sin servidor SMTP disponible nacería sin acceso a su propia cuenta de gestión.
+Los dos problemas están enlazados por una pregunta: **¿quién tiene derecho a crear la primera cuenta de una institución?** No puede ser un rol, porque el alta ocurre antes de que exista nadie con ese rol.
+
+La primera versión respondió con una clave de instalación fija. La revisión del 31/07 la reemplazó por el código de un solo uso, para que el sistema no tenga dos mecanismos de validación distintos conviviendo.
 
 ## Decisiones
 
-### 1. El alta de institución se protege con una clave de instalación, no con un rol
+### 1. El alta se valida con el mismo código de un solo uso que el resto del sistema
 
-`/alta-institucion` es, junto con el login y la recuperación, una ruta accesible sin sesión. Lo que la protege es una clave que sale de una variable de entorno (`app.instalacion.clave`, alimentada por `INSTALACION_CLAVE`) y que quien instala el sistema conoce.
+`/alta-institucion` es, junto con el login y la recuperación, una ruta accesible sin sesión. Lo que la protege es un **código de seis dígitos enviado al correo declarado**: el mismo mecanismo, con las mismas defensas, que usan la verificación de cuenta y la recuperación de contraseña.
 
-El motivo es que **no hay ningún rol que pueda autorizar esta operación**: la institución todavía no existe, así que no existe tampoco ningún usuario dentro de ella. Cualquier otra ruta del sistema se apoya en el `TenantContext`; ésta es la única que corre con el contexto vacío, por definición.
+El motivo de que no la proteja un rol es que **no hay ningún rol que pueda autorizar esta operación**: la institución todavía no existe, así que no existe tampoco ningún usuario dentro de ella. Cualquier otra ruta del sistema se apoya en el `TenantContext`; ésta es la única que corre con el contexto vacío, por definición.
 
-De ahí se desprenden dos consecuencias que quedan explícitas en el código:
+De ahí se desprende que el servicio **no puede apoyarse en el filtro de Hibernate** para el aislamiento, porque no hay tenant al cual filtrar. La unicidad del nombre y del CUIT se valida a mano, contra toda la tabla, y se vuelve a validar al confirmar: entre el envío del código y su validación pasan minutos, y en el medio otra persona pudo haber registrado ese mismo nombre.
 
-- El servicio **no puede apoyarse en el filtro de Hibernate** para el aislamiento, porque no hay tenant al cual filtrar. La unicidad del nombre y del CUIT se valida a mano, contra toda la tabla.
-- La comparación de la clave usa `MessageDigest.isEqual`, que **compara en tiempo constante**. Una comparación con `equals` corta en el primer carácter distinto, y esa diferencia de microsegundos permite, con suficientes intentos, adivinar la clave carácter por carácter.
-
-Si la variable no está configurada, el alta queda **deshabilitada** y lo dice: es preferible a que quede abierta con una clave vacía.
+> **Versión anterior.** Hasta el 31/07/2026 el alta se protegía con una clave de instalación fija (`INSTALACION_CLAVE`) y la primera cuenta nacía verificada sin código. Se reemplazó para que el sistema tenga **un solo mecanismo de validación** en vez de dos, y porque la clave era un secreto compartido que no rotaba, no vencía y no identificaba quién la había usado.
 
 ### 2. La institución y su primera cuenta se crean en una sola transacción
 
@@ -43,11 +42,15 @@ La misma persona puede tener cuenta de administrador en una institución **y** s
 
 Forzar unicidad global de correo obligaría a esa persona a inventarse una dirección por institución, que es exactamente el tipo de dato falso que [ADR-0009](./0009-verificacion-correo-y-recuperacion.md) buscaba evitar.
 
-### 5. La primera cuenta de la institución nace verificada
+### 5. Nada se crea hasta que el código se valida
 
-No se le pide confirmar el correo. **Quien la crea ya demostró conocer la clave de instalación**, que es una prueba de autorización más fuerte que un código enviado por correo.
+El formulario no persiste nada: manda el código y deja los datos **en espera dentro de la sesión** del navegador. La institución y su cuenta se crean recién al validar.
 
-Además es lo que evita el peor escenario posible: si esa cuenta tuviera que verificarse y el SMTP no estuviera disponible, la institución quedaría encerrada fuera de su propia cuenta de gestión sin ningún camino de vuelta — precisamente el problema que ADR-0009 se propuso cerrar.
+Esto resuelve de raíz el problema que tenía la versión anterior. Si la institución se creara primero y quedara bloqueada hasta verificar, un correo que nunca llega dejaría una institución existente, inutilizable y **ocupando su nombre y su CUIT**, que después hay que limpiar a mano desde la base. Al no crear nada, un alta abandonada no deja rastro.
+
+La cuenta nace verificada, pero ahora por un motivo distinto y más sólido: **acaba de demostrar que controla esa casilla**, que es exactamente lo que la verificación pide. No es una excepción a la regla, es la regla ya cumplida.
+
+Los datos en espera viven en la sesión y no en la base porque no hay institución ni usuario a los cuales asociarlos, y su vida útil son los quince minutos que dura el código. Persistirlos habría significado una tabla paralela para algo que pertenece a un solo navegador durante un rato.
 
 ### 6. Todas las demás cuentas quedan bloqueadas hasta verificar
 
@@ -80,9 +83,13 @@ Por eso el interceptor primero mira la marca del principal —camino rápido, si
 
 Sería lo natural en un sistema con administración centralizada. Se descarta porque **rompe el modelo de aislamiento** descrito en [ADR-0002](./0002-multi-tenant-discriminator.md): habría que introducir un usuario sin `institucion_id`, y con él una excepción permanente al filtro de Hibernate que hoy no admite ninguna. Un solo camino que esquive el filtro es un camino que hay que auditar para siempre.
 
-### Registro de institución abierto, sin clave
+### Mantener la clave de instalación además del código
 
-Que cualquiera pueda registrar una institución, como en un servicio comercial. Se descarta porque el sistema **no es un servicio público**: se despliega dentro de una institución educativa. Un alta abierta permitiría llenar la base de instituciones falsas, y cada una arrastra una cuenta con acceso al sistema.
+Sería la opción más cerrada: la clave decide quién puede crear y el código prueba el correo. **Se evaluó y se descartó deliberadamente**, a favor de tener un único mecanismo de validación en todo el sistema.
+
+Hay que ser explícito sobre lo que eso cuesta: **el alta queda abierta**. Cualquiera que alcance la pantalla y tenga una casilla de correo puede crear una institución, y cada una arrastra una cuenta con acceso. Lo que queda como defensa es que el correo tiene que ser real y que hay un tope de envíos por dirección.
+
+Mientras el despliegue viva en una red interna esto es aceptable. **Si alguna vez se publica en internet, hay que reponer una barrera**: restringir la ruta por IP de origen o volver a exigir una credencial. Queda anotado como la condición que vuelve necesaria esa revisión.
 
 ### Bloquear con un filtro de Spring Security en vez de un interceptor
 
@@ -97,13 +104,17 @@ Reutiliza un campo que ya existe y Spring Security la rechazaría en el login si
 ### Positivas
 
 - Instalar el sistema en una institución nueva es un procedimiento de aplicación, no de base de datos.
+- **Un solo mecanismo de validación en todo el sistema**: la misma pantalla, el mismo formato de código y las mismas defensas para el alta de institución, la verificación de cuenta y la recuperación de contraseña. Hay una sola cosa que entender y una sola que auditar.
+- Un alta abandonada no deja nada: ni institución, ni cuenta, ni un nombre ocupado.
 - La verificación de correo pasa de recomendación a requisito efectivo, y con ella la garantía de que toda cuenta operativa tiene una vía de recuperación real.
 - El bloqueo por lista blanca hace que las pantallas futuras nazcan protegidas.
 - Una persona que trabaja en varias instituciones puede usar su correo real en todas.
 
 ### Negativas y limitaciones
 
-- **La clave de instalación es un secreto compartido**: no rota, no expira y no distingue quién la usó. El registro queda en el log (`Alta de institucion: institucion_id=...`), pero la clave en sí no identifica a nadie.
+- **El alta es abierta.** No hay ninguna barrera previa al correo: quien llegue a la pantalla puede iniciar un alta. El tope de envíos por dirección evita que la pantalla se use para molestar a una casilla ajena, pero no impide que alguien cree instituciones con correos propios. Es la contrapartida directa de unificar el mecanismo, y solo es aceptable mientras el despliegue no esté expuesto a internet.
+- **El freno de envíos vive en memoria**: se reinicia con la aplicación y no se comparte entre instancias. Alcanza para el abuso casual, no para un intento sostenido.
+- Los datos en espera viven en la sesión: si se cierra el navegador antes de validar, hay que volver a completar el formulario.
 - Las cuentas sembradas por `V002` quedan bloqueadas hasta verificar. Es intencional —darlas por buenas vaciaría de sentido la verificación— pero significa que un despliegue nuevo necesita el SMTP funcionando para que esas cuentas puedan operar. La salida está documentada más abajo.
 - El interceptor agrega **una consulta a la base por petición** mientras la cuenta esté sin verificar. Es una situación transitoria y acotada a una sola cuenta, pero no es gratis.
 - La unicidad global del nombre de institución es sensible al tipeo: "Escuela N° 7" y "Escuela Nro 7" conviven sin conflicto.

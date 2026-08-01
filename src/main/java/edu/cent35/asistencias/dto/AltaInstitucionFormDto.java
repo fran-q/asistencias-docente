@@ -9,20 +9,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Datos del alta de una institución nueva junto con su primera cuenta. Es el único formulario
- * que pide la clave de instalación, porque dar de alta una institución es una operación de
- * despliegue y no una función de la aplicación: ocurre antes de que exista ningún tenant.
+ * Datos del alta de una institución nueva junto con su primera cuenta. Nada de esto se guarda
+ * al enviar el formulario: queda en espera hasta que se valide el código enviado al correo,
+ * de modo que una institución solo llega a existir con su dirección ya comprobada.
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AltaInstitucionFormDto {
-
-    // No se valida el formato: es un secreto de configuración y su forma la elige quien
-    // despliega. Solo se acota el largo para no aceptar un envío enorme.
-    @NotBlank(message = "Ingresá la clave de instalación")
-    @Size(max = 200, message = "La clave de instalación es más corta que eso")
-    private String claveInstalacion;
 
     // ---- Institución ----
 

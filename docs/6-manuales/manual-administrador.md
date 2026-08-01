@@ -38,20 +38,22 @@
 
 ### Registrar una institución nueva
 
-En el pie de la pantalla de login hay un enlace **"Registrar una institución
-nueva"**. Es un paso de instalación, no algo de uso diario: pide una **clave de
-instalación** que solo conoce quien puso el sistema en funcionamiento.
+En el pie de la pantalla de ingreso hay un enlace **"Registrar una institución
+nueva"**. Se completan los datos de la institución y los de su primera cuenta.
 
-Al completarlo se crean de una sola vez la institución y su primera cuenta, que
-es la que después da de alta al resto del personal. Esa primera cuenta **no
-necesita confirmar el correo**: ya demostró tener la clave de instalación.
+Al enviarlo **todavía no se crea nada**: llega un código de 6 dígitos al correo que
+declaraste, y la institución aparece recién cuando lo confirmás. Si abandonás a
+mitad de camino, no queda ningún registro.
+
+Esa primera cuenta queda **verificada de entrada**, porque acabás de demostrar que
+controlás esa casilla. Las que crees después van a tener que confirmar la suya con
+su propio código.
 
 El nombre y el CUIT de la institución no se pueden repetir con los de otra ya
 registrada.
 
-> **Consejo**: la primera vez que ingreses, asegurate de que la cámara funcione
-> en el navegador. El sistema te va a pedir permiso para usarla en la pantalla
-> de **Pase de asistencia** y **Registrar rostro**.
+> Usá una dirección a la que puedas entrar en ese momento: sin el código, el alta
+> no se completa.
 
 ---
 

@@ -100,7 +100,8 @@ public class UsuarioService {
 
         // Si se cambia email, validar unicidad por institucion
         String emailNuevo = email.trim();
-        if (!emailNuevo.equalsIgnoreCase(u.getEmail())
+        boolean cambioElCorreo = !emailNuevo.equalsIgnoreCase(u.getEmail());
+        if (cambioElCorreo
                 && usuarioRepository.existsByEmailAndInstitucionId(emailNuevo, u.getInstitucionId())) {
             throw new IllegalArgumentException("El email '" + emailNuevo + "' ya existe en esta institucion");
         }
@@ -141,6 +142,15 @@ public class UsuarioService {
         u.setEmail(emailNuevo);
         u.setRol(rol);
         u.setActivo(activo);
+
+        // Cambiar la direccion invalida la verificacion: la anterior fue confirmada, esta no.
+        // Sin esto la cuenta seguiria figurando verificada con un correo que nadie probo, y
+        // la recuperacion de contrasena pasaria a apuntar a ese buzon sin ninguna garantia.
+        if (cambioElCorreo && u.getEmailVerificadoEn() != null) {
+            u.setEmailVerificadoEn(null);
+            log.info("Verificacion invalidada: el usuario {} cambio su correo y debe confirmarlo",
+                     u.getId());
+        }
 
         Usuario saved = usuarioRepository.save(u);
         log.info("Usuario actualizado: id={}, username={}, rol={}, activo={}",

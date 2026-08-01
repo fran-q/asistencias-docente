@@ -55,6 +55,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-40 | Recuperación autónoma de contraseña | Una cuenta que olvidó su contraseña debe poder fijar una nueva sin intervención de otro usuario, acreditando el control de su correo. El sistema no debe revelar si una cuenta existe al responder a estas solicitudes. |
 | RF-42 | Verificación obligatoria para operar | Una cuenta que no verificó su correo no debe poder acceder a ninguna funcionalidad del sistema, salvo la pantalla donde se verifica y el cierre de sesión. La verificación debe surtir efecto de inmediato, sin exigir un nuevo inicio de sesión: un bloqueo que persista después de cumplir la condición deja a la persona sin acceso a su propia cuenta. |
 | RF-43 | Identidad reutilizable entre instituciones | Una misma persona debe poder tener cuenta en más de una institución con la misma dirección de correo, y esa dirección debe poder coincidir con la de un docente registrado. La unicidad del usuario y del correo rige dentro de cada institución, no en todo el sistema. |
+| RF-57 | Revalidación al cambiar el correo | Modificar la dirección de una cuenta debe invalidar su verificación y volver a bloquearla hasta confirmar la nueva. La anterior fue comprobada; la nueva no, y sin esto la cuenta seguiría figurando verificada con un buzón que nadie probó, al que además pasaría a apuntar la recuperación de contraseña. |
 | RF-56 | Registro del último acceso | El sistema debe registrar la fecha y hora del último inicio de sesión de cada cuenta, y mostrarla en la administración de usuarios. Permite detectar cuentas que quedaron sin usar y dar contexto ante cualquier revisión posterior. |
 
 ### 3.2. Módulo de Gestión de Instituciones
@@ -62,7 +63,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | ID | Requerimiento | Descripción |
 |---|---|---|
 | RF-05 | Alta de institución | El sistema debe permitir registrar nuevas instituciones educativas con sus datos básicos (nombre, dirección, contacto), creando en el mismo acto la cuenta con la cual esa institución accede. Una institución sin cuenta de acceso es inutilizable y bloquea el nombre para futuros intentos. |
-| RF-44 | Autorización del alta de institución | El alta de una institución debe exigir una credencial de instalación conocida por quien despliega el sistema. No puede exigir un rol, porque se ejecuta antes de que exista ningún usuario de esa institución, y no puede quedar abierta, porque permitiría crear cuentas con acceso al sistema sin autorización alguna. |
+| RF-44 | Validación del alta de institución | El alta debe validarse con el mismo código de un solo uso que el resto del sistema, enviado al correo declarado. No puede exigir un rol, porque se ejecuta antes de que exista ningún usuario de esa institución. La institución no debe crearse hasta que ese código se valide: así ninguna llega a existir con una dirección sin comprobar, y un alta abandonada no deja registros ni nombres ocupados. |
 | RF-45 | Unicidad de la institución | El nombre y el CUIT de una institución deben ser únicos en todo el sistema. Dos instituciones homónimas serían indistinguibles para quien administra el despliegue, y un CUIT repetido indica un dato mal cargado. |
 | RF-06 | CRUD de administradores | La institución (superadministrador) debe poder crear, consultar, modificar y dar de baja (lógica) a los administradores de su institución. |
 
@@ -178,6 +179,7 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 | RNF-09 | Sesiones seguras | Las sesiones deben tener expiración configurable y protección contra CSRF y XSS. |
 | RNF-10 | Aislamiento de datos | Ningún usuario de una institución debe acceder a datos de otra, ni desde la interfaz ni desde la capa de datos. |
 | RNF-31 | Respuestas que no revelan existencia | Ante un identificador de otra institución, o ante una cuenta inexistente en la recuperación de contraseña, el sistema debe responder exactamente igual que ante un caso legítimo negativo. Distinguir "no existe" de "no tenés permiso" confirma que el registro existe, y es suficiente para enumerar los datos ajenos probando identificadores. |
+| RNF-37 | Tope de envíos por dirección de destino | Los formularios públicos que envían códigos deben acotar cuántos puede recibir una misma dirección en una ventana de tiempo. Sin ese tope, una pantalla accesible sin sesión permite usar el sistema para enviar mensajes repetidos a la casilla de un tercero. |
 | RNF-32 | Protección de los códigos de un solo uso | Los códigos de verificación y de recuperación deben almacenarse hasheados, vencer en pocos minutos, consumirse en el primer uso, invalidarse al emitirse uno nuevo, y estar acotados tanto en intentos fallidos como en emisiones por hora. Seis dígitos son un millón de combinaciones: sin tope de intentos se agotan por fuerza bruta. |
 
 ### 4.4. Cumplimiento Legal y Normativo
@@ -229,9 +231,9 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 53 |
-| Requerimientos no funcionales (RNF) | 36 |
-| **Total** | **89** |
+| Requerimientos funcionales (RF) | 54 |
+| Requerimientos no funcionales (RNF) | 37 |
+| **Total** | **91** |
 
 > Los identificadores RF-34 a RF-36 correspondían al módulo de auditoría, que se
 > retiró del alcance del proyecto. No se reutilizan: renumerar rompería las

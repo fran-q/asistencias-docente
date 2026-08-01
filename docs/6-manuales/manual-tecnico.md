@@ -111,28 +111,49 @@ Y en `[mysql]` y `[client]` si aparecen, también ponerlo en `64M`.
 
 Reiniciar MySQL en XAMPP.
 
-### 3.5 Definir la clave de instalación
+### 3.5 Levantar un servidor de correo
 
-Es la clave que habilita el alta de instituciones nuevas desde
-`http://localhost:8080/alta-institucion`. Sale de una variable de entorno, no
-del código ni de un archivo versionado:
+**Este paso ya no es opcional.** Todo el sistema valida con códigos de un solo uso
+enviados por correo: dar de alta una institución, confirmar una cuenta nueva y
+recuperar una contraseña. Sin un SMTP alcanzable, ninguna de las tres cosas funciona.
+
+La aplicación habla SMTP estándar y **no sabe a qué servidor le escribe**: host,
+puerto, credenciales y TLS salen de variables de entorno. Cambiar de uno a otro no
+requiere tocar código.
+
+#### En desarrollo: un buzón local
+
+Alcanza con un servidor de captura que reciba los mensajes y los muestre en una
+página web, sin mandar nada a internet. La opción estándar es **Mailpit**, un único
+ejecutable sin instalación:
 
 ```bash
-export INSTALACION_CLAVE="una-clave-larga-propia-de-esta-instalacion"
+mailpit
 ```
 
-En Windows, desde PowerShell:
+Escucha en `127.0.0.1:1025` (SMTP) y publica su interfaz en `http://127.0.0.1:8025`,
+que son exactamente los puertos que la aplicación trae configurados por defecto.
 
-```powershell
-$env:INSTALACION_CLAVE = "una-clave-larga-propia-de-esta-instalacion"
+Para la demostración esto es **preferible a un envío real**: no depende de conexión,
+el código aparece al instante, no hay riesgo de que el mensaje caiga en correo no
+deseado y no se exponen direcciones reales en pantalla.
+
+#### En producción: el servidor de la institución
+
+```bash
+export MAIL_HOST=smtp.institucion.edu.ar
+export MAIL_PORT=587
+export MAIL_USER=asistencias@institucion.edu.ar
+export MAIL_PASS=la-contrasena
+export MAIL_AUTH=true
+export MAIL_TLS=true
+export MAIL_FROM=asistencias@institucion.edu.ar
 ```
 
-> Si la variable no está definida, el alta de instituciones queda
-> **deshabilitada** y el formulario lo informa. Es deliberado: preferimos que
-> no funcione antes que dejarla abierta con una clave vacía.
-
-Quien conozca esta clave puede crear una institución y su cuenta inicial, así
-que se trata con el mismo cuidado que la contraseña de la base.
+Es la opción correcta cuando la institución tiene dominio propio: ningún tercero ve
+las direcciones. Un proveedor externo (Gmail con contraseña de aplicación, Brevo,
+Mailgun) también funciona con las mismas variables, con la salvedad de que las
+direcciones pasan por un servicio de terceros.
 
 ### 3.6 Levantar la app
 ```bash
@@ -148,19 +169,16 @@ versionado).
 
 Acceder en `http://localhost:8080`.
 
-### 3.7 Verificar el correo de las cuentas
+### 3.7 Verificar el correo de las cuentas sembradas
 
-Las cuentas sembradas por `V002` nacen **sin verificar**, y una cuenta sin
-verificar no puede operar el sistema: al iniciar sesión queda retenida en
-`/mi-cuenta` hasta confirmar su correo con el código de 6 dígitos.
+Las cuentas que crea `V002` nacen **sin verificar**, y una cuenta sin verificar no
+puede operar el sistema: al iniciar sesión queda retenida en `/mi-cuenta` hasta
+confirmar su correo con el código de 6 dígitos, que llega al buzón del paso 3.5.
 
-Para que ese código llegue hace falta un servidor SMTP. En desarrollo alcanza
-con uno de captura local, que muestra los mensajes en una interfaz web sin
-mandarlos a internet (Mailpit o MailHog en el puerto 1025, ya configurado en
-`application.properties`).
-
-Si el SMTP no está disponible, ver *Troubleshooting → Una cuenta quedó
-bloqueada sin poder verificar*.
+Sus direcciones son de ejemplo (`@cent35.edu.ar`), así que con un buzón local el
+código igual se puede leer. Con un SMTP real esos correos no existen: en ese caso
+conviene usar el desbloqueo manual de *Troubleshooting* o dar de alta una
+institución nueva con una dirección propia.
 
 ---
 
@@ -228,7 +246,7 @@ Propiedades clave:
 | `app.biometria.confirmacion.ventana-ms` | `3000` | Cuanto debe sostenerse la misma identidad antes de marcar (ADR-0013). |
 | `app.biometria.confirmacion.lecturas-minimas` | `3` | Piso de lecturas para dar por cumplida la ventana. |
 | `app.biometria.confirmacion.hueco-maximo-ms` | `2500` | Hueco a partir del cual se considera que la persona se fue del cuadro. |
-| `app.instalacion.clave` | `${INSTALACION_CLAVE:}` | Habilita el alta de instituciones. Vacía = alta deshabilitada. Ver sección 3.5. |
+| `app.alta.max-envios-por-hora` | `3` | Tope de códigos hacia una misma dirección. El alta es pública: sin esto la pantalla serviría para molestar a una casilla ajena. |
 | `app.verificacion.minutos-validez` | `15` | Cuánto vive el código de 6 dígitos. |
 | `app.verificacion.max-intentos` | `5` | Intentos fallidos antes de invalidar el código. |
 | `app.verificacion.max-por-hora` | `5` | Tope de pedidos de código por cuenta y por hora. |
@@ -468,9 +486,9 @@ UPDATE usuarios SET email_verificado_en = NOW() WHERE email_verificado_en IS NUL
 > intervención manual y se usa solo con el SMTP caído. La solución correcta es
 > levantar el servidor de correo.
 
-### El alta de institución dice que está deshabilitada
-- Falta la variable `INSTALACION_CLAVE`. Ver sección 3.5. Después de definirla
-  hay que reiniciar la app: se lee al arrancar.
+### El alta de institución no manda el código
+- No hay ningún SMTP escuchando. Ver sección 3.5: sin servidor de correo el alta
+  no puede completarse, porque la institución no se crea hasta validar el código.
 
 ---
 

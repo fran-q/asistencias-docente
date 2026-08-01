@@ -1,17 +1,23 @@
 package edu.cent35.asistencias.config;
 
+import edu.cent35.asistencias.model.PropositoCodigo;
 import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.service.NotificadorEmailService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mail.MailSendException;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
@@ -20,27 +26,42 @@ import org.springframework.util.MultiValueMap;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Cubre el alta de una institución nueva, que es la única operación que corre sin institución
- * en contexto y sin sesión. Lo que se prueba no es que el formulario funcione, sino que la
- * clave de instalación sea una barrera real y que la cuenta inicial nazca utilizable.
+ * Cubre el alta de una institución, que es la única operación que corre sin sesión y sin
+ * institución en contexto. Lo que se prueba no es que el formulario funcione, sino que nada
+ * llegue a crearse hasta que el código enviado al correo se valide.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class AltaInstitucionIT {
 
-    private static final String CLAVE_BUENA = "clave-de-prueba";
-
     @Autowired private MockMvc mockMvc;
     @Autowired private InstitucionRepository institucionRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private RolRepository rolRepository;
+
+    // Se intercepta el envío para poder leer el código sin levantar un servidor de correo.
+    @MockBean private NotificadorEmailService notificador;
+
+    // El freno de envios es un unico bean que vive todo el contexto de Spring y cuenta por
+    // direccion de destino. Si todos los tests usaran el mismo correo, el cuarto quedaria
+    // frenado por los anteriores y el resultado dependeria del orden de ejecucion.
+    private static final java.util.concurrent.atomic.AtomicInteger SECUENCIA =
+        new java.util.concurrent.atomic.AtomicInteger();
+    private String correo;
 
     @BeforeEach
     void preparar() {
@@ -51,6 +72,8 @@ class AltaInstitucionIT {
         rol.setCodigo("INSTITUCION");
         rol.setDescripcion("Cuenta institucional");
         rolRepository.save(rol);
+
+        correo = "jefe" + SECUENCIA.incrementAndGet() + "@ejemplo.edu.ar";
     }
 
     @AfterEach
@@ -65,57 +88,44 @@ class AltaInstitucionIT {
         mockMvc.perform(get("/alta-institucion")).andExpect(status().isOk());
     }
 
+    // ========================================================================
+    //  Paso 1: enviar el codigo
+    // ========================================================================
+
     @Test
-    @DisplayName("Sin la clave de instalacion no se crea nada")
-    void sinClaveNoCreaNada() throws Exception {
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos("clave-equivocada")))
-            .andExpect(status().isOk());          // vuelve al formulario, no redirige
+    @DisplayName("Enviar el formulario manda el código pero todavía no crea nada")
+    void elFormularioNoCreaNada() throws Exception {
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()))
+            .andExpect(status().is3xxRedirection());
+
+        verify(notificador).enviarCodigo(any(), eq(PropositoCodigo.VERIFICACION_EMAIL),
+                                         eq(correo), anyString());
 
         assertThat(institucionRepository.count())
-            .as("una clave incorrecta no puede dejar ninguna institucion creada")
+            .as("la institucion no puede existir antes de que el correo este comprobado")
             .isZero();
         assertThat(usuarioRepository.count()).isZero();
     }
 
     @Test
-    @DisplayName("Con la clave correcta crea la institucion y su primera cuenta")
-    void creaInstitucionYCuenta() throws Exception {
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos(CLAVE_BUENA)))
-            .andExpect(status().is3xxRedirection());
+    @DisplayName("Si el correo no se puede enviar, no queda nada a medio crear")
+    void siFallaElCorreoNoQuedaNada() throws Exception {
+        doThrow(new MailSendException("SMTP caido"))
+            .when(notificador).enviarCodigo(any(), any(), anyString(), anyString());
 
-        assertThat(institucionRepository.count()).isEqualTo(1);
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()))
+            .andExpect(status().isOk());          // vuelve al formulario con el error
 
-        Optional<Usuario> creado = usuarioRepository.findByUsername("jefe.nuevo").stream().findFirst();
-        assertThat(creado).isPresent();
-        assertThat(creado.get().getRol().getCodigo()).isEqualTo("INSTITUCION");
-        assertThat(creado.get().getInstitucionId())
-            .isEqualTo(institucionRepository.findAll().get(0).getId());
+        assertThat(institucionRepository.count()).isZero();
+        assertThat(usuarioRepository.count()).isZero();
     }
 
     @Test
-    @DisplayName("La cuenta inicial nace verificada, para que la institucion no quede sin acceso")
-    void laCuentaInicialNaceVerificada() throws Exception {
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos(CLAVE_BUENA)))
-            .andExpect(status().is3xxRedirection());
-
-        Usuario creado = usuarioRepository.findByUsername("jefe.nuevo").get(0);
-        assertThat(creado.getEmailVerificadoEn())
-            .as("si tuviera que verificar por correo y el SMTP fallara, la institucion "
-                + "quedaria sin acceso a su propia cuenta de gestion")
-            .isNotNull();
-    }
-
-    @Test
-    @DisplayName("No se puede repetir el nombre de una institucion ya registrada")
+    @DisplayName("No se puede repetir el nombre de una institución ya registrada")
     void elNombreEsUnicoEnTodoElSistema() throws Exception {
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos(CLAVE_BUENA)))
-            .andExpect(status().is3xxRedirection());
+        crearInstitucionCompleta(new MockHttpSession());
 
-        MultiValueMap<String, String> repetida = datos(CLAVE_BUENA);
-        repetida.set("username", "otro.jefe");
-        repetida.set("email", "otro@ejemplo.edu.ar");
-
-        mockMvc.perform(post("/alta-institucion").with(csrf()).params(repetida))
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()))
             .andExpect(status().isOk());          // vuelve al formulario con el error
 
         assertThat(institucionRepository.count()).isEqualTo(1);
@@ -124,22 +134,146 @@ class AltaInstitucionIT {
     @Test
     @DisplayName("Sin token CSRF el alta se rechaza igual que en el resto del sistema")
     void exigeCsrf() throws Exception {
-        mockMvc.perform(post("/alta-institucion").params(datos(CLAVE_BUENA)))
+        mockMvc.perform(post("/alta-institucion").params(datos()))
             .andExpect(status().isForbidden());
         assertThat(institucionRepository.count()).isZero();
+    }
+
+    // ========================================================================
+    //  Paso 2: validar el codigo
+    // ========================================================================
+
+    @Test
+    @DisplayName("Con el código correcto se crea la institución y su cuenta, ya verificada")
+    void elCodigoCorrectoCreaTodo() throws Exception {
+        crearInstitucionCompleta(new MockHttpSession());
+
+        assertThat(institucionRepository.count()).isEqualTo(1);
+
+        Optional<Usuario> creado = usuarioRepository.findByUsername("jefe.nuevo").stream().findFirst();
+        assertThat(creado).isPresent();
+        assertThat(creado.get().getRol().getCodigo()).isEqualTo("INSTITUCION");
+        assertThat(creado.get().getEmailVerificadoEn())
+            .as("acaba de demostrar que controla esa casilla, que es lo que la verificacion pide")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("Un código equivocado no crea nada y deja seguir intentando")
+    void codigoEquivocadoNoCreaNada() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(sesion))
+            .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
+                        .param("codigo", "000000").session(sesion))
+            .andExpect(status().isOk());          // vuelve a la pantalla del codigo
+
+        assertThat(institucionRepository.count()).isZero();
+        assertThat(usuarioRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("Al agotar los intentos el alta se descarta entera")
+    void alAgotarIntentosSeDescarta() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(sesion))
+            .andExpect(status().is3xxRedirection());
+        String correcto = codigoEnviado();
+
+        // El tope configurado son 5 intentos fallidos.
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
+                            .param("codigo", "000000").session(sesion));
+        }
+
+        // Ni siquiera el codigo correcto sirve ya: los datos se descartaron.
+        mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
+                        .param("codigo", correcto).session(sesion))
+            .andExpect(status().is3xxRedirection());
+
+        assertThat(institucionRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("Sin un alta en curso, la pantalla del código no se puede usar")
+    void sinAltaEnCursoNoHayPantalla() throws Exception {
+        mockMvc.perform(get("/alta-institucion/codigo"))
+            .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/alta-institucion/codigo").with(csrf()).param("codigo", "123456"))
+            .andExpect(status().is3xxRedirection());
+
+        assertThat(institucionRepository.count()).isZero();
+    }
+
+    @Test
+    @DisplayName("El código de una sesión no sirve en otra")
+    void elCodigoNoCruzaDeSesion() throws Exception {
+        MockHttpSession deAlguien = new MockHttpSession();
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(deAlguien))
+            .andExpect(status().is3xxRedirection());
+
+        // Otro navegador, con el codigo correcto pero sin el alta en su sesion.
+        mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
+                        .param("codigo", codigoEnviado()).session(new MockHttpSession()))
+            .andExpect(status().is3xxRedirection());
+
+        assertThat(institucionRepository.count()).isZero();
+    }
+
+    // ========================================================================
+    //  Freno de envios
+    // ========================================================================
+
+    @Test
+    @DisplayName("Una misma dirección no puede recibir códigos sin límite")
+    void frenaLosEnviosRepetidos() throws Exception {
+        // El tope configurado son 3 por hora y por direccion.
+        for (int i = 0; i < 3; i++) {
+            MultiValueMap<String, String> p = datos();
+            p.set("nombreInstitucion", "Instituto " + i);   // nombre distinto, mismo correo
+            mockMvc.perform(post("/alta-institucion").with(csrf()).params(p))
+                .andExpect(status().is3xxRedirection());
+        }
+
+        MultiValueMap<String, String> unoMas = datos();
+        unoMas.set("nombreInstitucion", "Instituto de mas");
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(unoMas))
+            .andExpect(status().isOk());          // vuelve al formulario con el aviso
+
+        // Salieron los tres primeros y ninguno mas: el cuarto quedo frenado.
+        verify(notificador, times(3))
+            .enviarCodigo(any(), any(), anyString(), anyString());
     }
 
     // ========================================================================
     //  helpers
     // ========================================================================
 
-    private MultiValueMap<String, String> datos(String clave) {
+    // Recorre el alta completa: formulario, lectura del codigo enviado y confirmacion.
+    private void crearInstitucionCompleta(MockHttpSession sesion) throws Exception {
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(sesion))
+            .andExpect(status().is3xxRedirection());
+        mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
+                        .param("codigo", codigoEnviado()).session(sesion))
+            .andExpect(status().is3xxRedirection());
+    }
+
+    // Lee el codigo que la aplicacion le paso al notificador.
+    private String codigoEnviado() {
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(notificador, atLeastOnce())
+            .enviarCodigo(any(), any(), anyString(), captor.capture());
+        return captor.getValue();
+    }
+
+    private MultiValueMap<String, String> datos() {
         MultiValueMap<String, String> p = new LinkedMultiValueMap<>();
-        p.add("claveInstalacion", clave);
         p.add("nombreInstitucion", "Instituto Nuevo");
         p.add("cuit", "");
         p.add("username", "jefe.nuevo");
-        p.add("email", "jefe@ejemplo.edu.ar");
+        p.add("email", correo);
         p.add("password", "clave12345");
         p.add("confirmacion", "clave12345");
         p.add("nombre", "Jefa");

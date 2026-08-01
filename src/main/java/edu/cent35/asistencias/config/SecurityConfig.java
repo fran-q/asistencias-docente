@@ -29,10 +29,13 @@ public class SecurityConfig {
                 // /recuperar/** va abierto por necesidad: quien perdio la contrasena no puede
                 // autenticarse para pedirla. El flujo se protege con el codigo de un solo uso.
                 //
-                // /alta-institucion tambien: crear una institucion ocurre ANTES de que exista
-                // el tenant, asi que no hay sesion ni rol contra el cual autorizar. Lo protege
-                // la clave de instalacion que pide el propio formulario (ADR-0010).
-                .requestMatchers("/login", "/recuperar/**", "/alta-institucion",
+                // /alta-institucion/** tambien: crear una institucion ocurre ANTES de que
+                // exista el tenant, asi que no hay sesion ni rol contra el cual autorizar. Lo
+                // que la protege es el codigo que se manda al correo declarado, que ademas
+                // impide que la institucion llegue a crearse sin esa direccion comprobada
+                // (ADR-0010).
+                .requestMatchers("/login", "/recuperar/**", "/alta-institucion/**",
+                                 "/alta-institucion",
                                  "/css/**", "/js/**", "/img/**",
                                  "/webjars/**", "/actuator/health").permitAll()
                 .anyRequest().authenticated()

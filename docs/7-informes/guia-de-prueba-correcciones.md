@@ -11,17 +11,21 @@ verificarlo punto por punto sin conocer el código.
 ## Antes de empezar
 
 1. Arrancar **MariaDB** desde el panel de XAMPP.
-2. Definir la clave de instalación y levantar la aplicación:
+2. Arrancar el **buzón de correo local**. Sin esto no se puede dar de alta una
+   institución ni confirmar una cuenta: todo el sistema valida con códigos que
+   llegan por correo.
 
 ```bash
-export INSTALACION_CLAVE="cent35-instalacion-2026"
+mailpit
 ```
+
+3. Levantar la aplicación:
 
 ```bash
 ./gradlew bootRun
 ```
 
-3. Abrir `http://localhost:8080`.
+4. Abrir `http://localhost:8080`. Los correos se leen en `http://localhost:8025`.
 
 > Al arrancar, Flyway aplica la migración **V008**, que agrega la fecha de baja de
 > los docentes. Se aplica sola; no hay que hacer nada.
@@ -125,22 +129,56 @@ Si la pantalla es muy baja, el subtítulo desaparece antes que los controles.
 
 1. **Cerrar sesión**.
 2. En la pantalla de ingreso, abajo: **"Registrar una institución nueva"**.
-3. Completar con una **clave de instalación equivocada** y enviar.
-   - **Qué tiene que pasar**: rechaza con *"La clave de instalación no es correcta."*
-     y **no crea nada**.
-4. Volver a completar, ahora con `cent35-instalacion-2026`:
+3. Completar los datos:
    - Nombre: `Escuela de Prueba 9`
    - CUIT: (se puede dejar vacío)
-   - Usuario, correo, contraseña (mínimo 8), nombre y apellido.
-5. Enviar.
+   - Usuario, correo, contraseña (mínimo 6), nombre y apellido.
+4. Enviar.
 
-**Qué tiene que pasar**: vuelve a la pantalla de ingreso. Ya se puede entrar con
-esa cuenta, **sin tener que verificar el correo**.
+**Qué tiene que pasar**: pasa a una pantalla que pide el código, indicando a qué
+dirección se envió. **Todavía no se creó nada.**
 
-**Por qué esa cuenta no verifica**: quien la creó ya demostró tener la clave de
-instalación, que es una prueba más fuerte que un código por correo. Si tuviera que
-verificar y el servidor de correo estuviera caído, la institución nacería sin
-acceso a su propia cuenta de gestión.
+5. **Comprobalo antes de seguir**: abrí `http://localhost:8025` y vas a ver el
+   correo con el código. En la base, la institución **no debe existir**:
+
+```bash
+/c/xampp/mysql/bin/mysql.exe -u asistencias -p asistenciautomatica -e "SELECT COUNT(*) FROM instituciones WHERE nombre='Escuela de Prueba 9';"
+```
+
+Tiene que dar **0**. Ese es el punto de todo el rediseño.
+
+6. Ingresar el código.
+
+**Qué tiene que pasar**: vuelve a la pantalla de ingreso y ahora sí la institución
+existe. Se puede entrar con esa cuenta **sin tener que verificar el correo**, porque
+acaba de demostrar que controla esa casilla.
+
+**Probá también abandonar a mitad de camino**: completá el formulario y cerrá el
+navegador sin ingresar el código. No tiene que quedar ninguna institución creada ni
+el nombre ocupado.
+
+---
+
+### 3.1.b El código equivocado no crea nada
+
+Completá el formulario y en la pantalla del código escribí `000000`.
+
+**Qué tiene que pasar**: avisa que el código no es correcto y te deja reintentar.
+Después de **5 intentos fallidos** el alta se descarta entera y vuelve al
+formulario: ni siquiera el código correcto sirve ya.
+
+---
+
+### 3.1.c No se puede usar para molestar a una casilla ajena
+
+Completá el formulario **cuatro veces seguidas** con el mismo correo, cambiando el
+nombre de la institución cada vez.
+
+**Qué tiene que pasar**: los tres primeros mandan el código; el cuarto lo rechaza
+avisando que esa dirección ya recibió varios en la última hora.
+
+**Por qué importa**: el alta es pública, así que sin este tope cualquiera podría
+usar la pantalla para mandarle mensajes repetidos al correo de otra persona.
 
 ---
 
@@ -379,7 +417,7 @@ Con el rol **Administrador**, dentro de **Personal** aparece solo *Docentes*:
 | Síntoma | Dónde mirar |
 |---|---|
 | No arranca la aplicación | ¿MariaDB está levantado en XAMPP? |
-| "El alta de instituciones está deshabilitada" | Falta `INSTALACION_CLAVE`. Se lee al arrancar: hay que definirla y reiniciar |
+| El alta no manda el código | No hay ningún buzón escuchando. Arrancá Mailpit antes que la aplicación |
 | El código de verificación no llega | Hace falta un SMTP. Manual Técnico, sección 3.7 |
 | Una cuenta quedó encerrada sin poder verificar | Desbloqueo manual: Manual Técnico, sección 12 |
 | El filtro no filtra | Recargar con Ctrl+F5: puede haber quedado el JavaScript viejo en caché |

@@ -15,57 +15,118 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 /**
- * Da de alta una institución junto con su primera cuenta. Es la única operación del sistema
- * que corre sin TenantContext, porque se ejecuta antes de que el tenant exista: por eso está
- * protegida por una clave de configuración y no por un rol, y por eso valida el aislamiento
- * a mano en vez de apoyarse en el filtro de Hibernate.
+ * Da de alta una institución junto con su primera cuenta, en dos pasos: primero manda un código
+ * al correo declarado y deja los datos en espera, y solo al validarlo crea la institución. Así
+ * nada llega a existir con una dirección sin comprobar, y un alta abandonada no deja registros.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AltaInstitucionService {
 
+    private static final SecureRandom ALEATORIO = new SecureRandom();
+
     private final InstitucionRepository institucionRepository;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificadorEmailService notificador;
+    private final FrenoDeEnviosService freno;
 
-    @Value("${app.instalacion.clave}")
-    private String claveConfigurada;
+    @Value("${app.verificacion.minutos-vigencia}")
+    private int minutosVigencia;
+
+    @Value("${app.verificacion.max-intentos}")
+    private int maxIntentos;
+
+    /** Por qué se rechazó un código. */
+    public enum Rechazo { CORRECTO, INCORRECTO, VENCIDO, SIN_INTENTOS }
 
     /**
-     * Crea la institución y su cuenta inicial en una sola transacción: una institución sin
-     * cuenta con la cual entrar sería inservible, y quedaría ocupando el nombre.
+     * Paso 1: valida que los datos no choquen con nada ya registrado, manda el código al correo
+     * declarado y devuelve el alta en espera para que quien llama la guarde en la sesión.
      *
-     * @return el usuario creado, ya verificado
+     * <p>Las comprobaciones de unicidad se repiten en el paso 2. Acá sirven para no hacerle
+     * completar un código a alguien cuyo nombre de institución ya estaba tomado.
+     */
+    public AltaPendiente iniciar(AltaInstitucionFormDto form) {
+        verificarQueNoExista(form);
+
+        String email = form.getEmail().trim();
+        if (!freno.permitirEnvio(email)) {
+            throw new IllegalStateException(
+                "Esa dirección ya recibió varios códigos en la última hora. "
+                + "Esperá un rato antes de volver a intentar.");
+        }
+
+        // Seis digitos con ceros a la izquierda, igual que el resto de los codigos del sistema.
+        String codigoEnClaro = String.format("%06d", ALEATORIO.nextInt(1_000_000));
+
+        // El usuario todavia no existe, asi que se arma uno de paso solo para el saludo del
+        // correo. No se guarda: el notificador unicamente lee su nombre.
+        Usuario destinatario = Usuario.builder()
+            .nombre(form.getNombre().trim())
+            .build();
+
+        try {
+            notificador.enviarCodigo(destinatario,
+                edu.cent35.asistencias.model.PropositoCodigo.VERIFICACION_EMAIL,
+                email, codigoEnClaro);
+        } catch (RuntimeException ex) {
+            // Si no salio, el cupo no se consumio: devolverlo evita castigar a quien no
+            // recibio nada por una caida del servidor de correo.
+            freno.devolverCupo(email);
+            log.error("No se pudo enviar el codigo del alta de institucion", ex);
+            throw new IllegalStateException(
+                "No se pudo enviar el código al correo. Revisá la dirección o intentá más tarde.");
+        }
+
+        log.info("Alta de institucion iniciada: nombre='{}', a la espera del codigo",
+                 form.getNombreInstitucion().trim());
+        return new AltaPendiente(form, passwordEncoder.encode(codigoEnClaro),
+                                 LocalDateTime.now().plusMinutes(minutosVigencia));
+    }
+
+    // Comprueba el codigo tipeado contra el que espera, sumando el intento si falla.
+    public Rechazo comprobarCodigo(AltaPendiente pendiente, String codigoTipeado) {
+        if (pendiente.estaVencida()) {
+            return Rechazo.VENCIDO;
+        }
+        if (pendiente.getIntentos() >= maxIntentos) {
+            return Rechazo.SIN_INTENTOS;
+        }
+        String tipeado = codigoTipeado == null ? "" : codigoTipeado.trim();
+        if (!passwordEncoder.matches(tipeado, pendiente.getCodigoHash())) {
+            int van = pendiente.sumarIntentoFallido();
+            log.warn("Codigo de alta incorrecto: intento {} de {}", van, maxIntentos);
+            return van >= maxIntentos ? Rechazo.SIN_INTENTOS : Rechazo.INCORRECTO;
+        }
+        return Rechazo.CORRECTO;
+    }
+
+    /**
+     * Paso 2: crea la institución y su cuenta en una sola transacción, con el correo ya
+     * comprobado. La cuenta nace verificada porque acaba de demostrar que controla esa casilla,
+     * que es exactamente lo que la verificación pide.
+     *
+     * @return el usuario creado
      */
     @Transactional
-    public Usuario darDeAlta(AltaInstitucionFormDto form) {
-        verificarClave(form.getClaveInstalacion());
+    public Usuario confirmar(AltaPendiente pendiente) {
+        AltaInstitucionFormDto form = pendiente.getDatos();
 
-        String nombreInst = form.getNombreInstitucion().trim();
-        String cuit = vacioANulo(form.getCuit());
-
-        // El nombre y el CUIT son unicos en TODO el sistema, no por institucion: dos colegios
-        // distintos no pueden llamarse igual ni compartir CUIT.
-        if (institucionRepository.existsByNombre(nombreInst)) {
-            throw new IllegalArgumentException(
-                "Ya hay una institución registrada con ese nombre.");
-        }
-        if (cuit != null && institucionRepository.existsByCuit(cuit)) {
-            throw new IllegalArgumentException(
-                "Ya hay una institución registrada con ese CUIT.");
-        }
+        // Se repite la comprobacion: entre el paso 1 y el 2 pasaron minutos, y en el medio
+        // otra persona pudo haber registrado ese mismo nombre.
+        verificarQueNoExista(form);
 
         Institucion institucion = institucionRepository.save(
             Institucion.builder()
-                .nombre(nombreInst)
-                .cuit(cuit)
+                .nombre(form.getNombreInstitucion().trim())
+                .cuit(vacioANulo(form.getCuit()))
                 .emailContacto(form.getEmail().trim())
                 .activo(true)
                 .build());
@@ -82,32 +143,27 @@ public class AltaInstitucionService {
             .apellido(form.getApellido().trim())
             .rol(rol)
             .activo(true)
-            // Nace verificada a proposito: quien la crea ya demostro tener la clave de
-            // instalacion, que es una prueba mas fuerte que un codigo por correo. Si tuviera
-            // que verificarse, una institucion sin servidor de correo quedaria sin acceso a
-            // su propia cuenta de gestion, que es exactamente el problema que se evita.
             .emailVerificadoEn(LocalDateTime.now())
             .build();
         usuario.setInstitucionId(institucion.getId());
 
         Usuario guardado = usuarioRepository.save(usuario);
-        log.info("Alta de institucion: institucion_id={}, nombre='{}', usuario_id={}, username={}",
-                 institucion.getId(), nombreInst, guardado.getId(), guardado.getUsername());
+        log.info("Alta de institucion confirmada: institucion_id={}, nombre='{}', usuario_id={}",
+                 institucion.getId(), institucion.getNombre(), guardado.getId());
         return guardado;
     }
 
-    // Compara en tiempo constante para no filtrar por cuanto tarda cuantos caracteres acerto.
-    private void verificarClave(String ingresada) {
-        if (claveConfigurada == null || claveConfigurada.isBlank()) {
-            log.error("Intento de alta de institucion con app.instalacion.clave sin configurar");
-            throw new IllegalStateException(
-                "El alta de instituciones está deshabilitada: falta configurar la clave de instalación.");
+    // El nombre y el CUIT son unicos en TODO el sistema, no por institucion: dos colegios
+    // distintos no pueden llamarse igual ni compartir CUIT.
+    private void verificarQueNoExista(AltaInstitucionFormDto form) {
+        String nombre = form.getNombreInstitucion().trim();
+        String cuit = vacioANulo(form.getCuit());
+
+        if (institucionRepository.existsByNombre(nombre)) {
+            throw new IllegalArgumentException("Ya hay una institución registrada con ese nombre.");
         }
-        byte[] a = claveConfigurada.getBytes(StandardCharsets.UTF_8);
-        byte[] b = ingresada == null ? new byte[0] : ingresada.getBytes(StandardCharsets.UTF_8);
-        if (!MessageDigest.isEqual(a, b)) {
-            log.warn("Alta de institucion rechazada: clave de instalacion incorrecta");
-            throw new IllegalArgumentException("La clave de instalación no es correcta.");
+        if (cuit != null && institucionRepository.existsByCuit(cuit)) {
+            throw new IllegalArgumentException("Ya hay una institución registrada con ese CUIT.");
         }
     }
 

@@ -113,6 +113,48 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
+    //  ACTUALIZAR / verificacion del correo (RF-57)
+    // ====================================================================
+
+    @Test
+    @DisplayName("actualizar: cambiar el correo invalida la verificacion")
+    void actualizar_cambiarCorreoInvalidaLaVerificacion() {
+        Usuario u = usuarioActivo(10L, RolCodigo.ADMIN);
+        u.setEmailVerificadoEn(java.time.LocalDateTime.now());
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(u));
+        when(usuarioRepository.existsByEmailAndInstitucionId("otro@x.com", TENANT_A))
+            .thenReturn(false);
+        when(rolRepository.findByCodigo("ADMIN")).thenReturn(Optional.of(rolAdmin));
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.actualizar(10L, "N", "A", "otro@x.com", RolCodigo.ADMIN, true, USUARIO_ACTUAL);
+
+        assertThat(u.getEmailVerificadoEn())
+            .as("la direccion anterior estaba comprobada; esta no, asi que hay que "
+                + "confirmarla antes de seguir operando")
+            .isNull();
+    }
+
+    @Test
+    @DisplayName("actualizar: dejar el mismo correo no obliga a verificar de nuevo")
+    void actualizar_mismoCorreoConservaLaVerificacion() {
+        Usuario u = usuarioActivo(10L, RolCodigo.ADMIN);
+        java.time.LocalDateTime cuando = java.time.LocalDateTime.now().minusDays(3);
+        u.setEmailVerificadoEn(cuando);
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(u));
+        when(rolRepository.findByCodigo("ADMIN")).thenReturn(Optional.of(rolAdmin));
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        // Se edita el nombre, no el correo.
+        service.actualizar(10L, "Nombre nuevo", "A", u.getEmail(),
+                           RolCodigo.ADMIN, true, USUARIO_ACTUAL);
+
+        assertThat(u.getEmailVerificadoEn())
+            .as("bloquear a alguien por editarle el nombre seria un castigo sin motivo")
+            .isEqualTo(cuando);
+    }
+
+    // ====================================================================
     //  ACTUALIZAR / autoproteccion
     // ====================================================================
 

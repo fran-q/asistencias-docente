@@ -20,25 +20,17 @@
                 <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
             </div>
 
-            <div class="form-group">
-                <label for="claveInstalacion">Clave de instalación <span class="required">*</span></label>
-                <input type="password" id="claveInstalacion" th:field="*{claveInstalacion}" required autofocus
-                       autocomplete="off"
-                       th:classappend="${#fields.hasErrors('claveInstalacion')} ? 'is-invalid'">
-                <span class="form-error" th:if="${#fields.hasErrors('claveInstalacion')}"
-                      th:errors="*{claveInstalacion}">Error</span>
-                <small class="form-hint">
-                    La define quien instala el sistema. Dar de alta una institución es una
-                    operación de despliegue, no una función del uso diario.
-                </small>
-            </div>
+            <p class="text-muted" style="margin-top:0;">
+                Al enviar el formulario te vamos a mandar un código de 6 dígitos al correo
+                que declares. La institución se crea recién cuando lo confirmes.
+            </p>
 
             <hr class="separador">
             <h2 class="form-seccion">Datos de la institución</h2>
 
             <div class="form-group">
                 <label for="nombreInstitucion">Nombre <span class="required">*</span></label>
-                <input type="text" id="nombreInstitucion" th:field="*{nombreInstitucion}" required
+                <input type="text" id="nombreInstitucion" th:field="*{nombreInstitucion}" required autofocus
                        maxlength="150"
                        th:classappend="${#fields.hasErrors('nombreInstitucion')} ? 'is-invalid'">
                 <span class="form-error" th:if="${#fields.hasErrors('nombreInstitucion')}"
@@ -85,8 +77,8 @@
                        th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
                 <span class="form-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</span>
                 <small class="form-hint">
-                    Esta cuenta queda verificada desde el arranque; las que crees después
-                    tendrán que confirmar su correo con un código.
+                    Acá llega el código para confirmar el alta. Tiene que ser una casilla a
+                    la que puedas entrar ahora mismo.
                 </small>
             </div>
 
@@ -114,7 +106,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full">Crear institución</button>
+            <button type="submit" class="btn btn--primary btn--full">Enviar código al correo</button>
         </form>
 
         <p class="login-card__ayuda">

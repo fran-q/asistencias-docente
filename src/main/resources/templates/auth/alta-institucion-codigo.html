@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar el alta - Asistencias</title>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="login-body">
+    <main class="login-card">
+        <header class="login-card__header">
+            <div class="login-card__logo">A</div>
+            <h1>Confirmá tu correo</h1>
+            <p class="login-card__subtitle">Último paso para crear la institución</p>
+        </header>
+
+        <div th:if="${error}" class="alert alert--error" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <p>
+            Mandamos un código de 6 dígitos a
+            <strong th:text="${email}">correo@ejemplo.com</strong>.
+            Vence en unos minutos y se usa una sola vez.
+        </p>
+
+        <!-- Nada se creo todavia: la institucion y su cuenta aparecen recien cuando este
+             codigo se valida. Si se abandona acá, no queda ningun registro. -->
+        <form th:action="@{/alta-institucion/codigo}" method="post" class="login-form" novalidate>
+            <div class="form-group">
+                <label for="codigo">Código recibido</label>
+                <input type="text" id="codigo" name="codigo" required autofocus
+                       inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+                       pattern="[0-9]{6}" placeholder="000000">
+            </div>
+
+            <button type="submit" class="btn btn--primary btn--full">Crear la institución</button>
+        </form>
+
+        <p class="login-card__ayuda">
+            ¿No llegó? <a th:href="@{/alta-institucion}">Volvé a completar el formulario</a>
+            para recibir uno nuevo.
+        </p>
+    </main>
+
+    <script th:src="@{/js/toast.js}" defer></script>
+</body>
+</html>
