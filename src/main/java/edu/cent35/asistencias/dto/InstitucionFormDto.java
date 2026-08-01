@@ -31,8 +31,9 @@ public class InstitucionFormDto {
     // Mismas dos formas que en el alta de institución, por la misma razón.
     @Pattern(
         regexp = "^$|^\\d{11}$|^\\d{2}-\\d{8}-\\d{1}$",
-        message = "El CUIT tiene que ser 11 dígitos: 30-12345678-9 o 30123456789"
+        message = "El CUIT tiene que ser 11 dígitos: 30-12345678-1 o 30123456781"
     )
+    @CuitValido
     @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
     private String cuit;
 

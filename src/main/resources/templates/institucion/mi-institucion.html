@@ -36,9 +36,9 @@
                 <div class="form-group">
                     <label for="cuit">CUIT</label>
                     <input type="text" id="cuit" th:field="*{cuit}"
-                           placeholder="30-12345678-9" maxlength="13"
+                           placeholder="30-12345678-1" maxlength="13"
                            th:classappend="${#fields.hasErrors('cuit')} ? 'is-invalid'">
-                    <small class="form-hint">Formato: dos dígitos, guion, ocho dígitos, guion, un dígito.</small>
+                    <small class="form-hint">Con guiones o de corrido. Se comprueba el dígito verificador.</small>
                     <span class="form-error" th:if="${#fields.hasErrors('cuit')}"
                           th:errors="*{cuit}">Error CUIT</span>
                 </div>

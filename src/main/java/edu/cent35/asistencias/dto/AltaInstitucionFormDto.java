@@ -28,7 +28,8 @@ public class AltaInstitucionFormDto {
     // Exigir una sola era rechazar un dato correcto por un detalle de tipeo. Antes de
     // guardarlo se lleva siempre a la forma con guiones (ver Cuit.normalizar).
     @Pattern(regexp = "^$|^[0-9]{11}$|^[0-9]{2}-[0-9]{8}-[0-9]$",
-             message = "El CUIT tiene que ser 11 dígitos: 30-12345678-9 o 30123456789")
+             message = "El CUIT tiene que ser 11 dígitos: 30-12345678-1 o 30123456781")
+    @CuitValido
     @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
     private String cuit;
 

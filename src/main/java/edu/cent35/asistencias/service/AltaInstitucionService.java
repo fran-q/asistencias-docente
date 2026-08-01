@@ -158,7 +158,7 @@ public class AltaInstitucionService {
     // distintos no pueden llamarse igual ni compartir CUIT.
     private void verificarQueNoExista(AltaInstitucionFormDto form) {
         String nombre = form.getNombreInstitucion().trim();
-        // Normalizado antes de comparar: si no, '30123456789' y '30-12345678-9'
+        // Normalizado antes de comparar: si no, '30123456781' y '30-12345678-1'
         // pasarian como dos CUIT distintos siendo el mismo numero.
         String cuit = Cuit.normalizar(form.getCuit());
 

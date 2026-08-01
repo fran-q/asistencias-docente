@@ -135,12 +135,12 @@ class AltaInstitucionIT {
     @DisplayName("El mismo CUIT escrito de otra forma se detecta como repetido")
     void elCuitSeComparaNormalizado() throws Exception {
         MultiValueMap<String, String> conGuiones = datos();
-        conGuiones.set("cuit", "30-44445555-6");
+        conGuiones.set("cuit", "30-44445555-8");
         crearConDatos(conGuiones, new MockHttpSession());
 
         // Mismo numero, escrito de corrido. Sin normalizar entraria como si fuera otro.
         MultiValueMap<String, String> deCorrido = datos();
-        deCorrido.set("cuit", "30444455556");
+        deCorrido.set("cuit", "30444455558");
         deCorrido.set("nombreInstitucion", "Otro Instituto");
         deCorrido.set("username", "otro.jefe");
 
@@ -156,11 +156,26 @@ class AltaInstitucionIT {
     @DisplayName("El CUIT se guarda siempre con guiones, se haya escrito como se haya escrito")
     void elCuitSeGuardaCanonico() throws Exception {
         MultiValueMap<String, String> p = datos();
-        p.set("cuit", "30777788889");          // de corrido
+        p.set("cuit", "30777788880");          // de corrido
         crearConDatos(p, new MockHttpSession());
 
         assertThat(institucionRepository.findAll().get(0).getCuit())
-            .isEqualTo("30-77778888-9");
+            .isEqualTo("30-77778888-0");
+    }
+
+    @Test
+    @DisplayName("Un CUIT con el dígito verificador mal no llega a mandar el código")
+    void elCuitInvalidoSeRechazaEnElFormulario() throws Exception {
+        MultiValueMap<String, String> p = datos();
+        p.set("cuit", "30-12345678-9");        // forma correcta, verificador equivocado
+
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(p))
+            .andExpect(status().isOk());        // vuelve al formulario con el error
+
+        // Ni siquiera se gasta un envio de correo en un dato que no puede existir.
+        verify(notificador, org.mockito.Mockito.never())
+            .enviarCodigo(any(), any(), anyString(), anyString());
+        assertThat(institucionRepository.count()).isZero();
     }
 
     @Test

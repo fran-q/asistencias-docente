@@ -185,7 +185,8 @@ posteriores:
 | RF-42 | Verificación obligatoria para operar | ✅ | `VerificacionInterceptor` con lista blanca; desbloqueo en la misma sesión |
 | RF-43 | Identidad reutilizable entre instituciones | ✅ | Unicidad de usuario y correo acotada a la institución |
 | RF-44 | Validación del alta de institución | ✅ | Código al correo; la institución se crea recién al validarlo |
-| RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos en todo el sistema |
+| RF-45 | Unicidad de la institución | ✅ | Nombre y CUIT únicos; el CUIT se normaliza antes de comparar |
+| RF-58 | Validez del CUIT | ✅ | Dígito verificador comprobado en el alta y en la edición |
 | RF-46 | Registro del período en funciones | ✅ | Alta automática al cargar; baja elegible, acotada entre el alta y hoy |
 | RF-47 | Captura guiada por poses | ✅ | 5 poses × 3 capturas; termina por calidad, no por tiempo |
 | RF-48 | Criterios de aceptación de cada captura | ✅ | Nitidez, luz y encuadre, con el motivo del descarte en pantalla |
@@ -199,7 +200,7 @@ posteriores:
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 | RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 44 implementados · 6 parciales · 4 backlog (total 54).
+**Resumen RF:** 45 implementados · 6 parciales · 4 backlog (total 55).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -249,11 +250,11 @@ posteriores:
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 44 | 6 | 4 | 54 |
+| Funcionales | 45 | 6 | 4 | 55 |
 | No funcionales | 35 | 1 | 1 | 37 |
-| **Total** | **79** | **7** | **5** | **91** |
+| **Total** | **80** | **7** | **5** | **92** |
 
-**Cobertura del hito 1:** 79 de 91 requerimientos completamente
+**Cobertura del hito 1:** 80 de 92 requerimientos completamente
 implementados (≈87%), 7 parcialmente cubiertos (≈8%) y 5 en backlog
 planificado (≈5%).
 

@@ -64,7 +64,8 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 |---|---|---|
 | RF-05 | Alta de institución | El sistema debe permitir registrar nuevas instituciones educativas con sus datos básicos (nombre, dirección, contacto), creando en el mismo acto la cuenta con la cual esa institución accede. Una institución sin cuenta de acceso es inutilizable y bloquea el nombre para futuros intentos. |
 | RF-44 | Validación del alta de institución | El alta debe validarse con el mismo código de un solo uso que el resto del sistema, enviado al correo declarado. No puede exigir un rol, porque se ejecuta antes de que exista ningún usuario de esa institución. La institución no debe crearse hasta que ese código se valide: así ninguna llega a existir con una dirección sin comprobar, y un alta abandonada no deja registros ni nombres ocupados. |
-| RF-45 | Unicidad de la institución | El nombre y el CUIT de una institución deben ser únicos en todo el sistema. Dos instituciones homónimas serían indistinguibles para quien administra el despliegue, y un CUIT repetido indica un dato mal cargado. |
+| RF-45 | Unicidad de la institución | El nombre y el CUIT de una institución deben ser únicos en todo el sistema. Dos instituciones homónimas serían indistinguibles para quien administra el despliegue, y un CUIT repetido indica un dato mal cargado. El CUIT debe normalizarse a una única forma antes de compararlo: escrito con guiones y de corrido es el mismo número, y comparándolo como texto la restricción no lo detectaría. |
+| RF-58 | Validez del CUIT | El sistema debe comprobar el dígito verificador del CUIT y rechazar los que no cierren. El formato correcto no garantiza que el número exista: el último dígito se calcula a partir de los diez anteriores, de modo que la comprobación detecta cualquier error de tipeo y no solo los del último dígito. Un CUIT ausente es válido, porque el dato es opcional. |
 | RF-06 | CRUD de administradores | La institución (superadministrador) debe poder crear, consultar, modificar y dar de baja (lógica) a los administradores de su institución. |
 
 ### 3.3. Módulo de Gestión de Docentes
@@ -231,9 +232,9 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 54 |
+| Requerimientos funcionales (RF) | 55 |
 | Requerimientos no funcionales (RNF) | 37 |
-| **Total** | **91** |
+| **Total** | **92** |
 
 > Los identificadores RF-34 a RF-36 correspondían al módulo de auditoría, que se
 > retiró del alcance del proyecto. No se reutilizan: renumerar rompería las
