@@ -63,7 +63,7 @@ La barra de arriba agrupa las pantallas por lo que vas a hacer, no por módulo:
 
 | Grupo | Qué hay adentro |
 |---|---|
-| **Inicio** | Pantalla principal |
+| **Inicio** | Panel del día (ver más abajo) |
 | **Académico** | Carreras, Materias, Comisiones, Horarios, Grilla semanal |
 | **Asistencias** | Pase de asistencia, Listado del día, Reportes |
 | **Personal** | Docentes, Usuarios del sistema, Mi institución |
@@ -71,6 +71,41 @@ La barra de arriba agrupa las pantallas por lo que vas a hacer, no por módulo:
 El grupo donde estás parado queda subrayado, así no perdés la referencia aunque
 el menú esté cerrado. En pantallas chicas la barra se convierte en un cajón
 lateral con el botón de las tres rayas, y ahí los grupos se ven abiertos.
+
+### La pantalla de inicio
+
+El inicio **no repite los accesos del menú**: a *"¿a dónde voy?"* ya contesta la
+barra de arriba. Contesta qué está pasando y qué necesita que hagas algo. Tiene
+tres bloques y un solo botón, el del pase, que es la acción del día.
+
+**Ahora mismo.** Las clases con la ventana horaria abierta en este momento, con
+el docente de cada una y si ya marcó o no. La franja de color a la izquierda de
+cada fila lo dice de un vistazo: verde ya marcó, amarillo falta. La ventana es
+exactamente la misma que usa el pase (desde `hora_inicio` menos la tolerancia,
+hasta `hora_fin`), así que lo que acá aparece como en curso es lo que el pase
+va a aceptar marcar.
+
+**El día en números.** Presentes, Tarde, Ausentes y Clases por venir. Cada
+número es un enlace al listado **ya filtrado por ese estado**. Debajo, la barra
+de seguimiento dice cuántos de los docentes que tienen clase hoy ya marcaron.
+
+> Se cuentan **docentes, no clases**: un docente con dos clases que marcó las
+> dos cuenta como una sola persona. Y una clase sin marca que todavía no
+> terminó no es una ausencia, es una clase por venir — si no, el tablero
+> estaría en rojo todas las mañanas.
+
+**Requiere atención.** Lo que está cargado a medias y hace que el sistema no
+funcione, que de otro modo solo se descubre entrando ficha por ficha:
+
+| Aparece cuando | Por qué importa |
+|---|---|
+| Docentes sin consentimiento vigente | Sin el consentimiento firmado no se les puede registrar el rostro. |
+| Docentes sin rostro registrado | Tienen consentimiento, pero hasta registrarles el rostro no pueden marcar por cámara. |
+| Comisiones sin docente asignado | Sus clases no se le pueden imputar a nadie. |
+| Comisiones sin horarios cargados | Sin franja horaria nunca hay una clase en curso contra la cual marcar. |
+
+Cada fila lleva a la pantalla donde se resuelve. Si no falta nada, el bloque lo
+dice y no muestra ninguna fila.
 
 ### Buscar dentro de un listado
 

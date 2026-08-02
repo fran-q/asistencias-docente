@@ -82,4 +82,19 @@ public class Horario {
     public void setDia(DiaSemana d) {
         this.diaSemana = d == null ? null : d.getNumero();
     }
+
+    /**
+     * Indica si {@code ahora} cae dentro de [hora_inicio - tolerancia, hora_fin], que es la
+     * ventana en la que el pase acepta una marca para esta clase.
+     *
+     * <p>Vive en el modelo y no en un servicio porque la responden dos pantallas distintas:
+     * el pase, para decidir a que clase imputar la marca, y el panel de inicio, para decir
+     * que clases estan corriendo. Con una copia en cada lado alcanzaba con tocar una para
+     * que la home mostrara como en curso algo que el pase se negaba a marcar.
+     */
+    public boolean estaEnCurso(LocalTime ahora) {
+        if (ahora == null || horaInicio == null || horaFin == null) return false;
+        short tol = toleranciaMin == null ? 0 : toleranciaMin;
+        return !ahora.isBefore(horaInicio.minusMinutes(tol)) && !ahora.isAfter(horaFin);
+    }
 }

@@ -194,6 +194,7 @@ posteriores:
 | RF-50 | Bloqueo del registro sin consentimiento | ✅ | Verificado en el servicio, no solo en la interfaz |
 | RF-51 | Confirmación sostenida de la identidad | ✅ | 3 s continuos; otra identidad reinicia el conteo |
 | RF-52 | Margen respecto del segundo candidato | ✅ | Se registra en el log de calibración de cada intento |
+| RF-60 | Panel de inicio con estado del día | ✅ | Clases en curso, números del día y cargas incompletas |
 | RF-59 | Una sola persona en cuadro | ✅ | Aviso por texto y sin recuadro mientras haya más de una |
 | RF-53 | Idempotencia del registro | ✅ | Restricción única (docente, horario, fecha) en la base |
 | RF-54 | Integridad referencial en las bajas | ✅ | Informa cuántas dependencias activas impiden la baja |
@@ -201,7 +202,7 @@ posteriores:
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 | RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 46 implementados · 6 parciales · 4 backlog (total 56).
+**Resumen RF:** 47 implementados · 6 parciales · 4 backlog (total 57).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -251,12 +252,12 @@ posteriores:
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 46 | 6 | 4 | 56 |
+| Funcionales | 47 | 6 | 4 | 57 |
 | No funcionales | 35 | 1 | 1 | 37 |
-| **Total** | **81** | **7** | **5** | **93** |
+| **Total** | **82** | **7** | **5** | **94** |
 
-**Cobertura del hito 1:** 81 de 93 requerimientos completamente
-implementados (≈87%), 7 parcialmente cubiertos (≈8%) y 5 en backlog
+**Cobertura del hito 1:** 82 de 94 requerimientos completamente
+implementados (≈87%), 7 parcialmente cubiertos (≈7%) y 5 en backlog
 planificado (≈5%).
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del

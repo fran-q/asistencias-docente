@@ -1,72 +1,124 @@
 <!DOCTYPE html>
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Inicio - Asistencias</title>
 </head>
 <body>
+    <!--
+      El inicio NO repite los accesos del menú: a "¿dónde voy?" ya contesta la barra de
+      navegación. Contesta qué está pasando ahora y qué necesita que alguien haga algo.
+      El único acceso que queda es el del pase, que es la acción del día.
+    -->
     <section class="home">
-        <header class="page-header">
-            <h1>Hola, <span th:text="${username}">Usuario</span></h1>
-            <p class="page-header__subtitle">
-                ¿Qué querés hacer hoy? Accedé rápido a las secciones más usadas.
-            </p>
+        <header class="page-header home__header">
+            <div>
+                <h1>Hola, <span th:text="${username}">Usuario</span></h1>
+                <p class="page-header__subtitle">Así viene el día.</p>
+            </div>
+            <a th:href="@{/asistencia/pase}" class="btn btn--primary home__pase">
+                Ir al pase de asistencia
+            </a>
         </header>
 
-        <!-- Accesos rápidos -->
-        <div class="home__acciones"
-             style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));
-                    gap:1rem; margin-top:1rem;">
+        <!-- ============ AHORA MISMO ============ -->
+        <div class="card home__bloque">
+            <h2 class="home__titulo">Ahora mismo</h2>
 
-            <a th:href="@{/asistencia/pase}" class="card home__accion"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Pase de asistencia</h2>
-                <p class="text-muted" style="margin:0;">
-                    Reconocé al docente por cámara y registrá su asistencia en el acto.
-                </p>
-            </a>
+            <p class="home__vacio" th:if="${panel.sinClasesAhora()}">
+                No hay ninguna clase en curso en este momento.
+            </p>
 
-            <a th:href="@{/asistencias}" class="card home__accion"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Asistencias</h2>
-                <p class="text-muted" style="margin:0;">
-                    Consultá las marcas del día, cargá manuales y justificá ausencias.
-                </p>
-            </a>
+            <ul class="home__clases" th:unless="${panel.sinClasesAhora()}">
+                <li th:each="c : ${panel.enCurso()}" class="home__clase"
+                    th:classappend="${c.marcada()} ? 'home__clase--ok' : 'home__clase--falta'">
+                    <span class="home__clase-hora"
+                          th:text="${#temporals.format(c.horaInicio(), 'HH:mm')} + '–'
+                                 + ${#temporals.format(c.horaFin(), 'HH:mm')}">08:00–10:00</span>
+                    <span class="home__clase-datos">
+                        <strong th:text="${c.docenteNombre()}">Docente</strong>
+                        <span class="text-muted"
+                              th:text="${c.comisionCodigo()} + ' · ' + ${c.materiaNombre()}">COM · Materia</span>
+                    </span>
+                    <span class="home__clase-estado">
+                        <span th:if="${c.marcada()}" class="badge badge--success"
+                              th:text="${c.estado()} + ' ' + ${#temporals.format(c.horaMarca(), 'HH:mm')}">PRESENTE</span>
+                        <span th:unless="${c.marcada()}" class="badge badge--warning">Sin marcar</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
 
-            <a th:href="@{/reportes}" class="card home__accion"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Reportes</h2>
-                <p class="text-muted" style="margin:0;">
-                    Filtrá por período, docente o materia y exportá a CSV.
-                </p>
-            </a>
+        <!-- ============ EL DIA EN NUMEROS ============ -->
+        <div class="card home__bloque">
+            <h2 class="home__titulo">El día en números</h2>
 
-            <a th:href="@{/docentes}" class="card home__accion"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Docentes</h2>
-                <p class="text-muted" style="margin:0;">
-                    Gestioná el personal docente, consentimientos y modelo facial.
-                </p>
-            </a>
+            <p class="home__vacio" th:if="${panel.resumen().sinClasesHoy()}">
+                Hoy no hay clases programadas.
+            </p>
 
-            <a th:href="@{/grilla}" class="card home__accion"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Grilla semanal</h2>
-                <p class="text-muted" style="margin:0;">
-                    Visualizá los horarios de cursada de cada carrera.
-                </p>
-            </a>
+            <div th:unless="${panel.resumen().sinClasesHoy()}">
+                <!-- Cada número lleva al listado YA filtrado por ese estado: eso es lo que
+                     lo diferencia de poner un acceso más al menú. -->
+                <div class="home__numeros">
+                    <a th:href="@{/asistencias(estado='PRESENTE')}" class="home__numero home__numero--ok">
+                        <span class="home__numero-valor" th:text="${panel.resumen().presentes()}">0</span>
+                        <span class="home__numero-label">Presentes</span>
+                    </a>
+                    <a th:href="@{/asistencias(estado='TARDE')}" class="home__numero home__numero--tarde">
+                        <span class="home__numero-valor" th:text="${panel.resumen().tarde()}">0</span>
+                        <span class="home__numero-label">Tarde</span>
+                    </a>
+                    <a th:href="@{/asistencias(estado='AUSENTE')}" class="home__numero home__numero--ausente">
+                        <span class="home__numero-valor" th:text="${panel.resumen().ausentes()}">0</span>
+                        <span class="home__numero-label">Ausentes</span>
+                    </a>
+                    <a th:href="@{/asistencias}" class="home__numero">
+                        <span class="home__numero-valor"
+                              th:text="${panel.resumen().pendientesDeMarcar()}">0</span>
+                        <span class="home__numero-label">Clases por venir</span>
+                    </a>
+                </div>
 
-            <a th:href="@{/usuarios}" class="card home__accion"
-               sec:authorize="hasRole('INSTITUCION')"
-               style="text-decoration:none; display:block;">
-                <h2 style="margin:0 0 0.35rem;">Usuarios</h2>
-                <p class="text-muted" style="margin:0;">
-                    Administrá las cuentas de acceso de tu institución.
-                </p>
-            </a>
+                <!-- Seguimiento general: cuántos del personal del día ya pasaron. -->
+                <div class="home__cobertura">
+                    <p class="home__cobertura-texto">
+                        <strong th:text="${panel.resumen().docentesQueMarcaron()}">0</strong>
+                        de
+                        <strong th:text="${panel.resumen().docentesConClase()}">0</strong>
+                        docentes con clase hoy ya marcaron
+                        (<span th:text="${panel.resumen().porcentajeCobertura()} + '%'">0%</span>)
+                    </p>
+                    <div class="home__barra" role="progressbar"
+                         aria-valuemin="0" aria-valuemax="100"
+                         th:attr="aria-valuenow=${panel.resumen().porcentajeCobertura()}">
+                        <div class="home__barra-relleno"
+                             th:style="'width:' + ${panel.resumen().porcentajeCobertura()} + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ REQUIERE ATENCION ============ -->
+        <div class="card home__bloque">
+            <h2 class="home__titulo">Requiere atención</h2>
+
+            <p class="home__vacio" th:if="${panel.todoEnOrden()}">
+                No falta cargar nada: los docentes activos tienen consentimiento y rostro
+                registrado, y las comisiones tienen docente y horarios.
+            </p>
+
+            <ul class="home__pendientes" th:unless="${panel.todoEnOrden()}">
+                <li th:each="p : ${panel.pendientes()}">
+                    <a th:href="@{${p.url()}}" class="home__pendiente">
+                        <span class="home__pendiente-cantidad" th:text="${p.cantidad()}">0</span>
+                        <span class="home__pendiente-texto">
+                            <strong th:text="${p.titulo()}">Título</strong>
+                            <span class="text-muted" th:text="${p.detalle()}">Detalle</span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
         </div>
     </section>
 </body>

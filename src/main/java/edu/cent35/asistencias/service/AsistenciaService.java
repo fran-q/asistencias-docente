@@ -338,7 +338,7 @@ public class AsistenciaService {
                                                    Long docenteId,
                                                    LocalDate fecha) {
         List<Horario> enVentana = horariosHoy.stream()
-            .filter(h -> estaEnCurso(h, ahora))
+            .filter(h -> h.estaEnCurso(ahora))
             .toList();
 
         if (enVentana.isEmpty()) {
@@ -375,13 +375,6 @@ public class AsistenciaService {
     // Distancia absoluta en minutos entre dos horas del mismo día.
     private long minutosHasta(LocalTime desde, LocalTime hasta) {
         return Math.abs(java.time.Duration.between(desde, hasta).toMinutes());
-    }
-
-    // Indica si el momento cae dentro de [hora_inicio - tolerancia, hora_fin].
-    private boolean estaEnCurso(Horario h, LocalTime ahora) {
-        short tol = h.getToleranciaMin() == null ? 0 : h.getToleranciaMin();
-        LocalTime ventanaInicio = h.getHoraInicio().minusMinutes(tol);
-        return !ahora.isBefore(ventanaInicio) && !ahora.isAfter(h.getHoraFin());
     }
 
     // PRESENTE hasta la hora de inicio inclusive (la tolerancia permite llegar antes), TARDE después.

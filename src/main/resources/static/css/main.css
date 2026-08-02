@@ -238,17 +238,6 @@ code {
 
 .navbar__logout-form { margin: 0; }
 
-/* ========== Footer ========== */
-.footer {
-    padding: var(--space) var(--space-lg);
-    background-color: var(--bg-elev);
-    border-top: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    text-align: center;
-}
-.footer p { margin: 0; }
-
 /* ========== Cards ========== */
 .card {
     background-color: var(--bg-elev);
@@ -258,20 +247,129 @@ code {
     margin-bottom: var(--space-lg);
 }
 
-/* ========== Accesos rapidos del inicio ========== */
-.home__accion {
-    margin-bottom: 0;
-    color: inherit;
-    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+/* ============================================================================
+ *  PANEL DE INICIO
+ *  Tres bloques: que corre ahora, como viene el dia y que falta cargar. No hay
+ *  accesos repetidos del menu; el unico boton es el del pase, que es la accion.
+ * ========================================================================== */
+.home__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space);
+    flex-wrap: wrap;
 }
-.home__accion:hover {
+.home__pase { flex-shrink: 0; }
+
+.home__bloque { margin-bottom: var(--space); }
+.home__titulo {
+    margin: 0 0 var(--space);
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+/* Los estados vacios son buenas noticias, no errores: van en tono normal. */
+.home__vacio { margin: 0; color: var(--text-muted); }
+
+/* ---- Ahora mismo ---- */
+.home__clases { list-style: none; margin: 0; padding: 0; }
+.home__clase {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space);
+    padding: var(--space-sm) 0 var(--space-sm) var(--space);
+    border-left: 3px solid transparent;
+}
+.home__clase + .home__clase { border-top: 1px solid var(--border); }
+/* La barra lateral dice de un vistazo cual de las clases en curso falta marcar. */
+.home__clase--ok    { border-left-color: var(--success); }
+.home__clase--falta { border-left-color: var(--warning); }
+
+.home__clase-hora {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+.home__clase-datos { display: flex; flex-direction: column; min-width: 0; }
+.home__clase-datos span { font-size: 0.85rem; }
+.home__clase-estado { white-space: nowrap; }
+
+/* ---- El dia en numeros ---- */
+.home__numeros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-sm);
+}
+.home__numero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: var(--space) var(--space-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    text-align: center;
+    transition: border-color .15s ease, background-color .15s ease;
+}
+.home__numero:hover {
     border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+    background-color: var(--bg-elev-2);
+    text-decoration: none;
 }
-.home__accion h2 {
-    color: var(--primary);
-    font-size: 1.1rem;
+.home__numero-valor { font-size: 1.9rem; font-weight: 600; line-height: 1; }
+.home__numero-label { font-size: 0.8rem; color: var(--text-muted); }
+.home__numero--ok      .home__numero-valor { color: var(--success); }
+.home__numero--tarde   .home__numero-valor { color: var(--warning); }
+.home__numero--ausente .home__numero-valor { color: var(--danger); }
+
+.home__cobertura { margin-top: var(--space-lg); }
+.home__cobertura-texto { margin: 0 0 var(--space-sm); font-size: 0.9rem; }
+.home__barra {
+    height: 8px;
+    background-color: var(--bg-elev-2);
+    border-radius: 999px;
+    overflow: hidden;
+}
+.home__barra-relleno {
+    height: 100%;
+    background-color: var(--success);
+    border-radius: 999px;
+    transition: width .3s ease;
+}
+
+/* ---- Requiere atencion ---- */
+.home__pendientes { list-style: none; margin: 0; padding: 0; }
+.home__pendiente {
+    display: flex;
+    align-items: center;
+    gap: var(--space);
+    padding: var(--space-sm) 0;
+    color: var(--text);
+}
+.home__pendiente:hover { text-decoration: none; }
+.home__pendiente:hover .home__pendiente-texto strong { color: var(--primary); }
+.home__pendientes li + li { border-top: 1px solid var(--border); }
+.home__pendiente-cantidad {
+    flex-shrink: 0;
+    min-width: 2.4rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--warning);
+    text-align: right;
+}
+.home__pendiente-texto { display: flex; flex-direction: column; min-width: 0; }
+.home__pendiente-texto span { font-size: 0.85rem; }
+
+@media (max-width: 620px) {
+    /* El estado baja abajo del nombre: a este ancho las tres columnas aprietan
+       el nombre del docente hasta partirlo en varias lineas. */
+    .home__clase { grid-template-columns: auto minmax(0, 1fr); }
+    .home__clase-estado { grid-column: 2; }
+    .home__pase { width: 100%; }
 }
 
 /* ========== Botones ========== */
