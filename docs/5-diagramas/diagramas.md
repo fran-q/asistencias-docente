@@ -260,7 +260,7 @@ sequenceDiagram
     participant AS as AsistenciaService
     participant DB as MariaDB
 
-    Op->>JS: Encender cámara e iniciar pase
+    Op->>JS: Iniciar pase (enciende la cámara y arranca el loop)
 
     loop Por cada fotograma
         JS->>PC: POST /asistencia/pase/marcar
@@ -270,27 +270,27 @@ sequenceDiagram
 
         alt Distancia mayor al umbral
             IFS-->>PS: No reconocido
-            PS-->>JS: Recuadro amarillo
+            PS-->>JS: Recuadro rojo con el motivo
         else Distancia dentro del umbral
             IFS-->>PS: Docente identificado
             PS->>AS: marcarAutomatica(docente, distancia)
 
             alt Sin clase en la ventana horaria
                 AS-->>PS: No hay clase ahora
-                PS-->>JS: Recuadro amarillo con el motivo
+                PS-->>JS: Recuadro verde con el motivo
             else Hay clase en curso
                 AS->>DB: ¿Existe marca para docente, horario y fecha?
 
                 alt Ya estaba marcada
                     DB-->>AS: Marca existente
                     AS-->>PS: Ya estaba (idempotencia)
-                    PS-->>JS: Recuadro azul y pausa de 5 s
+                    PS-->>JS: Recuadro azul y pausa de 3 s
                 else Todavía no
                     AS->>DB: Guardar PRESENTE o TARDE
                     Note over AS,DB: Si dos peticiones compiten, el UNIQUE de la<br/>base rechaza la segunda: se relee y se informa<br/>como ya marcada, sin error para el operador.
                     DB-->>AS: Asistencia persistida
                     AS-->>PS: Marca creada
-                    PS-->>JS: Recuadro verde y pausa de 5 s
+                    PS-->>JS: Recuadro verde y pausa de 3 s
                 end
             end
         end

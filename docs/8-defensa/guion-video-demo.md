@@ -65,10 +65,10 @@ Esta es una propuesta. Adaptala a tu estilo y al tiempo que pida tu tutor.
 ### 5. **Pase de asistencia (la estrella)** (2 min)
 
 - Navbar → **Pase de asistencia**.
-- Encender cámara → Iniciar pase.
+- **Iniciar pase**: un solo click enciende la cámara y arranca el loop.
 - Mirando a la cámara: mostrar el recuadro **verde** + el nombre del
   docente + "Asistencia marcada: PRESENTE en Comisión X — Materia Y".
-- Esperar la pausa de 5 s y mostrar el cambio a recuadro **azul** con
+- Esperar la pausa de 3 s y mostrar el cambio a recuadro **azul** con
   "Ya estaba marcado".
 - **Tapar la cara con la mano** → recuadro desaparece, mensaje cambia.
 - **Mostrar el caso de otro docente**: pedile a alguien que no esté

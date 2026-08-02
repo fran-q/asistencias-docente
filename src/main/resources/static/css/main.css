@@ -36,6 +36,12 @@
 /* ========== Reset minimo ========== */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* El atributo hidden lo pone el navegador con display:none, pero esa regla viene de
+   la hoja del navegador y pierde contra cualquier display que declaremos nosotros.
+   Bastaba un `.btn { display: inline-block }` para que un boton marcado como hidden
+   se siguiera viendo. Se reafirma aca para que hidden signifique lo que dice. */
+[hidden] { display: none !important; }
+
 html, body {
     margin: 0;
     padding: 0;

@@ -214,8 +214,8 @@ recorre esto:
    violacion de UNIQUE por si hubo carrera.
 
 **Paso C — Responder**: `PaseAsistenciaService` arma el DTO combinado y el JS pinta el
-recuadro (verde = marcado, azul = ya estaba, amarillo = sin clase, rojo = no reconocido) y
-**pausa 5 segundos**.
+recuadro (verde = reconocido, sea que se marco o que no haya clase ahora; azul = ya estaba;
+rojo = no reconocido) y **pausa 3 segundos**.
 
 ### Recorrido 4 — El cierre del dia (ausencias)
 

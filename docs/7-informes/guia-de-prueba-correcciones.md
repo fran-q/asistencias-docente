@@ -76,7 +76,7 @@ apagar la cámara.
 **Cómo probarlo**
 
 1. Menú → **Asistencias → Pase de asistencia**.
-2. **Encender cámara** → **Iniciar pase**.
+2. **Iniciar pase** (enciende la cámara y arranca el loop en un solo click).
 3. Ponerse frente a la cámara hasta que marque una asistencia.
 4. **Justo en los 3 segundos siguientes a la marca**, presionar **Detener pase**.
 

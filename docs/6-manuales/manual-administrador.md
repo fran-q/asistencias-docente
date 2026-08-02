@@ -310,17 +310,33 @@ su consentimiento, hay que registrarle el rostro de nuevo desde cero.
 
 Menú → **Pase de asistencia**.
 
-1. **"Encender cámara"** (toggle).
-2. **"Iniciar pase"** (toggle): empieza el loop continuo.
-3. El docente se para frente a la cámara. El sistema:
+1. **"Iniciar pase"**: un solo click enciende la cámara y arranca el loop. La
+   primera vez el navegador pide permiso para usar la cámara.
+2. El docente se para frente a la cámara. El sistema:
+   - **Cian**, sin nombre → lo está reconociendo, todavía sostiene la identidad.
    - **Verde** + nombre + "Asistencia marcada: PRESENTE" → todo bien.
    - **Verde** + nombre + "Asistencia marcada: TARDE" → llegó después del `hora_inicio`.
    - **Azul** + "Ya estaba marcado" → ya había marca para esa clase.
-   - **Amarillo** + "No hay clase ahora para X" → reconocido pero sin horario activo.
-   - **Rojo** + "Rostro no reconocido" → la cara no matchea ningún modelo.
-4. Tras cada marca exitosa, el sistema **pausa 5 segundos** antes de buscar
-   otro rostro (evita ruido).
-5. **"Detener pase"** + **"Apagar cámara"** al terminar la sesión.
+   - **Verde** + "No hay clase ahora para X" → reconocido, pero sin horario activo.
+     El recuadro sigue en verde porque el reconocimiento funcionó; lo que falta es
+     la clase, y eso lo dice el mensaje.
+   - **Rojo** + el motivo → o la cara no está registrada, o no se la pudo distinguir
+     de otra parecida. Son dos fallas distintas y se corrigen distinto.
+   - **Sin recuadro** + "Hay N personas en cuadro" → tiene que quedar una sola frente
+     a la cámara. No se señala a ninguna: elegir por tamaño marcaría a la más cercana.
+3. La asistencia **no se marca con un solo fotograma**: la misma identidad tiene que
+   sostenerse unos segundos seguidos. Por eso hay que quedarse quieto un momento.
+4. Tras cada marca exitosa el sistema **pausa 3 segundos** antes de buscar otro
+   rostro, con cuenta regresiva en pantalla.
+5. **"Detener pase"** corta el marcado pero **deja la cámara encendida**, para
+   retomar sin volver a pedir el dispositivo. **"Apagar cámara"** la suelta del todo.
+
+> **Por qué son dos botones y no uno.** Detener el pase y apagar la cámara no cuestan
+> lo mismo. El pase manda una imagen por segundo al servidor, que corre la detección y
+> la comparación contra todos los modelos de la institución; detenerlo libera eso.
+> La cámara es local, y volver a pedirla implica un segundo de pantalla en negro y,
+> según el navegador, otro pedido de permiso. Por eso se pueden frenar por separado.
+> Lo que **no** son es dos pasos de arranque: para empezar alcanza un click.
 
 ### Cómo decide PRESENTE vs TARDE
 - Antes del `hora_inicio` (pero dentro de la tolerancia) → **PRESENTE**.

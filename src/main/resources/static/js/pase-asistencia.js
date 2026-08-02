@@ -2,16 +2,20 @@
  * pase-asistencia.js
  *
  * Pantalla de pase de asistencia:
- *  - botón único Encender/Apagar cámara (toggle),
- *  - botón único Iniciar/Detener pase (toggle): cuando está activo, manda
- *    un frame cada ~1 s al endpoint /asistencia/pase/marcar y muestra el
- *    resultado (marcado / ya estaba / sin clase / no reconocido).
+ *  - botón principal Iniciar/Detener pase: al iniciar enciende la cámara y
+ *    arranca el loop en un solo paso, y cuando está activo manda un frame
+ *    cada ~1 s al endpoint /asistencia/pase/marcar mostrando el resultado
+ *    (marcado / ya estaba / sin clase / no reconocido);
+ *  - botón secundario Apagar cámara, para soltar el dispositivo.
  *
- * El recuadro sobre la cara va en VERDE cuando el rostro se reconoce y
- * además se marcó (o ya estaba marcada) la asistencia, AMARILLO si
- * reconoce pero no hay clase ahora, y ROJO si detecta cara sin reconocer.
+ * Son dos controles y no uno porque apagan cosas distintas: detener el pase
+ * corta el envío de frames al servidor pero deja la vista previa, que es lo
+ * que hace falta para pausar el marcado sin perder el encuadre. Pero NO son
+ * dos pasos de arranque: encender la cámara sin llegar a iniciar el pase no
+ * le sirve a nadie, y pedirlo en dos clicks todos los días era ruido.
  *
- * Las imágenes nunca se persisten.
+ * El recuadro sobre la cara va en VERDE cuando se reconoce a la persona y
+ * ROJO cuando no. Las imágenes nunca se persisten.
  */
 (function () {
     'use strict';
@@ -45,20 +49,15 @@
     // sigue activo, y con esa confusion el boton "Detener" terminaba arrancando otro loop.
     let paseActivo = false;
 
-    // ---- Cámara: toggle ---------------------------------------------------
+    // ---- Cámara -----------------------------------------------------------
 
-    async function toggleCamara() {
-        if (stream) {
-            apagarCamara();
-        } else {
-            await encenderCamara();
-        }
-    }
-
+    // Deja la camara lista para enviar frames. Devuelve false si no se pudo, para que
+    // el que llama no siga adelante creyendo que hay imagen.
     async function encenderCamara() {
+        if (stream) return true;
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             mostrarMensaje('Tu navegador no soporta el acceso a la cámara.', 'error');
-            return;
+            return false;
         }
         try {
             stream = await navigator.mediaDevices.getUserMedia({
@@ -68,12 +67,20 @@
             video.srcObject = stream;
             await video.play().catch(function () {});
             ajustarOverlay();
-            btnCamara.textContent = 'Apagar cámara';
-            btnPase.disabled      = false;
-            mostrarMensaje('Cámara encendida. Apretá "Iniciar pase" para comenzar.', 'info');
+            btnCamara.hidden = false;
             claseEl.textContent = '';
+            return true;
         } catch (err) {
+            // getUserMedia puede haber concedido la camara y fallar despues, al engancharla
+            // al <video>. Si no se suelta acá, stream queda seteado y todo el resto cree que
+            // hay camara prendida: el proximo "Iniciar pase" arranca el loop sin imagen.
+            if (stream) {
+                stream.getTracks().forEach(function (t) { t.stop(); });
+                stream = null;
+            }
+            video.srcObject = null;
             mostrarMensaje('No se pudo acceder a la cámara: ' + traducirError(err), 'error');
+            return false;
         }
     }
 
@@ -85,24 +92,32 @@
             stream = null;
         }
         video.srcObject = null;
-        btnCamara.textContent = 'Encender cámara';
-        btnPase.textContent   = 'Iniciar pase';
-        btnPase.disabled      = true;
+        // El boton de apagar solo existe mientras haya algo que apagar.
+        btnCamara.hidden = true;
         mostrarMensaje('Cámara apagada', 'info');
         claseEl.textContent = '';
     }
 
     // ---- Pase: toggle -----------------------------------------------------
 
-    function togglePase() {
+    async function togglePase() {
         if (paseActivo) {
+            // Detener corta el envio de frames pero deja la camara prendida: es la unica
+            // razon por la que siguen siendo dos controles y no uno. Volver a pedir el
+            // dispositivo cuesta un segundo en negro y, segun el navegador, otro permiso.
             detenerLoop();
-            mostrarMensaje('Pase detenido.', 'info');
+            mostrarMensaje('Pase detenido. La cámara sigue encendida.', 'info');
             claseEl.textContent = '';
             limpiarOverlay();
-        } else {
-            arrancarLoop();
+            return;
         }
+        // Un solo click hace las dos cosas. Tener la camara prendida sin el pase andando
+        // no le sirve a nadie al arrancar, asi que no se pide como paso aparte.
+        btnPase.disabled = true;
+        mostrarMensaje('Encendiendo la cámara…', 'info');
+        const listo = await encenderCamara();
+        btnPase.disabled = false;
+        if (listo) arrancarLoop();
     }
 
     function arrancarLoop() {
@@ -326,7 +341,7 @@
 
     // ---- Eventos ----------------------------------------------------------
 
-    btnCamara.addEventListener('click', toggleCamara);
+    btnCamara.addEventListener('click', apagarCamara);
     btnPase.addEventListener('click', togglePase);
     window.addEventListener('pagehide', apagarCamara);
 })();

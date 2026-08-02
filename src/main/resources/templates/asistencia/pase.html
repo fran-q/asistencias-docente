@@ -40,12 +40,15 @@
                 </div>
 
                 <div class="card">
+                    <!-- Un solo boton para arrancar: enciende la camara y larga el pase.
+                         Apagar la camara es la accion secundaria, y aparece recien cuando
+                         hay una camara prendida para apagar. -->
                     <div class="pase__acciones">
-                        <button type="button" id="pa-btn-camara" class="btn btn--primary">
-                            Encender cámara
-                        </button>
-                        <button type="button" id="pa-btn-pase" class="btn btn--primary" disabled>
+                        <button type="button" id="pa-btn-pase" class="btn btn--primary">
                             Iniciar pase
+                        </button>
+                        <button type="button" id="pa-btn-camara" class="btn btn--ghost" hidden>
+                            Apagar cámara
                         </button>
                     </div>
                 </div>
