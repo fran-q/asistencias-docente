@@ -76,7 +76,8 @@ public class MateriaService {
 
     @Transactional
     // Crea una materia bajo una carrera activa, con código único en la institución.
-    public Materia crear(String codigo, String nombre, Long carreraId, Long docenteTitularId) {
+    public Materia crear(String codigo, String nombre, Long carreraId, Short anio,
+                         Long docenteTitularId) {
         Long tenantId = TenantContext.getRequired();
         Carrera carrera = obtenerCarreraValidada(carreraId, tenantId);
 
@@ -91,12 +92,15 @@ public class MateriaService {
                 "Ya existe una materia con código '" + codigoNorm + "' en esta institución.");
         }
 
+        validarAnio(anio, carrera);
+
         Docente titular = obtenerDocenteValidadoOrNull(docenteTitularId, tenantId, /*requireActivo*/ true);
 
         Materia m = Materia.builder()
             .codigo(codigoNorm)
             .nombre(nombre.trim())
             .carrera(carrera)
+            .anio(anio)
             .docenteTitular(titular)
             .activo(true)
             .build();
@@ -110,7 +114,7 @@ public class MateriaService {
 
     @Transactional
     // Edita la materia; solo exige carrera activa si se la está cambiando por otra.
-    public Materia actualizar(Long id, String codigo, String nombre, Long carreraId,
+    public Materia actualizar(Long id, String codigo, String nombre, Long carreraId, Short anio,
                               Long docenteTitularId) {
         Materia m = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
@@ -129,6 +133,8 @@ public class MateriaService {
                 "Ya existe otra materia con código '" + codigoNuevo + "' en esta institución.");
         }
 
+        validarAnio(anio, carrera);
+
         // Si NO cambia de titular, permitir mantenerlo aunque ahora este inactivo (legacy).
         // Si cambia, el nuevo titular debe estar activo.
         Long titularActualId = m.getDocenteTitular() != null ? m.getDocenteTitular().getId() : null;
@@ -138,6 +144,7 @@ public class MateriaService {
         m.setCodigo(codigoNuevo);
         m.setNombre(nombre.trim());
         m.setCarrera(carrera);
+        m.setAnio(anio);
         m.setDocenteTitular(titular);
         Materia saved = materiaRepository.save(m);
         log.info("Materia actualizada: id={}, codigo={}, titular_id={}",
@@ -206,5 +213,25 @@ public class MateriaService {
             throw new IllegalArgumentException("La carrera seleccionada no existe.");
         }
         return c;
+    }
+
+    /**
+     * El anio de la materia no puede pasar la duracion de su carrera.
+     *
+     * <p>No se puede expresar como CHECK en la base porque haria falta una subconsulta a
+     * carreras, asi que la regla vive aca. El mensaje nombra la carrera y su duracion: decir
+     * solo "año inválido" obliga a ir a buscar contra que se comparo.
+     */
+    private void validarAnio(Short anio, Carrera carrera) {
+        if (anio == null) {
+            throw new IllegalArgumentException("Hay que indicar de qué año es la materia.");
+        }
+        Short duracion = carrera.getDuracionAnios();
+        if (duracion != null && anio > duracion) {
+            throw new IllegalArgumentException(
+                "La carrera '" + carrera.getNombre() + "' dura " + duracion + " año"
+                + (duracion == 1 ? "" : "s") + ", así que no puede tener materias de "
+                + anio + "° año.");
+        }
     }
 }

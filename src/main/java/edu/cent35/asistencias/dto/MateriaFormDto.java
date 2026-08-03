@@ -2,6 +2,8 @@ package edu.cent35.asistencias.dto;
 import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Materia;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -36,6 +38,13 @@ public class MateriaFormDto {
     @NotNull(message = "Hay que elegir una carrera")
     private Long carreraId;
 
+    // El tope real lo pone la duracion de la carrera elegida; se valida en el service,
+    // porque aca todavia no sabemos cual es.
+    @NotNull(message = "Hay que indicar de qué año es la materia")
+    @Min(value = 1, message = "El año tiene que ser 1 o mayor")
+    @Max(value = 10, message = "El año no puede pasar de 10")
+    private Short anio;
+
     // Opcional: id del docente titular (puede ser null).
     private Long docenteTitularId;
 
@@ -45,6 +54,7 @@ public class MateriaFormDto {
             .codigo(m.getCodigo())
             .nombre(m.getNombre())
             .carreraId(m.getCarrera().getId())
+            .anio(m.getAnio())
             .docenteTitularId(m.getDocenteTitular() != null ? m.getDocenteTitular().getId() : null)
             .build();
     }

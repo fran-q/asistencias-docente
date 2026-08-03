@@ -261,7 +261,20 @@ code {
 }
 .home__pase { flex-shrink: 0; }
 
-.home__bloque { margin-bottom: var(--space); }
+/* Los tres bloques en columnas cuando hay ancho, y uno debajo del otro cuando no.
+   El corte es 1024px: mas abajo, tres columnas dejan el nombre del docente en dos
+   lineas y la tarjeta pasa a ser mas dificil de leer que util. */
+.home__paneles {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space);
+    align-items: start;
+}
+@media (min-width: 1024px) {
+    .home__paneles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.home__bloque { margin-bottom: 0; }
 .home__titulo {
     margin: 0 0 var(--space);
     font-size: 1.05rem;
@@ -274,14 +287,18 @@ code {
 
 /* ---- Ahora mismo ---- */
 .home__clases { list-style: none; margin: 0; padding: 0; }
+/* Flex y no grid: dentro de una columna angosta el estado tiene que poder bajar solo
+   a la linea siguiente. Con tres columnas fijas terminaba partiendo el nombre del
+   docente en varias lineas para hacerle lugar. */
 .home__clase {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--space);
+    gap: var(--space-sm) var(--space);
     padding: var(--space-sm) 0 var(--space-sm) var(--space);
     border-left: 3px solid transparent;
 }
+.home__clase-datos { flex: 1 1 10rem; }
 .home__clase + .home__clase { border-top: 1px solid var(--border); }
 /* La barra lateral dice de un vistazo cual de las clases en curso falta marcar. */
 .home__clase--ok    { border-left-color: var(--success); }
@@ -295,6 +312,7 @@ code {
 }
 .home__clase-datos { display: flex; flex-direction: column; min-width: 0; }
 .home__clase-datos span { font-size: 0.85rem; }
+.home__clase-datos strong { overflow-wrap: anywhere; }
 .home__clase-estado { white-space: nowrap; }
 
 /* ---- El dia en numeros ---- */
@@ -365,10 +383,6 @@ code {
 .home__pendiente-texto span { font-size: 0.85rem; }
 
 @media (max-width: 620px) {
-    /* El estado baja abajo del nombre: a este ancho las tres columnas aprietan
-       el nombre del docente hasta partirlo en varias lineas. */
-    .home__clase { grid-template-columns: auto minmax(0, 1fr); }
-    .home__clase-estado { grid-column: 2; }
     .home__pase { width: 100%; }
 }
 
@@ -736,7 +750,14 @@ code {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border);
+    /* Queda fijo arriba mientras el cuerpo se desplaza: una tabla larga sin
+       encabezado obliga a subir para recordar que columna se esta mirando.
+       El borde va como box-shadow y no como border-bottom porque, con
+       border-collapse, el borde de una celda sticky no viaja con ella. */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: inset 0 -1px 0 var(--border);
 }
 .table tbody td {
     padding: var(--space-sm) var(--space);
@@ -958,18 +979,48 @@ code {
     white-space: nowrap;
 }
 
-/* ========== Wrap para tablas anchas (scroll horizontal) ========== */
+/* ============================================================================
+ *  Wrap de tablas: scroll horizontal si son anchas y vertical si son largas,
+ *  dejando el encabezado a la vista.
+ *
+ *  El alto maximo se calcula contra la ventana en vez de fijarlo en pixeles:
+ *  lo que sobra arriba (navbar, titulo, filtros) es mas o menos igual en todas
+ *  las pantallas de listado, y asi la tabla usa todo el alto que haya sin
+ *  empujar el resto fuera de la vista. Con pocas filas la caja se encoge sola,
+ *  asi que no aparece un marco vacio cuando hay tres registros.
+ * ========================================================================== */
 .table-wrap {
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 21rem);
+    min-height: 8rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
 }
-.table-wrap::-webkit-scrollbar          { height: 8px; }
+.table-wrap::-webkit-scrollbar          { height: 8px; width: 8px; }
 .table-wrap::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 4px; }
 .table-wrap::-webkit-scrollbar-track    { background: transparent; }
 .table-wrap .table { min-width: 720px; }
+
+/* ========== Selector de hora (dos listas) ========== */
+.hora-picker {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+.hora-picker__campo {
+    /* Ancho propio: estirados al 100% como el resto de los select quedaban dos
+       cajas enormes para dos digitos cada una. */
+    width: auto;
+    min-width: 4.5rem;
+    font-family: var(--font-mono);
+    text-align: center;
+}
+.hora-picker__sep {
+    color: var(--text-muted);
+    font-weight: 600;
+}
 
 /* ========== Password input con boton ojo ========== */
 .password-input {

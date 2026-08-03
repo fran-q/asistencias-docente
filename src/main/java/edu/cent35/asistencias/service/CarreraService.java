@@ -50,7 +50,7 @@ public class CarreraService {
 
     // Crea una carrera con código único dentro de la institución.
     @Transactional
-    public Carrera crear(String codigo, String nombre) {
+    public Carrera crear(String codigo, String nombre, Short duracionAnios) {
         Long tenantId = TenantContext.getRequired();
         String codigoNorm = codigo.trim();
         String nombreNorm = nombre.trim();
@@ -63,6 +63,7 @@ public class CarreraService {
         Carrera c = Carrera.builder()
             .codigo(codigoNorm)
             .nombre(nombreNorm)
+            .duracionAnios(duracionAnios)
             .activo(true)
             .build();
         c.setInstitucionId(tenantId);
@@ -75,7 +76,7 @@ public class CarreraService {
 
     // Renombra la carrera, cuidando que el código nuevo no choque con otra.
     @Transactional
-    public Carrera actualizar(Long id, String codigo, String nombre) {
+    public Carrera actualizar(Long id, String codigo, String nombre, Short duracionAnios) {
         Carrera c = buscarPorId(id);
         String codigoNuevo = codigo.trim();
 
@@ -85,8 +86,20 @@ public class CarreraService {
                 "Ya existe otra carrera con código '" + codigoNuevo + "' en esta institución.");
         }
 
+        // Acortar la duracion dejaria materias fuera del plan, en un anio que ya no existe.
+        // Se frena antes de guardar y se dice cual es el anio que estorba: mandar a "revisar
+        // las materias" sin decir cual no le ahorra la busqueda a nadie.
+        Short maxAnio = materiaRepository.maxAnioDeLaCarrera(id);
+        if (duracionAnios != null && maxAnio != null && maxAnio > duracionAnios) {
+            throw new IllegalArgumentException(
+                "No se puede acortar la carrera a " + duracionAnios + " año"
+                + (duracionAnios == 1 ? "" : "s") + ": tiene materias de " + maxAnio
+                + "° año. Cambiales el año o dalas de baja primero.");
+        }
+
         c.setCodigo(codigoNuevo);
         c.setNombre(nombre.trim());
+        c.setDuracionAnios(duracionAnios);
 
         Carrera saved = carreraRepository.save(c);
         log.info("Carrera actualizada: id={}, codigo={}", saved.getId(), saved.getCodigo());

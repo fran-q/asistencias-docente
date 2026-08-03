@@ -55,7 +55,7 @@ class ComisionServiceTest {
         Materia ajena = materiaConTenant(TENANT_B);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(ajena));
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 30, null))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("La materia seleccionada no existe");
         verify(comisionRepository, never()).save(any());
@@ -69,11 +69,10 @@ class ComisionServiceTest {
         when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(false);
         when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Comision c = service.crear("A", MATERIA_ID, 30, null);
+        Comision c = service.crear("A", MATERIA_ID, null);
 
         assertThat(c.getCodigo()).isEqualTo("A");
         assertThat(c.getMateria()).isSameAs(m);
-        assertThat(c.getCupo()).isEqualTo(30);
         assertThat(c.getActivo()).isTrue();
         assertThat(c.getDocenteAsignado()).isNull();
     }
@@ -85,21 +84,9 @@ class ComisionServiceTest {
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
         when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null, null))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
-    }
-
-    @Test
-    @DisplayName("crear: rechaza cupo cero o negativo")
-    void crear_cupoInvalido() {
-        Materia m = materiaConTenant(TENANT_A);
-        when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
-        when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(false);
-
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, 0, null))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("positivo");
     }
 
     @Test

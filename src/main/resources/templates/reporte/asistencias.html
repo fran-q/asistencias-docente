@@ -78,10 +78,18 @@
                 <strong th:text="${#lists.size(filas)}">0</strong>
                 fila(s)
             </span>
-            <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
+            <!-- Dos formatos porque son dos usos: el CSV se sigue trabajando en una
+                 planilla, el PDF se imprime o se adjunta tal cual. -->
+            <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
                                         docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
                                         estado=${filtro.estado}, metodo=${filtro.metodo})}"
                class="btn btn--primary">
+                ⬇ Descargar PDF
+            </a>
+            <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                        docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                        estado=${filtro.estado}, metodo=${filtro.metodo})}"
+               class="btn btn--ghost">
                 ⬇ Descargar CSV
             </a>
         </div>

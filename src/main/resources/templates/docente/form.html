@@ -88,7 +88,6 @@
         <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 760px;">
             <h2>Datos del sistema</h2>
             <dl class="kv">
-                <dt>ID</dt>      <dd th:text="${docente.id}">-</dd>
                 <dt>Estado</dt>  <dd>
                     <span th:if="${docente.activo}"   class="badge badge--success">Activo</span>
                     <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>

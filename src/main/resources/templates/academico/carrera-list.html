@@ -36,6 +36,7 @@
                         <tr>
                             <th>Código</th>
                             <th>Nombre</th>
+                            <th>Duración</th>
                             <th>Estado</th>
                             <th>Última actualización</th>
                             <th class="table__actions">Acciones</th>
@@ -48,6 +49,7 @@
                                 <code th:text="${c.codigo}">COD</code>
                             </td>
                             <td th:text="${c.nombre}">Nombre carrera</td>
+                            <td th:text="|${c.duracionAnios} año${c.duracionAnios == 1 ? '' : 's'}|">3 años</td>
                             <td>
                                 <span th:if="${c.activo}"   class="badge badge--success">Activa</span>
                                 <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>

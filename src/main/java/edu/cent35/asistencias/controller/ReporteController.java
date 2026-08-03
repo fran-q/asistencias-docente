@@ -6,7 +6,9 @@ import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.MateriaService;
+import edu.cent35.asistencias.service.MiInstitucionService;
 import edu.cent35.asistencias.service.ReporteAsistenciaService;
+import edu.cent35.asistencias.service.ReportePdfService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +34,10 @@ import java.util.List;
 
 /**
  * Reporte de asistencias filtrable por período, docente, materia, estado y método, para los
- * roles INSTITUCION y ADMIN. El mismo filtro alimenta la tabla en pantalla y la descarga en
- * CSV, que sale en UTF-8 con BOM para que Excel lo abra sin romper los acentos.
+ * roles INSTITUCION y ADMIN. El mismo filtro alimenta la tabla en pantalla y las dos
+ * descargas: CSV, en UTF-8 con BOM para que Excel lo abra sin romper los acentos, y PDF,
+ * para imprimir o adjuntar. Son dos usos distintos y por eso conviven: el CSV se sigue
+ * trabajando en una planilla, el PDF se lee tal cual.
  */
 @Controller
 @RequestMapping("/reportes")
@@ -48,6 +52,8 @@ public class ReporteController {
     private final ReporteAsistenciaService reporteService;
     private final DocenteService docenteService;
     private final MateriaService materiaService;
+    private final ReportePdfService reportePdfService;
+    private final MiInstitucionService miInstitucionService;
 
     // Pantalla del reporte con filtros + tabla.
     @GetMapping
@@ -119,6 +125,30 @@ public class ReporteController {
             }
         }
         log.info("Reporte CSV exportado: {} filas, archivo={}", filas.size(), nombreArchivo);
+    }
+
+    // Descarga el mismo reporte como PDF, ya listo para imprimir.
+    @GetMapping("/pdf")
+    public void descargarPdf(
+            @ModelAttribute ReporteFiltroDto filtro,
+            HttpServletResponse response) throws IOException {
+
+        // Mismo default que el CSV: mes actual hasta hoy.
+        LocalDate hoy = LocalDate.now();
+        if (filtro.getDesde() == null) filtro.setDesde(hoy.withDayOfMonth(1));
+        if (filtro.getHasta() == null) filtro.setHasta(hoy);
+
+        List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
+        String institucion = miInstitucionService.getMiInstitucion().getNombre();
+        String nombreArchivo = reportePdfService.nombreArchivo(filtro.getDesde(), filtro.getHasta());
+
+        response.setContentType("application/pdf");
+        response.setHeader("Content-Disposition",
+            "attachment; filename=\"" + nombreArchivo + "\"");
+
+        try (OutputStream out = response.getOutputStream()) {
+            reportePdfService.escribir(out, filas, filtro.getDesde(), filtro.getHasta(), institucion);
+        }
     }
 
     // ------------------------------------------------------------------------

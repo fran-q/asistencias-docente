@@ -194,6 +194,9 @@ posteriores:
 | RF-50 | Bloqueo del registro sin consentimiento | ✅ | Verificado en el servicio, no solo en la interfaz |
 | RF-51 | Confirmación sostenida de la identidad | ✅ | 3 s continuos; otra identidad reinicia el conteo |
 | RF-52 | Margen respecto del segundo candidato | ✅ | Se registra en el log de calibración de cada intento |
+| RF-62 | Año de cursada de la materia | ✅ | Acotado por la duración de la carrera, validado en el servicio |
+| RF-63 | Docente propuesto al crear una comisión | ✅ | Se propone el titular de la materia y queda editable |
+| RF-61 | Exportación del reporte en PDF | ✅ | Botón junto al de CSV, apaisado y con encabezado repetido |
 | RF-60 | Panel de inicio con estado del día | ✅ | Clases en curso, números del día y cargas incompletas |
 | RF-59 | Una sola persona en cuadro | ✅ | Aviso por texto y sin recuadro mientras haya más de una |
 | RF-53 | Idempotencia del registro | ✅ | Restricción única (docente, horario, fecha) en la base |
@@ -202,7 +205,7 @@ posteriores:
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 | RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 47 implementados · 6 parciales · 4 backlog (total 57).
+**Resumen RF:** 50 implementados · 6 parciales · 4 backlog (total 60).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -245,20 +248,23 @@ posteriores:
 | RNF-35 | Esquema versionado e inmutable | ✅ | Flyway V001–V009; migración aplicada no se edita |
 | RNF-36 | Pruebas automatizadas de las reglas críticas | ✅ | 222 pruebas; las de defectos verificadas por mutación |
 | RNF-37 | Tope de envíos por dirección de destino | ✅ | 3 por hora en el alta pública de institución |
+| RNF-38 | Encabezado visible al recorrer un listado | ✅ | thead fijo dentro del contenedor con scroll |
+| RNF-39 | Identificadores internos fuera de la interfaz | ✅ | Se quitó el ID de las seis pantallas donde figuraba |
+| RNF-40 | Selección de hora independiente del navegador | ✅ | Dos listas, hora y minutos de 5 en 5 |
 
-**Resumen RNF:** 35 implementados · 1 parcial · 1 backlog (total 37).
+**Resumen RNF:** 38 implementados · 1 parcial · 1 backlog (total 40).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 47 | 6 | 4 | 57 |
-| No funcionales | 35 | 1 | 1 | 37 |
-| **Total** | **82** | **7** | **5** | **94** |
+| Funcionales | 50 | 6 | 4 | 60 |
+| No funcionales | 38 | 1 | 1 | 40 |
+| **Total** | **88** | **7** | **5** | **100** |
 
-**Cobertura del hito 1:** 82 de 94 requerimientos completamente
-implementados (≈87%), 7 parcialmente cubiertos (≈7%) y 5 en backlog
-planificado (≈5%).
+**Cobertura del hito 1:** 88 de 100 requerimientos completamente
+implementados (88%), 7 parcialmente cubiertos (7%) y 5 en backlog
+planificado (5%).
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
 > proyecto. Su tabla existía en la base sin que ningún punto del código

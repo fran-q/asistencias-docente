@@ -49,12 +49,30 @@
                             <option value="">-- Elegir carrera --</option>
                             <option th:each="c : ${carreras}"
                                     th:value="${c.id}"
+                                    th:attr="data-duracion=${c.duracionAnios}"
                                     th:text="|${c.codigo} — ${c.nombre}${!c.activo ? ' (inactiva)' : ''}|">
                                 CARR — Nombre
                             </option>
                         </select>
                         <span class="form-error" th:if="${#fields.hasErrors('carreraId')}" th:errors="*{carreraId}">err</span>
                     </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="anio">Año de la carrera <span class="required">*</span></label>
+                        <!-- Las opciones se recortan por JS segun la duracion de la carrera
+                             elegida; el servidor revalida igual, porque el select se puede
+                             tocar desde afuera. -->
+                        <select id="anio" th:field="*{anio}" required
+                                th:classappend="${#fields.hasErrors('anio')} ? 'is-invalid'">
+                            <option th:each="n : ${#numbers.sequence(1, 10)}"
+                                    th:value="${n}" th:text="|${n}° año|">1° año</option>
+                        </select>
+                        <small class="form-hint" id="anio-hint">En qué año del plan se cursa.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('anio')}" th:errors="*{anio}">err</span>
+                    </div>
+                    <div class="form-group"></div>
                 </div>
 
                 <div class="form-group">
@@ -85,12 +103,12 @@
                     <a th:href="@{/materias}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
+        <script th:src="@{/js/academico-form.js}" defer></script>
         </div>
 
         <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 720px;">
             <h2>Datos del sistema</h2>
             <dl class="kv">
-                <dt>ID</dt>      <dd th:text="${materia.id}">-</dd>
                 <dt>Estado</dt>  <dd>
                     <span th:if="${materia.activo}"   class="badge badge--success">Activa</span>
                     <span th:unless="${materia.activo}" class="badge badge--danger">Inactiva</span>

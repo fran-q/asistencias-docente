@@ -73,7 +73,7 @@ public class CarreraController {
         }
 
         try {
-            Carrera c = service.crear(form.getCodigo(), form.getNombre());
+            Carrera c = service.crear(form.getCodigo(), form.getNombre(), form.getDuracionAnios());
             redirect.addFlashAttribute("flashMensaje",
                 "Carrera '" + c.getCodigo() + "' creada correctamente.");
             return "redirect:/carreras";
@@ -113,7 +113,7 @@ public class CarreraController {
         }
 
         try {
-            service.actualizar(id, form.getCodigo(), form.getNombre());
+            service.actualizar(id, form.getCodigo(), form.getNombre(), form.getDuracionAnios());
             redirect.addFlashAttribute("flashMensaje", "Carrera actualizada correctamente.");
             return "redirect:/carreras";
         } catch (IllegalArgumentException ex) {

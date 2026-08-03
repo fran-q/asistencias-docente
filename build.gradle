@@ -30,6 +30,13 @@ dependencies {
 	implementation 'org.flywaydb:flyway-mysql'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 
+	// OpenPDF: generacion del reporte en PDF. Es el fork libre de iText 2, con
+	// licencia LGPL/MPL, asi que entra en la restriccion de usar solo software
+	// abierto. Se eligio sobre PDFBox porque trae tablas con ancho de columna y
+	// repeticion de encabezado resueltas; con PDFBox habria que dibujar cada
+	// linea a mano y calcular los saltos de pagina.
+	implementation 'com.github.librepdf:openpdf:1.3.43'
+
 	// === Reconocimiento facial - Sprint 4 ===
 	// JavaCV: wrapper Java de OpenCV. opencv-platform incluye el modulo
 	// opencv_face (contrib) necesario para LBPHFaceRecognizer.

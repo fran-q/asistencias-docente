@@ -75,7 +75,7 @@ public class MateriaController {
 
         try {
             Materia m = service.crear(form.getCodigo(), form.getNombre(),
-                form.getCarreraId(), form.getDocenteTitularId());
+                form.getCarreraId(), form.getAnio(), form.getDocenteTitularId());
             redirect.addFlashAttribute("flashMensaje",
                 "Materia '" + m.getCodigo() + "' creada correctamente.");
             return "redirect:/materias";
@@ -118,7 +118,7 @@ public class MateriaController {
 
         try {
             service.actualizar(id, form.getCodigo(), form.getNombre(),
-                form.getCarreraId(), form.getDocenteTitularId());
+                form.getCarreraId(), form.getAnio(), form.getDocenteTitularId());
             redirect.addFlashAttribute("flashMensaje", "Materia actualizada correctamente.");
             return "redirect:/materias";
         } catch (IllegalArgumentException ex) {

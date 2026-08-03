@@ -75,7 +75,7 @@ public class ComisionController {
 
         try {
             Comision c = service.crear(form.getCodigo(), form.getMateriaId(),
-                form.getCupo(), form.getDocenteAsignadoId());
+                form.getDocenteAsignadoId());
             redirect.addFlashAttribute("flashMensaje",
                 "Comisión '" + c.getCodigo() + "' creada correctamente.");
             return "redirect:/comisiones";
@@ -118,7 +118,7 @@ public class ComisionController {
 
         try {
             service.actualizar(id, form.getCodigo(), form.getMateriaId(),
-                form.getCupo(), form.getDocenteAsignadoId());
+                form.getDocenteAsignadoId());
             redirect.addFlashAttribute("flashMensaje", "Comisión actualizada correctamente.");
             return "redirect:/comisiones";
         } catch (IllegalArgumentException ex) {

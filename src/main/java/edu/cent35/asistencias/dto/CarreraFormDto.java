@@ -2,7 +2,10 @@ package edu.cent35.asistencias.dto;
 import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Carrera;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -32,11 +35,17 @@ public class CarreraFormDto {
     @Size(min = 3, max = 150, message = "El nombre debe tener entre 3 y 150 caracteres")
     private String nombre;
 
+    @NotNull(message = "Hay que indicar cuántos años dura la carrera")
+    @Min(value = 1, message = "La carrera tiene que durar al menos un año")
+    @Max(value = 10, message = "La duración no puede pasar de 10 años")
+    private Short duracionAnios;
+
     // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static CarreraFormDto from(Carrera c) {
         return CarreraFormDto.builder()
             .codigo(c.getCodigo())
             .nombre(c.getNombre())
+            .duracionAnios(c.getDuracionAnios())
             .build();
     }
 }

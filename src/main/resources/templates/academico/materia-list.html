@@ -36,6 +36,7 @@
                             <th>Código</th>
                             <th>Nombre</th>
                             <th>Carrera</th>
+                            <th>Año</th>
                             <th>Titular</th>
                             <th>Estado</th>
                             <th>Última actualización</th>
@@ -52,6 +53,7 @@
                                 <small class="text-muted" th:text="${m.carreraNombre}">Nombre</small>
                                 <span th:unless="${m.carreraActiva}" class="badge badge--danger" style="margin-left:6px;">Carrera inactiva</span>
                             </td>
+                            <td th:text="|${m.anio}°|">1°</td>
                             <td>
                                 <span th:if="${m.titularNombre}" th:text="${m.titularNombre}">Apellido, Nombre</span>
                                 <span th:unless="${m.titularNombre}" class="text-muted">— Sin asignar —</span>

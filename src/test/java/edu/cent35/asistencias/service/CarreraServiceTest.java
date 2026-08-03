@@ -48,7 +48,7 @@ class CarreraServiceTest {
         when(carreraRepository.existsByCodigo("ECO")).thenReturn(false);
         when(carreraRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Carrera c = service.crear("ECO", "Economia");
+        Carrera c = service.crear("ECO", "Economia", (short) 3);
 
         assertThat(c.getCodigo()).isEqualTo("ECO");
         assertThat(c.getNombre()).isEqualTo("Economia");
@@ -61,7 +61,7 @@ class CarreraServiceTest {
     void crear_codigoDuplicado() {
         when(carreraRepository.existsByCodigo("ECO")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("ECO", "X"))
+        assertThatThrownBy(() -> service.crear("ECO", "X", (short) 3))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
         verify(carreraRepository, never()).save(any());
@@ -116,9 +116,56 @@ class CarreraServiceTest {
         assertThat(c.getActivo()).isTrue();
     }
 
+    // ========================================================================
+    //  Acortar la duracion con materias ya cargadas
+    // ========================================================================
+
+    @Test
+    @DisplayName("actualizar: no deja acortar la carrera por debajo del año de sus materias")
+    void actualizar_acortarDejariaMateriasHuerfanas() {
+        Carrera c = activa();
+        when(carreraRepository.findById(1L)).thenReturn(Optional.of(c));
+        when(materiaRepository.maxAnioDeLaCarrera(1L)).thenReturn((short) 3);
+
+        assertThatThrownBy(() -> service.actualizar(1L, "ECO", "Economia", (short) 2))
+            .as("bajar a 2 dejaria las materias de tercero en un año que ya no existe, "
+                + "y nada volveria a avisar de eso")
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("materias de 3° año");
+    }
+
+    @Test
+    @DisplayName("actualizar: acortar sí se permite si ninguna materia queda afuera")
+    void actualizar_acortarSinMateriasAfectadas() {
+        Carrera c = activa();
+        when(carreraRepository.findById(1L)).thenReturn(Optional.of(c));
+        when(materiaRepository.maxAnioDeLaCarrera(1L)).thenReturn((short) 2);
+        when(carreraRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.actualizar(1L, "ECO", "Economia", (short) 2);
+
+        assertThat(c.getDuracionAnios()).isEqualTo((short) 2);
+    }
+
+    @Test
+    @DisplayName("actualizar: una carrera sin materias se puede acortar libremente")
+    void actualizar_carreraSinMaterias() {
+        Carrera c = activa();
+        when(carreraRepository.findById(1L)).thenReturn(Optional.of(c));
+        when(materiaRepository.maxAnioDeLaCarrera(1L)).thenReturn(null);
+        when(carreraRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.actualizar(1L, "ECO", "Economia", (short) 1);
+
+        assertThat(c.getDuracionAnios())
+            .as("sin materias no hay nada que quede fuera del plan")
+            .isEqualTo((short) 1);
+    }
+
     // Carrera activa del tenant A.
     private Carrera activa() {
-        Carrera c = Carrera.builder().id(1L).codigo("ECO").nombre("Economia").activo(true).build();
+        Carrera c = Carrera.builder().id(1L).codigo("ECO").nombre("Economia")
+            .duracionAnios((short) 3).activo(true).build();
         c.setInstitucionId(TENANT_A);
         return c;
     }

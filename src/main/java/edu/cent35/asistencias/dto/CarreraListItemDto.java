@@ -17,6 +17,7 @@ public class CarreraListItemDto {
     Long id;
     String codigo;
     String nombre;
+    Short duracionAnios;
     boolean activo;
     LocalDateTime creadoEn;
     LocalDateTime actualizadoEn;
@@ -27,6 +28,7 @@ public class CarreraListItemDto {
             .id(c.getId())
             .codigo(c.getCodigo())
             .nombre(c.getNombre())
+            .duracionAnios(c.getDuracionAnios())
             .activo(Boolean.TRUE.equals(c.getActivo()))
             .creadoEn(c.getCreadoEn())
             .actualizadoEn(c.getActualizadoEn())

@@ -155,7 +155,10 @@ class AutorizacionPorRolIT {
                 .with(user(principal("INSTITUCION")))
                 .with(csrf())
                 .param("codigo", "X-1")
-                .param("nombre", "Carrera X"))
+                .param("nombre", "Carrera X")
+                // Obligatoria desde V010: sin ella el alta vuelve al formulario con
+                // errores de validacion y el test dejaria de probar lo que dice probar.
+                .param("duracionAnios", "3"))
             .andExpect(status().is3xxRedirection());
     }
 

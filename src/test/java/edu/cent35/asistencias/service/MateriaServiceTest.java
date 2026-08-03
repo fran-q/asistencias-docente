@@ -54,7 +54,7 @@ class MateriaServiceTest {
         ajena.setInstitucionId(TENANT_B);
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(ajena));
 
-        assertThatThrownBy(() -> service.crear("MAT", "Matematica", CARRERA_ID, null))
+        assertThatThrownBy(() -> service.crear("MAT", "Matematica", CARRERA_ID, (short) 1, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("La carrera seleccionada no existe");
         verify(materiaRepository, never()).save(any());
@@ -67,7 +67,7 @@ class MateriaServiceTest {
         c.setInstitucionId(TENANT_A);
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
 
-        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, null))
+        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, (short) 1, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("inactiva");
     }
@@ -80,7 +80,7 @@ class MateriaServiceTest {
         when(materiaRepository.existsByCodigo("MAT")).thenReturn(false);
         when(materiaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Materia m = service.crear("MAT", "Matematica", CARRERA_ID, null);
+        Materia m = service.crear("MAT", "Matematica", CARRERA_ID, (short) 1, null);
 
         assertThat(m.getCarrera()).isSameAs(c);
         assertThat(m.getInstitucionId()).isEqualTo(TENANT_A);
@@ -94,7 +94,7 @@ class MateriaServiceTest {
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
         when(materiaRepository.existsByCodigo("MAT")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, null))
+        assertThatThrownBy(() -> service.crear("MAT", "X", CARRERA_ID, (short) 1, null))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
     }
@@ -125,8 +125,42 @@ class MateriaServiceTest {
     }
 
     // Carrera activa del tenant A.
+    // ========================================================================
+    //  El anio contra la duracion de la carrera
+    // ========================================================================
+
+    @Test
+    @DisplayName("crear: rechaza una materia de un año que la carrera no tiene")
+    void crear_anioFueraDeLaCarrera() {
+        Carrera c = carreraActivaA();          // dura 3 anios
+        when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
+        when(materiaRepository.existsByCodigo("MAT")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.crear("MAT", "Matemática", CARRERA_ID, (short) 5, null))
+            .as("una tecnicatura de tres anios no puede tener materias de quinto; sin esto "
+                + "el anio seria un entero suelto que no se compara contra nada")
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("dura 3 años");
+    }
+
+    @Test
+    @DisplayName("crear: el último año de la carrera sí se acepta")
+    void crear_anioEnElBorde() {
+        Carrera c = carreraActivaA();
+        when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
+        when(materiaRepository.existsByCodigo("MAT")).thenReturn(false);
+        when(materiaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Materia m = service.crear("MAT", "Matemática", CARRERA_ID, (short) 3, null);
+
+        assertThat(m.getAnio())
+            .as("el tope es inclusivo: tercero existe en una carrera de tres años")
+            .isEqualTo((short) 3);
+    }
+
     private Carrera carreraActivaA() {
-        Carrera c = Carrera.builder().id(CARRERA_ID).codigo("ECO").nombre("Eco").activo(true).build();
+        Carrera c = Carrera.builder().id(CARRERA_ID).codigo("ECO").nombre("Eco")
+            .duracionAnios((short) 3).activo(true).build();
         c.setInstitucionId(TENANT_A);
         return c;
     }

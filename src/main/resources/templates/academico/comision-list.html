@@ -36,7 +36,6 @@
                             <th>Código</th>
                             <th>Materia</th>
                             <th>Carrera</th>
-                            <th>Cupo</th>
                             <th>Docente</th>
                             <th>Estado</th>
                             <th class="table__actions">Acciones</th>
@@ -54,10 +53,6 @@
                             <td>
                                 <code th:if="${c.carreraCodigo}" th:text="${c.carreraCodigo}">CARR</code>
                                 <span th:unless="${c.carreraCodigo}" class="text-muted">—</span>
-                            </td>
-                            <td>
-                                <span th:if="${c.cupo}" th:text="${c.cupo}">30</span>
-                                <span th:unless="${c.cupo}" class="text-muted">sin límite</span>
                             </td>
                             <td>
                                 <span th:if="${c.docenteNombre}" th:text="${c.docenteNombre}">Apellido, Nombre</span>

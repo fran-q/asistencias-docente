@@ -65,9 +65,6 @@ public class Comision {
     @JoinColumn(name = "docente_asignado_id")
     private Docente docenteAsignado;
 
-    @Column
-    private Integer cupo;
-
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

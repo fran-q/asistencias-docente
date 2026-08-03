@@ -50,6 +50,16 @@ public class Carrera extends BaseTenantEntity {
     @Column(nullable = false, length = 150)
     private String nombre;
 
+    /**
+     * Cuantos anios dura la carrera.
+     *
+     * <p>Acota el anio que se le puede poner a sus materias: sin esto el anio de la materia
+     * seria un entero suelto y nada impediria cargar una de "quinto" en una tecnicatura de tres.
+     */
+    @Column(name = "duracion_anios", nullable = false)
+    @Builder.Default
+    private Short duracionAnios = 3;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

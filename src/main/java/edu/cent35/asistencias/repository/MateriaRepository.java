@@ -3,6 +3,8 @@ import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Materia;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -35,4 +37,9 @@ public interface MateriaRepository extends JpaRepository<Materia, Long> {
 
     // Cuenta materias activas donde un docente es titular - para bloquear su baja.
     long countByDocenteTitularIdAndActivoTrue(Long docenteId);
+
+    // El anio mas alto entre las materias de la carrera; null si la carrera no tiene ninguna.
+    // Lo usa CarreraService para no dejar materias fuera del plan al acortar la duracion.
+    @Query("SELECT MAX(m.anio) FROM Materia m WHERE m.carrera.id = :carreraId")
+    Short maxAnioDeLaCarrera(@Param("carreraId") Long carreraId);
 }

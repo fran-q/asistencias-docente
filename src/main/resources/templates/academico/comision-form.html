@@ -49,6 +49,8 @@
                             <option value="">-- Elegir materia --</option>
                             <option th:each="m : ${materias}"
                                     th:value="${m.id}"
+                                    th:attr="data-titular-id=${m.docenteTitular != null ? m.docenteTitular.id : ''},
+                                             data-titular-nombre=${m.docenteTitular != null ? m.docenteTitular.nombreCompleto : ''}"
                                     th:text="|${m.codigo} — ${m.nombre}${!m.activo ? ' (inactiva)' : ''}|">
                                 MAT — Nombre
                             </option>
@@ -57,28 +59,22 @@
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="cupo">Cupo (opcional)</label>
-                        <input type="number" id="cupo" th:field="*{cupo}" min="1" max="999"
-                               th:classappend="${#fields.hasErrors('cupo')} ? 'is-invalid'">
-                        <small class="form-hint">Si lo dejás vacío, no se valida cupo al inscribir.</small>
-                        <span class="form-error" th:if="${#fields.hasErrors('cupo')}" th:errors="*{cupo}">err</span>
-                    </div>
-                    <div class="form-group">
-                        <label for="docenteAsignadoId">Docente asignado (opcional)</label>
-                        <select id="docenteAsignadoId" th:field="*{docenteAsignadoId}"
-                                th:classappend="${#fields.hasErrors('docenteAsignadoId')} ? 'is-invalid'">
-                            <option value="">— Sin asignar —</option>
-                            <option th:each="d : ${docentes}"
-                                    th:value="${d.id}"
-                                    th:text="|${d.apellido}, ${d.nombre} (DNI ${d.dni})${!d.activo ? ' [inactivo]' : ''}|">
-                                Apellido, Nombre (DNI X)
-                            </option>
-                        </select>
-                        <small class="form-hint">El docente asignado dicta las clases y firma la asistencia.</small>
-                        <span class="form-error" th:if="${#fields.hasErrors('docenteAsignadoId')}" th:errors="*{docenteAsignadoId}">err</span>
-                    </div>
+                <div class="form-group">
+                    <label for="docenteAsignadoId">Docente asignado</label>
+                    <select id="docenteAsignadoId" th:field="*{docenteAsignadoId}"
+                            th:classappend="${#fields.hasErrors('docenteAsignadoId')} ? 'is-invalid'">
+                        <option value="">— Sin asignar —</option>
+                        <option th:each="d : ${docentes}"
+                                th:value="${d.id}"
+                                th:text="|${d.apellido}, ${d.nombre} (DNI ${d.dni})${!d.activo ? ' [inactivo]' : ''}|">
+                            Apellido, Nombre (DNI X)
+                        </option>
+                    </select>
+                    <small class="form-hint" id="docente-hint">
+                        Al elegir la materia se propone su docente titular. Cambialo si la
+                        comisión la dicta otra persona.
+                    </small>
+                    <span class="form-error" th:if="${#fields.hasErrors('docenteAsignadoId')}" th:errors="*{docenteAsignadoId}">err</span>
                 </div>
 
                 <div class="form-actions">
@@ -87,12 +83,12 @@
                     <a th:href="@{/comisiones}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
+        <script th:src="@{/js/academico-form.js}" defer></script>
         </div>
 
         <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 720px;">
             <h2>Datos del sistema</h2>
             <dl class="kv">
-                <dt>ID</dt>      <dd th:text="${comision.id}">-</dd>
                 <dt>Estado</dt>  <dd>
                     <span th:if="${comision.activo}"   class="badge badge--success">Activa</span>
                     <span th:unless="${comision.activo}" class="badge badge--danger">Inactiva</span>

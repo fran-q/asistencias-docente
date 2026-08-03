@@ -2,8 +2,6 @@ package edu.cent35.asistencias.dto;
 import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Comision;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -38,11 +36,6 @@ public class ComisionFormDto {
     @NotNull(message = "Hay que elegir una materia")
     private Long materiaId;
 
-    // El tope evita cargas por error de tipeo: una comisión de un aula no llega a mil personas.
-    @Min(value = 1, message = "El cupo debe ser un número positivo")
-    @Max(value = 1000, message = "El cupo no puede superar 1000")
-    private Integer cupo;
-
     // Opcional: docente asignado a la comisión. Null = sin asignar.
     private Long docenteAsignadoId;
 
@@ -51,7 +44,6 @@ public class ComisionFormDto {
         return ComisionFormDto.builder()
             .codigo(c.getCodigo())
             .materiaId(c.getMateria().getId())
-            .cupo(c.getCupo())
             .docenteAsignadoId(c.getDocenteAsignado() != null ? c.getDocenteAsignado().getId() : null)
             .build();
     }

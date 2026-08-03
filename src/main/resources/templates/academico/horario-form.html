@@ -66,17 +66,33 @@
                     </div>
                 </div>
 
+                <!--
+                  La hora se elige con dos listas, hora y minutos, en vez del selector
+                  propio del navegador: ese cambia de forma y de comportamiento segun
+                  el navegador, y en Chrome abre una doble columna que hay que recorrer
+                  entera para llegar a las 14. El input real sigue siendo el de tipo
+                  time, oculto: es el que se envia y el que el servidor valida, asi que
+                  el formato que viaja no cambia.
+                -->
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="horaInicio">Hora inicio <span class="required">*</span></label>
-                        <input type="time" id="horaInicio" th:field="*{horaInicio}" required
-                               th:classappend="${#fields.hasErrors('horaInicio')} ? 'is-invalid'">
+                        <label for="horaInicio-h">Hora inicio <span class="required">*</span></label>
+                        <div class="hora-picker" data-hora-picker="horaInicio">
+                            <select id="horaInicio-h" class="hora-picker__campo" aria-label="Hora de inicio"></select>
+                            <span class="hora-picker__sep">:</span>
+                            <select id="horaInicio-m" class="hora-picker__campo" aria-label="Minutos de inicio"></select>
+                        </div>
+                        <input type="time" id="horaInicio" th:field="*{horaInicio}" required hidden>
                         <span class="form-error" th:if="${#fields.hasErrors('horaInicio')}" th:errors="*{horaInicio}">err</span>
                     </div>
                     <div class="form-group">
-                        <label for="horaFin">Hora fin <span class="required">*</span></label>
-                        <input type="time" id="horaFin" th:field="*{horaFin}" required
-                               th:classappend="${#fields.hasErrors('horaFin')} ? 'is-invalid'">
+                        <label for="horaFin-h">Hora fin <span class="required">*</span></label>
+                        <div class="hora-picker" data-hora-picker="horaFin">
+                            <select id="horaFin-h" class="hora-picker__campo" aria-label="Hora de fin"></select>
+                            <span class="hora-picker__sep">:</span>
+                            <select id="horaFin-m" class="hora-picker__campo" aria-label="Minutos de fin"></select>
+                        </div>
+                        <input type="time" id="horaFin" th:field="*{horaFin}" required hidden>
                         <small class="form-hint">Debe ser posterior a la hora de inicio.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('horaFin')}" th:errors="*{horaFin}">err</span>
                     </div>
@@ -104,12 +120,12 @@
                     <a th:href="@{/horarios}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
+        <script th:src="@{/js/hora-picker.js}" defer></script>
         </div>
 
         <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 760px;">
             <h2>Datos del sistema</h2>
             <dl class="kv">
-                <dt>ID</dt>      <dd th:text="${horario.id}">-</dd>
                 <dt>Estado</dt>  <dd>
                     <span th:if="${horario.activo}"   class="badge badge--success">Activo</span>
                     <span th:unless="${horario.activo}" class="badge badge--danger">Inactivo</span>

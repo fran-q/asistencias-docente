@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * ABM de las comisiones del tenant actual (RF-13), con cupo y docente asignado opcionales.
+ * ABM de las comisiones del tenant actual (RF-13), con docente asignado opcional.
  * Comisión no lleva institucion_id propio: su tenant sale de la materia padre, así que los
  * listados van por JOIN contra materia y los findById validan la cadena a mano.
  */
@@ -93,13 +93,19 @@ public class ComisionService {
     // Materias activas del tenant, para el combo del formulario de comisiones.
     public List<Materia> materiasActivasParaSelector() {
         List<Materia> ms = materiaRepository.findByActivoTrueOrderByNombreAsc();
-        ms.forEach(m -> { if (m.getCarrera() != null) m.getCarrera().getCodigo(); });
+        // Se tocan las relaciones LAZY que la plantilla va a leer: la carrera para el texto de
+        // la opcion y el titular para proponerlo como docente de la comision. Sin esto la
+        // sesion ya esta cerrada cuando Thymeleaf las pide.
+        ms.forEach(m -> {
+            if (m.getCarrera() != null) m.getCarrera().getCodigo();
+            if (m.getDocenteTitular() != null) m.getDocenteTitular().getNombreCompleto();
+        });
         return ms;
     }
 
     @Transactional
     // Crea una comisión bajo una materia activa, con código único dentro de esa materia.
-    public Comision crear(String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
+    public Comision crear(String codigo, Long materiaId, Long docenteAsignadoId) {
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
 
@@ -114,16 +120,11 @@ public class ComisionService {
                 "Ya existe una comisión '" + codigoNorm + "' en la materia '" + materia.getCodigo() + "'.");
         }
 
-        if (cupo != null && cupo <= 0) {
-            throw new IllegalArgumentException("El cupo debe ser un número positivo.");
-        }
-
         Docente asignado = obtenerDocenteValidadoOrNull(docenteAsignadoId, tenantId, /*requireActivo*/ true);
 
         Comision c = Comision.builder()
             .codigo(codigoNorm)
             .materia(materia)
-            .cupo(cupo)
             .docenteAsignado(asignado)
             .activo(true)
             .build();
@@ -135,8 +136,8 @@ public class ComisionService {
     }
 
     @Transactional
-    // Edita la comisión: código, materia, cupo y docente asignado.
-    public Comision actualizar(Long id, String codigo, Long materiaId, Integer cupo, Long docenteAsignadoId) {
+    // Edita la comisión: código, materia y docente asignado.
+    public Comision actualizar(Long id, String codigo, Long materiaId, Long docenteAsignadoId) {
         Comision c = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
@@ -158,10 +159,6 @@ public class ComisionService {
                 "Ya existe una comisión '" + codigoNuevo + "' en la materia '" + materia.getCodigo() + "'.");
         }
 
-        if (cupo != null && cupo <= 0) {
-            throw new IllegalArgumentException("El cupo debe ser un número positivo.");
-        }
-
         // Si NO cambia el docente asignado, permitir mantenerlo aunque ahora este inactivo (legacy).
         // Si cambia, el nuevo asignado debe estar activo.
         Long asignadoActualId = c.getDocenteAsignado() != null ? c.getDocenteAsignado().getId() : null;
@@ -170,7 +167,6 @@ public class ComisionService {
 
         c.setCodigo(codigoNuevo);
         c.setMateria(materia);
-        c.setCupo(cupo);
         c.setDocenteAsignado(asignado);
         Comision saved = comisionRepository.save(c);
         log.info("Comision actualizada: id={}, codigo={}, docente_asignado_id={}",

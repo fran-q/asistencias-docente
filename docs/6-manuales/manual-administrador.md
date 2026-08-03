@@ -19,7 +19,7 @@
 10. [Listado de asistencias](#10-listado-de-asistencias)
 11. [Carga manual de asistencia](#11-carga-manual-de-asistencia)
 12. [Justificar una ausencia](#12-justificar-una-ausencia)
-13. [Reportes y exportación CSV](#13-reportes-y-exportación-csv)
+13. [Reportes y exportación](#13-reportes-y-exportación)
 14. [Mi cuenta: verificar el correo y recuperar la contraseña](#14-mi-cuenta-verificar-el-correo-y-recuperar-la-contraseña)
 15. [Buenas prácticas](#15-buenas-prácticas)
 
@@ -209,6 +209,44 @@ Menú → **Grilla**. Vista calendar-like con los horarios activos de una
 carrera, día y franja horaria. Útil para detectar superposiciones visualmente.
 
 ---
+
+### Duración de la carrera y año de las materias
+
+Cada **carrera** declara cuántos años dura, y cada **materia** en qué año de esa
+carrera se cursa. El año va en la materia y no en la comisión porque es una
+propiedad del plan de estudios: que Análisis I sea de primero no depende de si
+se dicta a la mañana o a la noche.
+
+Al elegir la carrera en el formulario de la materia, el selector de año se
+recorta solo a la duración de esa carrera. El servidor lo revalida igual, así
+que no hay forma de guardar una materia de quinto en una tecnicatura de tres.
+
+> **Si querés acortar una carrera**, el sistema no te deja hacerlo por debajo
+> del año de sus materias vigentes, y te dice cuál es el año que estorba.
+> Cambiales el año a esas materias o dalas de baja primero.
+
+Las carreras que ya estaban cargadas antes de este cambio quedaron con **3 años**
+por defecto, que es solo el valor que permitió agregar la columna. Revisalas.
+
+### Comisiones: el docente se propone solo
+
+Al elegir la materia, el sistema **propone su docente titular** como docente de
+la comisión. Es quien dicta en la mayoría de los casos. Si esa comisión la dicta
+otra persona, cambialo: la propuesta es un punto de partida, no una imposición.
+
+Editando una comisión que ya existe, el docente guardado **no se pisa** al abrir
+el formulario. Solo cambia si vos cambiás la materia.
+
+> El **cupo** ya no está. Nunca se comparaba contra nada porque el sistema no
+> tiene inscripción de alumnos, así que era un número que se cargaba y no hacía
+> nada. Cuando la inscripción se implemente, va a traer su propio diseño.
+
+### Cargar un horario
+
+La hora se elige con **dos listas**, hora y minutos, en vez del selector del
+navegador. Los minutos van de cinco en cinco. Si un horario viejo tenía una hora
+que no cae en el múltiplo de cinco, se muestra igual: no se toca lo que ya está
+guardado.
 
 ## 6. Docentes
 
@@ -438,19 +476,31 @@ Solo aplica a marcas AUSENTE **persistidas**.
 
 ---
 
-## 13. Reportes y exportación CSV
+## 13. Reportes y exportación
 
 Menú → **Reportes**.
 
 1. Filtros: rango de fechas (obligatorio, default mes actual), docente,
    materia, estado, método.
 2. **"Aplicar"** muestra los resultados en la tabla.
-3. **"⬇ Descargar CSV"** baja el archivo con todas las columnas (incluyendo
-   docente, materia, horario, hora exacta, motivo de carga manual,
-   detalle, usuario que cargó, y motivo de justificación).
+3. Hay **dos descargas**, y las dos respetan los filtros que aplicaste.
+
+**"⬇ Descargar PDF"** — para imprimir o adjuntar tal cual. Sale apaisado, con
+ocho columnas legibles, el encabezado repetido en cada hoja y filas alternadas.
+Arriba deja constancia del período, cuántos registros trae y la fecha de
+emisión: sin eso, dos reportes impresos con filtros distintos son
+indistinguibles una vez que están sobre el escritorio.
+
+**"⬇ Descargar CSV"** — para seguir trabajando el dato en una planilla. Trae
+**todas** las columnas: docente, materia, horario, hora exacta, motivo de carga
+manual, detalle, usuario que cargó y motivo de justificación.
 
 > El CSV usa **UTF-8 con BOM** y separador `;`. Se abre directo en Excel
 > (Argentina) sin problemas de acentos ni columnas mezcladas.
+
+> **Por qué el PDF trae menos columnas.** Lo que no se lee de un vistazo en una
+> hoja estorba más de lo que aporta. Si necesitás el detalle completo, ese es el
+> CSV.
 
 ---
 

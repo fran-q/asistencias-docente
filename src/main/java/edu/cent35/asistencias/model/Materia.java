@@ -61,6 +61,17 @@ public class Materia extends BaseTenantEntity {
     @Column(nullable = false, length = 150)
     private String nombre;
 
+    /**
+     * Anio de la carrera en el que se cursa.
+     *
+     * <p>Va en la materia y no en la comision porque es una propiedad del plan de estudios:
+     * que Analisis I sea de primero no depende de si se dicta a la manana o a la noche. En la
+     * comision habria que repetirlo en cada una y dos podrian contradecirse.
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Short anio = 1;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "docente_titular_id")
     private Docente docenteTitular;
