@@ -76,17 +76,9 @@
             </form>
         </div>
 
-        <div class="card card--readonly">
-            <h2>Datos del sistema (no editables)</h2>
-            <dl class="kv">
-                <dt>Estado</dt>              <dd>
-                    <span th:if="${institucion.activo}"  class="badge badge--success">Activa</span>
-                    <span th:unless="${institucion.activo}" class="badge badge--danger">Inactiva</span>
-                </dd>
-                <dt>Alta</dt>                <dd th:text="${#temporals.format(institucion.creadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-                <dt>Ultima actualizacion</dt><dd th:text="${#temporals.format(institucion.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-            </dl>
-        </div>
+        <div th:replace="~{layout/fragmentos :: datosDelSistema(
+                            ${institucion.activo}, 'Activa', 'Inactiva',
+                            ${institucion.creadoEn}, ${institucion.actualizadoEn}, ~{})}"></div>
 
     </section>
 </body>

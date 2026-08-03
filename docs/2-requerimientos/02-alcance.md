@@ -251,20 +251,22 @@ posteriores:
 | RNF-38 | Encabezado visible al recorrer un listado | ✅ | thead fijo dentro del contenedor con scroll |
 | RNF-39 | Identificadores internos fuera de la interfaz | ✅ | Se quitó el ID de las seis pantallas donde figuraba |
 | RNF-40 | Selección de hora independiente del navegador | ✅ | Dos listas, hora y minutos de 5 en 5 |
+| RNF-41 | Bloque de datos del sistema uniforme | ✅ | Fragmento único aplicado en las seis pantallas |
+| RNF-42 | Búsqueda por escritura en desplegables largos | ✅ | Seis desplegables; el select real queda detrás |
 
-**Resumen RNF:** 38 implementados · 1 parcial · 1 backlog (total 40).
+**Resumen RNF:** 40 implementados · 1 parcial · 1 backlog (total 42).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
 | Funcionales | 50 | 6 | 4 | 60 |
-| No funcionales | 38 | 1 | 1 | 40 |
-| **Total** | **88** | **7** | **5** | **100** |
+| No funcionales | 40 | 1 | 1 | 42 |
+| **Total** | **90** | **7** | **5** | **102** |
 
-**Cobertura del hito 1:** 88 de 100 requerimientos completamente
-implementados (88%), 7 parcialmente cubiertos (7%) y 5 en backlog
-planificado (5%).
+**Cobertura del hito 1:** 90 de 102 requerimientos completamente
+implementados (≈88%), 7 parcialmente cubiertos (≈7%) y 5 en backlog
+planificado (≈5%).
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
 > proyecto. Su tabla existía en la base sin que ningún punto del código

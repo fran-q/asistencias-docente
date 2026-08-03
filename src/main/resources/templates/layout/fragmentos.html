@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Bloque "Datos del sistema", igual en todas las pantallas de edición.
+
+  Vive acá y no copiado en cada formulario porque antes lo estaba, y se había
+  desincronizado solo: el horario mostraba únicamente el estado y las demás
+  pantallas mostraban tres datos. Quien usa el sistema no tiene forma de saber
+  si eso pasa porque el horario no guarda esas fechas o porque la pantalla se
+  olvidó de mostrarlas, y un formulario que a veces informa y a veces no enseña
+  a desconfiar también de los que sí informan.
+
+  Los datos propios de cada entidad (la fecha de baja del docente, por ejemplo)
+  entran por el parámetro `extra`, que es un fragmento. Las pantallas que no
+  tienen nada que agregar pasan `~{}`.
+
+  @param activo          estado vigente del registro
+  @param labelActivo     cómo se dice "vigente" para esta entidad (Activa/Activo)
+  @param labelInactivo   cómo se dice lo contrario
+  @param creadoEn        alta del registro
+  @param actualizadoEn   última modificación
+  @param extra           filas adicionales propias de la entidad, o ~{}
+-->
+<div th:fragment="datosDelSistema(activo, labelActivo, labelInactivo, creadoEn, actualizadoEn, extra)"
+     class="card card--readonly datos-sistema">
+    <h2>Datos del sistema</h2>
+    <dl class="kv">
+        <dt>Estado</dt>
+        <dd>
+            <span th:if="${activo}" class="badge badge--success" th:text="${labelActivo}">Activo</span>
+            <span th:unless="${activo}" class="badge badge--danger" th:text="${labelInactivo}">Inactivo</span>
+        </dd>
+
+        <dt>Alta</dt>
+        <dd>
+            <span th:if="${creadoEn}"
+                  th:text="${#temporals.format(creadoEn, 'dd/MM/yyyy HH:mm')}">-</span>
+            <span th:unless="${creadoEn}" class="text-muted">Sin registrar</span>
+        </dd>
+
+        <dt>Última actualización</dt>
+        <dd>
+            <span th:if="${actualizadoEn}"
+                  th:text="${#temporals.format(actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</span>
+            <span th:unless="${actualizadoEn}" class="text-muted">Sin registrar</span>
+        </dd>
+
+        <th:block th:replace="${extra}"></th:block>
+    </dl>
+</div>
+
+</body>
+</html>

@@ -15,8 +15,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
@@ -72,6 +75,14 @@ public class Horario {
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
+
+    @CreationTimestamp
+    @Column(name = "creado_en", nullable = false, updatable = false)
+    private LocalDateTime creadoEn;
+
+    @UpdateTimestamp
+    @Column(name = "actualizado_en", nullable = false)
+    private LocalDateTime actualizadoEn;
 
     // Helper de conveniencia: devuelve el enum DiaSemana correspondiente.
     public DiaSemana getDia() {

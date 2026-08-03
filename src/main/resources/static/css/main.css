@@ -239,6 +239,12 @@ code {
 .navbar__logout-form { margin: 0; }
 
 /* ========== Cards ========== */
+/* Ancho unico para los formularios de edicion y su bloque de datos del sistema.
+   Antes cada pantalla traia el suyo en un style inline --640, 720 y 760-- y el
+   ancho terminaba dependiendo de en cual estabas parado. */
+.card--form,
+.datos-sistema { max-width: 760px; }
+
 .card {
     background-color: var(--bg-elev);
     border: 1px solid var(--border);
@@ -268,13 +274,21 @@ code {
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--space);
-    align-items: start;
+    /* stretch y no start: las tres tarjetas terminan a la misma altura aunque
+       tengan distinto contenido. Con start, la de "Ahora mismo" quedaba a media
+       altura de las otras y la fila se veia despareja. */
+    align-items: stretch;
 }
 @media (min-width: 1024px) {
     .home__paneles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
-.home__bloque { margin-bottom: 0; }
+/* height 100% para que la tarjeta ocupe todo el alto que le da la grilla, no
+   solo el de su contenido. */
+.home__bloque {
+    margin-bottom: 0;
+    height: 100%;
+}
 .home__titulo {
     margin: 0 0 var(--space);
     font-size: 1.05rem;
@@ -1002,6 +1016,72 @@ code {
 .table-wrap::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 4px; }
 .table-wrap::-webkit-scrollbar-track    { background: transparent; }
 .table-wrap .table { min-width: 720px; }
+
+/* ============================================================================
+ *  Select con busqueda
+ *  El <select> real queda oculto detras; esto es solo la capa visible.
+ * ========================================================================== */
+.buscable { position: relative; }
+
+.buscable__input {
+    width: 100%;
+    /* Hereda el aspecto de los inputs del formulario para que no se note que
+       este campo esta hecho aparte. */
+}
+
+.buscable__lista {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    max-height: 15rem;
+    overflow-y: auto;
+    margin: 0;
+    padding: var(--space-xs);
+    list-style: none;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.buscable__opcion {
+    padding: var(--space-sm) var(--space);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Activa = la que se elige con Enter. Se mueve con las flechas y tambien al
+   pasar el mouse, para que teclado y mouse no discutan sobre cual esta elegida. */
+.buscable__opcion--activa { background: var(--bg-elev); }
+.buscable__opcion--actual { color: var(--primary); font-weight: 600; }
+.buscable__opcion:hover   { background: var(--bg-elev); }
+
+.buscable__vacio {
+    padding: var(--space-sm) var(--space);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ========== Acciones de descarga del reporte ========== */
+.reporte__acciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space);
+    margin-top: var(--space);
+    flex-wrap: wrap;
+}
+/* Los dos botones son la misma decision --en que formato me lo llevo-- asi que
+   van pegados y no repartidos a lo ancho de la fila. */
+.reporte__descargas {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
 
 /* ========== Selector de hora (dos listas) ========== */
 .hora-picker {

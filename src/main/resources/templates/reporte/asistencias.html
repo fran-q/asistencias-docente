@@ -27,7 +27,7 @@
             </div>
             <div class="form-group" style="margin:0;">
                 <label for="docenteId">Docente</label>
-                <select id="docenteId" name="docenteId">
+                <select id="docenteId" data-buscable name="docenteId">
                     <option value="">Todos</option>
                     <option th:each="d : ${docentes}"
                             th:value="${d.id}"
@@ -37,7 +37,7 @@
             </div>
             <div class="form-group" style="margin:0;">
                 <label for="materiaId">Materia</label>
-                <select id="materiaId" name="materiaId">
+                <select id="materiaId" data-buscable name="materiaId">
                     <option value="">Todas</option>
                     <option th:each="m : ${materias}"
                             th:value="${m.id}"
@@ -71,15 +71,17 @@
             </div>
         </form>
 
-        <!-- Acción de descarga -->
-        <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+        <!-- Acciones de descarga.
+             Los dos botones van agrupados: sueltos dentro del space-between, el PDF
+             quedaba flotando en el medio de la fila, lejos del CSV y lejos del
+             recuento, como si no tuviera nada que ver con ninguno de los dos. -->
+        <div class="reporte__acciones">
             <span>
                 Resultados:
                 <strong th:text="${#lists.size(filas)}">0</strong>
                 fila(s)
             </span>
-            <!-- Dos formatos porque son dos usos: el CSV se sigue trabajando en una
-                 planilla, el PDF se imprime o se adjunta tal cual. -->
+            <div class="reporte__descargas">
             <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
                                         docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
                                         estado=${filtro.estado}, metodo=${filtro.metodo})}"
@@ -92,6 +94,7 @@
                class="btn btn--ghost">
                 ⬇ Descargar CSV
             </a>
+            </div>
         </div>
 
         <div th:if="${error != null}" class="alert alert--error"
@@ -165,6 +168,7 @@
                 </table>
             </div>
         </div>
+        <script th:src="@{/js/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>

@@ -24,7 +24,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="docenteId">Docente <span class="required">*</span></label>
-                        <select id="docenteId" th:field="*{docenteId}" required
+                        <select id="docenteId" data-buscable th:field="*{docenteId}" required
                                 th:classappend="${#fields.hasErrors('docenteId')} ? 'is-invalid'">
                             <option value="">-- Elegir docente --</option>
                             <option th:each="d : ${docentes}"
@@ -114,6 +114,7 @@
                 </div>
             </form>
         </div>
+        <script th:src="@{/js/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>

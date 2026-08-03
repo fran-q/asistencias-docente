@@ -20,7 +20,7 @@
             <p>Antes de crear horarios, <a th:href="@{/comisiones/nueva}">creá al menos una comisión</a>.</p>
         </div>
 
-        <div class="card" style="max-width: 760px;" th:unless="${#lists.isEmpty(comisiones)}">
+        <div class="card card--form" th:unless="${#lists.isEmpty(comisiones)}">
             <form th:action="${modo == 'crear'}
                               ? @{/horarios/nuevo}
                               : @{/horarios/{id}/editar(id=${horario.id})}"
@@ -32,7 +32,7 @@
 
                 <div class="form-group">
                     <label for="comisionId">Comisión <span class="required">*</span></label>
-                    <select id="comisionId" th:field="*{comisionId}" required
+                    <select id="comisionId" data-buscable th:field="*{comisionId}" required
                             th:classappend="${#fields.hasErrors('comisionId')} ? 'is-invalid'">
                         <option value="">-- Elegir comisión --</option>
                         <option th:each="c : ${comisiones}"
@@ -123,15 +123,16 @@
         <script th:src="@{/js/hora-picker.js}" defer></script>
         </div>
 
-        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 760px;">
-            <h2>Datos del sistema</h2>
-            <dl class="kv">
-                <dt>Estado</dt>  <dd>
-                    <span th:if="${horario.activo}"   class="badge badge--success">Activo</span>
-                    <span th:unless="${horario.activo}" class="badge badge--danger">Inactivo</span>
-                </dd>
-            </dl>
-        </div>
+        <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
+             MAS precedencia que th:if, asi que sobre el mismo elemento los parametros del
+             fragmento se evaluan igual en modo alta, donde la entidad todavia no existe,
+             y la pantalla revienta antes de decidir que no habia que mostrar nada. -->
+        <th:block th:if="${modo == 'editar'}">
+            <div th:replace="~{layout/fragmentos :: datosDelSistema(
+                                ${horario.activo}, 'Activo', 'Inactivo',
+                                ${horario.creadoEn}, ${horario.actualizadoEn}, ~{})}"></div>
+        </th:block>
+        <script th:src="@{/js/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>

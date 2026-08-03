@@ -23,7 +23,7 @@
             <p>Antes de crear comisiones, <a th:href="@{/materias/nueva}">creá al menos una materia</a>.</p>
         </div>
 
-        <div class="card" style="max-width: 720px;" th:unless="${#lists.isEmpty(materias)}">
+        <div class="card card--form" th:unless="${#lists.isEmpty(materias)}">
             <form th:action="${modo == 'crear'}
                               ? @{/comisiones/nueva}
                               : @{/comisiones/{id}/editar(id=${comision.id})}"
@@ -44,7 +44,7 @@
                     </div>
                     <div class="form-group">
                         <label for="materiaId">Materia <span class="required">*</span></label>
-                        <select id="materiaId" th:field="*{materiaId}" required
+                        <select id="materiaId" data-buscable th:field="*{materiaId}" required
                                 th:classappend="${#fields.hasErrors('materiaId')} ? 'is-invalid'">
                             <option value="">-- Elegir materia --</option>
                             <option th:each="m : ${materias}"
@@ -61,7 +61,7 @@
 
                 <div class="form-group">
                     <label for="docenteAsignadoId">Docente asignado</label>
-                    <select id="docenteAsignadoId" th:field="*{docenteAsignadoId}"
+                    <select id="docenteAsignadoId" data-buscable th:field="*{docenteAsignadoId}"
                             th:classappend="${#fields.hasErrors('docenteAsignadoId')} ? 'is-invalid'">
                         <option value="">— Sin asignar —</option>
                         <option th:each="d : ${docentes}"
@@ -86,18 +86,16 @@
         <script th:src="@{/js/academico-form.js}" defer></script>
         </div>
 
-        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 720px;">
-            <h2>Datos del sistema</h2>
-            <dl class="kv">
-                <dt>Estado</dt>  <dd>
-                    <span th:if="${comision.activo}"   class="badge badge--success">Activa</span>
-                    <span th:unless="${comision.activo}" class="badge badge--danger">Inactiva</span>
-                </dd>
-                <dt>Alta</dt>    <dd th:text="${#temporals.format(comision.creadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-                <dt>Última actualización</dt>
-                                 <dd th:text="${#temporals.format(comision.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-            </dl>
-        </div>
+        <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
+             MAS precedencia que th:if, asi que sobre el mismo elemento los parametros del
+             fragmento se evaluan igual en modo alta, donde la entidad todavia no existe,
+             y la pantalla revienta antes de decidir que no habia que mostrar nada. -->
+        <th:block th:if="${modo == 'editar'}">
+            <div th:replace="~{layout/fragmentos :: datosDelSistema(
+                                ${comision.activo}, 'Activa', 'Inactiva',
+                                ${comision.creadoEn}, ${comision.actualizadoEn}, ~{})}"></div>
+        </th:block>
+        <script th:src="@{/js/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>

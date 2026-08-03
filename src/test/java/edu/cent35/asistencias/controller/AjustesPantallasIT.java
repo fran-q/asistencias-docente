@@ -243,6 +243,89 @@ class AjustesPantallasIT {
             .andExpect(content().string(containsString("Descargar CSV")));
     }
 
+    // ========================================================================
+    //  Bloque "Datos del sistema" unificado
+    // ========================================================================
+
+    @Test
+    @DisplayName("Todas las pantallas de edición muestran el mismo bloque de datos del sistema")
+    void bloqueDeDatosUniforme() throws Exception {
+        String[] pantallas = { "/horarios/" + horarioId + "/editar", "/mi-institucion" };
+        for (String ruta : pantallas) {
+            mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Datos del sistema")))
+                .andExpect(content().string(containsString("<dt>Estado</dt>")))
+                .andExpect(content().string(containsString("<dt>Alta</dt>")))
+                // El horario era el unico que mostraba solo el estado: una pantalla que
+                // informa menos que las demas hace dudar de si el dato no existe o si
+                // simplemente se olvidaron de mostrarlo.
+                .andExpect(content().string(containsString("Última actualización")));
+        }
+    }
+
+    @Test
+    @DisplayName("El bloque del docente conserva sus fechas propias además de las comunes")
+    void bloqueDelDocenteConservaSusFechas() throws Exception {
+        Long docenteId = docenteRepository.findAll().stream()
+            .filter(d -> tenantId.equals(d.getInstitucionId()))
+            .findFirst().orElseThrow().getId();
+
+        mockMvc.perform(get("/docentes/" + docenteId + "/editar")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("<dt>Alta</dt>")))
+            .andExpect(content().string(containsString("Última actualización")))
+            .andExpect(content().string(containsString("Fecha de alta")));
+    }
+
+    // ========================================================================
+    //  Selects con busqueda
+    // ========================================================================
+
+    @Test
+    @DisplayName("Los desplegables que crecen con la carga son buscables")
+    void desplegablesLargosSonBuscables() throws Exception {
+        String[][] casos = {
+            {"/comisiones/nueva", "materiaId"},
+            {"/comisiones/nueva", "docenteAsignadoId"},
+            {"/materias/nueva",   "carreraId"},
+            {"/materias/nueva",   "docenteTitularId"},
+            {"/horarios/nuevo",   "comisionId"},
+            {"/reportes",         "docenteId"},
+        };
+        for (String[] c : casos) {
+            mockMvc.perform(get(c[0]).with(user(principal("INSTITUCION"))))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(
+                    "<select id=\"" + c[1] + "\" data-buscable")))
+                .andExpect(content().string(containsString("select-buscable.js")));
+        }
+    }
+
+    @Test
+    @DisplayName("Los desplegables de opciones fijas no llevan buscador")
+    void desplegablesCortosNoLlevanBuscador() throws Exception {
+        // El estado tiene tres valores: un buscador ahi estorba mas de lo que ayuda.
+        mockMvc.perform(get("/reportes").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString(
+                "<select id=\"estado\" data-buscable"))));
+    }
+
+    // ========================================================================
+    //  Descargas del reporte
+    // ========================================================================
+
+    @Test
+    @DisplayName("Los dos botones de descarga van agrupados")
+    void descargasAgrupadas() throws Exception {
+        mockMvc.perform(get("/reportes").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            // Sueltos dentro del space-between el PDF quedaba flotando en el medio.
+            .andExpect(content().string(containsString("reporte__descargas")));
+    }
+
     // ------------------------------------------------------------------------
 
     private CustomUserDetails principal(String rol) {

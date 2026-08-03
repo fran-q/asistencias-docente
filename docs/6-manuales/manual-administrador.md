@@ -107,6 +107,32 @@ funcione, que de otro modo solo se descubre entrando ficha por ficha:
 Cada fila lleva a la pantalla donde se resuelve. Si no falta nada, el bloque lo
 dice y no muestra ninguna fila.
 
+### Buscar dentro de un desplegable
+
+Los desplegables que crecen con la carga de tu institución —docente, materia,
+comisión, carrera— **se filtran escribiendo**. Hacé click, tipeá tres letras del
+apellido o del código y la lista se recorta. No hace falta escribir tildes:
+`garcia` encuentra a *García*.
+
+Se maneja también con el teclado: flechas para moverte, **Enter** para elegir,
+**Escape** para cerrar. Si cerrás sin elegir nada, el campo vuelve a mostrar lo
+que estaba seleccionado antes.
+
+> Los desplegables de pocas opciones fijas —estado, método, día de la semana—
+> siguen siendo desplegables comunes. Con tres opciones, un buscador estorba más
+> de lo que ayuda.
+
+### El bloque "Datos del sistema"
+
+Todas las pantallas de edición terminan con el mismo recuadro: **estado**
+vigente, **alta** y **última actualización**. Es el mismo en todas a propósito.
+Algunas agregan datos propios: el docente suma su fecha de alta y, si está
+inactivo, la de baja.
+
+> Los horarios cargados **antes** de que existiera este bloque muestran como
+> fecha de alta el día en que se aplicó la migración, no el día real en que se
+> cargaron. Ese dato no existía en ningún lado y no se puede reconstruir.
+
 ### Buscar dentro de un listado
 
 Todos los listados de catálogo —docentes, usuarios, carreras, materias,

@@ -17,7 +17,7 @@
             </p>
         </header>
 
-        <div class="card" style="max-width: 760px;">
+        <div class="card card--form">
             <form th:action="${modo == 'crear'}
                               ? @{/docentes/nuevo}
                               : @{/docentes/{id}/editar(id=${docente.id})}"
@@ -85,32 +85,33 @@
             </form>
         </div>
 
-        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 760px;">
-            <h2>Datos del sistema</h2>
-            <dl class="kv">
-                <dt>Estado</dt>  <dd>
-                    <span th:if="${docente.activo}"   class="badge badge--success">Activo</span>
-                    <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>
+        <!-- Las fechas de alta y baja del docente son datos administrativos propios
+             suyos, no marcas de auditoría: entran como filas extra del bloque comun.
+             El th:if va afuera por la precedencia de th:replace (ver carrera-form). -->
+        <th:block th:if="${modo == 'editar'}">
+            <div th:replace="~{layout/fragmentos :: datosDelSistema(
+                                ${docente.activo}, 'Activo', 'Inactivo',
+                                ${docente.creadoEn}, ${docente.actualizadoEn},
+                                ~{::fechasDelDocente})}"></div>
+        </th:block>
+
+        <th:block th:fragment="fechasDelDocente" th:if="${modo == 'editar'}">
+            <dt>Fecha de alta</dt>
+            <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">-</dd>
+            <th:block th:if="${!docente.activo}">
+                <dt>Fecha de baja</dt>
+                <dd>
+                    <span th:if="${docente.fechaBaja}"
+                          th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</span>
+                    <span th:unless="${docente.fechaBaja}" class="text-muted">
+                        Sin registrar (baja anterior a que el sistema la guardara)
+                    </span>
                 </dd>
-                <dt>Fecha de alta</dt>
-                                 <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">-</dd>
-                <th:block th:if="${!docente.activo}">
-                    <dt>Fecha de baja</dt>
-                    <dd>
-                        <span th:if="${docente.fechaBaja}"
-                              th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</span>
-                        <span th:unless="${docente.fechaBaja}" class="text-muted">
-                            Sin registrar (baja anterior a que el sistema la guardara)
-                        </span>
-                    </dd>
-                </th:block>
-                <dt>Última actualización</dt>
-                                 <dd th:text="${#temporals.format(docente.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-            </dl>
-        </div>
+            </th:block>
+        </th:block>
 
         <!-- Consentimiento biométrico -->
-        <div th:if="${modo == 'editar'}" class="card" style="max-width: 760px;">
+        <div th:if="${modo == 'editar'}" class="card card--form">
             <h2>Consentimiento biométrico</h2>
             <p class="text-muted" style="margin-top:-0.5rem;">
                 Ley 25.326 + Resolución AAIP 255/2022.
@@ -172,7 +173,7 @@
         </div>
 
         <!-- Modelo facial -->
-        <div th:if="${modo == 'editar'}" class="card" style="max-width: 760px;">
+        <div th:if="${modo == 'editar'}" class="card card--form">
             <h2>Modelo facial</h2>
             <p class="text-muted" style="margin-top:-0.5rem;">
                 Huella biométrica para el reconocimiento facial automático.

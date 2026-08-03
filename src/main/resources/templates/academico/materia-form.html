@@ -23,7 +23,7 @@
             <p>Antes de crear materias, <a th:href="@{/carreras/nueva}">creá al menos una carrera</a>.</p>
         </div>
 
-        <div class="card" style="max-width: 720px;" th:unless="${#lists.isEmpty(carreras)}">
+        <div class="card card--form" th:unless="${#lists.isEmpty(carreras)}">
             <form th:action="${modo == 'crear'}
                               ? @{/materias/nueva}
                               : @{/materias/{id}/editar(id=${materia.id})}"
@@ -44,7 +44,7 @@
                     </div>
                     <div class="form-group">
                         <label for="carreraId">Carrera <span class="required">*</span></label>
-                        <select id="carreraId" th:field="*{carreraId}" required
+                        <select id="carreraId" data-buscable th:field="*{carreraId}" required
                                 th:classappend="${#fields.hasErrors('carreraId')} ? 'is-invalid'">
                             <option value="">-- Elegir carrera --</option>
                             <option th:each="c : ${carreras}"
@@ -84,7 +84,7 @@
 
                 <div class="form-group">
                     <label for="docenteTitularId">Docente titular (opcional)</label>
-                    <select id="docenteTitularId" th:field="*{docenteTitularId}"
+                    <select id="docenteTitularId" data-buscable th:field="*{docenteTitularId}"
                             th:classappend="${#fields.hasErrors('docenteTitularId')} ? 'is-invalid'">
                         <option value="">— Sin asignar —</option>
                         <option th:each="d : ${docentes}"
@@ -106,18 +106,16 @@
         <script th:src="@{/js/academico-form.js}" defer></script>
         </div>
 
-        <div th:if="${modo == 'editar'}" class="card card--readonly" style="max-width: 720px;">
-            <h2>Datos del sistema</h2>
-            <dl class="kv">
-                <dt>Estado</dt>  <dd>
-                    <span th:if="${materia.activo}"   class="badge badge--success">Activa</span>
-                    <span th:unless="${materia.activo}" class="badge badge--danger">Inactiva</span>
-                </dd>
-                <dt>Alta</dt>    <dd th:text="${#temporals.format(materia.creadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-                <dt>Última actualización</dt>
-                                 <dd th:text="${#temporals.format(materia.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</dd>
-            </dl>
-        </div>
+        <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
+             MAS precedencia que th:if, asi que sobre el mismo elemento los parametros del
+             fragmento se evaluan igual en modo alta, donde la entidad todavia no existe,
+             y la pantalla revienta antes de decidir que no habia que mostrar nada. -->
+        <th:block th:if="${modo == 'editar'}">
+            <div th:replace="~{layout/fragmentos :: datosDelSistema(
+                                ${materia.activo}, 'Activa', 'Inactiva',
+                                ${materia.creadoEn}, ${materia.actualizadoEn}, ~{})}"></div>
+        </th:block>
+        <script th:src="@{/js/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>
