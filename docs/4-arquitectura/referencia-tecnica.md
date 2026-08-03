@@ -633,7 +633,6 @@ De los **37 RF**: la gran mayoría implementados. Pendientes o parciales:
 | RF-31/32/33 | Export PDF, Excel y gráficos → hay **CSV** |
 | RF-37 | Dashboard con métricas del día: parcial |
 | RNF-22 | Modo claro conmutable: solo oscuro |
-| RF-38 | **Vivacidad / anti-spoofing**: especificado, no implementado |
 
 ### Deuda técnica documentada
 

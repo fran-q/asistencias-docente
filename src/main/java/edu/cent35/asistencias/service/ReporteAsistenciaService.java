@@ -10,6 +10,7 @@ import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,27 @@ public class ReporteAsistenciaService {
     private final AsistenciaManualRepository asistenciaManualRepository;
     private final JustificacionAusenciaRepository justificacionAusenciaRepository;
 
+    // Cuantas filas como maximo devuelve un reporte.
+    @Value("${app.reportes.max-filas}")
+    private int maxFilas;
+
+    // Cuantas filas devolveria el reporte sin el tope; la pantalla lo usa para avisar.
+    @Transactional(readOnly = true)
+    public long contar(ReporteFiltroDto filtro) {
+        LocalDate hoy = LocalDate.now();
+        LocalDate desde = filtro.getDesde() != null ? filtro.getDesde() : hoy.withDayOfMonth(1);
+        LocalDate hasta = filtro.getHasta() != null ? filtro.getHasta() : hoy;
+        if (desde.isAfter(hasta)) return 0;
+        return asistenciaRepository.contarParaReporte(
+            desde, hasta, filtro.getDocenteId(), filtro.getMateriaId(),
+            filtro.getCarreraId(), filtro.getEstado(), filtro.getMetodo());
+    }
+
+    // Tope configurado, para que la pantalla pueda decir cuantas filas entran.
+    public int getMaxFilas() {
+        return maxFilas;
+    }
+
     // Arma las filas del reporte; los detalles manuales y de justificación se traen en bulk (evita N+1).
     @Transactional(readOnly = true)
     public List<AsistenciaReporteRowDto> reporte(ReporteFiltroDto filtro) {
@@ -51,22 +73,34 @@ public class ReporteAsistenciaService {
 
         List<Asistencia> asistencias = asistenciaRepository.findParaReporte(
             desde, hasta,
-            filtro.getDocenteId(), filtro.getMateriaId(),
+            filtro.getDocenteId(), filtro.getMateriaId(), filtro.getCarreraId(),
             filtro.getEstado(), filtro.getMetodo());
 
         if (asistencias.isEmpty()) {
             return List.of();
         }
 
-        // Bulk de manuales y justificaciones: una sola consulta cada uno
-        // y mapeamos por asistencia_id para evitar N+1.
+        // Tope duro. Un rango de un año sin filtros trae todo a memoria y de ahi al HTML,
+        // que es donde el navegador se cae primero. Se corta y se avisa en vez de tardar
+        // dos minutos y morir sin explicacion: el que pidio el reporte puede acotar el
+        // rango, pero solo si sabe que le falta algo.
+        boolean truncado = asistencias.size() > maxFilas;
+        if (truncado) {
+            log.warn("Reporte truncado: {} filas encontradas, se devuelven {}.",
+                     asistencias.size(), maxFilas);
+            asistencias = asistencias.subList(0, maxFilas);
+        }
+
+        // Manuales y justificaciones de ESTAS asistencias, en una consulta cada uno. Antes
+        // se hacia findAll() y se filtraba en Java: traia las dos tablas enteras a memoria
+        // para quedarse con un punado, y el filtro era un List.contains dentro de un
+        // stream, o sea cuadratico sobre la tabla completa.
         List<Long> ids = asistencias.stream().map(Asistencia::getId).toList();
-        Map<Long, AsistenciaManual> manualesPorId = asistenciaManualRepository.findAll().stream()
-            .filter(m -> ids.contains(m.getAsistencia().getId()))
-            .collect(Collectors.toMap(m -> m.getAsistencia().getId(), m -> m, (a, b) -> a));
+        Map<Long, AsistenciaManual> manualesPorId =
+            asistenciaManualRepository.findByAsistenciaIdIn(ids).stream()
+                .collect(Collectors.toMap(m -> m.getAsistencia().getId(), m -> m, (a, b) -> a));
         Map<Long, JustificacionAusencia> justificacionesPorId =
-            justificacionAusenciaRepository.findAll().stream()
-                .filter(j -> ids.contains(j.getAsistencia().getId()))
+            justificacionAusenciaRepository.findByAsistenciaIdIn(ids).stream()
                 .collect(Collectors.toMap(j -> j.getAsistencia().getId(), j -> j, (a, b) -> a));
 
         List<AsistenciaReporteRowDto> filas = new ArrayList<>(asistencias.size());

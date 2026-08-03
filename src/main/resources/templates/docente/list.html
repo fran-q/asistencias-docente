@@ -85,6 +85,12 @@
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
+                                <!-- Los derechos de la Ley 25.326 se ejercen sobre una persona
+                                     concreta, asi que el acceso natural es su fila. -->
+                                <a th:href="@{/docentes/{id}/arco(id=${d.id})}"
+                                   class="btn btn--ghost btn--sm"
+                                   title="Acceso, rectificación, cancelación y oposición">Datos</a>
+
                                 <!-- La fecha se pide en el modal porque la baja suele cargarse
                                      dias despues del hecho: forzar "hoy" falsearia el registro.
                                      El rango la acota entre el alta del docente y hoy. -->

@@ -36,6 +36,16 @@
                 </select>
             </div>
             <div class="form-group" style="margin:0;">
+                <label for="carreraId">Carrera</label>
+                <select id="carreraId" data-buscable name="carreraId">
+                    <option value="">Todas</option>
+                    <option th:each="c : ${carreras}"
+                            th:value="${c.id}"
+                            th:text="|${c.codigo} - ${c.nombre}|"
+                            th:selected="${c.id == filtro.carreraId}">CAR - Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
                 <label for="materiaId">Materia</label>
                 <select id="materiaId" data-buscable name="materiaId">
                     <option value="">Todas</option>
@@ -80,16 +90,21 @@
                 Resultados:
                 <strong th:text="${#lists.size(filas)}">0</strong>
                 fila(s)
+                <!-- Un reporte cortado en silencio se lee como un reporte completo. -->
+                <span th:if="${truncado}" class="badge badge--warning" style="margin-left:8px;"
+                      th:text="|de ${totalSinTope} · acotá el rango o los filtros|">de N</span>
             </span>
             <div class="reporte__descargas">
             <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
                                         docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                        carreraId=${filtro.carreraId},
                                         estado=${filtro.estado}, metodo=${filtro.metodo})}"
                class="btn btn--primary">
                 ⬇ Descargar PDF
             </a>
             <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
                                         docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                        carreraId=${filtro.carreraId},
                                         estado=${filtro.estado}, metodo=${filtro.metodo})}"
                class="btn btn--ghost">
                 ⬇ Descargar CSV

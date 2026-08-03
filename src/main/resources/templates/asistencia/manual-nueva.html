@@ -29,7 +29,7 @@
                             <option value="">-- Elegir docente --</option>
                             <option th:each="d : ${docentes}"
                                     th:value="${d.id}"
-                                    th:text="|${d.apellido}, ${d.nombre} (DNI ${d.dni})|">
+                                    th:text="|${d.apellido}, ${d.nombre} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.dni}|">
                                 Apellido, Nombre
                             </option>
                         </select>

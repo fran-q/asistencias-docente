@@ -12,12 +12,14 @@ import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_face.LBPHFaceRecognizer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -55,6 +57,13 @@ public class IdentificacionFacialService {
 
     // Cache: modeloFacialId → recognizer ya cargado y listo para predict.
     private final ConcurrentHashMap<Long, LBPHFaceRecognizer> cache = new ConcurrentHashMap<>();
+
+    // Cuando se uso por ultima vez cada entrada del cache.
+    private final ConcurrentHashMap<Long, Long> ultimoUso = new ConcurrentHashMap<>();
+
+    // Cuantos minutos puede quedar un modelo descifrado en memoria sin que nadie lo use.
+    @Value("${app.biometria.cache-minutos-inactividad}")
+    private long minutosInactividad;
 
     // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una linea
     // CALIBRACION con distancia y tiempos, que es la fuente de docs/calibracion-umbral.md.
@@ -197,9 +206,37 @@ public class IdentificacionFacialService {
         return Veredicto.ACEPTADO;
     }
 
+    /**
+     * Descarta los modelos que llevan rato sin usarse.
+     *
+     * <p>El cache guarda el dato biometrico <b>descifrado</b>: mientras una entrada vive, el
+     * embedding esta en memoria en claro. Que se quede ahi mientras el pase corre es el
+     * precio de que ande rapido; que se quede toda la noche despues de la ultima clase no
+     * compra nada y solo alarga la ventana en la que ese dato existe sin cifrar.
+     *
+     * <p>Hace falta un barrido programado y no alcanza con limpiar dentro de
+     * {@code sincronizarCache}: ese metodo corre cuando alguien identifica, y el momento en
+     * que hay que soltar la memoria es justamente cuando ya nadie identifica.
+     */
+    @Scheduled(fixedDelayString = "${app.biometria.cache-barrido-ms}")
+    public void descartarModelosInactivos() {
+        long limite = System.currentTimeMillis() - minutosInactividad * 60_000L;
+        for (Map.Entry<Long, Long> e : ultimoUso.entrySet()) {
+            if (e.getValue() > limite) continue;
+            LBPHFaceRecognizer rec = cache.remove(e.getKey());
+            ultimoUso.remove(e.getKey());
+            if (rec != null) {
+                rec.close();
+                log.info("Modelo facial id={} descartado del cache tras {} min sin uso.",
+                         e.getKey(), minutosInactividad);
+            }
+        }
+    }
+
     // Saca el recognizer del cache y libera su memoria nativa; sin esto, tras un borrado ARCO
     // una copia en memoria seguiria reconociendo al docente hasta el proximo reinicio.
     public void evictarModelo(Long modeloFacialId) {
+        ultimoUso.remove(modeloFacialId);
         LBPHFaceRecognizer rec = cache.remove(modeloFacialId);
         if (rec != null) {
             rec.close();
@@ -217,6 +254,7 @@ public class IdentificacionFacialService {
         Set<Long> aRemover = new HashSet<>(cache.keySet());
         aRemover.removeAll(idsActivos);
         for (Long id : aRemover) {
+            ultimoUso.remove(id);
             LBPHFaceRecognizer viejo = cache.remove(id);
             if (viejo != null) {
                 viejo.close();
@@ -224,9 +262,12 @@ public class IdentificacionFacialService {
             }
         }
 
-        // Cargar los nuevos.
+        // Cargar los nuevos y marcar a todos como usados recien: si estan sincronizados es
+        // porque alguien acaba de identificar contra ellos.
+        long ahora = System.currentTimeMillis();
         for (ModeloFacial m : modelosActivos) {
             cache.computeIfAbsent(m.getId(), id -> cargar(m));
+            ultimoUso.put(m.getId(), ahora);
         }
     }
 

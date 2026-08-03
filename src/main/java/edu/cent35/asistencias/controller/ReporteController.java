@@ -6,6 +6,7 @@ import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.MateriaService;
+import edu.cent35.asistencias.service.CarreraService;
 import edu.cent35.asistencias.service.MiInstitucionService;
 import edu.cent35.asistencias.service.ReporteAsistenciaService;
 import edu.cent35.asistencias.service.ReportePdfService;
@@ -54,6 +55,7 @@ public class ReporteController {
     private final MateriaService materiaService;
     private final ReportePdfService reportePdfService;
     private final MiInstitucionService miInstitucionService;
+    private final CarreraService carreraService;
 
     // Pantalla del reporte con filtros + tabla.
     @GetMapping
@@ -64,6 +66,7 @@ public class ReporteController {
                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @RequestParam(name = "docenteId", required = false) Long docenteId,
             @RequestParam(name = "materiaId", required = false) Long materiaId,
+            @RequestParam(name = "carreraId", required = false) Long carreraId,
             @RequestParam(name = "estado",    required = false) EstadoAsistencia estado,
             @RequestParam(name = "metodo",    required = false) MetodoAsistencia metodo,
             Model model) {
@@ -75,13 +78,19 @@ public class ReporteController {
 
         ReporteFiltroDto filtro = ReporteFiltroDto.builder()
             .desde(desde).hasta(hasta)
-            .docenteId(docenteId).materiaId(materiaId)
+            .docenteId(docenteId).materiaId(materiaId).carreraId(carreraId)
             .estado(estado).metodo(metodo)
             .build();
 
         try {
             List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
             model.addAttribute("filas", filas);
+            // Cuantas habria sin el tope. Si son mas que las mostradas, la pantalla avisa:
+            // un reporte cortado en silencio se lee como un reporte completo.
+            long total = reporteService.contar(filtro);
+            model.addAttribute("totalSinTope", total);
+            model.addAttribute("truncado", total > filas.size());
+            model.addAttribute("maxFilas", reporteService.getMaxFilas());
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
             model.addAttribute("filas", List.of());
@@ -90,6 +99,7 @@ public class ReporteController {
         model.addAttribute("filtro", filtro);
         model.addAttribute("docentes", docenteService.listar());
         model.addAttribute("materias", materiaService.listar());
+        model.addAttribute("carreras", carreraService.listar());
         model.addAttribute("estadosPosibles", EstadoAsistencia.values());
         model.addAttribute("metodosPosibles", MetodoAsistencia.values());
         return "reporte/asistencias";

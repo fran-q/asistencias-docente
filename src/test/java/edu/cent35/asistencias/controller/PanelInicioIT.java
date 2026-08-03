@@ -101,8 +101,10 @@ class PanelInicioIT {
     void institucionVacia() throws Exception {
         mockMvc.perform(get("/").with(user(principal())))
             .andExpect(status().isOk())
+            // Sin clases en curso NI por venir. El bloque ya no dice solo "no hay nada":
+            // cuando hay algo mas tarde, lo anticipa (RF-65).
             .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                "No hay ninguna clase en curso")))
+                "No hay clases en curso ni por venir hoy")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString(
                 "Hoy no hay clases programadas")));
     }

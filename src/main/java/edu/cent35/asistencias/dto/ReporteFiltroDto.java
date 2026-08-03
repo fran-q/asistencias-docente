@@ -22,6 +22,9 @@ public class ReporteFiltroDto {
     private LocalDate hasta;
     private Long docenteId;
     private Long materiaId;
+
+    // Filtra por carrera; complementa al de materia para poder mirar un plan completo (RF-29).
+    private Long carreraId;
     private EstadoAsistencia estado;
     private MetodoAsistencia metodo;
 }

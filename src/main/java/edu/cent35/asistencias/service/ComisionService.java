@@ -148,13 +148,17 @@ public class ComisionService {
                 "La nueva materia '" + materia.getNombre() + "' está inactiva. Elegí una activa.");
         }
 
+        // La pregunta es una sola: ¿hay OTRA comision con ese codigo en esa materia? La
+        // version anterior la partia en tres condiciones encadenadas y el ultimo termino
+        // repetia el primero, con lo cual el chequeo se reducia a "cambia el codigo": mover
+        // una comision "A" a una materia que ya tenia una "A" pasaba de largo por aca y
+        // terminaba rebotando contra el UNIQUE de la base, con un mensaje generico.
         String codigoNuevo = codigo.trim();
-        boolean cambiaCodigo  = !codigoNuevo.equalsIgnoreCase(c.getCodigo());
-        if ((cambiaCodigo || cambiaMateria)
-                && comisionRepository.existsByMateriaIdAndCodigo(materiaId, codigoNuevo)
-                && !codigoNuevo.equalsIgnoreCase(c.getCodigo())) {
-            // Si cambia codigo y/o materia, validar unicidad en la (nueva) materia
-            // (solo si el codigo en la nueva materia no es el de esta misma comision)
+        boolean colisiona = comisionRepository
+            .findByMateriaIdAndCodigo(materiaId, codigoNuevo)
+            .filter(otra -> !otra.getId().equals(c.getId()))
+            .isPresent();
+        if (colisiona) {
             throw new IllegalArgumentException(
                 "Ya existe una comisión '" + codigoNuevo + "' en la materia '" + materia.getCodigo() + "'.");
         }

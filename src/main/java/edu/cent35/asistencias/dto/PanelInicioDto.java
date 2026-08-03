@@ -11,11 +11,13 @@ import java.util.List;
  * lo unico que justifica una pantalla de inicio propia.
  *
  * @param enCurso    clases con la ventana horaria abierta en este momento
+ * @param proximas   las que arrancan mas tarde hoy; solo importan si no hay ninguna en curso
  * @param resumen    como viene el dia en numeros
  * @param pendientes cosas cargadas a medias que impiden que el sistema funcione
  */
 public record PanelInicioDto(
     List<ClaseEnCurso> enCurso,
+    List<ProximaClase> proximas,
     ResumenDelDia resumen,
     List<Pendiente> pendientes
 ) {
@@ -23,6 +25,16 @@ public record PanelInicioDto(
     // true si no hay ninguna clase corriendo ahora mismo.
     public boolean sinClasesAhora() {
         return enCurso.isEmpty();
+    }
+
+    // true si no hay nada corriendo pero si algo mas tarde.
+    public boolean hayProximas() {
+        return enCurso.isEmpty() && !proximas.isEmpty();
+    }
+
+    // true si no hay nada corriendo ni por venir: el dia ya termino o no habia clases.
+    public boolean nadaMasHoy() {
+        return enCurso.isEmpty() && proximas.isEmpty();
     }
 
     // true si hay alguna clase en curso con el docente todavia sin marcar.
@@ -50,6 +62,21 @@ public record PanelInicioDto(
         boolean marcada,
         String estado,
         LocalTime horaMarca
+    ) {}
+
+    /**
+     * Una clase que todavia no empezo.
+     *
+     * <p>Solo se muestran cuando no hay ninguna en curso: el bloque "Ahora mismo" pasaba la
+     * mayor parte del dia diciendo que no habia nada y ocupando un tercio del ancho igual.
+     * Decir a que hora arranca la proxima usa ese espacio para algo.
+     */
+    public record ProximaClase(
+        LocalTime horaInicio,
+        LocalTime horaFin,
+        String comisionCodigo,
+        String materiaNombre,
+        String docenteNombre
     ) {}
 
     /**

@@ -43,6 +43,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         WHERE a.fecha BETWEEN :desde AND :hasta
           AND (:docenteId IS NULL OR d.id = :docenteId)
           AND (:materiaId IS NULL OR m.id = :materiaId)
+          AND (:carreraId IS NULL OR m.carrera.id = :carreraId)
           AND (:estado    IS NULL OR a.estado = :estado)
           AND (:metodo    IS NULL OR a.metodo = :metodo)
         ORDER BY a.fecha DESC, a.horaRegistrada DESC, a.id DESC
@@ -52,6 +53,30 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("hasta")     LocalDate hasta,
         @Param("docenteId") Long docenteId,
         @Param("materiaId") Long materiaId,
+        @Param("carreraId") Long carreraId,
+        @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
+        @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
+
+    // Cuantas filas daria el reporte sin el tope. Se cuenta en la base en vez de traerlas
+    // y medir la lista: contar es justamente lo que hay que poder hacer sin traer nada.
+    @Query("""
+        SELECT COUNT(a) FROM Asistencia a
+        JOIN a.docente d
+        JOIN a.comision c
+        JOIN c.materia m
+        WHERE a.fecha BETWEEN :desde AND :hasta
+          AND (:docenteId IS NULL OR d.id = :docenteId)
+          AND (:materiaId IS NULL OR m.id = :materiaId)
+          AND (:carreraId IS NULL OR m.carrera.id = :carreraId)
+          AND (:estado    IS NULL OR a.estado = :estado)
+          AND (:metodo    IS NULL OR a.metodo = :metodo)
+    """)
+    long contarParaReporte(
+        @Param("desde")     LocalDate desde,
+        @Param("hasta")     LocalDate hasta,
+        @Param("docenteId") Long docenteId,
+        @Param("materiaId") Long materiaId,
+        @Param("carreraId") Long carreraId,
         @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
         @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
 }

@@ -110,7 +110,6 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-19 | Clasificación del estado de asistencia | El sistema debe clasificar la asistencia en Presente (dentro de la tolerancia), Llegada Tarde (pasada la tolerancia) o Ausente (sin registro). |
 | RF-20 | Retroalimentación visual | El sistema debe mostrar una notificación clara indicando si el reconocimiento fue exitoso (nombre + materia) o si no fue posible identificar. |
 | RF-21 | Registro de metadatos | Cada registro debe almacenar: fecha, hora exacta, docente, materia/comisión, estado, método (automático/manual) e institución. |
-| RF-38 | Detección de vivacidad | El sistema debe distinguir a una persona presente de una reproducción de su imagen (fotografía o pantalla), verificando señales de vida como parpadeo o micromovimiento entre fotogramas, dentro del mismo presupuesto de tiempo del RF-17. |
 
 ### 3.6. Módulo de Carga Manual de Asistencia
 
@@ -135,6 +134,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-27 | Reporte por docente | El sistema debe generar reportes filtrados por un docente, mostrando su historial completo. |
 | RF-28 | Reporte por materia | El sistema debe generar reportes agrupados por materia. |
 | RF-29 | Reporte por carrera | El sistema debe generar reportes agrupados por carrera. |
+| RF-64 | Filtro por carrera en el reporte | El reporte debe poder acotarse a una carrera, además de por docente y materia. Sin él, mirar cómo viene un plan completo obliga a filtrar materia por materia y sumar a mano. Cubre RF-29. |
 | RF-30 | Filtros avanzados | Los reportes deben permitir filtrar por rangos de fechas, días, meses y períodos personalizados. |
 | RF-31 | Exportación a PDF | El sistema debe permitir exportar cualquier reporte en formato PDF. **RF-61 detalla cómo**: durante el hito 1 se agregó ese requerimiento sin advertir que RF-31 ya cubría lo mismo, y la matriz llegó a decir a la vez que el PDF estaba y que no estaba. Se conservan los dos números, cruzados, en vez de renumerar: los identificadores ya están citados en el código y en los informes. |
 | RF-32 | Exportación a Excel | El sistema debe permitir exportar cualquier reporte en formato Excel (.xlsx). |
@@ -145,6 +145,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | ID | Requerimiento | Descripción |
 |---|---|---|
 | RF-37 | Panel de inicio | El sistema debe presentar un dashboard con información del día: asistencias registradas, docentes presentes/ausentes/tarde, próximos horarios y alertas. **RF-60 detalla el alcance entregado**; queda pendiente únicamente el listado de próximos horarios. Mismo caso de duplicación que RF-31/RF-61. |
+| RF-65 | Anticipo de la próxima clase | Cuando no hay ninguna clase en curso, el panel de inicio debe mostrar las que siguen hoy. Completa lo que faltaba de RF-37: el bloque pasaba la mayor parte del día ocupando lugar para decir que no había nada. |
 
 ### 3.10. Funciones transversales de gestión
 
@@ -191,6 +192,10 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 | RNF-40 | Selección de hora independiente del navegador | La carga de horarios debe usar un control propio y no el selector de hora nativo, cuya forma y comportamiento cambian según el navegador. |
 | RNF-41 | Bloque de datos del sistema uniforme | Toda entidad editable desde la interfaz debe mostrar el mismo bloque con su estado vigente, su fecha de alta y su última modificación. Una pantalla que informe menos que las demás no se distingue de una donde el dato no existe, y enseña a desconfiar también de las que sí informan. El bloque debe estar definido en un solo lugar: copiado en cada formulario ya se había desincronizado. |
 | RNF-42 | Búsqueda por escritura en desplegables largos | Los desplegables cuya cantidad de opciones crece con la carga de la institución —docentes, materias, comisiones, carreras— deben permitir filtrar escribiendo, ignorando tildes y mayúsculas igual que los filtros de los listados. Los de opciones fijas y pocas quedan como están: ahí el buscador estorba más de lo que ayuda. |
+| RNF-43 | Pantalla única de derechos ARCO | Los cuatro derechos de la Ley 25.326 —acceso, rectificación, cancelación y oposición— deben poder ejercerse desde un mismo lugar por docente, con constancia descargable. Estaban repartidos en tres pantallas, y un derecho que hay que ir a buscar a tres lugares es un derecho que en la práctica no se ejerce. Cubre RNF-14. |
+| RNF-44 | Expiración del dato biométrico en memoria | Los modelos descifrados en caché deben descartarse tras un período de inactividad. Mientras una entrada vive, el dato sensible está en claro en RAM; que se quede mientras el pase corre es el precio de la velocidad, que se quede toda la noche no compra nada. |
+| RNF-45 | Tope de filas del reporte | Un reporte debe acotar cuántas filas devuelve y **avisar cuando corta**. Sin tope, un rango amplio sin filtros trae todo a memoria y de ahí al HTML. Un reporte cortado en silencio se lee como un reporte completo. |
+| RNF-46 | Validación de formularios antes de enviar | Los formularios deben señalar los campos con problemas sin recargar la página, apoyándose en las mismas restricciones que declara el servidor. No reemplaza la validación del servidor: las reglas que necesitan la base siguen resolviéndose ahí. |
 | RNF-32 | Protección de los códigos de un solo uso | Los códigos de verificación y de recuperación deben almacenarse hasheados, vencer en pocos minutos, consumirse en el primer uso, invalidarse al emitirse uno nuevo, y estar acotados tanto en intentos fallidos como en emisiones por hora. Seis dígitos son un millón de combinaciones: sin tope de intentos se agotan por fuerza bruta. |
 
 ### 4.4. Cumplimiento Legal y Normativo
@@ -219,7 +224,7 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 | ID | Requerimiento | Descripción |
 |---|---|---|
 | RNF-21 | Diseño minimalista | Interfaz limpia y minimalista, priorizando el uso frecuente y prolongado por el administrador. |
-| RNF-22 | Modo oscuro y claro | El sistema debe ofrecer modo oscuro (por defecto) y modo claro conmutable. |
+| RNF-22 | Modo oscuro y claro | El sistema debe ofrecer modo oscuro (por defecto) y modo claro conmutable. La preferencia se recuerda entre sesiones y, si nunca se eligió, se respeta la del sistema operativo. El tema debe aplicarse **antes del primer dibujado**: cargado después, la pantalla alcanza a pintarse oscura y salta. |
 | RNF-23 | Optimización para escritorio | La interfaz está diseñada para PC de escritorio; no se requiere adaptación móvil en esta etapa. |
 | RNF-24 | Retroalimentación clara | El sistema debe dar mensajes claros sobre el resultado de cada acción (confirmaciones, errores, advertencias). |
 | RNF-29 | Errores de integridad legibles | Un dato que choca con una restricción de la base debe explicarse en los términos del usuario, indicando qué campo se repite y en qué ámbito. Nunca debe mostrarse el mensaje del motor de base de datos, que expone nombres de tablas e índices y valores concretos, ni una pantalla de error genérica. |

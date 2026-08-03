@@ -113,7 +113,7 @@ La respuesta obvia a "el modelo sale flojo" es grabar sesenta segundos en vez de
 - **El proceso tarda más y puede frustrar.** Antes eran treinta segundos pasara lo que pasara; ahora, con mala luz, puede no completarse hasta que se mejore la luz. Es intencional, pero es fricción real.
 - **Una llamada al servidor cada 600 ms** durante todo el registro. Aceptable en una red local, pero es más tráfico que antes.
 - La variación que se logra sigue siendo **moderada por diseño**. Esto no vuelve al sistema invariante a la pose: mejora la tolerancia dentro de un rango, no la elimina como problema.
-- **No corrige la ausencia de detección de vivacidad** (RF-38). Un modelo mejor entrenado reconoce mejor una fotografía sostenida frente a la cámara, igual que reconoce mejor a la persona.
+- **No distingue a la persona de su fotografía.** Un modelo mejor entrenado reconoce mejor una fotografía sostenida frente a la cámara, igual que reconoce mejor a la persona: entrenar mejor no ayuda con esto.
 
 ## Referencias
 

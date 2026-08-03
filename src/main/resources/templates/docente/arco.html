@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Derechos sobre los datos - Asistencias</title>
+</head>
+<body>
+    <!--
+      Las cuatro operaciones ARCO ya existían, pero repartidas en tres pantallas. Un
+      derecho que hay que ir a buscar a tres lugares es un derecho que en la práctica no
+      se ejerce. Acá no hay operaciones nuevas: están todas juntas y a la vista.
+    -->
+    <section class="arco">
+        <header class="page-header">
+            <h1>Derechos sobre los datos</h1>
+            <p class="page-header__subtitle">
+                <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong> —
+                DNI <span th:text="${docente.dni}">00000000</span>.
+                Ley 25.326 y Resolución AAIP 255/2022.
+            </p>
+        </header>
+
+        <!-- ACCESO: qué sabe el sistema de esta persona -->
+        <div class="card card--form">
+            <h2>Qué datos tiene el sistema</h2>
+            <dl class="kv">
+                <dt>Datos personales</dt>
+                <dd>
+                    Nombre, DNI<span th:if="${docente.legajo}">, legajo</span><span
+                          th:if="${docente.email}">, correo</span><span
+                          th:if="${docente.telefono}"> y teléfono</span>.
+                </dd>
+
+                <dt>Dato biométrico</dt>
+                <dd>
+                    <span th:if="${tieneModelo}" class="badge badge--warning">Modelo facial registrado</span>
+                    <span th:unless="${tieneModelo}" class="badge badge--success">Sin modelo facial</span>
+                    <p class="text-muted arco__nota">
+                        El sistema <strong>no guarda fotografías</strong>: guarda un modelo
+                        matemático cifrado del que no se puede reconstruir la imagen.
+                    </p>
+                </dd>
+
+                <dt>Consentimiento</dt>
+                <dd>
+                    <span th:text="${estadoConsentimiento}" class="badge">ACTIVO</span>
+                    <ul class="arco__historial" th:if="${!#lists.isEmpty(historial)}">
+                        <li th:each="c : ${historial}">
+                            <span th:text="${#temporals.format(c.fechaConsentimiento, 'dd/MM/yyyy')}">01/01/2026</span>
+                            — otorgado<span th:if="${c.fechaRevocacion}"
+                                  th:text="|, revocado el ${#temporals.format(c.fechaRevocacion, 'dd/MM/yyyy')}|"></span>
+                        </li>
+                    </ul>
+                    <p class="text-muted arco__nota" th:if="${#lists.isEmpty(historial)}">
+                        No se registran consentimientos.
+                    </p>
+                </dd>
+
+                <dt>Asistencias</dt>
+                <dd class="text-muted">
+                    Se conservan como registro administrativo aunque se supriman los datos
+                    biométricos, sin ninguna referencia a ellos.
+                </dd>
+            </dl>
+
+            <div class="form-actions">
+                <a th:href="@{/docentes/{id}/arco/constancia(id=${docente.id})}"
+                   class="btn btn--primary">⬇ Descargar constancia</a>
+                <a th:href="@{/docentes}" class="btn btn--ghost">Volver</a>
+            </div>
+        </div>
+
+        <!-- LOS OTROS TRES DERECHOS -->
+        <div class="card card--form">
+            <h2>Ejercer un derecho</h2>
+
+            <ul class="arco__derechos">
+                <li>
+                    <div>
+                        <strong>Rectificación</strong>
+                        <span class="text-muted">Corregir datos personales inexactos.</span>
+                    </div>
+                    <a th:href="@{/docentes/{id}/editar(id=${docente.id})}"
+                       class="btn btn--ghost">Editar datos</a>
+                </li>
+
+                <li>
+                    <div>
+                        <strong>Oposición</strong>
+                        <span class="text-muted">
+                            Revocar el consentimiento. Deja de usarse el reconocimiento facial;
+                            la asistencia pasa a cargarse manualmente.
+                        </span>
+                    </div>
+                    <a th:if="${estadoConsentimiento.name() == 'ACTIVO'}"
+                       th:href="@{/docentes/{id}/consentimiento/revocar(id=${docente.id})}"
+                       class="btn btn--ghost">Revocar</a>
+                    <span th:unless="${estadoConsentimiento.name() == 'ACTIVO'}"
+                          class="text-muted">Sin consentimiento vigente</span>
+                </li>
+
+                <li>
+                    <div>
+                        <strong>Cancelación</strong>
+                        <span class="text-muted">
+                            Suprimir el dato biométrico. Es un <strong>borrado físico y
+                            definitivo</strong>, no una baja lógica: una fila marcada como
+                            inactiva seguiría conteniendo el dato.
+                        </span>
+                    </div>
+                    <a th:if="${tieneModelos}"
+                       th:href="@{/docentes/{id}/rostro/registrar(id=${docente.id})}"
+                       class="btn btn--ghost btn--danger">Suprimir</a>
+                    <span th:unless="${tieneModelos}" class="text-muted">No hay datos que suprimir</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+</body>
+</html>

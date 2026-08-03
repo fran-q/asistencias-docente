@@ -112,6 +112,43 @@ class ComisionServiceTest {
             .isInstanceOf(EntityNotFoundException.class);
     }
 
+    @Test
+    @DisplayName("actualizar: mover la comisión a una materia que ya tiene ese código se rechaza")
+    void actualizar_colisionAlCambiarDeMateria() {
+        Comision c = comisionActivaA();                 // codigo "A" en la materia 30
+        Materia otra = materiaConTenant(TENANT_A);
+        otra.setId(31L);
+        otra.setCodigo("OTRA");
+        Comision ocupante = Comision.builder()
+            .id(41L).codigo("A").materia(otra).activo(true).build();
+
+        when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
+        when(materiaRepository.findById(31L)).thenReturn(Optional.of(otra));
+        when(comisionRepository.findByMateriaIdAndCodigo(31L, "A"))
+            .thenReturn(Optional.of(ocupante));
+
+        assertThatThrownBy(() -> service.actualizar(40L, "A", 31L, null))
+            .as("el codigo no cambia, cambia la materia: la version anterior de la condicion "
+                + "se reducia a 'cambia el codigo' y dejaba pasar justo este caso, que despues "
+                + "rebotaba contra el UNIQUE de la base con un mensaje generico")
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Ya existe una comisión 'A'");
+    }
+
+    @Test
+    @DisplayName("actualizar: guardar sin cambios no choca contra la comisión misma")
+    void actualizar_sinCambiosNoColisionaConsigoMisma() {
+        Comision c = comisionActivaA();
+        when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
+        when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(c.getMateria()));
+        // La consulta la encuentra a ella misma: eso no es una colision.
+        when(comisionRepository.findByMateriaIdAndCodigo(MATERIA_ID, "A"))
+            .thenReturn(Optional.of(c));
+        when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        assertThat(service.actualizar(40L, "A", MATERIA_ID, null).getCodigo()).isEqualTo("A");
+    }
+
     // Materia asociada al tenant indicado.
     private Materia materiaConTenant(Long tenant) {
         Carrera car = Carrera.builder().id(1L).codigo("ECO").nombre("Eco").activo(true).build();

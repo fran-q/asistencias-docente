@@ -16,12 +16,14 @@ import edu.cent35.asistencias.model.MotivoCargaManual;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -46,10 +48,17 @@ class ReporteAsistenciaServiceTest {
 
     @InjectMocks private ReporteAsistenciaService service;
 
+    @BeforeEach
+    void setUp() {
+        // El tope viene de application.properties; sin fijarlo, en el test unitario vale 0
+        // y todo reporte saldria vacio por truncamiento.
+        ReflectionTestUtils.setField(service, "maxFilas", 2000);
+    }
+
     @Test
     @DisplayName("reporte: rango por defecto = mes actual hasta hoy")
     void reporte_rangoDefault() {
-        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any()))
+        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any()))
             .thenReturn(List.of());
 
         List<AsistenciaReporteRowDto> filas = service.reporte(new ReporteFiltroDto());
@@ -74,7 +83,7 @@ class ReporteAsistenciaServiceTest {
     @DisplayName("reporte: enriquece con motivo manual y justificación")
     void reporte_enriquece() {
         Asistencia a = construirAsistenciaAutomatica();
-        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any()))
+        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any()))
             .thenReturn(List.of(a));
 
         AsistenciaManual manual = AsistenciaManual.builder()
@@ -84,12 +93,12 @@ class ReporteAsistenciaServiceTest {
         manual.setMotivo(MotivoCargaManual.builder()
             .id((short) 1).codigo("FALLA_CAMARA")
             .descripcion("Falla técnica de la cámara").build());
-        when(asistenciaManualRepository.findAll()).thenReturn(List.of(manual));
+        when(asistenciaManualRepository.findByAsistenciaIdIn(any())).thenReturn(List.of(manual));
 
         JustificacionAusencia just = JustificacionAusencia.builder()
             .asistencia(a)
             .motivo("Certificado médico").build();
-        when(justificacionAusenciaRepository.findAll()).thenReturn(List.of(just));
+        when(justificacionAusenciaRepository.findByAsistenciaIdIn(any())).thenReturn(List.of(just));
 
         List<AsistenciaReporteRowDto> filas = service.reporte(ReporteFiltroDto.builder()
             .desde(LocalDate.of(2026, 6, 1))

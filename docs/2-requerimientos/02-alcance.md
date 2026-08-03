@@ -121,9 +121,7 @@ posteriores:
 |---|---|---|
 | Exportación a **PDF** | RF-31 | Exportación a PDF | ✅ | Entregado; el detalle está en RF-61 | RF-32 | El CSV generado abre correctamente en Excel; el .xlsx nativo se difiere. |
 | **Visualizaciones gráficas** en reportes | RF-33 | Requiere librería de charts; no crítico para el MVP. |
-| **Reporte por carrera** | RF-29 | El reporte filtra por docente, materia, estado y método; el agrupamiento por carrera se difiere. |
-| **Dashboard** con métricas en vivo | RF-37 | Panel de inicio | 🟡 | Entregado en RF-60; falta el listado de próximos horarios | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
-| **Detección de vivacidad** | RF-38 | El pase acepta hoy una fotografía sostenida frente a la cámara. La limitación está declarada y el control compensatorio es la presencia del administrador durante el pase. |
+| **Reporte por carrera** | RF-29 | Reporte por carrera | ✅ | Entregado como filtro; ver RF-64 | RF-37 | Panel de inicio | ✅ | Entregado en RF-60 y RF-65 | RNF-22 | Modo oscuro y claro | ✅ | Conmutador en la barra; recuerda la preferencia | RF-38 | El pase acepta hoy una fotografía sostenida frente a la cámara. La limitación está declarada y el control compensatorio es la presencia del administrador durante el pase. |
 
 ### 3.3. Exclusiones permanentes (no forman parte del proyecto)
 
@@ -170,13 +168,14 @@ posteriores:
 | RF-26 | Justificación de ausencias | ✅ | Sobre ausencias persistidas (las calculadas se cargan manual primero) |
 | RF-27 | Reporte por docente | 🟡 | Vía filtro por docente en el reporte general |
 | RF-28 | Reporte por materia | 🟡 | Vía filtro por materia en el reporte general |
-| RF-29 | Reporte por carrera | 🔜 | No hay filtro/agrupamiento por carrera |
+| RF-29 | Reporte por carrera | ✅ | Entregado como filtro; ver RF-64 |
+| RF-64 | Filtro por carrera en el reporte | ✅ | En pantalla, CSV y PDF |
 | RF-30 | Filtros avanzados | 🟡 | Rango de fechas sí; filtro por día/mes específico, diferido |
 | RF-31 | Exportación a PDF | ✅ | Entregado; el detalle está en RF-61 |
 | RF-32 | Exportación a Excel (.xlsx) | 🟡 | CSV compatible con Excel; .xlsx nativo diferido |
 | RF-33 | Visualizaciones gráficas | 🔜 | Sin gráficos en esta entrega |
-| RF-37 | Panel de inicio | 🟡 | Entregado en RF-60; falta el listado de próximos horarios |
-| RF-38 | Detección de vivacidad | 🔜 | El pase acepta hoy una fotografía; limitación declarada en ADR-0007 |
+| RF-37 | Panel de inicio | ✅ | Entregado en RF-60 y RF-65 |
+| RF-65 | Anticipo de la próxima clase | ✅ | Hasta tres, cuando no hay ninguna en curso |
 | RF-39 | Verificación del correo | ✅ | Código de 6 dígitos, hasheado, vence a los 15 min |
 | RF-40 | Recuperación autónoma de contraseña | ✅ | Sin revelar si la cuenta existe |
 | RF-41 | Registro automático de ausencias | ✅ | Tarea programada con propagación manual del tenant |
@@ -203,7 +202,7 @@ posteriores:
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 | RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 51 implementados · 6 parciales · 3 backlog (total 60).
+**Resumen RF:** 55 implementados · 5 parciales · 1 backlog (total 61).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -222,7 +221,7 @@ posteriores:
 | RNF-11 | Ley N° 25.326 | ✅ | Consentimiento + cifrado + sin fotos |
 | RNF-12 | Resolución AAIP 255/2022 | ✅ | Datos biométricos tratados como sensibles |
 | RNF-13 | Consentimiento informado | ✅ | Versionado y auditable |
-| RNF-14 | Derechos ARCO | 🟡 | Acceso/rectificación (editar docente) y oposición (revocar consentimiento) cubiertos; flujo ARCO formal diferido |
+| RNF-14 | Derechos ARCO | ✅ | Pantalla única por docente; ver RNF-43 |
 | RNF-15 | Backend en Spring Boot | ✅ | Java 21 + Spring Boot 3.5 |
 | RNF-16 | Reconocimiento facial en Java | ✅ | JavaCV/OpenCV |
 | RNF-17 | Aplicación web | ✅ | Thymeleaf server-side |
@@ -230,7 +229,7 @@ posteriores:
 | RNF-19 | Base de datos relacional | ✅ | MariaDB |
 | RNF-20 | Compatibilidad de cámara | ✅ | getUserMedia / cámara USB |
 | RNF-21 | Diseño minimalista | ✅ | |
-| RNF-22 | Modo oscuro y claro | 🔜 | Solo modo oscuro entregado |
+| RNF-22 | Modo oscuro y claro | ✅ | Conmutador en la barra; recuerda la preferencia |
 | RNF-23 | Optimización para escritorio | ✅ | |
 | RNF-24 | Retroalimentación clara | ✅ | Toasts + mensajes |
 | RNF-25 | Desarrollo incremental | ✅ | 6 sprints con tags de cierre |
@@ -251,20 +250,31 @@ posteriores:
 | RNF-40 | Selección de hora independiente del navegador | ✅ | Dos listas, hora y minutos de 5 en 5 |
 | RNF-41 | Bloque de datos del sistema uniforme | ✅ | Fragmento único aplicado en las seis pantallas |
 | RNF-42 | Búsqueda por escritura en desplegables largos | ✅ | Seis desplegables; el select real queda detrás |
+| RNF-43 | Pantalla única de derechos ARCO | ✅ | Los cuatro derechos y constancia en PDF |
+| RNF-44 | Expiración del dato biométrico en memoria | ✅ | Barrido programado, 30 min de inactividad |
+| RNF-45 | Tope de filas del reporte | ✅ | 2000 filas, con aviso de truncado |
+| RNF-46 | Validación de formularios antes de enviar | ✅ | Sobre los formularios con novalidate |
 
-**Resumen RNF:** 40 implementados · 1 parcial · 1 backlog (total 42).
+**Resumen RNF:** 46 implementados · 0 parciales · 0 backlog (total 46).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 51 | 6 | 3 | 60 |
-| No funcionales | 40 | 1 | 1 | 42 |
-| **Total** | **91** | **7** | **4** | **102** |
+| Funcionales | 55 | 5 | 1 | 61 |
+| No funcionales | 46 | 0 | 0 | 46 |
+| **Total** | **101** | **5** | **1** | **107** |
 
-**Cobertura del hito 1:** 91 de 102 requerimientos completamente
-implementados (≈89%), 7 parcialmente cubiertos (≈7%) y 4 en backlog
-planificado (≈4%).
+**Cobertura del hito 1:** 101 de 107 requerimientos completamente
+implementados (≈94%), 5 parcialmente cubiertos (≈5%) y 1 en backlog
+planificado (≈1%).
+
+> La detección de vivacidad (antes RF-38) se retiró del alcance: excede el hito y
+> su implementación seria requiere hardware o modelos que el proyecto no tiene.
+> **La limitación que dejaba cubierta sigue existiendo y sigue documentada** como
+> limitación técnica, no como requerimiento pendiente: el sistema no distingue a
+> una persona de su fotografía. Sacar el requerimiento cambia qué nos
+> comprometimos a construir; no cambia lo que el sistema hace.
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
 > proyecto. Su tabla existía en la base sin que ningún punto del código

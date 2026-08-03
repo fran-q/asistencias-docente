@@ -27,9 +27,29 @@
         <div class="card home__bloque">
             <h2 class="home__titulo">Ahora mismo</h2>
 
-            <p class="home__vacio" th:if="${panel.sinClasesAhora()}">
-                No hay ninguna clase en curso en este momento.
+            <!-- Sin nada en curso, el bloque anticipa lo que sigue en vez de quedarse
+                 diciendo que no hay nada: es la mayor parte del dia. -->
+            <p class="home__vacio" th:if="${panel.nadaMasHoy()}">
+                No hay clases en curso ni por venir hoy.
             </p>
+
+            <div th:if="${panel.hayProximas()}">
+                <p class="home__vacio home__proximas-titulo">
+                    Nada en curso. Lo que sigue:
+                </p>
+                <ul class="home__clases">
+                    <li th:each="p : ${panel.proximas()}" class="home__clase home__clase--proxima">
+                        <span class="home__clase-hora"
+                              th:text="${#temporals.format(p.horaInicio(), 'HH:mm')} + '–'
+                                     + ${#temporals.format(p.horaFin(), 'HH:mm')}">14:00–16:00</span>
+                        <span class="home__clase-datos">
+                            <strong th:text="${p.docenteNombre()}">Docente</strong>
+                            <span class="text-muted"
+                                  th:text="${p.comisionCodigo()} + ' · ' + ${p.materiaNombre()}">COM · Materia</span>
+                        </span>
+                    </li>
+                </ul>
+            </div>
 
             <ul class="home__clases" th:unless="${panel.sinClasesAhora()}">
                 <li th:each="c : ${panel.enCurso()}" class="home__clase"

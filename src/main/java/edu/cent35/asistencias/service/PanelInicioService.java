@@ -21,6 +21,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +49,10 @@ public class PanelInicioService {
     // Cuantas clases en curso se muestran como maximo, para que el panel no crezca sin limite.
     private static final int MAX_EN_CURSO = 6;
 
+    // Cuantas clases por venir se anticipan. Mas de tres deja de ser "que sigue" y pasa a
+    // ser la grilla del dia, que ya tiene su propia pantalla.
+    private static final int MAX_PROXIMAS = 3;
+
     // Reloj inyectable: todo el panel se define contra "ahora", asi que sin poder fijarlo
     // los tests dependerian de la hora a la que se corren.
     private Clock clock = Clock.systemDefaultZone();
@@ -68,6 +73,7 @@ public class PanelInicioService {
 
         return new PanelInicioDto(
             clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora),
+            proximasClases(clasesDeHoy, ahora),
             resumenDelDia(clasesDeHoy, marcasDeHoy, ahora),
             pendientes(tenantId));
     }
@@ -107,6 +113,30 @@ public class PanelInicioService {
             if (filas.size() == MAX_EN_CURSO) break;
         }
         return filas;
+    }
+
+    /**
+     * Las clases que todavia no abrieron su ventana, de la mas proxima en adelante.
+     *
+     * <p>Se calculan siempre, pero la pantalla solo las muestra cuando no hay ninguna en
+     * curso: el bloque pasaba la mayor parte del dia diciendo "no hay nada" y ocupando un
+     * tercio del ancho igual.
+     */
+    private List<PanelInicioDto.ProximaClase> proximasClases(List<Horario> clasesDeHoy,
+                                                             LocalTime ahora) {
+        return clasesDeHoy.stream()
+            .filter(h -> !h.estaEnCurso(ahora))
+            .filter(h -> h.getHoraInicio().isAfter(ahora))
+            .sorted(Comparator.comparing(Horario::getHoraInicio))
+            .limit(MAX_PROXIMAS)
+            .map(h -> {
+                Comision c = h.getComision();
+                return new PanelInicioDto.ProximaClase(
+                    h.getHoraInicio(), h.getHoraFin(),
+                    c.getCodigo(), c.getMateria().getNombre(),
+                    c.getDocenteAsignado().getNombreCompleto());
+            })
+            .toList();
     }
 
     // ------------------------------------------------------------------------

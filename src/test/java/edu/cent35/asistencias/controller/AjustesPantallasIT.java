@@ -326,6 +326,51 @@ class AjustesPantallasIT {
             .andExpect(content().string(containsString("reporte__descargas")));
     }
 
+    // ========================================================================
+    //  Derechos ARCO (RNF-14)
+    // ========================================================================
+
+    @Test
+    @DisplayName("La pantalla ARCO reúne los cuatro derechos en un solo lugar")
+    void pantallaArcoReuneLosCuatroDerechos() throws Exception {
+        Long docenteId = docenteRepository.findAll().stream()
+            .filter(d -> tenantId.equals(d.getInstitucionId()))
+            .findFirst().orElseThrow().getId();
+
+        mockMvc.perform(get("/docentes/" + docenteId + "/arco")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            // Acceso: se ve que tiene el sistema sobre la persona.
+            .andExpect(content().string(containsString("Qué datos tiene el sistema")))
+            .andExpect(content().string(containsString("no guarda fotografías")))
+            // Los otros tres, cada uno con su accion.
+            .andExpect(content().string(containsString("Rectificación")))
+            .andExpect(content().string(containsString("Oposición")))
+            .andExpect(content().string(containsString("Cancelación")))
+            .andExpect(content().string(containsString("Ley 25.326")));
+    }
+
+    @Test
+    @DisplayName("La constancia ARCO se descarga como PDF")
+    void constanciaArcoEsUnPdf() throws Exception {
+        Long docenteId = docenteRepository.findAll().stream()
+            .filter(d -> tenantId.equals(d.getInstitucionId()))
+            .findFirst().orElseThrow().getId();
+
+        MvcResult r = mockMvc.perform(get("/docentes/" + docenteId + "/arco/constancia")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        assertThat(r.getResponse().getContentType()).isEqualTo("application/pdf");
+        assertThat(r.getResponse().getHeader("Content-Disposition"))
+            .contains("constancia_arco_");
+        // Un PDF valido empieza con %PDF; sin esto el test pasaria con un archivo vacio.
+        assertThat(r.getResponse().getContentAsByteArray())
+            .as("el archivo tiene que ser un PDF de verdad, no una respuesta vacía")
+            .startsWith("%PDF".getBytes());
+    }
+
     // ------------------------------------------------------------------------
 
     private CustomUserDetails principal(String rol) {

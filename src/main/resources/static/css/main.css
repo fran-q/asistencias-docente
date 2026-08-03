@@ -33,6 +33,34 @@
     --font-mono:    'Consolas', 'Cascadia Code', 'Fira Code', monospace;
 }
 
+/* ============================================================================
+ *  MODO CLARO (RNF-22)
+ *
+ *  Solo redefine las variables de color: todo el resto de la hoja ya las usa, asi
+ *  que no hace falta duplicar ninguna regla. El tema lo decide el atributo
+ *  data-tema en <html>, que pone el propio navegador antes de pintar --por eso el
+ *  script va inline en el <head> y no en un archivo aparte: cargado con defer, la
+ *  pagina alcanzaba a dibujarse oscura y despues saltaba a claro.
+ *
+ *  Los colores no son los oscuros invertidos. En fondo claro el mismo azul y el
+ *  mismo verde pierden contraste contra el blanco, asi que se bajaron hasta que
+ *  cada par texto/fondo pasara 4.5:1.
+ * ========================================================================== */
+:root[data-tema="claro"] {
+    --bg:           #f4f5f7;
+    --bg-elev:      #ffffff;
+    --bg-elev-2:    #eceef1;
+    --text:         #1c1f24;
+    --text-muted:   #5a6069;
+    --primary:      #1565c0;
+    --primary-hover:#0d47a1;
+    --accent:       #b85c10;
+    --success:      #1b6b3a;
+    --danger:       #b3261e;
+    --warning:      #8a5a00;
+    --border:       #d4d8de;
+}
+
 /* ========== Reset minimo ========== */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -316,6 +344,9 @@ code {
 .home__clase + .home__clase { border-top: 1px solid var(--border); }
 /* La barra lateral dice de un vistazo cual de las clases en curso falta marcar. */
 .home__clase--ok    { border-left-color: var(--success); }
+/* Las que todavia no empezaron van en gris: no piden nada todavia. */
+.home__clase--proxima { border-left-color: var(--border); }
+.home__proximas-titulo { margin: 0 0 var(--space-sm); }
 .home__clase--falta { border-left-color: var(--warning); }
 
 .home__clase-hora {
@@ -1082,6 +1113,49 @@ code {
     align-items: center;
     gap: var(--space-sm);
 }
+
+/* ========== Derechos ARCO ========== */
+.arco__nota { margin: var(--space-xs) 0 0; font-size: 0.85rem; }
+.arco__historial {
+    margin: var(--space-xs) 0 0;
+    padding-left: var(--space);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.arco__derechos { list-style: none; margin: 0; padding: 0; }
+.arco__derechos li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space);
+    padding: var(--space) 0;
+    flex-wrap: wrap;
+}
+.arco__derechos li + li { border-top: 1px solid var(--border); }
+.arco__derechos li > div { display: flex; flex-direction: column; min-width: 14rem; flex: 1; }
+.arco__derechos li span { font-size: 0.85rem; }
+
+/* ========== Conmutador de tema ========== */
+.tema-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+}
+.tema-toggle:hover { color: var(--text); border-color: var(--primary); }
+/* Se muestra el icono del tema al que se va a cambiar, no el actual: el boton
+   dice que hace, no donde estas. */
+.tema-toggle__luna { display: none; }
+:root[data-tema="claro"] .tema-toggle__luna { display: block; }
+:root[data-tema="claro"] .tema-toggle__sol  { display: none; }
 
 /* ========== Selector de hora (dos listas) ========== */
 .hora-picker {

@@ -89,7 +89,7 @@
                         <option value="">— Sin asignar —</option>
                         <option th:each="d : ${docentes}"
                                 th:value="${d.id}"
-                                th:text="|${d.apellido}, ${d.nombre} (DNI ${d.dni})${!d.activo ? ' [inactivo]' : ''}|">
+                                th:text="|${d.apellido}, ${d.nombre} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.dni}${!d.activo ? ' [inactivo]' : ''}|">
                             Apellido, Nombre (DNI X)
                         </option>
                     </select>
