@@ -119,12 +119,10 @@ posteriores:
 
 | Funcionalidad diferida | Requerimiento | Motivo de la postergación |
 |---|---|---|
-| Exportación a **PDF** | RF-31 | Se priorizó CSV (cubre la necesidad inmediata de reportes en Excel). PDF requiere librería adicional (iText/OpenPDF). |
-| Exportación nativa a **Excel .xlsx** | RF-32 | El CSV generado abre correctamente en Excel; el .xlsx nativo se difiere. |
+| Exportación a **PDF** | RF-31 | Exportación a PDF | ✅ | Entregado; el detalle está en RF-61 | RF-32 | El CSV generado abre correctamente en Excel; el .xlsx nativo se difiere. |
 | **Visualizaciones gráficas** en reportes | RF-33 | Requiere librería de charts; no crítico para el MVP. |
 | **Reporte por carrera** | RF-29 | El reporte filtra por docente, materia, estado y método; el agrupamiento por carrera se difiere. |
-| **Dashboard** con métricas en vivo | RF-37 | Existe pantalla de inicio; el dashboard con indicadores del día está diseñado en el prototipo y se difiere su implementación. |
-| **Modo claro** conmutable | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
+| **Dashboard** con métricas en vivo | RF-37 | Panel de inicio | 🟡 | Entregado en RF-60; falta el listado de próximos horarios | RNF-22 | Se entregó el modo oscuro (por defecto); el conmutador a modo claro se difiere. |
 | **Detección de vivacidad** | RF-38 | El pase acepta hoy una fotografía sostenida frente a la cámara. La limitación está declarada y el control compensatorio es la presencia del administrador durante el pase. |
 
 ### 3.3. Exclusiones permanentes (no forman parte del proyecto)
@@ -174,10 +172,10 @@ posteriores:
 | RF-28 | Reporte por materia | 🟡 | Vía filtro por materia en el reporte general |
 | RF-29 | Reporte por carrera | 🔜 | No hay filtro/agrupamiento por carrera |
 | RF-30 | Filtros avanzados | 🟡 | Rango de fechas sí; filtro por día/mes específico, diferido |
-| RF-31 | Exportación a PDF | 🔜 | Se entregó CSV |
+| RF-31 | Exportación a PDF | ✅ | Entregado; el detalle está en RF-61 |
 | RF-32 | Exportación a Excel (.xlsx) | 🟡 | CSV compatible con Excel; .xlsx nativo diferido |
 | RF-33 | Visualizaciones gráficas | 🔜 | Sin gráficos en esta entrega |
-| RF-37 | Dashboard | 🟡 | Pantalla de inicio sí; métricas en vivo en prototipo, diferidas |
+| RF-37 | Panel de inicio | 🟡 | Entregado en RF-60; falta el listado de próximos horarios |
 | RF-38 | Detección de vivacidad | 🔜 | El pase acepta hoy una fotografía; limitación declarada en ADR-0007 |
 | RF-39 | Verificación del correo | ✅ | Código de 6 dígitos, hasheado, vence a los 15 min |
 | RF-40 | Recuperación autónoma de contraseña | ✅ | Sin revelar si la cuenta existe |
@@ -205,7 +203,7 @@ posteriores:
 | RF-56 | Registro del último acceso | ✅ | Columna en la administración de usuarios |
 | RF-57 | Revalidación al cambiar el correo | ✅ | Cambiar la dirección vuelve a bloquear la cuenta |
 
-**Resumen RF:** 50 implementados · 6 parciales · 4 backlog (total 60).
+**Resumen RF:** 51 implementados · 6 parciales · 3 backlog (total 60).
 
 ### 4.2. Requerimientos No Funcionales
 
@@ -260,13 +258,13 @@ posteriores:
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
-| Funcionales | 50 | 6 | 4 | 60 |
+| Funcionales | 51 | 6 | 3 | 60 |
 | No funcionales | 40 | 1 | 1 | 42 |
-| **Total** | **90** | **7** | **5** | **102** |
+| **Total** | **91** | **7** | **4** | **102** |
 
-**Cobertura del hito 1:** 90 de 102 requerimientos completamente
-implementados (≈88%), 7 parcialmente cubiertos (≈7%) y 5 en backlog
-planificado (≈5%).
+**Cobertura del hito 1:** 91 de 102 requerimientos completamente
+implementados (≈89%), 7 parcialmente cubiertos (≈7%) y 4 en backlog
+planificado (≈4%).
 
 > El módulo de auditoría (antes RF-34 a RF-36) se retiró del alcance del
 > proyecto. Su tabla existía en la base sin que ningún punto del código

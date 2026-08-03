@@ -136,7 +136,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 | RF-28 | Reporte por materia | El sistema debe generar reportes agrupados por materia. |
 | RF-29 | Reporte por carrera | El sistema debe generar reportes agrupados por carrera. |
 | RF-30 | Filtros avanzados | Los reportes deben permitir filtrar por rangos de fechas, días, meses y períodos personalizados. |
-| RF-31 | Exportación a PDF | El sistema debe permitir exportar cualquier reporte en formato PDF. |
+| RF-31 | Exportación a PDF | El sistema debe permitir exportar cualquier reporte en formato PDF. **RF-61 detalla cómo**: durante el hito 1 se agregó ese requerimiento sin advertir que RF-31 ya cubría lo mismo, y la matriz llegó a decir a la vez que el PDF estaba y que no estaba. Se conservan los dos números, cruzados, en vez de renumerar: los identificadores ya están citados en el código y en los informes. |
 | RF-32 | Exportación a Excel | El sistema debe permitir exportar cualquier reporte en formato Excel (.xlsx). |
 | RF-33 | Visualizaciones gráficas | Los reportes deben incluir gráficos que faciliten la interpretación de los datos. |
 
@@ -144,7 +144,7 @@ El sistema contempla tres tipos de actores con distintos niveles de acceso:
 
 | ID | Requerimiento | Descripción |
 |---|---|---|
-| RF-37 | Panel de inicio | El sistema debe presentar un dashboard con información del día: asistencias registradas, docentes presentes/ausentes/tarde, próximos horarios y alertas. |
+| RF-37 | Panel de inicio | El sistema debe presentar un dashboard con información del día: asistencias registradas, docentes presentes/ausentes/tarde, próximos horarios y alertas. **RF-60 detalla el alcance entregado**; queda pendiente únicamente el listado de próximos horarios. Mismo caso de duplicación que RF-31/RF-61. |
 
 ### 3.10. Funciones transversales de gestión
 
