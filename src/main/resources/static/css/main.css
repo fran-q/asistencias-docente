@@ -1187,6 +1187,18 @@ code {
 .arco__derechos li > div { display: flex; flex-direction: column; min-width: 14rem; flex: 1; }
 .arco__derechos li span { font-size: 0.85rem; }
 
+/* Valor que se muestra pero no se edita, dentro de un formulario. Se distingue de
+   un input a proposito: si pareciera editable, quien lo intente va a creer que el
+   sistema no le respondio. */
+.campo-fijo {
+    margin: 0;
+    padding: var(--space-sm) var(--space);
+    background: var(--bg-elev-2);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+}
+
 /* Nombre largo dentro de una celda: se recorta con puntos suspensivos en vez de
    ensanchar la columna o partirse en tres lineas. El texto completo queda en el
    title, asi que sigue siendo legible al pasar el mouse. */

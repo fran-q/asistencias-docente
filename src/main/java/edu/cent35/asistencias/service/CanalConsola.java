@@ -50,10 +50,10 @@ public class CanalConsola implements CanalDeCodigos {
             """);
     }
 
+    // Escribe el codigo en la consola en vez de enviarlo. El marco no es adorno: el punto
+    // de este canal es poder encontrarlo de un vistazo entre las lineas de Hibernate.
     @Override
     public void enviarCodigo(Usuario usuario, PropositoCodigo proposito, String email, String codigo) {
-        // Se escribe con warn y con marco para que no se pierda entre las lineas de Hibernate.
-        // El punto de este canal es que el codigo se pueda encontrar de un vistazo.
         log.warn("""
 
             ┌─────────────────────────────────────────────────────────────┐
@@ -66,6 +66,7 @@ public class CanalConsola implements CanalDeCodigos {
             """, usuario.getNombre(), email, describir(proposito), codigo);
     }
 
+    // Nombre corto del canal, para los logs y el aviso de arranque.
     @Override
     public String nombre() {
         return "consola";

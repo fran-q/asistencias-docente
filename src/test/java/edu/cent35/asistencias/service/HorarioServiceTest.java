@@ -168,6 +168,53 @@ class HorarioServiceTest {
         assertThat(h.getToleranciaMin()).isEqualTo((short) 15);
     }
 
+    @Test
+    @DisplayName("actualizar: mover el horario a otra comisión se rechaza")
+    void actualizar_noPermiteCambiarDeComision() {
+        Comision propia = comisionActivaA();
+        Horario h = Horario.builder()
+            .id(70L).comision(propia).diaSemana((byte) 1)
+            .horaInicio(LocalTime.of(8, 0)).horaFin(LocalTime.of(10, 0))
+            .toleranciaMin((short) 15).activo(true).build();
+        Comision otra = comisionActivaA();
+        otra.setId(99L);
+
+        when(horarioRepository.findById(70L)).thenReturn(Optional.of(h));
+        when(comisionRepository.findById(99L)).thenReturn(Optional.of(otra));
+
+        assertThatThrownBy(() -> service.actualizar(70L, 99L, DiaSemana.LUNES,
+                LocalTime.of(8, 0), LocalTime.of(10, 0), (short) 15))
+            .as("cada asistencia guarda su comision ademas de su horario; moverlo dejaria "
+                + "las asistencias ya registradas apuntando a una comision que nunca dicto "
+                + "esa clase, y el reporte contaria clases ajenas")
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("No se puede mover un horario a otra comisión")
+            // El mensaje tiene que decir QUE HACER en su lugar, no solo que no se puede.
+            .hasMessageContaining("Dá de baja este horario y creá uno nuevo");
+
+        verify(horarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("actualizar: cambiar hora o tolerancia de la MISMA comisión sí se permite")
+    void actualizar_dentroDeLaMismaComisionSiSePuede() {
+        Comision propia = comisionActivaA();
+        Horario h = Horario.builder()
+            .id(70L).comision(propia).diaSemana((byte) 1)
+            .horaInicio(LocalTime.of(8, 0)).horaFin(LocalTime.of(10, 0))
+            .toleranciaMin((short) 15).activo(true).build();
+
+        when(horarioRepository.findById(70L)).thenReturn(Optional.of(h));
+        when(comisionRepository.findById(COMISION_ID)).thenReturn(Optional.of(propia));
+        when(horarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Horario r = service.actualizar(70L, COMISION_ID, DiaSemana.MARTES,
+            LocalTime.of(9, 0), LocalTime.of(11, 0), (short) 20);
+
+        assertThat(r.getHoraInicio()).isEqualTo(LocalTime.of(9, 0));
+        assertThat(r.getToleranciaMin()).isEqualTo((short) 20);
+    }
+
     // ====== Helpers ======
     private Comision comisionActivaA() {
         Carrera car = Carrera.builder().id(1L).codigo("ECO").nombre("Eco").activo(true).build();

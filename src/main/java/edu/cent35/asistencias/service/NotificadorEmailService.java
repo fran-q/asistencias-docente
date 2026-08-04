@@ -51,6 +51,7 @@ public class NotificadorEmailService implements CanalDeCodigos {
         log.info("Correo enviado: proposito={}, usuario={}", proposito, usuario.getId());
     }
 
+    // Nombre corto del canal, para los logs y el aviso de arranque.
     @Override
     public String nombre() {
         return "correo";

@@ -118,17 +118,32 @@ public class HorarioService {
         Long tenantId = TenantContext.getRequired();
         Comision comision = obtenerComisionValidada(comisionId, tenantId);
 
-        boolean cambiaComision = !comision.getId().equals(h.getComision().getId());
-        if (cambiaComision && Boolean.FALSE.equals(comision.getActivo())) {
+        // La comision de un horario NO se puede cambiar.
+        //
+        // Cada asistencia guarda su comision ademas de su horario --redundancia deliberada,
+        // para que el reporte no tenga que hacer un JOIN mas en su consulta mas pesada--.
+        // Esa copia se escribe cuando se marca la asistencia y despues nadie la vuelve a
+        // tocar. Si el horario se reasignara a otra comision, todas las asistencias ya
+        // registradas quedarian apuntando a la anterior, y el reporte contaria clases de
+        // una comision que nunca las dicto. No es un riesgo teorico: es la unica operacion
+        // del sistema que podia producir ese estado.
+        //
+        // Se prohibe el cambio en vez de propagarlo a las asistencias porque reescribir
+        // historial de asistencias para acomodar una correccion de carga es peor: esas
+        // filas son el registro de lo que efectivamente paso. Si la franja pertenece a otra
+        // comision, lo correcto es dar de baja esta y crear la que corresponde, que ademas
+        // deja constancia de cuando dejo de valer la anterior.
+        if (!comision.getId().equals(h.getComision().getId())) {
             throw new IllegalArgumentException(
-                "La nueva comisión está inactiva. Elegí una activa.");
+                "No se puede mover un horario a otra comisión: las asistencias ya "
+                + "registradas quedarían asociadas a la comisión anterior. Dá de baja este "
+                + "horario y creá uno nuevo en la comisión que corresponde.");
         }
 
         validarHoras(horaInicio, horaFin);
         validarTolerancia(toleranciaMin);
         validarSinSolapamiento(comisionId, dia, horaInicio, horaFin, id);
 
-        h.setComision(comision);
         h.setDia(dia);
         h.setHoraInicio(horaInicio);
         h.setHoraFin(horaFin);

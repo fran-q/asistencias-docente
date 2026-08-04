@@ -30,9 +30,18 @@
                     <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
                 </div>
 
+                <!--
+                  En alta se elige la comision; en edicion se muestra pero no se cambia.
+                  Las asistencias ya registradas guardan la comision, y moverles el horario
+                  las dejaria asociadas a una comision que nunca dicto esa clase. Ofrecer un
+                  desplegable editable que el servidor despues rechaza seria peor que no
+                  ofrecerlo: el campo tiene que decir la verdad sobre lo que se puede hacer.
+                -->
                 <div class="form-group">
-                    <label for="comisionId">Comisión <span class="required">*</span></label>
-                    <select id="comisionId" data-buscable th:field="*{comisionId}" required
+                    <label for="comisionId">Comisión <span class="required" th:if="${modo == 'crear'}">*</span></label>
+
+                    <select th:if="${modo == 'crear'}" id="comisionId" data-buscable
+                            th:field="*{comisionId}" required
                             th:classappend="${#fields.hasErrors('comisionId')} ? 'is-invalid'">
                         <option value="">-- Elegir comisión --</option>
                         <option th:each="c : ${comisiones}"
@@ -41,6 +50,19 @@
                             MAT — A
                         </option>
                     </select>
+
+                    <th:block th:unless="${modo == 'crear'}">
+                        <p class="campo-fijo"
+                           th:text="|${horario.comision.materia.codigo} — ${horario.comision.codigo}|">MAT — A</p>
+                        <!-- Viaja igual, porque el servicio lo compara contra el guardado. -->
+                        <input type="hidden" th:field="*{comisionId}">
+                        <small class="form-hint">
+                            La comisión de un horario no se cambia: las asistencias ya
+                            registradas quedarían asociadas a la anterior. Si la franja
+                            pertenece a otra comisión, dá de baja este horario y creá uno nuevo.
+                        </small>
+                    </th:block>
+
                     <span class="form-error" th:if="${#fields.hasErrors('comisionId')}" th:errors="*{comisionId}">err</span>
                 </div>
 

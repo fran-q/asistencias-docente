@@ -25,6 +25,7 @@ public class AltaPendiente implements Serializable {
         this.expiraEn = expiraEn;
     }
 
+    // Los datos tipeados en el paso 1, que recien se persisten al confirmar el codigo.
     public AltaInstitucionFormDto getDatos() {
         return datos;
     }
@@ -39,6 +40,7 @@ public class AltaPendiente implements Serializable {
         return datos.getEmail();
     }
 
+    // true si paso la ventana de vigencia y el alta ya no se puede confirmar.
     public boolean estaVencida() {
         return LocalDateTime.now().isAfter(expiraEn);
     }
@@ -48,6 +50,7 @@ public class AltaPendiente implements Serializable {
         return ++intentos;
     }
 
+    // Cuantas veces se tipeo un codigo incorrecto para esta alta.
     public int getIntentos() {
         return intentos;
     }

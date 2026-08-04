@@ -25,6 +25,7 @@ public class CambioPasswordDto {
     @NotBlank(message = "Repetí la contraseña nueva")
     private String confirmacion;
 
+    // true si la contrasena nueva y su repeticion son iguales.
     public boolean coincide() {
         return nuevaPassword != null && nuevaPassword.equals(confirmacion);
     }

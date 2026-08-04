@@ -62,6 +62,7 @@ public class PanelInicioService {
         this.clock = clock;
     }
 
+    // Arma los tres bloques de la pantalla de inicio en una sola transaccion de lectura.
     @Transactional(readOnly = true)
     public PanelInicioDto armar() {
         Long tenantId = TenantContext.getRequired();
