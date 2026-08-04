@@ -5,6 +5,7 @@ import edu.cent35.asistencias.dto.PanelInicioDto;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.ModeloFacial;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
@@ -148,26 +149,35 @@ public class PanelInicioService {
                                                        LocalTime ahora) {
         long presentes = 0;
         long tarde = 0;
-        Set<Long> horariosMarcados = new HashSet<>();
+        long ausentes = 0;
+        Set<Long> horariosConFila = new HashSet<>();
         Set<Long> docentesQueMarcaron = new HashSet<>();
 
         for (Asistencia a : marcasDeHoy) {
-            horariosMarcados.add(a.getHorario().getId());
-            docentesQueMarcaron.add(a.getDocente().getId());
+            horariosConFila.add(a.getHorario().getId());
             switch (a.getEstado()) {
                 case PRESENTE -> presentes++;
                 case TARDE    -> tarde++;
-                default       -> { }
+                // Las ausencias TAMBIEN se persisten: las escribe el generador al cierre del
+                // dia. Antes caian en este default y no se contaban en ningun lado, asi que
+                // el tablero decia "0 ausentes" con dos filas AUSENTE en la base, y el
+                // listado de asistencias --que si las muestra-- lo desmentia.
+                case AUSENTE  -> ausentes++;
+            }
+            // Solo cuenta como "marco" quien efectivamente se presento. Una ausencia
+            // generada por el job es una fila de asistencia, no una marca: contarla daba
+            // "1 de 1 ya marcaron (100%)" para un docente que justamente no vino.
+            if (a.getEstado() == EstadoAsistencia.PRESENTE || a.getEstado() == EstadoAsistencia.TARDE) {
+                docentesQueMarcaron.add(a.getDocente().getId());
             }
         }
 
-        long ausentes = 0;
         long pendientesDeMarcar = 0;
         Set<Long> docentesConClase = new HashSet<>();
 
         for (Horario h : clasesDeHoy) {
             docentesConClase.add(h.getComision().getDocenteAsignado().getId());
-            if (horariosMarcados.contains(h.getId())) continue;
+            if (horariosConFila.contains(h.getId())) continue;
 
             // Una clase sin marca que todavia no termino no es una ausencia, es una clase
             // que falta. Contarlas juntas dejaria el tablero en rojo todas las mananas.

@@ -33,14 +33,23 @@
             // y sin forma de entender por que.
             const tope = isNaN(duracion) ? 10 : duracion;
 
+            // Se sacan del DOM en vez de ocultarlas: hidden + disabled las deja igual
+            // en el arbol de accesibilidad, asi que un lector de pantalla seguia
+            // anunciando "5° año ... 10° año" en una carrera de tres.
             let seleccionadoQuedaFuera = false;
-            Array.prototype.forEach.call(anioSel.options, function (o) {
-                const n = parseInt(o.value, 10);
-                const sobra = n > tope;
-                o.hidden   = sobra;
-                o.disabled = sobra;
-                if (sobra && o.selected) seleccionadoQuedaFuera = true;
+            Array.prototype.slice.call(anioSel.options).forEach(function (o) {
+                if (parseInt(o.value, 10) > tope) {
+                    if (o.selected) seleccionadoQuedaFuera = true;
+                    o.remove();
+                }
             });
+            // Y se reponen las que vuelven a entrar si se elige una carrera mas larga.
+            for (let n = anioSel.options.length + 1; n <= tope; n++) {
+                const o = document.createElement('option');
+                o.value = String(n);
+                o.textContent = n + '° año';
+                anioSel.appendChild(o);
+            }
 
             // Si el anio que estaba elegido ya no entra, se baja al ultimo valido en vez de
             // dejar el select mostrando una opcion deshabilitada.

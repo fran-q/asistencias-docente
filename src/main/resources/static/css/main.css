@@ -61,6 +61,40 @@
     --border:       #d4d8de;
 }
 
+/* ============================================================================
+ *  FOCO VISIBLE (WCAG 2.4.7)
+ *
+ *  Sin esto, quien navega con teclado no ve donde esta parado: los navegadores
+ *  traen su propio anillo, pero se pierde en cuanto se declaran colores de
+ *  fondo propios como los de esta app.
+ *
+ *  Se usa :focus-visible y no :focus para que el anillo aparezca al tabular
+ *  pero no al hacer click con el mouse, que es ruido.
+ * ========================================================================== */
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+}
+
+/* Enlace para saltar al contenido. Invisible hasta que se lo tabula: sin el,
+   llegar al contenido desde el teclado obliga a recorrer todo el menu en cada
+   pantalla. */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: var(--space-sm) var(--space);
+    background: var(--primary);
+    color: #fff;
+    border-radius: 0 0 var(--radius) 0;
+}
+.skip-link:focus {
+    left: 0;
+    text-decoration: none;
+}
+
 /* ========== Reset minimo ========== */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -300,15 +334,18 @@ code {
    lineas y la tarjeta pasa a ser mas dificil de leer que util. */
 .home__paneles {
     display: grid;
-    grid-template-columns: 1fr;
+    /* auto-fit en vez de una media query con numero fijo: la grilla mete tantas
+       columnas de al menos 320px como entren, y baja sola.
+
+       Con el corte en 1024px habia un salto feo: a 1024 exactos daba tres
+       columnas de 315px --apretadas-- y 24px mas abajo saltaba a UNA sola de
+       952px, o sea cuatro numeros chiquitos flotando en una tarjeta enorme.
+       Faltaba el escalon de dos columnas, y con auto-fit aparece solo. */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: var(--space);
-    /* stretch y no start: las tres tarjetas terminan a la misma altura aunque
-       tengan distinto contenido. Con start, la de "Ahora mismo" quedaba a media
-       altura de las otras y la fila se veia despareja. */
+    /* stretch y no start: las tarjetas de una misma fila terminan a la misma
+       altura aunque tengan distinto contenido. */
     align-items: stretch;
-}
-@media (min-width: 1024px) {
-    .home__paneles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 /* height 100% para que la tarjeta ocupe todo el alto que le da la grilla, no

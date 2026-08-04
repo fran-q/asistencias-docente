@@ -184,6 +184,49 @@ class PanelInicioServiceTest {
     }
 
     @Test
+    @DisplayName("resumen: una ausencia YA persistida se cuenta como ausente")
+    void resumen_cuentaLasAusenciasPersistidas() {
+        Docente d = docente(1L, "Pérez");
+        Horario h = horario(10L, d, 8, 0, 10, 0);
+        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+            .thenReturn(List.of(h));
+        // La escribe el generador de ausencias al cierre del dia.
+        when(asistenciaRepository.findDelDia(any()))
+            .thenReturn(List.of(marca(d, h, EstadoAsistencia.AUSENTE, 10, 0)));
+
+        PanelInicioDto.ResumenDelDia r = service.armar().resumen();
+
+        assertThat(r.ausentes())
+            .as("el tablero decia 0 ausentes con una fila AUSENTE en la base: la fila caia "
+                + "en 'ya tiene marca' y no se contaba en ningun lado, mientras el listado "
+                + "de asistencias si la mostraba")
+            .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("cobertura: un docente ausente NO cuenta como que ya marcó")
+    void cobertura_elAusenteNoCuentaComoMarcado() {
+        Docente vino = docente(1L, "Pérez");
+        Docente falto = docente(2L, "García");
+        Horario h1 = horario(10L, vino, 8, 0, 10, 0);
+        Horario h2 = horario(20L, falto, 8, 0, 10, 0);
+        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+            .thenReturn(List.of(h1, h2));
+        when(asistenciaRepository.findDelDia(any())).thenReturn(List.of(
+            marca(vino, h1, EstadoAsistencia.PRESENTE, 8, 0),
+            marca(falto, h2, EstadoAsistencia.AUSENTE, 10, 0)));
+
+        PanelInicioDto.ResumenDelDia r = service.armar().resumen();
+
+        assertThat(r.docentesQueMarcaron())
+            .as("una ausencia es una fila de asistencia, no una marca; contarla daba "
+                + "'2 de 2 ya marcaron (100%)' con la mitad del personal sin venir")
+            .isEqualTo(1);
+        assertThat(r.docentesConClase()).isEqualTo(2);
+        assertThat(r.porcentajeCobertura()).isEqualTo(50);
+    }
+
+    @Test
     @DisplayName("cobertura: cuenta docentes distintos, no clases")
     void cobertura_cuentaPersonasNoClases() {
         Docente conDosClases = docente(1L, "Pérez");
