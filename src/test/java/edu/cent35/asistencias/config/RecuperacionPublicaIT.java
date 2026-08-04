@@ -7,7 +7,7 @@ import edu.cent35.asistencias.repository.CodigoVerificacionRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
-import edu.cent35.asistencias.service.NotificadorEmailService;
+import edu.cent35.asistencias.service.CanalDeCodigos;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,7 +54,9 @@ class RecuperacionPublicaIT {
 
     // Se reemplaza el notificador real para poder afirmar que NO se lo llama. Con el real solo
     // se sabria que el envio fallo por no haber SMTP, que no es lo mismo que no haberlo pedido.
-    @MockBean private NotificadorEmailService notificador;
+    // Se mockea la interfaz, no el canal concreto: el test verifica que el codigo se
+    // pida, no por donde sale.
+    @MockBean private CanalDeCodigos notificador;
 
     // Una cuenta real contra la cual comparar el comportamiento con una inexistente.
     @BeforeEach

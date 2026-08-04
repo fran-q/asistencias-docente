@@ -6,7 +6,7 @@ import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
-import edu.cent35.asistencias.service.NotificadorEmailService;
+import edu.cent35.asistencias.service.CanalDeCodigos;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,7 +54,9 @@ class AltaInstitucionIT {
     @Autowired private RolRepository rolRepository;
 
     // Se intercepta el envío para poder leer el código sin levantar un servidor de correo.
-    @MockBean private NotificadorEmailService notificador;
+    // Se mockea la interfaz, no el canal concreto: el test verifica que el codigo se
+    // pida, no por donde sale.
+    @MockBean private CanalDeCodigos notificador;
 
     // El freno de envios es un unico bean que vive todo el contexto de Spring y cuenta por
     // direccion de destino. Si todos los tests usaran el mismo correo, el cuarto quedaria

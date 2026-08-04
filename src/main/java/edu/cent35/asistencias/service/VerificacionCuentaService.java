@@ -26,7 +26,9 @@ public class VerificacionCuentaService {
 
     private final UsuarioRepository usuarioRepository;
     private final CodigoVerificacionService codigoService;
-    private final NotificadorEmailService notificador;
+    // La interfaz y no la clase: cual sale por correo y cual por consola lo decide
+    // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
+    private final CanalDeCodigos notificador;
     private final PasswordEncoder passwordEncoder;
 
     // ========================================================================

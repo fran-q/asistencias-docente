@@ -257,18 +257,19 @@ posteriores:
 | RNF-47 | Foco visible al navegar con teclado | ✅ | Anillo con :focus-visible, no en el foco de mouse |
 | RNF-48 | Salto al contenido | ✅ | Primer elemento tabulable de cada pantalla |
 | RNF-49 | Opciones no disponibles fuera del árbol de accesibilidad | ✅ | El select de año las quita del DOM |
+| RNF-50 | Canal de códigos intercambiable | ✅ | Correo y consola por `app.mail.canal` |
 
-**Resumen RNF:** 49 implementados · 0 parciales · 0 backlog (total 49).
+**Resumen RNF:** 50 implementados · 0 parciales · 0 backlog (total 50).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
 | Funcionales | 55 | 5 | 1 | 61 |
-| No funcionales | 49 | 0 | 0 | 49 |
-| **Total** | **104** | **5** | **1** | **110** |
+| No funcionales | 50 | 0 | 0 | 50 |
+| **Total** | **105** | **5** | **1** | **111** |
 
-**Cobertura del hito 1:** 104 de 110 requerimientos completamente
+**Cobertura del hito 1:** 105 de 111 requerimientos completamente
 implementados (≈95%), 5 parcialmente cubiertos (≈4%) y 1 en backlog
 planificado (≈1%).
 

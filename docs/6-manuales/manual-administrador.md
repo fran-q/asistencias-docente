@@ -72,6 +72,35 @@ El grupo donde estás parado queda subrayado, así no perdés la referencia aunq
 el menú esté cerrado. En pantallas chicas la barra se convierte en un cajón
 lateral con el botón de las tres rayas, y ahí los grupos se ven abiertos.
 
+### Si el código no te llega
+
+El sistema manda los códigos de un solo uso —confirmar el correo, recuperar la
+contraseña, dar de alta una institución— por **correo electrónico**, y para eso
+necesita un servidor de correo configurado y andando. Si no lo hay, la pantalla
+igual dice *"revisá tu correo"* y no llega nada.
+
+Para desarrollo existe un **modo consola**: el código, en vez de enviarse, se
+escribe en la terminal donde corre la aplicación, dentro de un recuadro:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  CODIGO DE UN SOLO USO  (modo consola, no se envio correo)  │
+├─────────────────────────────────────────────────────────────┤
+│  Para      : Admin <admin@cent35.edu.ar>
+│  Motivo    : recuperar la contraseña
+│  CODIGO    : 527469
+└─────────────────────────────────────────────────────────────┘
+```
+
+Se activa arrancando con `MAIL_CANAL=consola`, o dejándolo en el archivo de
+configuración. El código es el mismo que se habría enviado: mismo hash, mismo
+vencimiento, mismo uso único. Lo único que cambia es por dónde sale.
+
+> **No dejar este modo en producción.** Cualquiera que vea la consola del
+> servidor puede tomar el código de recuperación de cualquier cuenta y entrar.
+> Al arrancar, la aplicación escribe una advertencia grande justamente para que
+> no pase inadvertido.
+
 ### La pantalla de inicio
 
 El inicio **no repite los accesos del menú**: a *"¿a dónde voy?"* ya contesta la

@@ -35,7 +35,9 @@ public class AltaInstitucionService {
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NotificadorEmailService notificador;
+    // La interfaz y no la clase: cual sale por correo y cual por consola lo decide
+    // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
+    private final CanalDeCodigos notificador;
     private final FrenoDeEnviosService freno;
 
     @Value("${app.verificacion.minutos-vigencia}")

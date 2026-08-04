@@ -5,19 +5,26 @@ import edu.cent35.asistencias.model.Usuario;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
- * Arma y envía los correos con el código de un solo uso. Habla SMTP estándar a través de
- * JavaMailSender, así que el servidor concreto es configuración: en desarrollo apunta a un
- * SMTP local de captura y en producción se cambia por variables de entorno sin tocar el código.
+ * Canal de correo: arma y envía el mensaje con el código de un solo uso.
+ *
+ * <p>Habla SMTP estándar a través de JavaMailSender, así que el servidor concreto es
+ * configuración: en desarrollo apunta a un SMTP local de captura y en producción se cambia por
+ * variables de entorno sin tocar el código.
+ *
+ * <p>Es el canal por defecto. El alternativo, {@link CanalConsola}, existe para poder probar
+ * los flujos sin levantar un SMTP; se elige con {@code app.mail.canal}.
  */
 @Service
+@ConditionalOnProperty(name = "app.mail.canal", havingValue = "correo", matchIfMissing = true)
 @RequiredArgsConstructor
 @Slf4j
-public class NotificadorEmailService {
+public class NotificadorEmailService implements CanalDeCodigos {
 
     private final JavaMailSender mailSender;
 
@@ -32,6 +39,7 @@ public class NotificadorEmailService {
      * flujo tiene que enterarse, porque decirle a la persona que revise su correo cuando el
      * mensaje nunca salió la deja esperando algo que no va a llegar.
      */
+    @Override
     public void enviarCodigo(Usuario usuario, PropositoCodigo proposito, String email, String codigo) {
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setFrom(remitente);
@@ -41,6 +49,11 @@ public class NotificadorEmailService {
 
         mailSender.send(mensaje);
         log.info("Correo enviado: proposito={}, usuario={}", proposito, usuario.getId());
+    }
+
+    @Override
+    public String nombre() {
+        return "correo";
     }
 
     private String asunto(PropositoCodigo proposito) {
