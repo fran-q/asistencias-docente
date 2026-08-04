@@ -11,7 +11,7 @@
                 <h1>Horarios</h1>
                 <p class="page-header__subtitle">
                     Franjas horarias semanales de cada comisión. La tolerancia se usa
-                    para clasificar Presente vs Tarde en la asistencia automática (RF-19).
+                    para clasificar Presente vs Tarde en la asistencia automática.
                 </p>
             </div>
             <a th:href="@{/horarios/nuevo}" class="btn btn--primary">+ Nuevo horario</a>
@@ -38,7 +38,6 @@
                             <th>Tol.</th>
                             <th>Comisión</th>
                             <th>Materia</th>
-                            <th>Vigencia</th>
                             <th>Estado</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
@@ -62,15 +61,6 @@
                             <td>
                                 <code th:text="${h.materiaCodigo}">MAT</code>
                                 <small class="text-muted" th:text="${h.materiaNombre}">Nombre</small>
-                            </td>
-                            <td>
-                                <small>
-                                    <span th:text="${#temporals.format(h.vigenteDesde, 'dd/MM/yy')}">01/01/26</span>
-                                    →
-                                    <span th:if="${h.vigenteHasta}"
-                                          th:text="${#temporals.format(h.vigenteHasta, 'dd/MM/yy')}">31/12/26</span>
-                                    <span th:unless="${h.vigenteHasta}" class="text-muted">∞</span>
-                                </small>
                             </td>
                             <td>
                                 <span th:if="${h.activo}"   class="badge badge--success">Activo</span>

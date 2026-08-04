@@ -98,7 +98,7 @@ class AjustesPantallasIT {
         horarioId = horarioRepository.save(Horario.builder()
             .comision(com).diaSemana((byte) 1)
             .horaInicio(LocalTime.of(8, 0)).horaFin(LocalTime.of(10, 0))
-            .toleranciaMin((short) 15).vigenteDesde(LocalDate.now()).activo(true)
+            .toleranciaMin((short) 15).activo(true)
             .build()).getId();
         TenantContext.clear();
     }

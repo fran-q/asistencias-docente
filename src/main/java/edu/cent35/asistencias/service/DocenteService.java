@@ -147,6 +147,7 @@ public class DocenteService {
         }
 
         d.setActivo(false);
+
         d.setFechaBaja(fechaBaja);
         docenteRepository.save(d);
         log.info("Docente dado de baja: id={}, fecha_baja={}", id, fechaBaja);

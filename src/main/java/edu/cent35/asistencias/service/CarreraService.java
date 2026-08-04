@@ -120,6 +120,7 @@ public class CarreraService {
                 " materia(s) activa(s). Dales de baja primero.");
         }
         c.setActivo(false);
+        c.setFechaBaja(java.time.LocalDate.now());
         carreraRepository.save(c);
         log.info("Carrera dada de baja: id={}", id);
     }
@@ -132,6 +133,7 @@ public class CarreraService {
             throw new IllegalArgumentException("La carrera ya está activa.");
         }
         c.setActivo(true);
+        c.setFechaBaja(null);
         carreraRepository.save(c);
         log.info("Carrera reactivada: id={}", id);
     }

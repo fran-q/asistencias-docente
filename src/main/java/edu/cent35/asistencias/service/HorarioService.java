@@ -76,7 +76,7 @@ public class HorarioService {
     // Crea una franja en una comisión activa, validando horas, tolerancia, vigencia y solapamiento.
     @Transactional
     public Horario crear(Long comisionId, DiaSemana dia, LocalTime horaInicio, LocalTime horaFin,
-                         Short toleranciaMin, LocalDate vigenteDesde, LocalDate vigenteHasta) {
+                         Short toleranciaMin) {
 
         Long tenantId = TenantContext.getRequired();
         Comision comision = obtenerComisionValidada(comisionId, tenantId);
@@ -92,7 +92,6 @@ public class HorarioService {
 
         validarHoras(horaInicio, horaFin);
         validarTolerancia(toleranciaMin);
-        validarVigencia(vigenteDesde, vigenteHasta);
         validarSinSolapamiento(comisionId, dia, horaInicio, horaFin, null);
 
         Horario h = Horario.builder()
@@ -100,8 +99,6 @@ public class HorarioService {
             .horaInicio(horaInicio)
             .horaFin(horaFin)
             .toleranciaMin(toleranciaMin == null ? (short) 15 : toleranciaMin)
-            .vigenteDesde(vigenteDesde)
-            .vigenteHasta(vigenteHasta)
             .activo(true)
             .build();
         h.setDia(dia);
@@ -115,8 +112,7 @@ public class HorarioService {
     // Modifica una franja existente y vuelve a correr todas las validaciones de alta.
     @Transactional
     public Horario actualizar(Long id, Long comisionId, DiaSemana dia,
-                              LocalTime horaInicio, LocalTime horaFin, Short toleranciaMin,
-                              LocalDate vigenteDesde, LocalDate vigenteHasta) {
+                              LocalTime horaInicio, LocalTime horaFin, Short toleranciaMin) {
 
         Horario h = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
@@ -130,7 +126,6 @@ public class HorarioService {
 
         validarHoras(horaInicio, horaFin);
         validarTolerancia(toleranciaMin);
-        validarVigencia(vigenteDesde, vigenteHasta);
         validarSinSolapamiento(comisionId, dia, horaInicio, horaFin, id);
 
         h.setComision(comision);
@@ -138,14 +133,13 @@ public class HorarioService {
         h.setHoraInicio(horaInicio);
         h.setHoraFin(horaFin);
         h.setToleranciaMin(toleranciaMin == null ? (short) 15 : toleranciaMin);
-        h.setVigenteDesde(vigenteDesde);
-        h.setVigenteHasta(vigenteHasta);
         Horario saved = horarioRepository.save(h);
         log.info("Horario actualizado: id={}, dia={}, {}-{}", saved.getId(), dia, horaInicio, horaFin);
         return saved;
     }
 
     // Desactiva un horario sin borrarlo, para no perder las asistencias que lo referencian.
+    // Deja ademas la fecha: "esta inactivo" sin decir desde cuando no sirve como constancia.
     @Transactional
     public void darDeBaja(Long id) {
         Horario h = buscarPorId(id);
@@ -153,6 +147,7 @@ public class HorarioService {
             throw new IllegalArgumentException("El horario ya está inactivo.");
         }
         h.setActivo(false);
+        h.setFechaBaja(java.time.LocalDate.now());
         horarioRepository.save(h);
         log.info("Horario dado de baja: id={}", id);
     }
@@ -171,6 +166,7 @@ public class HorarioService {
         validarSinSolapamiento(h.getComision().getId(), h.getDia(),
                                h.getHoraInicio(), h.getHoraFin(), id);
         h.setActivo(true);
+        h.setFechaBaja(null);
         horarioRepository.save(h);
         log.info("Horario reactivado: id={}", id);
     }
@@ -210,17 +206,6 @@ public class HorarioService {
         if (toleranciaMin < 0 || toleranciaMin > MAX_TOLERANCIA_MIN) {
             throw new IllegalArgumentException(
                 "La tolerancia debe estar entre 0 y " + MAX_TOLERANCIA_MIN + " minutos.");
-        }
-    }
-
-    // Exige fecha de inicio de vigencia y que la de fin no sea anterior.
-    private void validarVigencia(LocalDate desde, LocalDate hasta) {
-        if (desde == null) {
-            throw new IllegalArgumentException("La fecha de inicio de vigencia es obligatoria.");
-        }
-        if (hasta != null && hasta.isBefore(desde)) {
-            throw new IllegalArgumentException(
-                "La fecha de fin de vigencia (" + hasta + ") no puede ser anterior a la de inicio (" + desde + ").");
         }
     }
 

@@ -22,6 +22,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Filter;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -79,6 +80,10 @@ public class Materia extends BaseTenantEntity {
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
+
+    // Cuando se dio de baja. NULL = no fue dada de baja.
+    @Column(name = "fecha_baja")
+    private LocalDate fechaBaja;
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)

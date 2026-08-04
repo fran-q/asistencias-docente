@@ -363,8 +363,7 @@ class PanelInicioServiceTest {
             .horaInicio(LocalTime.of(hi, mi))
             .horaFin(LocalTime.of(hf, mf))
             .toleranciaMin((short) 15)
-            .vigenteDesde(LocalDate.of(2026, 1, 1))
-            .activo(true)
+                        .activo(true)
             .build();
     }
 

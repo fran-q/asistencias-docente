@@ -58,7 +58,6 @@ public class HorarioController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", HorarioFormDto.builder()
                 .toleranciaMin((short) 15)
-                .vigenteDesde(LocalDate.now())
                 .build());
         }
         prepararDatosForm(model, null);
@@ -83,8 +82,7 @@ public class HorarioController {
             Horario h = horarioService.crear(
                 form.getComisionId(), form.getDia(),
                 form.getHoraInicio(), form.getHoraFin(),
-                form.getToleranciaMin(),
-                form.getVigenteDesde(), form.getVigenteHasta()
+                form.getToleranciaMin()
             );
             redirect.addFlashAttribute("flashMensaje",
                 "Horario del " + form.getDia().getEtiqueta() +
@@ -131,8 +129,7 @@ public class HorarioController {
             horarioService.actualizar(
                 id, form.getComisionId(), form.getDia(),
                 form.getHoraInicio(), form.getHoraFin(),
-                form.getToleranciaMin(),
-                form.getVigenteDesde(), form.getVigenteHasta()
+                form.getToleranciaMin()
             );
             redirect.addFlashAttribute("flashMensaje", "Horario actualizado correctamente.");
             return "redirect:/horarios";

@@ -166,6 +166,7 @@ public class MateriaService {
                 " comisión(es) activa(s). Dales de baja primero.");
         }
         m.setActivo(false);
+        m.setFechaBaja(java.time.LocalDate.now());
         materiaRepository.save(m);
         log.info("Materia dada de baja: id={}", id);
     }
@@ -182,6 +183,7 @@ public class MateriaService {
                 "La carrera de esta materia está inactiva. Reactivala primero.");
         }
         m.setActivo(true);
+        m.setFechaBaja(null);
         materiaRepository.save(m);
         log.info("Materia reactivada: id={}", id);
     }

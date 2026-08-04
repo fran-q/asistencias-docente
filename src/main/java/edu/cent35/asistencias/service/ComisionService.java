@@ -192,6 +192,7 @@ public class ComisionService {
                 " horario(s) activo(s). Dales de baja primero.");
         }
         c.setActivo(false);
+        c.setFechaBaja(java.time.LocalDate.now());
         comisionRepository.save(c);
         log.info("Comision dada de baja: id={}", id);
     }
@@ -208,6 +209,7 @@ public class ComisionService {
                 "La materia de esta comisión está inactiva. Reactivala primero.");
         }
         c.setActivo(true);
+        c.setFechaBaja(null);
         comisionRepository.save(c);
         log.info("Comision reactivada: id={}", id);
     }

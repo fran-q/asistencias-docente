@@ -82,7 +82,6 @@ public class GeneradorAusenciasService {
         int creadas = 0;
         for (Horario h : horarios) {
             if (!ahora.isAfter(h.getHoraFin())) continue;      // la clase no termino
-            if (!estaVigente(h, fecha)) continue;              // fuera de vigencia
             Docente docente = h.getComision().getDocenteAsignado();
             if (docente == null || Boolean.FALSE.equals(docente.getActivo())) continue;
 
@@ -118,10 +117,4 @@ public class GeneradorAusenciasService {
         return creadas;
     }
 
-    // Vigencia del horario en la fecha dada: desde <= fecha <= hasta (hasta nullable).
-    // Indica si la fecha cae dentro del período de vigencia del horario.
-    private boolean estaVigente(Horario h, LocalDate fecha) {
-        if (h.getVigenteDesde() != null && fecha.isBefore(h.getVigenteDesde())) return false;
-        return h.getVigenteHasta() == null || !fecha.isAfter(h.getVigenteHasta());
-    }
 }

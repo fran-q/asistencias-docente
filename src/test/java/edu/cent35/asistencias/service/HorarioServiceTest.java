@@ -67,7 +67,7 @@ class HorarioServiceTest {
     void crear_ok() {
         Horario h = service.crear(COMISION_ID, DiaSemana.LUNES,
             LocalTime.of(8, 0), LocalTime.of(10, 0),
-            (short) 15, LocalDate.of(2026, 3, 1), null);
+            (short) 15);
 
         assertThat(h.getHoraInicio()).isEqualTo(LocalTime.of(8, 0));
         assertThat(h.getHoraFin()).isEqualTo(LocalTime.of(10, 0));
@@ -80,7 +80,7 @@ class HorarioServiceTest {
     void crear_horaFinAntesQueInicio() {
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(10, 0), LocalTime.of(9, 0),
-                (short) 15, LocalDate.of(2026, 3, 1), null))
+                (short) 15))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("posterior a la hora de inicio");
         verify(horarioRepository, never()).save(any());
@@ -91,7 +91,7 @@ class HorarioServiceTest {
     void crear_horasIguales() {
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(8, 0), LocalTime.of(8, 0),
-                (short) 15, LocalDate.of(2026, 3, 1), null))
+                (short) 15))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("posterior");
     }
@@ -101,7 +101,7 @@ class HorarioServiceTest {
     void crear_toleranciaAlta() {
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(8, 0), LocalTime.of(10, 0),
-                (short) 130, LocalDate.of(2026, 3, 1), null))
+                (short) 130))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("0 y 120");
     }
@@ -111,19 +111,9 @@ class HorarioServiceTest {
     void crear_toleranciaNegativa() {
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(8, 0), LocalTime.of(10, 0),
-                (short) -5, LocalDate.of(2026, 3, 1), null))
+                (short) -5))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("0 y 120");
-    }
-
-    @Test
-    @DisplayName("crear: rechaza vigenteHasta < vigenteDesde")
-    void crear_vigenciaInvertida() {
-        assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
-                LocalTime.of(8, 0), LocalTime.of(10, 0),
-                (short) 15, LocalDate.of(2026, 8, 1), LocalDate.of(2026, 3, 1)))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("no puede ser anterior");
     }
 
     @Test
@@ -145,7 +135,7 @@ class HorarioServiceTest {
 
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(9, 0), LocalTime.of(11, 0),
-                (short) 15, LocalDate.of(2026, 3, 1), null))
+                (short) 15))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Se superpone")
             .hasMessageContaining("Lunes");
@@ -156,7 +146,7 @@ class HorarioServiceTest {
     void crear_sinSolapamiento_distintoHorario() {
         Horario h = service.crear(COMISION_ID, DiaSemana.LUNES,
             LocalTime.of(11, 0), LocalTime.of(13, 0),
-            (short) 15, LocalDate.of(2026, 3, 1), null);
+            (short) 15);
         assertThat(h).isNotNull();
     }
 
@@ -165,7 +155,7 @@ class HorarioServiceTest {
     void crear_sinSolapamiento_distintoDia() {
         Horario h = service.crear(COMISION_ID, DiaSemana.MARTES,
             LocalTime.of(8, 0), LocalTime.of(10, 0),
-            (short) 15, LocalDate.of(2026, 3, 1), null);
+            (short) 15);
         assertThat(h.getDia()).isEqualTo(DiaSemana.MARTES);
     }
 
@@ -174,7 +164,7 @@ class HorarioServiceTest {
     void crear_toleranciaNullDefault() {
         Horario h = service.crear(COMISION_ID, DiaSemana.LUNES,
             LocalTime.of(8, 0), LocalTime.of(10, 0),
-            null, LocalDate.of(2026, 3, 1), null);
+            null);
         assertThat(h.getToleranciaMin()).isEqualTo((short) 15);
     }
 

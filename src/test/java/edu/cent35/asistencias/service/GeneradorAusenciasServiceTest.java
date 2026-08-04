@@ -119,19 +119,6 @@ class GeneradorAusenciasServiceTest {
         verify(asistenciaRepository, never()).saveAndFlush(any());
     }
 
-    @Test
-    @DisplayName("no genera si el horario esta fuera de vigencia en esa fecha")
-    void noGenera_fueraDeVigencia() {
-        Horario h = horarioLunes18a20();
-        h.setVigenteHasta(LUNES.minusDays(7));   // vencio la semana anterior
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
-            .thenReturn(List.of(h));
-
-        int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(21, 0));
-
-        assertThat(creadas).isZero();
-        verify(asistenciaRepository, never()).saveAndFlush(any());
-    }
 
     @Test
     @DisplayName("carrera con el pase facial: el UNIQUE la resuelve y el job no explota")
@@ -169,8 +156,7 @@ class GeneradorAusenciasServiceTest {
             .horaInicio(LocalTime.of(18, 0))
             .horaFin(LocalTime.of(20, 0))
             .toleranciaMin((short) 15)
-            .vigenteDesde(LocalDate.of(2026, 1, 1))
-            .activo(true)
+                        .activo(true)
             .build();
     }
 }

@@ -22,8 +22,6 @@ public class HorarioListItemDto {
     LocalTime horaInicio;
     LocalTime horaFin;
     Short toleranciaMin;
-    LocalDate vigenteDesde;
-    LocalDate vigenteHasta;
     Long comisionId;
     String comisionCodigo;
     String materiaCodigo;
@@ -42,8 +40,6 @@ public class HorarioListItemDto {
             .horaInicio(h.getHoraInicio())
             .horaFin(h.getHoraFin())
             .toleranciaMin(h.getToleranciaMin())
-            .vigenteDesde(h.getVigenteDesde())
-            .vigenteHasta(h.getVigenteHasta())
             .comisionId(h.getComision().getId())
             .comisionCodigo(h.getComision().getCodigo())
             .materiaCodigo(h.getComision().getMateria().getCodigo())

@@ -44,12 +44,7 @@ public class HorarioFormDto {
     @Max(value = 120, message = "La tolerancia no puede superar los 120 minutos")
     private Short toleranciaMin;
 
-    @NotNull(message = "La fecha de inicio de vigencia es obligatoria")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate vigenteDesde;
 
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate vigenteHasta;
 
     // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static HorarioFormDto from(Horario h) {
@@ -59,8 +54,6 @@ public class HorarioFormDto {
             .horaInicio(h.getHoraInicio())
             .horaFin(h.getHoraFin())
             .toleranciaMin(h.getToleranciaMin())
-            .vigenteDesde(h.getVigenteDesde())
-            .vigenteHasta(h.getVigenteHasta())
             .build();
     }
 }

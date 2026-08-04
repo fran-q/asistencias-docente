@@ -66,15 +66,16 @@ public class Horario {
     @Builder.Default
     private Short toleranciaMin = (short) 15;
 
-    @Column(name = "vigente_desde", nullable = false)
-    private LocalDate vigenteDesde;
 
-    @Column(name = "vigente_hasta")
-    private LocalDate vigenteHasta;
 
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
+
+    // Cuando se dio de baja. NULL = no fue dado de baja. Con actualizado_en no alcanza:
+    // cambia con cualquier edicion posterior y deja de servir como constancia.
+    @Column(name = "fecha_baja")
+    private LocalDate fechaBaja;
 
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)

@@ -57,8 +57,7 @@ class AsistenciaReporteRowDtoTest {
             .horaInicio(LocalTime.of(8, 0))
             .horaFin(LocalTime.of(10, 0))
             .toleranciaMin((short) 15)
-            .vigenteDesde(LocalDate.of(2026, 1, 1))
-            .activo(true)
+                        .activo(true)
             .build();
         Docente docente = Docente.builder()
             .id(4L).dni("30123456").nombre("Juan").apellido("Pérez").activo(true).build();

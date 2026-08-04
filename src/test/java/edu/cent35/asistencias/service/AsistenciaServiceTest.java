@@ -383,8 +383,7 @@ class AsistenciaServiceTest {
             .horaInicio(LocalTime.of(18, 0))
             .horaFin(LocalTime.of(20, 0))
             .toleranciaMin((short) 15)
-            .vigenteDesde(LocalDate.of(2026, 1, 1))
-            .activo(true)
+                        .activo(true)
             .build();
     }
 
@@ -410,8 +409,7 @@ class AsistenciaServiceTest {
             .horaInicio(LocalTime.of(inicioHora, inicioMin))
             .horaFin(LocalTime.of(finHora, finMin))
             .toleranciaMin((short) 15)
-            .vigenteDesde(LocalDate.of(2026, 1, 1))
-            .activo(true)
+                        .activo(true)
             .build();
     }
 }
