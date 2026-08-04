@@ -24,6 +24,8 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 
 **Si querés entender cómo está organizado el código** → [4-arquitectura/como-esta-armado-el-proyecto.md](./4-arquitectura/como-esta-armado-el-proyecto.md). Explica en qué carpeta va cada cosa y cómo funciona el reconocimiento facial, sin entrar en el detalle línea por línea. Es el punto de partida antes de abrir el código.
 
+**Si te van a preguntar por la base de datos** → [4-arquitectura/normalizacion-de-la-base.md](./4-arquitectura/normalizacion-de-la-base.md). Las 15 tablas revisadas contra 1FN, 2FN y 3FN, con las excepciones deliberadas y cómo defenderlas.
+
 **Si nunca trabajaste con Spring Boot** → [4-arquitectura/spring-boot-en-este-proyecto.md](./4-arquitectura/spring-boot-en-este-proyecto.md). Explica qué hace el framework por vos, dónde está aplicado en este código y cómo defender esas decisiones. Con diagramas y un glosario al final.
 
 **Si querés saber cómo se comporta la interfaz** → [7-informes/revision-ui-ux.md](./7-informes/revision-ui-ux.md). Qué se probó en el navegador, qué problemas aparecieron y cuáles son incómodos para el día a día de un administrador.

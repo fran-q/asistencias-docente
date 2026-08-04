@@ -1,0 +1,23 @@
+-- =============================================================================
+--  V013__quitar_creado_en_duplicado.sql
+--
+--  Saca modelos_faciales.creado_en, que es lo mismo que fecha_registro.
+--
+--  Que paso. La V012 le agrego creado_en a las tres tablas que no lo tenian,
+--  sin advertir que modelos_faciales ya registraba su alta con otro nombre:
+--  fecha_registro. Quedaron dos columnas para el mismo hecho.
+--
+--  Por que importa y no es un detalle. Dos columnas que dicen lo mismo se
+--  desincronizan: hoy no coinciden --fecha_registro tiene la fecha real de cada
+--  modelo y creado_en tiene la fecha en que corrio la migracion-- asi que
+--  cualquiera que consulte una u otra obtiene respuestas distintas a la misma
+--  pregunta. Ademas es una dependencia derivada, que es exactamente lo que la
+--  tercera forma normal pide evitar.
+--
+--  Se conserva fecha_registro y no creado_en, aunque el nombre uniforme del
+--  resto del esquema sea creado_en, por dos razones: es la que tiene los datos
+--  buenos, y "fecha de registro del modelo biometrico" es como se la nombra en
+--  la documentacion de consentimiento y en la constancia ARCO.
+-- =============================================================================
+
+ALTER TABLE modelos_faciales DROP COLUMN creado_en;
