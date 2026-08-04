@@ -331,17 +331,17 @@ class AjustesPantallasIT {
     // ========================================================================
 
     @Test
-    @DisplayName("La pantalla ARCO reúne los cuatro derechos en un solo lugar")
+    @DisplayName("La ficha del docente muestra todos sus datos y los cuatro derechos")
     void pantallaArcoReuneLosCuatroDerechos() throws Exception {
         Long docenteId = docenteRepository.findAll().stream()
             .filter(d -> tenantId.equals(d.getInstitucionId()))
             .findFirst().orElseThrow().getId();
 
-        mockMvc.perform(get("/docentes/" + docenteId + "/arco")
+        mockMvc.perform(get("/docentes/" + docenteId + "/ficha")
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             // Acceso: se ve que tiene el sistema sobre la persona.
-            .andExpect(content().string(containsString("Qué datos tiene el sistema")))
+            .andExpect(content().string(containsString("Datos personales")))
             .andExpect(content().string(containsString("no guarda fotografías")))
             // Los otros tres, cada uno con su accion.
             .andExpect(content().string(containsString("Rectificación")))
@@ -357,7 +357,7 @@ class AjustesPantallasIT {
             .filter(d -> tenantId.equals(d.getInstitucionId()))
             .findFirst().orElseThrow().getId();
 
-        MvcResult r = mockMvc.perform(get("/docentes/" + docenteId + "/arco/constancia")
+        MvcResult r = mockMvc.perform(get("/docentes/" + docenteId + "/ficha/constancia")
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andReturn();

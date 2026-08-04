@@ -70,9 +70,9 @@
         </button>
 
         <div class="navbar__brand">
-            <a th:href="@{/}">
-                <span class="navbar__logo">A</span>
-                <span class="navbar__title">Asistencias</span>
+            <a th:href="@{/}" aria-label="Visum, ir al inicio">
+                <span class="navbar__logo" aria-hidden="true">V</span>
+                <span class="navbar__title">Visum</span>
             </a>
         </div>
 
@@ -155,6 +155,13 @@
     <div class="navbar__backdrop" aria-hidden="true"></div>
 
     <!-- ============ CONTENIDO ============ -->
+    <!-- Migas de pan. Se arman en el navegador a partir de la URL y del mapa de rutas,
+         igual que el resaltado del menu: pedirle a cada controlador que las publique
+         seria repetir en veinte lugares algo que ya se puede deducir de la direccion. -->
+    <nav class="migas" aria-label="Ruta de navegación" sec:authorize="isAuthenticated()">
+        <ol class="migas__lista" id="migas"></ol>
+    </nav>
+
     <main class="container" id="contenido" tabindex="-1">
         <div th:replace="${content}">
             <p>Contenido por defecto</p>
@@ -168,6 +175,7 @@
                   data-error=${flashError}"
          hidden></div>
 
+    <script th:src="@{/js/migas.js}" defer></script>
     <script th:src="@{/js/tema.js}" defer></script>
     <script th:src="@{/js/form-validacion.js}" defer></script>
     <script th:src="@{/js/toast.js}" defer></script>

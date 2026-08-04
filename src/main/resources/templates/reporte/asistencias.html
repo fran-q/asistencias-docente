@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Reporte de asistencias - Asistencias</title>
+    <title>Reporte de asistencias - Visum</title>
 </head>
 <body>
     <section class="reportes">
@@ -41,7 +41,7 @@
                     <option value="">Todas</option>
                     <option th:each="c : ${carreras}"
                             th:value="${c.id}"
-                            th:text="|${c.codigo} - ${c.nombre}|"
+                            th:text="${c.nombre}" th:title="${c.nombre}"
                             th:selected="${c.id == filtro.carreraId}">CAR - Nombre</option>
                 </select>
             </div>

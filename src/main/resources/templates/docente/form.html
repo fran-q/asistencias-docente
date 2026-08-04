@@ -85,29 +85,15 @@
             </form>
         </div>
 
-        <!-- Las fechas de alta y baja del docente son datos administrativos propios
-             suyos, no marcas de auditoría: entran como filas extra del bloque comun.
-             El th:if va afuera por la precedencia de th:replace (ver carrera-form). -->
+        <!-- Bloque comun, sin extras. Las fechas de alta y baja estaban acá como un
+             th:fragment y salían DOS veces: Thymeleaf renderiza el fragmento en su lugar
+             original además de donde se lo referencia, así que quedaba un "Fecha de alta"
+             suelto colgando debajo del recuadro. Ahora viven en la ficha del docente,
+             que es donde se consultan. -->
         <th:block th:if="${modo == 'editar'}">
             <div th:replace="~{layout/fragmentos :: datosDelSistema(
                                 ${docente.activo}, 'Activo', 'Inactivo',
-                                ${docente.creadoEn}, ${docente.actualizadoEn},
-                                ~{::fechasDelDocente})}"></div>
-        </th:block>
-
-        <th:block th:fragment="fechasDelDocente" th:if="${modo == 'editar'}">
-            <dt>Fecha de alta</dt>
-            <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">-</dd>
-            <th:block th:if="${!docente.activo}">
-                <dt>Fecha de baja</dt>
-                <dd>
-                    <span th:if="${docente.fechaBaja}"
-                          th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</span>
-                    <span th:unless="${docente.fechaBaja}" class="text-muted">
-                        Sin registrar (baja anterior a que el sistema la guardara)
-                    </span>
-                </dd>
-            </th:block>
+                                ${docente.creadoEn}, ${docente.actualizadoEn}, ~{})}"></div>
         </th:block>
 
         <!-- Consentimiento biométrico -->

@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Docentes - Asistencias</title>
+    <title>Docentes - Visum</title>
 </head>
 <body>
     <section class="docentes-list">
@@ -37,12 +37,7 @@
                             <th>DNI</th>
                             <th>Legajo</th>
                             <th>Apellido, Nombre</th>
-                            <th>Correo</th>
-                            <th>Teléfono</th>
-                            <th>Alta</th>
-                            <th>Baja</th>
                             <th>Estado</th>
-                            <th>Consentimiento</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
@@ -56,40 +51,18 @@
                             </td>
                             <td th:text="${d.nombreCompleto}">Apellido, Nombre</td>
                             <td>
-                                <span th:if="${d.email}" th:text="${d.email}">e@x</span>
-                                <span th:unless="${d.email}" class="text-muted">—</span>
-                            </td>
-                            <td>
-                                <span th:if="${d.telefono}" th:text="${d.telefono}">tel</span>
-                                <span th:unless="${d.telefono}" class="text-muted">—</span>
-                            </td>
-                            <td th:text="${#temporals.format(d.fechaAlta, 'dd/MM/yyyy')}">01/01/2026</td>
-                            <td>
-                                <span th:if="${d.fechaBaja}"
-                                      th:text="${#temporals.format(d.fechaBaja, 'dd/MM/yyyy')}">01/01/2026</span>
-                                <span th:unless="${d.fechaBaja}" class="text-muted">—</span>
-                            </td>
-                            <td>
                                 <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
                                 <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
-                            </td>
-                            <td>
-                                <span th:if="${d.estadoConsentimiento.name() == 'ACTIVO'}"
-                                      class="badge badge--success" title="Consentimiento vigente">Vigente</span>
-                                <span th:if="${d.estadoConsentimiento.name() == 'REVOCADO'}"
-                                      class="badge badge--danger" title="Consentimiento revocado por el docente o el admin">Revocado</span>
-                                <span th:if="${d.estadoConsentimiento.name() == 'NUNCA_OTORGADO'}"
-                                      class="badge badge--warning" title="Sin consentimiento - no puede usar reconocimiento facial">Sin firmar</span>
                             </td>
                             <td class="table__actions">
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
-                                <!-- Los derechos de la Ley 25.326 se ejercen sobre una persona
-                                     concreta, asi que el acceso natural es su fila. -->
-                                <a th:href="@{/docentes/{id}/arco(id=${d.id})}"
+                                <!-- La ficha completa: todo lo que el sistema sabe de esta
+                                     persona, incluidos sus derechos sobre esos datos. -->
+                                <a th:href="@{/docentes/{id}/ficha(id=${d.id})}"
                                    class="btn btn--ghost btn--sm"
-                                   title="Acceso, rectificación, cancelación y oposición">Datos</a>
+                                   title="Ver todos los datos de esta persona">Datos</a>
 
                                 <!-- La fecha se pide en el modal porque la baja suele cargarse
                                      dias despues del hecho: forzar "hoy" falsearia el registro.
@@ -117,12 +90,12 @@
                             </td>
                         </tr>
                         <tr class="table__empty-fila" hidden>
-                            <td colspan="10" class="table__empty">
+                            <td colspan="5" class="table__empty">
                                 Ningún docente coincide con la búsqueda.
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(docentes)}">
-                            <td colspan="10" class="table__empty">
+                            <td colspan="5" class="table__empty">
                                 Todavía no cargaste ningún docente.
                                 <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
                             </td>

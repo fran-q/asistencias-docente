@@ -50,7 +50,7 @@
                             <option th:each="c : ${carreras}"
                                     th:value="${c.id}"
                                     th:attr="data-duracion=${c.duracionAnios}"
-                                    th:text="|${c.codigo} — ${c.nombre}${!c.activo ? ' (inactiva)' : ''}|">
+                                    th:text="|${c.nombre}${!c.activo ? ' (inactiva)' : ''}|" th:title="${c.nombre}">
                                 CARR — Nombre
                             </option>
                         </select>

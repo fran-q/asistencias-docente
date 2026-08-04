@@ -17,6 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import edu.cent35.asistencias.dto.CambioPasswordDto;
+import edu.cent35.asistencias.service.UsuarioService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -33,6 +35,7 @@ public class CuentaController {
 
     private final VerificacionCuentaService verificacionService;
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     // Muestra el correo de la cuenta y si ya fue confirmado.
     @GetMapping
@@ -40,6 +43,9 @@ public class CuentaController {
         prepararModelo(principal, model);
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new CodigoFormDto());
+        }
+        if (!model.containsAttribute("formPassword")) {
+            model.addAttribute("formPassword", new CambioPasswordDto());
         }
         return "cuenta/mi-cuenta";
     }
@@ -115,5 +121,40 @@ public class CuentaController {
             return reenviada.split(",")[0].trim();
         }
         return request.getRemoteAddr();
+    }
+
+    // Cambio de la propia contrasena. Vive en Mi cuenta y no en el listado de usuarios
+    // porque es la unica pantalla a la que todos los roles llegan sobre si mismos.
+    @PostMapping("/password")
+    public String cambiarPassword(@AuthenticationPrincipal CustomUserDetails principal,
+                                  @Valid @ModelAttribute("formPassword") CambioPasswordDto form,
+                                  BindingResult binding,
+                                  RedirectAttributes redirect) {
+
+        if (!form.coincide()) {
+            binding.rejectValue("confirmacion", "error.match", "Las contraseñas no coinciden");
+        }
+        if (form.esLaMisma()) {
+            binding.rejectValue("nuevaPassword", "error.igual",
+                "La contraseña nueva tiene que ser distinta de la actual");
+        }
+        if (binding.hasErrors()) {
+            redirect.addFlashAttribute(
+                "org.springframework.validation.BindingResult.formPassword", binding);
+            redirect.addFlashAttribute("formPassword", form);
+            return "redirect:/mi-cuenta";
+        }
+
+        try {
+            usuarioService.cambiarPasswordPropia(
+                principal.getUsuarioId(), form.getActual(), form.getNuevaPassword());
+            redirect.addFlashAttribute("flashMensaje", "Contraseña cambiada correctamente.");
+        } catch (IllegalArgumentException ex) {
+            binding.rejectValue("actual", "error.actual", ex.getMessage());
+            redirect.addFlashAttribute(
+                "org.springframework.validation.BindingResult.formPassword", binding);
+            redirect.addFlashAttribute("formPassword", form);
+        }
+        return "redirect:/mi-cuenta";
     }
 }

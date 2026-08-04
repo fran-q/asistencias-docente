@@ -1182,6 +1182,39 @@ code {
 .arco__derechos li > div { display: flex; flex-direction: column; min-width: 14rem; flex: 1; }
 .arco__derechos li span { font-size: 0.85rem; }
 
+/* ============================================================================
+ *  MIGAS DE PAN
+ *  Franja fina entre el menu y el contenido. Los grupos del menu van apagados
+ *  porque no tienen pantalla propia: mostrarlos como enlace prometeria un
+ *  destino que no existe.
+ * ========================================================================== */
+.migas {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--space) var(--space-lg) 0;
+}
+.migas__lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.85rem;
+}
+.migas__item { color: var(--text-muted); }
+.migas__item + .migas__item::before {
+    content: "/";
+    margin-right: var(--space-xs);
+    color: var(--border);
+}
+.migas__item[aria-current="page"] { color: var(--text); font-weight: 600; }
+.migas__item--grupo { opacity: 0.7; }
+/* Cuando hay migas, el contenido no necesita todo el aire de arriba. */
+.migas + .container { padding-top: var(--space); }
+
 /* ========== Conmutador de tema ========== */
 .tema-toggle {
     display: inline-flex;

@@ -177,4 +177,22 @@ public class UsuarioService {
             throw new EntityNotFoundException("Usuario no encontrado");
         }
     }
+
+    /**
+     * Cambia la contraseña de la propia cuenta, verificando la actual.
+     *
+     * <p>La verificación no es burocracia: esta operación corre con la sesión ya abierta, así
+     * que sin ella alguien que se siente frente a una máquina desatendida puede cambiarle la
+     * contraseña al dueño y dejarlo afuera de su cuenta.
+     */
+    @Transactional
+    public void cambiarPasswordPropia(Long usuarioId, String actual, String nueva) {
+        Usuario u = buscarPorId(usuarioId);
+        if (!passwordEncoder.matches(actual, u.getPasswordHash())) {
+            throw new IllegalArgumentException("La contraseña actual no es correcta.");
+        }
+        u.setPasswordHash(passwordEncoder.encode(nueva));
+        usuarioRepository.save(u);
+        log.info("Password cambiada por el propio usuario: id={}", usuarioId);
+    }
 }

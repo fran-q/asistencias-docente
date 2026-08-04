@@ -24,7 +24,7 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * Pantalla única de derechos ARCO por docente (RNF-14).
+ * Ficha completa del docente: todo lo que el sistema sabe de esa persona.
  *
  * <p>Las cuatro operaciones ya existían, pero repartidas: los datos personales en el
  * formulario del docente, la oposición dentro del consentimiento, la cancelación escondida
@@ -36,11 +36,11 @@ import java.util.List;
  * todo lo que el sistema sabe de la persona y emite la constancia.
  */
 @Controller
-@RequestMapping("/docentes/{docenteId}/arco")
+@RequestMapping("/docentes/{docenteId}/ficha")
 @PreAuthorize("hasAnyRole('INSTITUCION', 'ADMIN')")
 @RequiredArgsConstructor
 @Slf4j
-public class ArcoController {
+public class FichaDocenteController {
 
     private final DocenteService docenteService;
     private final ConsentimientoBiometricoService consentimientoService;
@@ -58,7 +58,7 @@ public class ArcoController {
         model.addAttribute("historial", consentimientoService.historialDe(docenteId));
         model.addAttribute("tieneModelo", modeloFacialService.tieneModeloActivo(docenteId));
         model.addAttribute("tieneModelos", modeloFacialService.tieneModelos(docenteId));
-        return "docente/arco";
+        return "docente/ficha";
     }
 
     // Constancia en PDF de lo que la institución trata sobre esta persona.

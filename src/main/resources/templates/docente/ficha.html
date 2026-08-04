@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Derechos sobre los datos - Asistencias</title>
+    <title>Ficha del docente - Visum</title>
 </head>
 <body>
     <!--
@@ -11,25 +11,71 @@
       se ejerce. Acá no hay operaciones nuevas: están todas juntas y a la vista.
     -->
     <section class="arco">
-        <header class="page-header">
-            <h1>Derechos sobre los datos</h1>
-            <p class="page-header__subtitle">
-                <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong> —
-                DNI <span th:text="${docente.dni}">00000000</span>.
-                Ley 25.326 y Resolución AAIP 255/2022.
-            </p>
+        <header class="page-header arco__header">
+            <div>
+                <h1 th:text="${docente.nombreCompleto}">Apellido, Nombre</h1>
+                <p class="page-header__subtitle">
+                    Todo lo que el sistema tiene sobre esta persona.
+                </p>
+            </div>
+            <a th:href="@{/docentes/{id}/editar(id=${docente.id})}"
+               class="btn btn--primary">Editar datos</a>
         </header>
 
-        <!-- ACCESO: qué sabe el sistema de esta persona -->
+        <!-- Los datos personales, completos. En el listado quedan solo los cuatro que
+             sirven para encontrar a alguien; el resto se consulta acá. -->
         <div class="card card--form">
-            <h2>Qué datos tiene el sistema</h2>
+            <h2>Datos personales</h2>
             <dl class="kv">
-                <dt>Datos personales</dt>
+                <dt>DNI</dt>
+                <dd th:text="${docente.dni}">00000000</dd>
+
+                <dt>Legajo</dt>
                 <dd>
-                    Nombre, DNI<span th:if="${docente.legajo}">, legajo</span><span
-                          th:if="${docente.email}">, correo</span><span
-                          th:if="${docente.telefono}"> y teléfono</span>.
+                    <span th:if="${docente.legajo}" th:text="${docente.legajo}">L-001</span>
+                    <span th:unless="${docente.legajo}" class="text-muted">Sin cargar</span>
                 </dd>
+
+                <dt>Correo</dt>
+                <dd>
+                    <span th:if="${docente.email}" th:text="${docente.email}">a@b.c</span>
+                    <span th:unless="${docente.email}" class="text-muted">Sin cargar</span>
+                </dd>
+
+                <dt>Teléfono</dt>
+                <dd>
+                    <span th:if="${docente.telefono}" th:text="${docente.telefono}">000</span>
+                    <span th:unless="${docente.telefono}" class="text-muted">Sin cargar</span>
+                </dd>
+
+                <dt>Estado</dt>
+                <dd>
+                    <span th:if="${docente.activo}" class="badge badge--success">Activo</span>
+                    <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>
+                </dd>
+
+                <dt>Fecha de alta</dt>
+                <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">01/01/2026</dd>
+
+                <th:block th:if="${!docente.activo}">
+                    <dt>Fecha de baja</dt>
+                    <dd>
+                        <span th:if="${docente.fechaBaja}"
+                              th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</span>
+                        <span th:unless="${docente.fechaBaja}" class="text-muted">
+                            Sin registrar (baja anterior a que el sistema la guardara)
+                        </span>
+                    </dd>
+                </th:block>
+            </dl>
+        </div>
+
+        <!-- Los datos sensibles y los derechos sobre ellos, que la ley obliga a poder
+             consultar y ejercer. -->
+        <div class="card card--form">
+            <h2>Datos biométricos</h2>
+            <p class="text-muted arco__nota">Ley 25.326 y Resolución AAIP 255/2022.</p>
+            <dl class="kv">
 
                 <dt>Dato biométrico</dt>
                 <dd>
@@ -64,9 +110,9 @@
             </dl>
 
             <div class="form-actions">
-                <a th:href="@{/docentes/{id}/arco/constancia(id=${docente.id})}"
-                   class="btn btn--primary">⬇ Descargar constancia</a>
-                <a th:href="@{/docentes}" class="btn btn--ghost">Volver</a>
+                <a th:href="@{/docentes/{id}/ficha/constancia(id=${docente.id})}"
+                   class="btn btn--ghost">⬇ Descargar constancia</a>
+                <a th:href="@{/docentes}" class="btn btn--ghost">Volver al listado</a>
             </div>
         </div>
 

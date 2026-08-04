@@ -168,7 +168,7 @@ public class ReporteController {
             "id", "fecha", "dia_semana", "hora_inicio", "hora_fin",
             "carrera", "materia_codigo", "materia_nombre", "comision",
             "docente_dni", "docente_apellido", "docente_nombre",
-            "hora_registrada", "estado", "metodo", "confianza",
+            "hora_registrada", "estado", "metodo",
             "motivo_carga_manual", "detalle_carga_manual", "usuario_registro",
             "justificada", "motivo_justificacion"));
     }
@@ -191,7 +191,6 @@ public class ReporteController {
             csvTime(f.getHoraRegistrada()),
             csv(f.getEstado()),
             csv(f.getMetodo()),
-            csv(f.getConfianza()),
             csv(f.getMotivoManual()),
             csv(f.getDetalleManual()),
             csv(f.getUsuarioRegistrador()),
