@@ -45,6 +45,9 @@ public class GrillaSemanalDto {
         String comisionCodigo;
         String materiaCodigo;
         String materiaNombre;
+        // Quien dicta. Se agrega para el cuadro flotante: saber que materia hay en un
+        // bloque sin saber quien la da no alcanza para decidir nada.
+        String docenteNombre;
         LocalTime horaInicio;
         LocalTime horaFin;
         short toleranciaMin;

@@ -1183,6 +1183,36 @@ code {
 .arco__derechos li span { font-size: 0.85rem; }
 
 /* ============================================================================
+ *  DETALLE FLOTANTE DE LA GRILLA
+ *  Se posiciona con JS contra el bloque; aca solo va el aspecto.
+ * ========================================================================== */
+.grilla-detalle {
+    position: absolute;
+    z-index: 70;
+    min-width: 15rem;
+    max-width: 20rem;
+    padding: var(--space);
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    font-size: 0.85rem;
+}
+.grilla-detalle__titulo {
+    margin: 0 0 var(--space-sm);
+    font-weight: 600;
+    color: var(--text);
+}
+.grilla-detalle__datos {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 2px var(--space-sm);
+    margin: 0 0 var(--space);
+}
+.grilla-detalle__datos dt { color: var(--text-muted); }
+.grilla-detalle__datos dd { margin: 0; color: var(--text); }
+
+/* ============================================================================
  *  MIGAS DE PAN
  *  Franja fina entre el menu y el contenido. Los grupos del menu van apagados
  *  porque no tienen pantalla propia: mostrarlos como enlace prometeria un
@@ -1738,7 +1768,14 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     border-top: 1px solid var(--bg-elev-2);
 }
 
+/* Ahora es un <button>: hay que anular los estilos que el navegador le pone y que
+   no le ponia al <a> anterior (borde, fondo propio, tipografia del sistema). */
 .grilla__item {
+    border: none;
+    font-family: inherit;
+    text-align: left;
+    display: block;
+    width: calc(100% - 4px);
     margin: 1px 2px;
     padding: 4px 6px;
     background: var(--primary);

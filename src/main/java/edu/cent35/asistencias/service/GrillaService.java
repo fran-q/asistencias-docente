@@ -102,6 +102,8 @@ public class GrillaService {
             .comisionCodigo(h.getComision().getCodigo())
             .materiaCodigo(h.getComision().getMateria().getCodigo())
             .materiaNombre(h.getComision().getMateria().getNombre())
+            .docenteNombre(h.getComision().getDocenteAsignado() != null
+                ? h.getComision().getDocenteAsignado().getNombreCompleto() : null)
             .horaInicio(h.getHoraInicio())
             .horaFin(h.getHoraFin())
             .toleranciaMin(h.getToleranciaMin())

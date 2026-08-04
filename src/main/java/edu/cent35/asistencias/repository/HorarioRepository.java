@@ -28,8 +28,9 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
     @Query("""
         SELECT h
           FROM Horario h
-          JOIN h.comision c
-          JOIN c.materia m
+          JOIN FETCH h.comision c
+          JOIN FETCH c.materia m
+          LEFT JOIN FETCH c.docenteAsignado d
          WHERE m.carrera.id    = :carreraId
            AND m.institucionId = :tenantId
            AND h.activo = true

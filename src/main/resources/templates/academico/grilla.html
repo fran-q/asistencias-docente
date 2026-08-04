@@ -66,23 +66,38 @@
                  th:text="${lbl.texto}">07:00</div>
 
             <!-- Items posicionados -->
-            <a th:each="item : ${grilla.items}"
-               th:href="@{/horarios/{id}/editar(id=${item.horarioId})}"
+            <!--
+              Boton y no enlace: antes cada bloque llevaba directo a la edicion, asi que un
+              click hecho para "ver de que es esta clase" terminaba en un formulario. Ahora
+              el bloque solo muestra; editar es una decision aparte, dentro del cuadro.
+              Es <button> para que tambien se llegue con el teclado.
+            -->
+            <button type="button" th:each="item : ${grilla.items}"
                class="grilla__item"
                th:style="|grid-column: ${item.gridColumn}; grid-row: ${item.gridRowStart} / ${item.gridRowEnd}|"
-               th:title="|${item.materiaNombre} · Tol. ${item.toleranciaMin} min · click para editar|">
+               th:attr="data-materia=${item.materiaNombre},
+                        data-materia-codigo=${item.materiaCodigo},
+                        data-comision=${item.comisionCodigo},
+                        data-docente=${item.docenteNombre},
+                        data-inicio=${#temporals.format(item.horaInicio, 'HH:mm')},
+                        data-fin=${#temporals.format(item.horaFin, 'HH:mm')},
+                        data-tolerancia=${item.toleranciaMin},
+                        data-editar=@{/horarios/{id}/editar(id=${item.horarioId})}"
+               aria-haspopup="dialog">
                 <strong th:text="${item.materiaCodigo}">MAT</strong>
                 <small th:text="|${item.comisionCodigo} · ${#temporals.format(item.horaInicio, 'HH:mm')}-${#temporals.format(item.horaFin, 'HH:mm')}|">A · 08:00-10:00</small>
-            </a>
+            </button>
         </div>
 
         <p th:if="${grilla != null and grilla.totalHorarios > 0}" class="grilla__footer">
             <small class="text-muted">
                 Mostrando <strong th:text="${grilla.totalHorarios}">N</strong> horario(s)
                 de <strong th:text="${grilla.carreraCodigo}">CARR</strong>.
-                Click en un bloque para editarlo.
+                Pasá el mouse por un bloque para ver el detalle.
             </small>
         </p>
+        <script th:src="@{/js/grilla-detalle.js}" defer></script>
+
     </section>
 </body>
 </html>

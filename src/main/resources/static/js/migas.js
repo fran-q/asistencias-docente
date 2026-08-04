@@ -37,6 +37,7 @@
         'pase': 'Pase de asistencia', 'manual': 'Carga manual',
         'justificar': 'Justificar ausencia', 'rostro': 'Registro del rostro',
         'registrar': 'Registrar', 'consentimiento': 'Consentimiento',
+        'ficha': 'Ficha del docente', 'constancia': 'Constancia',
         'otorgar': 'Otorgar', 'revocar': 'Revocar', 'password': 'Cambiar contraseña'
     };
 
@@ -79,7 +80,11 @@
         var items = [crumb('Inicio', '/', false)];
 
         if (seccion) {
-            if (seccion.grupo) items.push(crumb(seccion.grupo, null, false));
+            // El grupo solo se agrega si aporta algo. En /asistencia/pase el grupo y la
+            // seccion se llaman igual, y la ruta salia "Inicio / Asistencias / Asistencias".
+            if (seccion.grupo && seccion.grupo !== seccion.etiqueta) {
+                items.push(crumb(seccion.grupo, null, false));
+            }
             items.push(crumb(seccion.etiqueta, '/' + partes[0], partes.length === 1));
         } else {
             items.push(crumb(partes[0], null, partes.length === 1));

@@ -37,6 +37,9 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -369,6 +372,96 @@ class AjustesPantallasIT {
         assertThat(r.getResponse().getContentAsByteArray())
             .as("el archivo tiene que ser un PDF de verdad, no una respuesta vacía")
             .startsWith("%PDF".getBytes());
+    }
+
+    // ========================================================================
+    //  Donde aparece cada mensaje
+    // ========================================================================
+
+    @Test
+    @DisplayName("Un error de formulario se queda sobre el formulario, no sale por toast")
+    void errorDeFormularioVaEnElFormulario() throws Exception {
+        // Codigo repetido: es una regla de negocio que se descubre al guardar, pero sigue
+        // siendo un problema del formulario que hay que poder releer mientras se corrige.
+        MvcResult r = mockMvc.perform(post("/carreras/nueva")
+                .with(user(principal("INSTITUCION"))).with(csrf())
+                .param("codigo", "CAR" + SECUENCIA.get())
+                .param("nombre", "Otra carrera con el mismo código")
+                .param("duracionAnios", "3"))
+            .andExpect(status().isOk())          // se queda en el formulario, no redirige
+            .andReturn();
+
+        String html = r.getResponse().getContentAsString();
+        assertThat(html)
+            .as("el mensaje tiene que estar sobre el formulario")
+            .contains("alert--error")
+            .contains("Ya existe una carrera");
+        assertThat(html)
+            .as("un toast se va solo a los pocos segundos: no sirve para algo que hay que "
+                + "releer mientras se corrige el campo")
+            .doesNotContain("data-error=");
+    }
+
+    @Test
+    @DisplayName("Un error de sistema sale por toast, no sobre una pantalla")
+    void errorDeSistemaVaPorToast() throws Exception {
+        // Dar de baja algo que no existe no es un problema de ningun formulario: es el
+        // resultado de una accion, y el lugar de eso es el aviso flotante.
+        mockMvc.perform(post("/carreras/999999/baja")
+                .with(user(principal("INSTITUCION"))).with(csrf()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attributeExists("flashError"));
+    }
+
+    @Test
+    @DisplayName("Todos los formularios pueden mostrar errores que no son de un campo")
+    void todosLosFormulariosMuestranErroresGlobales() throws Exception {
+        // Se revisan las PLANTILLAS y no el HTML renderizado: el bloque lleva th:if, así que
+        // cuando no hay errores Thymeleaf no lo emite y buscarlo en la salida no probaría
+        // nada. Lo que se quiere fijar es que el hueco exista en el archivo.
+        java.nio.file.Path base = java.nio.file.Path.of("src/main/resources/templates");
+        try (java.util.stream.Stream<java.nio.file.Path> archivos =
+                 java.nio.file.Files.walk(base)) {
+            java.util.List<String> sinHueco = archivos
+                .filter(p -> p.toString().endsWith(".html"))
+                .filter(p -> {
+                    try { return java.nio.file.Files.readString(p).contains("novalidate"); }
+                    catch (Exception e) { return false; }
+                })
+                .filter(p -> {
+                    try {
+                        String c = java.nio.file.Files.readString(p);
+                        // Vale cualquiera de las dos formas: los errores de binding y los
+                        // que el controlador manda como atributo suelto.
+                        return !c.contains("hasGlobalErrors") && !c.contains("${error}");
+                    } catch (Exception e) { return true; }
+                })
+                .map(p -> base.relativize(p).toString())
+                .toList();
+
+            assertThat(sinHueco)
+                .as("sin este bloque, un error que no pertenece a un campo concreto no tiene "
+                    + "dónde mostrarse y se pierde: el formulario vuelve como si nada")
+                .isEmpty();
+        }
+    }
+
+    // ========================================================================
+    //  Grilla: mirar y editar cuestan distinto
+    // ========================================================================
+
+    @Test
+    @DisplayName("Los bloques de la grilla ya no son enlaces directos a la edición")
+    void grillaNoLlevaDirectoAEditar() throws Exception {
+        MvcResult r = mockMvc.perform(get("/grilla").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String html = r.getResponse().getContentAsString();
+        assertThat(html)
+            .as("un click hecho para 'ver de qué es esta clase' terminaba en un formulario")
+            .doesNotContain("<a th:href=\"@{/horarios/")
+            .contains("grilla-detalle.js");
     }
 
     // ------------------------------------------------------------------------
