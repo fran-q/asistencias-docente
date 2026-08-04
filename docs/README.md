@@ -26,6 +26,8 @@ Todo el material escrito del sistema de asistencias está acá, en una sola carp
 
 **Si nunca trabajaste con Spring Boot** → [4-arquitectura/spring-boot-en-este-proyecto.md](./4-arquitectura/spring-boot-en-este-proyecto.md). Explica qué hace el framework por vos, dónde está aplicado en este código y cómo defender esas decisiones. Con diagramas y un glosario al final.
 
+**Si querés saber cómo se comporta la interfaz** → [7-informes/revision-ui-ux.md](./7-informes/revision-ui-ux.md). Qué se probó en el navegador, qué problemas aparecieron y cuáles son incómodos para el día a día de un administrador.
+
 **Si estás preparando la defensa** → [8-defensa/preguntas-de-defensa.md](./8-defensa/preguntas-de-defensa.md). Las preguntas probables, con la respuesta corta, dónde está en el código y qué no conviene decir.
 
 **Si necesitás el detalle técnico** → [4-arquitectura/referencia-tecnica.md](./4-arquitectura/referencia-tecnica.md). Es la radiografía completa: capas, flujos, esquema de base de datos.

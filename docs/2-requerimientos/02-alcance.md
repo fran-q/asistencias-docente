@@ -254,19 +254,22 @@ posteriores:
 | RNF-44 | Expiración del dato biométrico en memoria | ✅ | Barrido programado, 30 min de inactividad |
 | RNF-45 | Tope de filas del reporte | ✅ | 2000 filas, con aviso de truncado |
 | RNF-46 | Validación de formularios antes de enviar | ✅ | Sobre los formularios con novalidate |
+| RNF-47 | Foco visible al navegar con teclado | ✅ | Anillo con :focus-visible, no en el foco de mouse |
+| RNF-48 | Salto al contenido | ✅ | Primer elemento tabulable de cada pantalla |
+| RNF-49 | Opciones no disponibles fuera del árbol de accesibilidad | ✅ | El select de año las quita del DOM |
 
-**Resumen RNF:** 46 implementados · 0 parciales · 0 backlog (total 46).
+**Resumen RNF:** 49 implementados · 0 parciales · 0 backlog (total 49).
 
 ### 4.3. Resumen global
 
 | | Implementado ✅ | Parcial 🟡 | Backlog 🔜 | Total |
 |---|---|---|---|---|
 | Funcionales | 55 | 5 | 1 | 61 |
-| No funcionales | 46 | 0 | 0 | 46 |
-| **Total** | **101** | **5** | **1** | **107** |
+| No funcionales | 49 | 0 | 0 | 49 |
+| **Total** | **104** | **5** | **1** | **110** |
 
-**Cobertura del hito 1:** 101 de 107 requerimientos completamente
-implementados (≈94%), 5 parcialmente cubiertos (≈5%) y 1 en backlog
+**Cobertura del hito 1:** 104 de 110 requerimientos completamente
+implementados (≈95%), 5 parcialmente cubiertos (≈4%) y 1 en backlog
 planificado (≈1%).
 
 > La detección de vivacidad (antes RF-38) se retiró del alcance: excede el hito y

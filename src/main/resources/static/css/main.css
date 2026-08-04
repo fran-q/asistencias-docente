@@ -546,7 +546,17 @@ code {
 
 .form-group input:focus,
 .form-group select:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.filtro__texto:focus,
+.filtro__estado:focus,
+.modal__campo-input:focus { border-color: var(--primary); }
+
+/* :focus-visible se reserva el anillo; aca solo se limpia el del mouse. El borde
+   azul es refuerzo, no el indicador: de gris a azul hay muy poco contraste entre
+   estados y con daltonismo no se distingue. */
+.form-group input:focus:not(:focus-visible),
+.form-group select:focus:not(:focus-visible),
+.form-group textarea:focus:not(:focus-visible) {
     outline: none;
     border-color: var(--primary);
 }
@@ -1037,8 +1047,8 @@ code {
     font-size: 0.9rem;
     font-family: inherit;
 }
-.filtro__texto:focus,
-.filtro__estado:focus {
+.filtro__texto:focus:not(:focus-visible),
+.filtro__estado:focus:not(:focus-visible) {
     outline: none;
     border-color: var(--primary);
 }
@@ -1449,7 +1459,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     font-size: 0.95rem;
     font-family: inherit;
 }
-.modal__campo-input:focus {
+.modal__campo-input:focus:not(:focus-visible) {
     outline: none;
     border-color: var(--primary);
 }
