@@ -49,8 +49,8 @@
                             <td><code th:text="${m.codigo}">COD</code></td>
                             <td th:text="${m.nombre}">Nombre materia</td>
                             <td>
-                                <code th:text="${m.carreraCodigo}">CARR</code>
-                                <small class="text-muted" th:text="${m.carreraNombre}">Nombre</small>
+                                <span class="celda-recortada" th:text="${m.carreraNombre}"
+                                      th:title="${m.carreraNombre}">Nombre de la carrera</span>
                                 <span th:unless="${m.carreraActiva}" class="badge badge--danger" style="margin-left:6px;">Carrera inactiva</span>
                             </td>
                             <td th:text="|${m.anio}°|">1°</td>

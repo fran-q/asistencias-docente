@@ -51,8 +51,9 @@
                                 <span th:unless="${c.materiaActiva}" class="badge badge--danger" style="margin-left:6px;">Materia inactiva</span>
                             </td>
                             <td>
-                                <code th:if="${c.carreraCodigo}" th:text="${c.carreraCodigo}">CARR</code>
-                                <span th:unless="${c.carreraCodigo}" class="text-muted">—</span>
+                                <span th:if="${c.carreraNombre}" class="celda-recortada"
+                                      th:text="${c.carreraNombre}" th:title="${c.carreraNombre}">Carrera</span>
+                                <span th:unless="${c.carreraNombre}" class="text-muted">—</span>
                             </td>
                             <td>
                                 <span th:if="${c.docenteNombre}" th:text="${c.docenteNombre}">Apellido, Nombre</span>
