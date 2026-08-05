@@ -13,22 +13,25 @@
 (function (window, document) {
     'use strict';
 
-    // Cada seccion: su etiqueta, el grupo del menu al que pertenece, y como se
-    // llama cada paso siguiente. El grupo NO es un enlace: es donde vive la
-    // pantalla dentro del menu, y sirve para ubicarse aunque no se pueda clickear.
+    // Cada seccion: su etiqueta y el grupo del menu al que pertenece. El grupo AHORA
+    // es un enlace: cada uno tiene su pantalla, y a donde lleva lo decide el servidor
+    // segun el rol --para el ADMIN, Personal va derecho a Docentes--. La clave del
+    // grupo es la que se busca en los data-* del contenedor.
     var MAPA = {
-        'carreras':   { etiqueta: 'Carreras',           grupo: 'Académico' },
-        'materias':   { etiqueta: 'Materias',           grupo: 'Académico' },
-        'comisiones': { etiqueta: 'Comisiones',         grupo: 'Académico' },
-        'horarios':   { etiqueta: 'Horarios',           grupo: 'Académico' },
-        'grilla':     { etiqueta: 'Grilla semanal',     grupo: 'Académico' },
-        'asistencias':{ etiqueta: 'Listado del día',    grupo: 'Asistencias' },
-        'asistencia': { etiqueta: 'Asistencias',        grupo: 'Asistencias' },
-        'reportes':   { etiqueta: 'Reportes',           grupo: 'Asistencias' },
-        'docentes':   { etiqueta: 'Docentes',           grupo: 'Personal' },
-        'usuarios':   { etiqueta: 'Usuarios',           grupo: 'Personal' },
-        'mi-institucion': { etiqueta: 'Mi institución', grupo: 'Personal' },
-        'mi-cuenta':  { etiqueta: 'Mi cuenta',          grupo: null }
+        'carreras':   { etiqueta: 'Carreras',           grupo: 'Académico',   clave: 'academico' },
+        'materias':   { etiqueta: 'Materias',           grupo: 'Académico',   clave: 'academico' },
+        'comisiones': { etiqueta: 'Comisiones',         grupo: 'Académico',   clave: 'academico' },
+        'horarios':   { etiqueta: 'Horarios',           grupo: 'Académico',   clave: 'academico' },
+        'grilla':     { etiqueta: 'Grilla semanal',     grupo: 'Académico',   clave: 'academico' },
+        'academico':  { etiqueta: 'Académico',          grupo: null,          clave: null },
+        'asistencias':{ etiqueta: 'Listado del día',    grupo: 'Asistencias', clave: 'asistencia' },
+        'asistencia': { etiqueta: 'Asistencias',        grupo: 'Asistencias', clave: 'asistencia' },
+        'reportes':   { etiqueta: 'Reportes',           grupo: 'Asistencias', clave: 'asistencia' },
+        'docentes':   { etiqueta: 'Docentes',           grupo: 'Personal',    clave: 'personal' },
+        'usuarios':   { etiqueta: 'Usuarios',           grupo: 'Personal',    clave: 'personal' },
+        'mi-institucion': { etiqueta: 'Mi institución', grupo: 'Personal',    clave: 'personal' },
+        'personal':   { etiqueta: 'Personal',           grupo: null,          clave: null },
+        'mi-cuenta':  { etiqueta: 'Mi cuenta',          grupo: null,          clave: null }
     };
 
     // Ultimo tramo de la ruta: que se esta haciendo sobre el registro.
@@ -76,14 +79,30 @@
             return;
         }
 
+        var nav = cont.closest('.migas');
         var seccion = MAPA[partes[0]];
         var items = [crumb('Inicio', '/', false)];
 
         if (seccion) {
-            // El grupo solo se agrega si aporta algo. En /asistencia/pase el grupo y la
-            // seccion se llaman igual, y la ruta salia "Inicio / Asistencias / Asistencias".
-            if (seccion.grupo && seccion.grupo !== seccion.etiqueta) {
-                items.push(crumb(seccion.grupo, null, false));
+            // El destino del grupo lo pone el servidor porque depende del rol. Si no
+            // viniera --por ejemplo si la barra no se renderizo-- el paso se muestra
+            // igual sin enlace: se pierde el atajo, no la ubicacion.
+            var destino = nav && seccion.clave ? nav.dataset[seccion.clave] : null;
+            var rutaSeccion = '/' + partes[0];
+
+            // El grupo se agrega solo si aporta algo, y hay dos formas de no aportar:
+            //
+            //   1. Que se llame igual que la seccion. En /asistencia/pase la ruta salia
+            //      "Inicio / Asistencias / Asistencias".
+            //   2. Que lleve al MISMO lugar que el paso siguiente. Le pasa al rol ADMIN
+            //      en Personal, que al tener una sola pantalla va derecho a Docentes:
+            //      quedaba "Personal → /docentes / Docentes → /docentes", dos pasos
+            //      distintos para un unico destino.
+            var aportaAlgo = seccion.grupo
+                && seccion.grupo !== seccion.etiqueta
+                && destino !== rutaSeccion;
+            if (aportaAlgo) {
+                items.push(crumb(seccion.grupo, destino || null, false));
             }
             items.push(crumb(seccion.etiqueta, '/' + partes[0], partes.length === 1));
         } else {

@@ -161,7 +161,15 @@
     <!-- Migas de pan. Se arman en el navegador a partir de la URL y del mapa de rutas,
          igual que el resaltado del menu: pedirle a cada controlador que las publique
          seria repetir en veinte lugares algo que ya se puede deducir de la direccion. -->
-    <nav class="migas" aria-label="Ruta de navegación" sec:authorize="isAuthenticated()">
+    <!--
+      Los destinos de cada grupo viajan en data-* porque dependen del ROL, y el script
+      corre en el navegador sin saber quien esta logueado: para el ADMIN, Personal lleva
+      derecho a Docentes; para INSTITUCION, a la pantalla del grupo.
+    -->
+    <nav class="migas" aria-label="Ruta de navegación" sec:authorize="isAuthenticated()"
+         th:attr="data-academico=${destinoAcademico},
+                  data-asistencia=${destinoAsistencia},
+                  data-personal=${destinoPersonal}">
         <ol class="migas__lista" id="migas"></ol>
     </nav>
 
