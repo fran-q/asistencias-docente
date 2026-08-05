@@ -74,15 +74,56 @@
             });
         }
 
+        function abrirGrupo(grupo, boton) {
+            grupo.classList.add('navbar__grupo--abierto');
+            boton.setAttribute('aria-expanded', 'true');
+            // Un solo grupo abierto a la vez: dos submenus superpuestos en la barra
+            // se tapan entre si.
+            cerrarGrupos(grupo);
+        }
+
+        var timerCierre = null;
+
         grupos.forEach(function (grupo) {
             var boton = grupo.querySelector('.navbar__grupo-boton');
+
+            // El desplegable se abre al PASAR EL MOUSE, y el click navega a la pantalla
+            // del grupo. Antes el click hacia las dos cosas, y por eso el grupo no era un
+            // lugar al que se pudiera ir: la miga de pan lo nombraba y no llevaba a nada.
+            //
+            // El boton es un <a> con href, asi que si este script no corre el click sigue
+            // navegando. Lo que se pierde sin JS es el desplegable, no el acceso.
+            grupo.addEventListener('mouseenter', function () {
+                clearTimeout(timerCierre);
+                abrirGrupo(grupo, boton);
+            });
+            // Demora corta al salir: el submenu esta unos pixeles debajo del boton, y sin
+            // ella el puntero lo cierra en el camino de uno al otro.
+            grupo.addEventListener('mouseleave', function () {
+                clearTimeout(timerCierre);
+                timerCierre = setTimeout(function () { cerrarGrupos(null); }, 200);
+            });
+
+            // Con teclado no existe "pasar por encima": la flecha abajo abre el submenu
+            // y desde ahi se tabula. Enter y Espacio quedan para el enlace, que navega.
+            boton.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    abrirGrupo(grupo, boton);
+                    var primero = grupo.querySelector('.navbar__sublink');
+                    if (primero) primero.focus();
+                }
+            });
+
+            // En pantallas chicas el menu es un cajon lateral y no hay hover: ahi el
+            // click tiene que poder abrir el grupo en vez de navegar.
             boton.addEventListener('click', function (e) {
+                if (!document.body.classList.contains('nav-compact')) return;
+                e.preventDefault();
                 e.stopPropagation();
-                var abierto = grupo.classList.toggle('navbar__grupo--abierto');
-                boton.setAttribute('aria-expanded', abierto ? 'true' : 'false');
-                // Un solo grupo abierto a la vez: dos submenus superpuestos en la
-                // barra se tapan entre si.
-                if (abierto) cerrarGrupos(grupo);
+                var abierto = grupo.classList.contains('navbar__grupo--abierto');
+                if (abierto) { cerrarGrupos(null); }
+                else { abrirGrupo(grupo, boton); }
             });
         });
 

@@ -1187,6 +1187,34 @@ code {
 .arco__derechos li > div { display: flex; flex-direction: column; min-width: 14rem; flex: 1; }
 .arco__derechos li span { font-size: 0.85rem; }
 
+/* ============================================================================
+ *  PANTALLA INTERMEDIA DE GRUPO
+ *  Las tarjetas de un grupo del menu. A diferencia de los accesos que se
+ *  sacaron del inicio, aca SI corresponde repetir lo que hay en el menu: esta
+ *  pantalla es ese grupo, no un atajo a otra cosa.
+ * ========================================================================== */
+.seccion__tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space);
+}
+.seccion__tarjeta {
+    margin-bottom: 0;
+    color: inherit;
+    transition: border-color .15s ease, transform .15s ease;
+}
+.seccion__tarjeta:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+.seccion__tarjeta h2 {
+    color: var(--primary);
+    font-size: 1.05rem;
+    margin-bottom: var(--space-xs);
+}
+.seccion__tarjeta p { margin: 0; font-size: 0.9rem; }
+
 /* Valor que se muestra pero no se edita, dentro de un formulario. Se distingue de
    un input a proposito: si pareciera editable, quien lo intente va a creer que el
    sistema no le respondio. */

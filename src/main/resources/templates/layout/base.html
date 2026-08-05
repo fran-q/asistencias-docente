@@ -88,11 +88,12 @@
             </a>
 
             <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                <a class="navbar__grupo-boton" aria-expanded="false"
+                   th:href="@{__${destinoAcademico}__}">
                     <svg th:replace="~{layout/iconos :: libro}"></svg>
                     <span>Académico</span>
                     <svg th:replace="~{layout/iconos :: flecha}"></svg>
-                </button>
+                </a>
                 <div class="navbar__submenu">
                     <a th:href="@{/carreras}"   class="navbar__sublink">Carreras</a>
                     <a th:href="@{/materias}"   class="navbar__sublink">Materias</a>
@@ -103,11 +104,12 @@
             </div>
 
             <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                <a class="navbar__grupo-boton" aria-expanded="false"
+                   th:href="@{__${destinoAsistencia}__}">
                     <svg th:replace="~{layout/iconos :: tilde}"></svg>
                     <span>Asistencias</span>
                     <svg th:replace="~{layout/iconos :: flecha}"></svg>
-                </button>
+                </a>
                 <div class="navbar__submenu">
                     <a th:href="@{/asistencia/pase}" class="navbar__sublink">Pase de asistencia</a>
                     <a th:href="@{/asistencias}"     class="navbar__sublink">Listado del día</a>
@@ -116,11 +118,12 @@
             </div>
 
             <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <button type="button" class="navbar__grupo-boton" aria-expanded="false">
+                <a class="navbar__grupo-boton" aria-expanded="false"
+                   th:href="@{__${destinoPersonal}__}">
                     <svg th:replace="~{layout/iconos :: personas}"></svg>
                     <span>Personal</span>
                     <svg th:replace="~{layout/iconos :: flecha}"></svg>
-                </button>
+                </a>
                 <div class="navbar__submenu">
                     <a th:href="@{/docentes}" class="navbar__sublink">Docentes</a>
                     <a th:href="@{/usuarios}" class="navbar__sublink"

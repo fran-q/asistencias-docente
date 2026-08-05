@@ -41,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -462,6 +463,72 @@ class AjustesPantallasIT {
             .as("un click hecho para 'ver de qué es esta clase' terminaba en un formulario")
             .doesNotContain("<a th:href=\"@{/horarios/")
             .contains("grilla-detalle.js");
+    }
+
+    // ========================================================================
+    //  Pantallas intermedias de cada grupo del menu
+    // ========================================================================
+
+    @Test
+    @DisplayName("La miga 'Asistencias' ahora lleva a una página que existe")
+    void laMigaDeAsistenciasLlevaAAlgo() throws Exception {
+        // Este es el bug que las origino: /asistencia/pase mostraba la miga
+        // "Inicio / Asistencias / Pase de asistencia" y al hacer click en "Asistencias"
+        // se llegaba a una URL sin pantalla detras.
+        mockMvc.perform(get("/asistencia").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Pase de asistencia")))
+            .andExpect(content().string(containsString("Listado del día")))
+            .andExpect(content().string(containsString("Reportes")));
+    }
+
+    @Test
+    @DisplayName("Los tres grupos tienen su pantalla, con lo mismo que el menú")
+    void losTresGruposTienenPantalla() throws Exception {
+        mockMvc.perform(get("/academico").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Carreras")))
+            .andExpect(content().string(containsString("Grilla semanal")));
+
+        mockMvc.perform(get("/personal").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Docentes")))
+            .andExpect(content().string(containsString("Usuarios del sistema")))
+            .andExpect(content().string(containsString("Mi institución")));
+    }
+
+    @Test
+    @DisplayName("Como ADMIN, Personal va derecho a Docentes en vez de a una lista de uno")
+    void personalDeAdminVaDerechoADocentes() throws Exception {
+        // El ADMIN solo ve Docentes en ese grupo: una pantalla intermedia que ofrece una
+        // unica opcion es un click que no decide nada.
+        mockMvc.perform(get("/personal").with(user(principal("ADMIN"))))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/docentes"));
+    }
+
+    @Test
+    @DisplayName("Como INSTITUCIÓN, Personal sí muestra la pantalla intermedia")
+    void personalDeInstitucionMuestraLaPantalla() throws Exception {
+        // Con tres pantallas en el grupo, la intermedia si sirve para elegir.
+        mockMvc.perform(get("/personal").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("El menú apunta a donde corresponde según el rol")
+    void elMenuApuntaSegunElRol() throws Exception {
+        String admin = mockMvc.perform(get("/").with(user(principal("ADMIN"))))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(admin)
+            .as("para el ADMIN, el grupo Personal tiene que llevar directo a Docentes")
+            .contains("href=\"/docentes\"");
+
+        String inst = mockMvc.perform(get("/").with(user(principal("INSTITUCION"))))
+            .andReturn().getResponse().getContentAsString();
+        assertThat(inst)
+            .as("para INSTITUCION, al grupo, que es donde puede elegir")
+            .contains("href=\"/personal\"");
     }
 
     // ------------------------------------------------------------------------

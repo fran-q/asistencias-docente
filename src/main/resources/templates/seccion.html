@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="|${grupo.etiqueta} - Visum|">Sección - Visum</title>
+</head>
+<body>
+    <!--
+      Pantalla intermedia de un grupo del menú. Muestra qué hay adentro sin obligar a abrir
+      el desplegable y, sobre todo, le da destino a la miga de pan de ese grupo, que antes
+      lo nombraba y no llevaba a ningún lado.
+    -->
+    <section class="seccion">
+        <header class="page-header">
+            <h1 th:text="${grupo.etiqueta}">Grupo</h1>
+            <p class="page-header__subtitle" th:text="${grupo.descripcion}">Qué se hace acá.</p>
+        </header>
+
+        <div class="seccion__tarjetas">
+            <a th:each="p : ${pantallas}" th:href="@{${p.ruta()}}" class="card seccion__tarjeta">
+                <h2 th:text="${p.titulo()}">Pantalla</h2>
+                <p class="text-muted" th:text="${p.descripcion()}">Qué se hace ahí.</p>
+            </a>
+        </div>
+    </section>
+</body>
+</html>
