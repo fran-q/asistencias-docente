@@ -60,3 +60,9 @@ desktop.ini
 .env
 .env.local
 
+# Credenciales del entorno local. El repositorio es publico, y una contrasena que
+# entra al historial de git queda ahi para siempre: borrarla despues no sirve,
+# porque sigue estando en los commits anteriores.
+docs/credenciales-locales.txt
+credenciales-locales.txt
+
