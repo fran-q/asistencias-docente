@@ -246,7 +246,7 @@ charset `utf8mb4_unicode_ci`.
 |---|---|---|
 | `carreras` | Programas académicos | UNIQUE (institucion, codigo) |
 | `materias` | Asignaturas | FK carrera + FK `docente_titular_id` (nullable) |
-| `comisiones` | Divisiones de una materia | FK materia + FK `docente_asignado_id` (nullable desde V004), CHECK cupo > 0 |
+| `comisiones` | Divisiones de una materia | FK materia + FK `docente_asignado_id` (nullable desde V004), UNIQUE (`materia_id`, `codigo`). El `cupo` y su CHECK se eliminaron en V010: nada los leía. |
 | `horarios` | Franjas semanales | `dia_semana` (1-7 ISO), `hora_inicio`, `hora_fin`, **`tolerancia_min`** (default 15), vigencia. CHECK hora_fin > hora_inicio |
 
 #### Asistencia

@@ -251,9 +251,14 @@ Aplican a todos los módulos de administración por igual, así que no pertenece
 
 | Categoría | Cantidad |
 |---|---|
-| Requerimientos funcionales (RF) | 55 |
-| Requerimientos no funcionales (RNF) | 37 |
-| **Total** | **92** |
+| Requerimientos funcionales (RF) | 61 |
+| Requerimientos no funcionales (RNF) | 50 |
+| **Total** | **111** |
+
+> Los números son los de las tablas de las secciones 3 y 4 de este mismo
+> documento, contados el 05/08/2026. Venían de la primera versión (55 / 37 / 92)
+> y no se habían actualizado al agregarse RF-39 a RF-65 y RNF-28 a RNF-50
+> durante el hito.
 
 > Los identificadores RF-34 a RF-36 correspondían al módulo de auditoría, que se
 > retiró del alcance del proyecto. No se reutilizan: renumerar rompería las

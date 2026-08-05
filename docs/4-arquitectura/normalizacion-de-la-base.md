@@ -173,8 +173,10 @@ existe.
 > una condición que se consulta en cada registro de rostro; y la comisión guardada en la
 > asistencia para no hacer un JOIN en el reporte.
 >
-> La tercera es la más débil: si un horario cambia de comisión, las asistencias viejas
-> quedarían apuntando a la anterior. Lo tengo identificado."
+> La tercera era la más débil: si un horario cambiaba de comisión, las asistencias
+> viejas quedaban apuntando a la anterior. Lo cerré prohibiendo ese cambio en
+> `HorarioService`: para mover una clase hay que dar de baja el horario y crear uno
+> nuevo. La redundancia quedó, el riesgo no."
 
 Esa respuesta vale más que decir "sí, está normalizada", porque demuestra que sabés dónde
 están los costos de cada decisión.

@@ -66,7 +66,6 @@ classDiagram
     class Comision {
         Long id
         String codigo
-        Integer cupo
         Boolean activo
     }
     class Horario {
