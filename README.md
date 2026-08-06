@@ -37,10 +37,6 @@ de administrador y técnico, changelog por sprint.
 
 ```
 asistencias/
-├── docs/                              ← documentación versionada
-│   ├── adr/                           (decisiones arquitectónicas)
-│   ├── 5-diagramas/                   (diagramas en Mermaid)
-│   └── legal/                         (textos de consentimiento)
 ├── src/
 │   ├── main/
 │   │   ├── java/edu/cent35/asistencias/
@@ -72,25 +68,32 @@ asistencias/
 | **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ✅ |
 | **S6** | 19-jun a 24-jun | Cierre: reportes CSV + diagramas UML + manuales + changelog | ✅ |
 
-Detalle completo en [la guía del proyecto](docs/1-catedra/Guia%20del%20proyecto.docx).
+Detalle completo en la guía del proyecto (`Documentacion/1-catedra/`).
 
 ## Documentación
 
-Todo el material escrito vive en **[`docs/`](docs/)**, organizado por tipo. Empezá por su
-[índice](docs/README.md), que explica qué hay en cada carpeta y por dónde conviene entrar
-según lo que necesites.
+**No está en este repositorio.** Todo el material escrito vive en la carpeta
+`Documentacion/`, un nivel arriba de acá, junto al proyecto.
 
-| | Carpeta | Qué encontrás |
-|---|---|---|
-| 📄 | [1-catedra](docs/1-catedra) | Guía, requerimientos y diagrama de BD originales |
-| 📋 | [2-requerimientos](docs/2-requerimientos) | Alcance, casos de uso, DFD y DER |
-| ⚖️ | [3-legal](docs/3-legal) | Consentimiento biométrico y Ley 25.326 |
-| 🏛️ | [4-arquitectura](docs/4-arquitectura) | Los 9 ADR, referencia técnica y deuda técnica |
-| 📊 | [5-diagramas](docs/5-diagramas) | Diagramas en Mermaid, se ven directo en GitHub |
-| 📘 | [6-manuales](docs/6-manuales) | Manual del administrador y manual técnico |
-| 📈 | [7-informes](docs/7-informes) | Correcciones y protocolo de calibración |
-| 🎬 | [8-defensa](docs/8-defensa) | Apuntes de estudio y guion del video |
-| 🖨️ | [9-imprimibles](docs/9-imprimibles) | Versiones PDF listas para imprimir |
+Se sacó del repositorio a propósito: se trabaja en un solo lugar, y el push deja de
+arrastrar PDF y documentos de Word que cambian enteros en cada guardada aunque se toque
+una coma. El historial anterior a agosto de 2026 la conserva.
+
+```
+Documentacion/
+├── 1-catedra/          Guía, requerimientos y diagrama de BD originales de la cátedra
+├── 2-requerimientos/   Requerimientos, alcance, casos de uso, DFD y DER
+├── 3-legal/            Consentimiento biométrico y Ley 25.326
+├── 4-arquitectura/     Los 14 ADR, referencia técnica y deuda técnica
+├── 5-diagramas/        Diagramas en Mermaid
+├── 6-manuales/         Manual del administrador y manual técnico
+├── 7-informes/         Correcciones, calibración del umbral y revisión de UI/UX
+├── 8-defensa/          Apuntes, preguntas del tribunal y guiones
+└── 9-imprimibles/      Versiones PDF listas para imprimir
+```
+
+Su índice es `Documentacion/README.md`, que explica por dónde entrar según lo que
+necesites.
 
 Además: [CHANGELOG por sprint](CHANGELOG.md).
 

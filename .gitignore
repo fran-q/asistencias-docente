@@ -60,13 +60,16 @@ desktop.ini
 .env
 .env.local
 
+# La documentacion se trabaja fuera del repositorio, en la carpeta Documentacion/
+# del proyecto (un nivel arriba de este). Se saco de aca para tener un solo lugar
+# donde editarla y para que el push no arrastre PDF y Word que cambian enteros
+# en cada guardada. La regla queda por si algo vuelve a generarse en docs/.
+docs/
+
 # Credenciales del entorno local. El repositorio es publico, y una contrasena que
 # entra al historial de git queda ahi para siempre: borrarla despues no sirve,
 # porque sigue estando en los commits anteriores.
-docs/credenciales-locales.txt
 credenciales-locales.txt
-
-docs/datos-de-prueba-cent35.txt
+credenciales_proyecto.txt
 datos-de-prueba-cent35.txt
-docs/datos-de-prueba-cent35.docx
 datos-de-prueba-cent35.docx

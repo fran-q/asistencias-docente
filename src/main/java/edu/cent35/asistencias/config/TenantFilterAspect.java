@@ -15,7 +15,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * Activa el filtro de Hibernate "tenant" en los beans @Service, para que toda query contra
  * entidades tenant-scoped agregue sola su WHERE institucion_id. El pointcut apunta a la
  * anotación y no a un nombre de paquete, porque reorganizar los paquetes ya lo dejó
- * silenciosamente inactivo una vez (TD-007, ver docs/TECH_DEBT.md).
+ * silenciosamente inactivo una vez (TD-007, ver Documentacion/4-arquitectura/TECH_DEBT.md).
  */
 @Aspect
 @Component

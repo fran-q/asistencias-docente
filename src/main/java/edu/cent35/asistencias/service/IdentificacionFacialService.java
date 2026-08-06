@@ -66,7 +66,7 @@ public class IdentificacionFacialService {
     private long minutosInactividad;
 
     // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una linea
-    // CALIBRACION con distancia y tiempos, que es la fuente de docs/calibracion-umbral.md.
+    // CALIBRACION con distancia y tiempos, que es la fuente de Documentacion/7-informes/calibracion-umbral.md.
     @Transactional(readOnly = true)
     public IdentificacionResultadoDto identificar(byte[] imagenBytes) {
         Long tenantId = TenantContext.getRequired();
