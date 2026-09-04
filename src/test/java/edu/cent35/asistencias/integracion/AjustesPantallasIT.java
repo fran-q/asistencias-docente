@@ -655,6 +655,66 @@ class AjustesPantallasIT {
             .contains("Nombre corto o siglas");
     }
 
+    // ========================================================================
+    //  Umbral de separacion de bloques (RF-76)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Mi institución deja configurar el umbral de separación y lo muestra")
+    void miInstitucionMuestraElUmbral() throws Exception {
+        MvcResult r = mockMvc.perform(get("/mi-institucion").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String html = r.getResponse().getContentAsString();
+        assertThat(html)
+            .as("hasta RF-76 el umbral solo se cambiaba por SQL")
+            .contains("umbralSeparacionMin")
+            .contains("Umbral de separación entre clases");
+        assertThat(html)
+            .as("tiene que venir precargado con el valor vigente, no vacío")
+            .contains("value=\"60\"");
+    }
+
+    @Test
+    @DisplayName("Guardar el umbral lo persiste en la institución")
+    void guardarElUmbralLoPersiste() throws Exception {
+        Institucion antes = institucionRepository.findById(tenantId).orElseThrow();
+
+        mockMvc.perform(post("/mi-institucion")
+                .with(user(principal("INSTITUCION"))).with(csrf())
+                .param("nombre", antes.getNombre())
+                .param("cuit", "")
+                .param("umbralSeparacionMin", "30"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/mi-institucion"));
+
+        assertThat(institucionRepository.findById(tenantId).orElseThrow().getUmbralSeparacionMin())
+            .isEqualTo((short) 30);
+    }
+
+    @Test
+    @DisplayName("Un umbral fuera de rango se rechaza en el formulario, no en la base")
+    void umbralFueraDeRangoSeRechazaEnElFormulario() throws Exception {
+        // El CHECK ck_instituciones_umbral_separacion de V019 no existe en H2, asi que este
+        // test no lo prueba: prueba que la validacion del DTO frena el valor ANTES de llegar
+        // a la base. Es justamente lo que evita que el limite se manifieste como un error de
+        // integridad ilegible en vez de un mensaje al lado del campo.
+        Institucion antes = institucionRepository.findById(tenantId).orElseThrow();
+
+        mockMvc.perform(post("/mi-institucion")
+                .with(user(principal("INSTITUCION"))).with(csrf())
+                .param("nombre", antes.getNombre())
+                .param("cuit", "")
+                .param("umbralSeparacionMin", "300"))
+            .andExpect(status().isOk())          // se queda en el formulario, no redirige
+            .andExpect(content().string(containsString("240")));
+
+        assertThat(institucionRepository.findById(tenantId).orElseThrow().getUmbralSeparacionMin())
+            .as("el valor rechazado no se tiene que haber guardado")
+            .isEqualTo(antes.getUmbralSeparacionMin());
+    }
+
     // ------------------------------------------------------------------------
 
     private UsuarioAutenticado principal(String rol) {

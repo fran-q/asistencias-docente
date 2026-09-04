@@ -126,7 +126,7 @@ reporte.
 |---|---|---|---|
 | RF-74 | Registro de la salida por reconocimiento facial | ✅ | `PaseAsistenciaService.pasar` → `BloquePresenciaService.registrar`; `POST /asistencia/pase/marcar` |
 | RF-75 | Bloque de presencia | ✅ | `ResolutorDeBloquesService.agrupar`, `BloqueDeHorarios`, `BloquePresenciaService`, tabla `bloques_presencia` (V019) |
-| RF-76 | Umbral de separación por institución | 🟡 | `instituciones.umbral_separacion_min` (V019), leído por `ResolutorDeBloquesService`. **Falta**: pantalla para configurarlo; hoy solo se cambia por SQL |
+| RF-76 | Umbral de separación por institución | ✅ | `instituciones.umbral_separacion_min` (V019), leído por `ResolutorDeBloquesService`. Se configura en `/mi-institucion` (sección "Registro de presencia"), solo rol INSTITUCION |
 | RF-77 | Permanencia mínima entre entrada y salida | ✅ | `BloquePresenciaService`, `app.asistencia.permanencia-minima-min` (10) |
 | RF-78 | Clasificación de la salida | ✅ | `Horario.salidaEnHora`, `BloquePresenciaService.clasificarSalida`, columna `estado_salida` |
 | RF-79 | Aviso de salidas pendientes | ✅ | `PanelInicioService.pendientes` los anuncia **primero** (son lo único que hay que resolver hoy), con enlace a `/asistencias/bloques/pendientes` |

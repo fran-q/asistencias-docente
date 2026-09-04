@@ -48,6 +48,17 @@ public class MiInstitucionService {
         inst.setEmailContacto(blankToNull(dto.getEmailContacto()));
         inst.setTelefonoContacto(blankToNull(dto.getTelefonoContacto()));
 
+        // El umbral se registra aparte cuando cambia (RF-76). No es un dato de contacto: decide
+        // qué clases quedan dentro del mismo bloque de presencia, y por lo tanto qué acredita el
+        // sistema. Si mañana un reporte no cuadra, el valor viejo tiene que estar en algún lado.
+        Short umbralAnterior = inst.getUmbralSeparacionMin();
+        Short umbralNuevo = dto.getUmbralSeparacionMin();
+        if (!java.util.Objects.equals(umbralAnterior, umbralNuevo)) {
+            log.info("RF-76: umbral de separacion de la institucion id={} pasa de {} a {} minutos",
+                     tenantId, umbralAnterior, umbralNuevo);
+        }
+        inst.setUmbralSeparacionMin(umbralNuevo);
+
         Institucion saved = institucionRepository.save(inst);
         log.info("Institucion id={} actualizada por superadmin", tenantId);
         return saved;

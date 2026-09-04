@@ -4,7 +4,10 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.validacion.CuitValido;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -51,6 +54,17 @@ public class InstitucionFormDto {
              message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefonoContacto;
 
+    /**
+     * Minutos de hueco entre clases que las mantienen en el mismo bloque de presencia (RF-76).
+     * Los límites son los mismos que el CHECK {@code ck_instituciones_umbral_separacion} de
+     * V019: si acá se aflojaran, el guardado fallaría con un error de integridad en vez de un
+     * mensaje que la persona pueda leer y corregir.
+     */
+    @NotNull(message = "El umbral de separación es obligatorio")
+    @Min(value = 0, message = "El umbral no puede ser negativo")
+    @Max(value = 240, message = "El umbral no puede superar los 240 minutos")
+    private Short umbralSeparacionMin;
+
     // Precarga el formulario con los datos actuales de la institución.
     public static InstitucionFormDto from(Institucion entidad) {
         return InstitucionFormDto.builder()
@@ -59,6 +73,7 @@ public class InstitucionFormDto {
             .direccion(entidad.getDireccion())
             .emailContacto(entidad.getEmailContacto())
             .telefonoContacto(entidad.getTelefonoContacto())
+            .umbralSeparacionMin(entidad.getUmbralSeparacionMin())
             .build();
     }
 }

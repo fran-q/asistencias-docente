@@ -69,6 +69,38 @@
                     </div>
                 </div>
 
+                <hr class="separador">
+                <h2 class="form-seccion">Registro de presencia</h2>
+
+                <div class="form-group">
+                    <label for="umbralSeparacionMin">
+                        Umbral de separación entre clases (minutos) <span class="required">*</span>
+                    </label>
+                    <input type="number" id="umbralSeparacionMin" th:field="*{umbralSeparacionMin}"
+                           min="0" max="240" step="1" required
+                           th:classappend="${#fields.hasErrors('umbralSeparacionMin')} ? 'is-invalid'">
+                    <small class="form-hint">
+                        Cuánto hueco puede haber entre dos clases seguidas del mismo docente para que
+                        sigan contando como una sola permanencia. Con <strong>60</strong>, quien da
+                        clase de 18 a 20 y de 21 a 23 marca una entrada y una salida; con
+                        <strong>30</strong>, marca dos de cada una.
+                    </small>
+                    <small class="form-hint">
+                        Se mide sobre los <strong>horarios de la grilla</strong>, no sobre las pasadas
+                        frente a la cámara. Un valor alto encadena clases que no tienen relación: con
+                        240, quien da a las 08 y vuelve a las 14 queda acreditado como presente todo
+                        el mediodía. El máximo son 240 minutos por esa razón.
+                    </small>
+                    <small class="form-hint">
+                        El cambio rige desde que lo guardás y alcanza a toda la institución. Los
+                        bloques ya cerrados no se recalculan; los que estén abiertos en este momento
+                        se van a cerrar con el umbral nuevo, así que conviene cambiarlo fuera del
+                        horario de clase.
+                    </small>
+                    <span class="form-error" th:if="${#fields.hasErrors('umbralSeparacionMin')}"
+                          th:errors="*{umbralSeparacionMin}">Error umbral</span>
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary" data-texto-enviando="Guardando...">Guardar cambios</button>
                     <a th:href="@{/}" class="btn btn--ghost">Cancelar</a>
