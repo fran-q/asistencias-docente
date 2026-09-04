@@ -21,7 +21,7 @@
                 <dd th:text="${usuario.username}">usuario</dd>
 
                 <dt>Nombre</dt>
-                <dd th:text="${usuario.nombre + ' ' + usuario.apellido}">Nombre Apellido</dd>
+                <dd th:text="${usuario.nombreParaMostrar}">Nombre Apellido</dd>
 
                 <dt>Correo</dt>
                 <dd th:text="${usuario.email}">correo@ejemplo.com</dd>
@@ -48,7 +48,7 @@
             </p>
 
             <form th:action="@{/mi-cuenta/enviar-codigo}" method="post" class="form-inline">
-                <button type="submit" class="btn btn--primary">Enviarme el código</button>
+                <button type="submit" class="btn btn--primary" data-texto-enviando="Enviando...">Enviarme el código</button>
             </form>
 
             <hr>
@@ -67,61 +67,110 @@
                           th:errors="*{codigo}">Error</span>
                 </div>
 
-                <button type="submit" class="btn btn--primary">Verificar</button>
+                <button type="submit" class="btn btn--primary" data-texto-enviando="Verificando...">Verificar</button>
             </form>
         </div>
 
-        <!-- Cambio de la propia contrasena. Se pide la actual porque acá ya hay una sesión
-             abierta: sin ese campo, quien se siente frente a una máquina desatendida puede
-             cambiarle la contraseña al dueño y dejarlo afuera de su cuenta. -->
+        <!--
+          Cambio de la propia contrasena, en tres pasos.
+
+          Antes alcanzaba con escribir la contrasena actual. El problema es que una sesion
+          abierta prueba que ALGUIEN entro con esa contrasena en algun momento, no que quien
+          esta frente a la pantalla ahora sea el dueno: una sesion olvidada abierta alcanzaba
+          para quedarse con la cuenta. Ahora hace falta ademas el codigo que llega al correo,
+          que es lo unico que el sistema sabe que le pertenece.
+
+          Los tres pasos se muestran de a uno. Cual se ve lo decide "pasoPassword", que el
+          controlador manda al redirigir; sin el, se muestra el primero.
+        -->
         <div class="card card--form">
             <h2>Cambiar la contraseña</h2>
 
-            <form th:action="@{/mi-cuenta/password}" th:object="${formPassword}"
-                  method="post" novalidate>
-
-                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
-                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
-                </div>
-
-                <div class="form-group">
-                    <label for="actual">Contraseña actual <span class="required">*</span></label>
-                    <div class="password-input">
-                        <input type="password" id="actual" th:field="*{actual}" required
-                               autocomplete="current-password"
-                               th:classappend="${#fields.hasErrors('actual')} ? 'is-invalid'">
+            <!-- Paso 1: pedir el codigo ------------------------------------------------->
+            <div th:unless="${pasoPassword == 'codigo' or pasoPassword == 'nueva'}">
+                <p class="text-muted">
+                    Para cambiar tu contraseña primero tenés que confirmar que este correo es
+                    tuyo. Te mandamos un código de un solo uso a
+                    <strong th:text="${usuario.email}">tu correo</strong>.
+                </p>
+                <form th:action="@{/mi-cuenta/password/codigo}" method="post">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn--primary" data-texto-enviando="Enviando...">Enviarme el código</button>
                     </div>
-                    <span class="form-error" th:if="${#fields.hasErrors('actual')}"
-                          th:errors="*{actual}">err</span>
+                </form>
+            </div>
+
+            <!-- Paso 2: escribir el codigo ---------------------------------------------->
+            <div th:if="${pasoPassword == 'codigo'}">
+                <p class="text-muted">
+                    Escribí el código que te llegó a
+                    <strong th:text="${usuario.email}">tu correo</strong>. Vence en unos
+                    minutos y sirve una sola vez.
+                </p>
+
+                <div th:if="${errorCodigoPassword}" class="alert alert--error" role="alert">
+                    <p th:text="${errorCodigoPassword}">Error</p>
                 </div>
 
-                <div class="form-group">
-                    <label for="nuevaPassword">Contraseña nueva <span class="required">*</span></label>
-                    <div class="password-input">
-                        <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}" required
-                               minlength="10" autocomplete="new-password"
-                               th:classappend="${#fields.hasErrors('nuevaPassword')} ? 'is-invalid'">
+                <form th:action="@{/mi-cuenta/password/verificar}" method="post" novalidate>
+                    <div class="form-group">
+                        <label for="codigoPassword">Código <span class="required">*</span></label>
+                        <input type="text" id="codigoPassword" name="codigo" required
+                               inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
+                               autocomplete="one-time-code" class="input--codigo">
+                        <small class="form-hint">Seis dígitos.</small>
                     </div>
-                    <small class="form-hint">Al menos 10 caracteres.</small>
-                    <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"
-                          th:errors="*{nuevaPassword}">err</span>
-                </div>
-
-                <div class="form-group">
-                    <label for="confirmacion">Repetir la nueva <span class="required">*</span></label>
-                    <div class="password-input">
-                        <input type="password" id="confirmacion" th:field="*{confirmacion}" required
-                               autocomplete="new-password"
-                               th:classappend="${#fields.hasErrors('confirmacion')} ? 'is-invalid'">
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn--primary" data-texto-enviando="Verificando...">Verificar código</button>
                     </div>
-                    <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
-                          th:errors="*{confirmacion}">err</span>
-                </div>
+                </form>
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn--primary">Cambiar contraseña</button>
-                </div>
-            </form>
+                <form th:action="@{/mi-cuenta/password/codigo}" method="post">
+                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Enviando...">Enviarme otro código</button>
+                </form>
+            </div>
+
+            <!-- Paso 3: la contrasena nueva, dos veces ---------------------------------->
+            <div th:if="${pasoPassword == 'nueva'}">
+                <p class="alert alert--success" role="status">
+                    Código verificado. Ya podés elegir tu contraseña nueva.
+                </p>
+
+                <form th:action="@{/mi-cuenta/password}" th:object="${formPassword}"
+                      method="post" novalidate>
+
+                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                        <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nuevaPassword">Contraseña nueva <span class="required">*</span></label>
+                        <div class="password-input">
+                            <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}" required
+                                   minlength="6" maxlength="20" autocomplete="new-password"
+                                   th:classappend="${#fields.hasErrors('nuevaPassword')} ? 'is-invalid'">
+                        </div>
+                        <small class="form-hint">Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"
+                              th:errors="*{nuevaPassword}">err</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmacion">Repetir la nueva <span class="required">*</span></label>
+                        <div class="password-input">
+                            <input type="password" id="confirmacion" th:field="*{confirmacion}" required
+                                   autocomplete="new-password"
+                                   th:classappend="${#fields.hasErrors('confirmacion')} ? 'is-invalid'">
+                        </div>
+                        <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
+                              th:errors="*{confirmacion}">err</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn--primary" data-texto-enviando="Cambiando...">Cambiar contraseña</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
     </section>

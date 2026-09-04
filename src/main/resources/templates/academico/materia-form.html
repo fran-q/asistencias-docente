@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="${modo == 'crear'} ? 'Nueva materia - Asistencias' : 'Editar materia - Asistencias'">Materia</title>
+    <title th:text="${modo == 'crear'} ? 'Nueva materia - Visum' : 'Editar materia - Visum'">Materia</title>
 </head>
 <body>
     <section class="materias-form">
@@ -89,7 +89,7 @@
                         <option value="">— Sin asignar —</option>
                         <option th:each="d : ${docentes}"
                                 th:value="${d.id}"
-                                th:text="|${d.apellido}, ${d.nombre} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.dni}${!d.activo ? ' [inactivo]' : ''}|">
+                                th:text="|${d.nombreCompleto} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.persona.dni}${!d.activo ? ' [inactivo]' : ''}|">
                             Apellido, Nombre (DNI X)
                         </option>
                     </select>
@@ -99,11 +99,11 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
-                            th:text="${modo == 'crear'} ? 'Crear materia' : 'Guardar cambios'">Guardar</button>
+                            th:text="${modo == 'crear'} ? 'Crear materia' : 'Guardar cambios'" data-texto-enviando="Guardando...">Guardar</button>
                     <a th:href="@{/materias}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
-        <script th:src="@{/js/academico-form.js}" defer></script>
+        <script th:src="@{/js/academico/academico-form.js}" defer></script>
         </div>
 
         <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
@@ -115,7 +115,7 @@
                                 ${materia.activo}, 'Activa', 'Inactiva',
                                 ${materia.creadoEn}, ${materia.actualizadoEn}, ~{})}"></div>
         </th:block>
-        <script th:src="@{/js/select-buscable.js}" defer></script>
+        <script th:src="@{/js/comun/select-buscable.js}" defer></script>
     </section>
 </body>
 </html>

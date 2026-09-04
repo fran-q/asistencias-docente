@@ -3,6 +3,7 @@ package edu.cent35.asistencias.service;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.AsistenciaManual;
+import edu.cent35.asistencias.model.BloquePresencia;
 import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
@@ -47,9 +48,10 @@ import java.util.Set;
 /**
  * Registra las asistencias del docente, sea por reconocimiento facial o por carga manual
  * (RF-17 a RF-21). Una marca automática solo entra si el docente tiene una clase corriendo
- * dentro de la ventana [hora_inicio - tolerancia, hora_fin]: antes del inicio queda PRESENTE
- * y a partir del inicio TARDE; es idempotente por (docente, horario, fecha) y siempre valida
- * que el docente pertenezca al tenant actual.
+ * dentro de la ventana [hora_inicio - tolerancia, hora_fin], y queda PRESENTE mientras la
+ * llegada entre en la tolerancia del horario —hacia los dos lados del inicio, ADR-0018— o
+ * TARDE después; es idempotente por (docente, horario, fecha) y siempre valida que el
+ * docente pertenezca al tenant actual.
  */
 @Service
 @RequiredArgsConstructor
@@ -165,22 +167,113 @@ public class AsistenciaService {
         }
     }
 
-    // Carga manual por un admin (RF-22 a RF-24): crea la marca y su detalle con motivo y autor.
+    /**
+     * Registra la asistencia de una clase que quedó cubierta por un bloque de presencia
+     * (RF-81), y la deja apuntando a ese bloque.
+     *
+     * <p><b>El estado sale de {@code horaLlegada}, y por eso no se pasa por parámetro.</b> En
+     * la clase donde el docente entró, esa hora es el momento real de la marca, así que puede
+     * dar TARDE. En las clases siguientes del mismo bloque se pasa su propia
+     * {@code hora_inicio}: el docente ya estaba adentro cuando empezaron, y la continuidad del
+     * bloque es lo que acredita su presencia. Con eso el cálculo es uno solo y no hay un caso
+     * especial que después alguien tenga que recordar.
+     *
+     * <p>Es idempotente por (docente, horario, fecha) igual que {@link #marcarAutomatica}: si
+     * la clase ya tenía marca —porque el docente la registró por su cuenta, porque la cargó un
+     * admin o porque el job ya pasó— se devuelve la que estaba y no se pisa nada.
+     */
+    @Transactional
+    public Asistencia imputarDelBloque(BloquePresencia bloque, Horario horario,
+                                       LocalTime horaLlegada) {
+        Long docenteId = bloque.getDocente().getId();
+        LocalDate fecha = bloque.getFecha();
+
+        Optional<Asistencia> existente = asistenciaRepository
+            .findByDocenteIdAndHorarioIdAndFecha(docenteId, horario.getId(), fecha);
+        if (existente.isPresent()) {
+            return existente.get();
+        }
+
+        Asistencia asistencia = Asistencia.builder()
+            .docente(bloque.getDocente())
+            .comision(horario.getComision())
+            .horario(horario)
+            .bloque(bloque)
+            .fecha(fecha)
+            .horaRegistrada(horaLlegada.withNano(0))
+            .estado(calcularEstado(horario, horaLlegada))
+            .metodo(MetodoAsistencia.AUTOMATICO)
+            .modeloFacial(bloque.getModeloFacialEntrada())
+            .confianza(bloque.getConfianzaEntrada())
+            .build();
+        asistencia.setInstitucionId(bloque.getInstitucionId());
+
+        try {
+            Asistencia guardada = asistenciaRepository.saveAndFlush(asistencia);
+            log.info("Asistencia imputada del bloque {}: id={}, docente={}, horario={}, estado={}",
+                     bloque.getId(), guardada.getId(), docenteId, horario.getId(),
+                     guardada.getEstado());
+            return guardada;
+        } catch (DataIntegrityViolationException ex) {
+            // Carrera con el job de ausencias o con una carga manual: el UNIQUE de la base la
+            // resolvio. Releemos y devolvemos la que quedo.
+            log.info("Imputacion descartada por marca concurrente: docente={}, horario={}, fecha={}",
+                     docenteId, horario.getId(), fecha);
+            return asistenciaRepository
+                .findByDocenteIdAndHorarioIdAndFecha(docenteId, horario.getId(), fecha)
+                .orElseThrow(() -> ex);
+        }
+    }
+
+    /**
+     * Carga manual por un administrador (RF-22 a RF-24).
+     *
+     * <p><b>La hora no se elige: la pone el sistema.</b> Es el momento en que el
+     * administrador está cargando el registro, no un dato que se tipea. Dejarlo abierto
+     * permitía escribir cualquier horario —incluso uno fuera de la franja de la clase— y
+     * convertía un registro administrativo en algo que dice lo que quien lo carga quiera
+     * que diga. Lo que se está asentando es "yo, tal administrador, a esta hora, declaro
+     * que este docente estuvo o no estuvo en esta clase". Esa es la afirmación real, y
+     * ésa es la que queda registrada.
+     *
+     * <p><b>El docente tiene que ser el de la comisión.</b> Antes se elegían el docente y
+     * el horario por separado, así que nada impedía marcarle asistencia a un docente en la
+     * clase de otro. La clase la dicta quien está asignado a esa comisión, y punto.
+     *
+     * <p>El motivo es obligatorio y sale de un catálogo: es lo que después permite contar
+     * cuántas cargas manuales hubo por falla de cámara y cuántas por otra cosa.
+     */
     @Transactional
     public Asistencia marcarManual(Long docenteId, Long horarioId, java.time.LocalDate fecha,
-                                   LocalTime horaRegistrada, EstadoAsistencia estado,
+                                   EstadoAsistencia estado,
                                    Short motivoId, String detalleAdicional,
                                    Long usuarioActualId) {
         Long tenantId = TenantContext.getRequired();
         Docente docente = obtenerDocenteValidado(docenteId, tenantId);
         Horario horario = obtenerHorarioValidado(horarioId, tenantId);
 
+        // La hora del asiento es AHORA: es cuando el administrador lo declara.
+        LocalTime horaRegistrada = LocalTime.now();
+
         if (estado == null) {
             throw new IllegalArgumentException("Hay que indicar el estado de la asistencia.");
         }
-        if (horaRegistrada == null) {
-            throw new IllegalArgumentException("Hay que indicar la hora.");
+
+        // El docente tiene que ser el asignado a la comision de ese horario.
+        Docente asignado = horario.getComision().getDocenteAsignado();
+        if (asignado == null) {
+            throw new IllegalArgumentException(
+                "La comisión '" + horario.getComision().getCodigo() + "' no tiene docente "
+                + "asignado, así que no se le puede cargar asistencia a nadie. Asignale un "
+                + "docente primero.");
         }
+        if (!asignado.getId().equals(docenteId)) {
+            throw new IllegalArgumentException(
+                "Esa clase la dicta " + asignado.getNombreCompleto() + ", no "
+                + docente.getNombreCompleto() + ". Elegí una clase de la comisión que tiene "
+                + "asignado este docente.");
+        }
+
         if (fecha == null || fecha.isAfter(java.time.LocalDate.now())) {
             throw new IllegalArgumentException("La fecha no puede ser futura.");
         }
@@ -296,7 +389,7 @@ public class AsistenciaService {
 
         // 1) Asistencias realmente persistidas para esa fecha.
         List<AsistenciaListItemDto> resultado = new ArrayList<>();
-        List<Asistencia> persistidas = asistenciaRepository.findDelDia(fecha);
+        List<Asistencia> persistidas = asistenciaRepository.findDelDia(TenantContext.getRequired(), fecha);
         for (Asistencia a : persistidas) {
             resultado.add(AsistenciaListItemDto.from(a));
         }
@@ -377,15 +470,31 @@ public class AsistenciaService {
         return Math.abs(java.time.Duration.between(desde, hasta).toMinutes());
     }
 
-    // PRESENTE hasta la hora de inicio inclusive (la tolerancia permite llegar antes), TARDE después.
+    /**
+     * PRESENTE mientras la llegada entre en la tolerancia del horario, TARDE después.
+     *
+     * <p><b>Cambió en ADR-0018.</b> Antes clasificaba TARDE apenas pasaba {@code hora_inicio}
+     * y la tolerancia solo servía para llegar antes; ahora perdona hacia los dos lados, que
+     * es lo que dicen el RF-19, el glosario y el javadoc de {@link Horario}. Con tolerancia
+     * 15, llegar 18:05 a una clase de las 18:00 pasa de TARDE a PRESENTE.
+     *
+     * <p>Las marcas anteriores al cambio conservan el estado con el que se guardaron: no se
+     * recalcula el histórico.
+     */
     private EstadoAsistencia calcularEstado(Horario h, LocalTime ahora) {
-        return ahora.isAfter(h.getHoraInicio())
-            ? EstadoAsistencia.TARDE
-            : EstadoAsistencia.PRESENTE;
+        return h.llegadaEnHora(ahora)
+            ? EstadoAsistencia.PRESENTE
+            : EstadoAsistencia.TARDE;
     }
 
-    // Pasa la distancia LBPH (menor = mejor) a un score 0-1 (mayor = mejor) contra el umbral.
-    private BigDecimal distanciaToConfianza(double distancia) {
+    /**
+     * Pasa la distancia LBPH (menor = mejor) a un score 0-1 (mayor = mejor) contra el umbral.
+     *
+     * <p>Es público porque {@code BloquePresenciaService} guarda la misma clase de score para
+     * la entrada y la salida del bloque, y la conversión tiene que ser una sola: es una
+     * decisión documentada (TD-004, ADR-0008), no una cuenta suelta que cada quien repite.
+     */
+    public BigDecimal distanciaToConfianza(double distancia) {
         if (umbralDistancia <= 0) return BigDecimal.ZERO;
         double score = Math.max(0.0, 1.0 - (distancia / umbralDistancia));
         score = Math.min(1.0, score);

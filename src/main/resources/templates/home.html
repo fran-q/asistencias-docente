@@ -52,8 +52,13 @@
             </div>
 
             <ul class="home__clases" th:unless="${panel.sinClasesAhora()}">
+                <!-- El modificador se concatena en vez de escribir las dos clases enteras:
+                     dos '__' en una misma expresion hacen que Thymeleaf tome lo del medio
+                     como preprocesado -es la sintaxis con la que el menu de base.html arma su
+                     href- y el render explota con un ParseException. Con un solo par de
+                     guiones bajos no hay nada que abrir y cerrar, asi que no se dispara. -->
                 <li th:each="c : ${panel.enCurso()}" class="home__clase"
-                    th:classappend="${c.marcada()} ? 'home__clase--ok' : 'home__clase--falta'">
+                    th:classappend="'home__clase--' + (${c.marcada()} ? 'ok' : 'falta')">
                     <span class="home__clase-hora"
                           th:text="${#temporals.format(c.horaInicio(), 'HH:mm')} + '–'
                                  + ${#temporals.format(c.horaFin(), 'HH:mm')}">08:00–10:00</span>

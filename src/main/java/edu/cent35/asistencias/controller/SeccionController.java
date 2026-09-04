@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.service.SeccionesService;
+import edu.cent35.asistencias.service.SeccionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -24,36 +24,36 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequiredArgsConstructor
 public class SeccionController {
 
-    private final SeccionesService seccionesService;
+    private final SeccionService seccionService;
 
     // Carreras, materias, comisiones, horarios y grilla.
     @GetMapping("/academico")
     public String academico(Authentication auth, Model model) {
-        return armar(SeccionesService.Grupo.ACADEMICO, auth, model);
+        return armar(SeccionService.Grupo.ACADEMICO, auth, model);
     }
 
     // Pase, listado del día y reportes.
     @GetMapping("/asistencia")
     public String asistencia(Authentication auth, Model model) {
-        return armar(SeccionesService.Grupo.ASISTENCIA, auth, model);
+        return armar(SeccionService.Grupo.ASISTENCIA, auth, model);
     }
 
     // Docentes y, para el rol INSTITUCION, usuarios y datos de la institución.
     @GetMapping("/personal")
     public String personal(Authentication auth, Model model) {
-        return armar(SeccionesService.Grupo.PERSONAL, auth, model);
+        return armar(SeccionService.Grupo.PERSONAL, auth, model);
     }
 
-    private String armar(SeccionesService.Grupo grupo, Authentication auth, Model model) {
+    private String armar(SeccionService.Grupo grupo, Authentication auth, Model model) {
         // Si en este grupo hay una sola pantalla, se redirige en vez de mostrar la lista.
         // Pasa con Personal para el rol ADMIN, que solo ve Docentes. Tambien cubre el caso
         // de que alguien llegue a /personal escribiendo la URL a mano.
-        String destino = seccionesService.destinoDelGrupo(grupo, auth);
+        String destino = seccionService.destinoDelGrupo(grupo, auth);
         if (!destino.equals("/" + grupo.getRuta())) {
             return "redirect:" + destino;
         }
         model.addAttribute("grupo", grupo);
-        model.addAttribute("pantallas", seccionesService.pantallasDe(grupo, auth));
+        model.addAttribute("pantallas", seccionService.pantallasDe(grupo, auth));
         return "seccion";
     }
 }

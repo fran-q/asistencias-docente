@@ -34,7 +34,7 @@
                        pattern="[0-9]{6}" placeholder="000000">
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full">Crear la institución</button>
+            <button type="submit" class="btn btn--primary btn--full" data-texto-enviando="Creando...">Crear la institución</button>
         </form>
 
         <p class="login-card__ayuda">
@@ -43,6 +43,7 @@
         </p>
     </main>
 
-    <script th:src="@{/js/toast.js}" defer></script>
+    <script th:src="@{/js/comun/toast.js}" defer></script>
+    <script th:src="@{/js/comun/envio-form.js}" defer></script>
 </body>
 </html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Materias de la carrera - Visum</title>
+</head>
+<body>
+    <section class="academico">
+        <header class="page-header">
+            <h1>Materias de <span th:text="${carrera.nombre}">Carrera</span></h1>
+            <p class="page-header__subtitle">
+                El plan tal como está cargado hoy, agrupado por año. La carrera dura
+                <strong th:text="${carrera.duracionAnios}">3</strong>
+                <span th:text="${carrera.duracionAnios == 1} ? 'año' : 'años'">años</span>
+                y ninguna materia puede declarar un año mayor que ése.
+            </p>
+        </header>
+
+        <div class="card">
+            <p>
+                <strong th:text="${#lists.size(materias)}">0</strong> materias activas en el plan.
+                <a th:href="@{/materias/nueva}" class="btn btn--primary btn--sm"
+                   style="margin-left:1rem;">+ Nueva materia</a>
+                <a th:href="@{/carreras}" class="btn btn--ghost btn--sm">Volver a carreras</a>
+            </p>
+        </div>
+
+        <!-- Sin materias todavia: se dice que falta y se ofrece el camino, en vez de
+             mostrar una tabla vacia que no explica nada. -->
+        <div class="card" th:if="${#lists.isEmpty(materias)}">
+            <p class="text-muted">
+                Esta carrera todavía no tiene materias cargadas. Sin materias no se pueden
+                crear comisiones ni horarios, así que es el primer paso.
+                <a th:href="@{/materias/nueva}">Cargá la primera materia</a>.
+            </p>
+        </div>
+
+        <!-- Un recuadro por anio del plan. Los anios salen ordenados porque el controlador
+             agrupa en un TreeMap. -->
+        <div class="card" th:each="grupo : ${porAnio}">
+            <h2>
+                <span th:text="|${grupo.key}° año|">1° año</span>
+                <span class="text-muted" style="font-weight:normal;font-size:0.9rem;"
+                      th:text="|(${#lists.size(grupo.value)} materias)|">(0 materias)</span>
+            </h2>
+
+            <div class="table-scroll">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nombre</th>
+                            <th>Titular</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="m : ${grupo.value}">
+                            <td><code th:text="${m.codigo}">COD</code></td>
+                            <td th:text="${m.nombre}">Materia</td>
+                            <td>
+                                <span th:if="${m.docenteTitular != null}"
+                                      th:text="${m.docenteTitular.nombreCompleto}">Docente</span>
+                                <span th:unless="${m.docenteTitular != null}"
+                                      class="text-muted">— Sin asignar —</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/materias/{id}/comisiones(id=${m.id})}"
+                                   class="btn btn--ghost btn--sm">Ver más</a>
+                                <a th:href="@{/materias/{id}/editar(id=${m.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

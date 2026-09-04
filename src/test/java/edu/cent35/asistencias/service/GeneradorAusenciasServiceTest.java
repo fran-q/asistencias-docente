@@ -1,10 +1,12 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
@@ -18,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -29,6 +32,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.InOrder;
+import static org.mockito.Mockito.inOrder;
 
 /**
  * Cubre el job que materializa las ausencias: que solo tome horarios ya terminados y sin marca,
@@ -46,6 +51,7 @@ class GeneradorAusenciasServiceTest {
     @Mock private InstitucionRepository institucionRepository;
     @Mock private HorarioRepository horarioRepository;
     @Mock private AsistenciaRepository asistenciaRepository;
+    @Mock private BloquePresenciaService bloquePresenciaService;
 
     @InjectMocks private GeneradorAusenciasService service;
 
@@ -141,9 +147,7 @@ class GeneradorAusenciasServiceTest {
 
     // Horario lunes 18:00-20:00 vigente, con docente activo asignado.
     private Horario horarioLunes18a20() {
-        Docente docente = Docente.builder()
-            .id(DOCENTE_ID).dni("12345678").nombre("Juana").apellido("Pérez").activo(true)
-            .build();
+        Docente docente = Docente.builder().persona(DatosDePrueba.personaConDni("12345678", "Juana", "Pérez")).id(DOCENTE_ID).activo(true).build();
         docente.setInstitucionId(TENANT_A);
         Materia materia = Materia.builder().id(80L).codigo("MAT").nombre("Matemática").build();
         materia.setInstitucionId(TENANT_A);
@@ -158,5 +162,24 @@ class GeneradorAusenciasServiceTest {
             .toleranciaMin((short) 15)
                         .activo(true)
             .build();
+    }
+
+    @Test
+    @DisplayName("ejecutar: cierra los bloques ANTES de generar las ausencias")
+    void cierraBloquesAntesDeGenerarAusencias() {
+        // El orden no es indistinto. Cerrar un bloque imputa las clases que el docente cubrio,
+        // y esas ya no son candidatas a ausencia. Al reves, la ausencia se escribiria primero
+        // y la imputacion chocaria contra el UNIQUE: quedaria como ausente una clase que si se
+        // dio, que es exactamente lo que RF-80 quiere evitar.
+        Institucion inst = Institucion.builder().id(TENANT_A).nombre("CENT 35").activo(true).build();
+        when(institucionRepository.findAll()).thenReturn(List.of(inst));
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any())).thenReturn(List.of());
+        ReflectionTestUtils.setField(service, "habilitado", true);
+
+        service.ejecutar();
+
+        InOrder orden = inOrder(bloquePresenciaService, horarioRepository);
+        orden.verify(bloquePresenciaService).cerrarBloquesVencidos(any(), any());
+        orden.verify(horarioRepository).findActivosDelDiaConDocente(any(), any());
     }
 }

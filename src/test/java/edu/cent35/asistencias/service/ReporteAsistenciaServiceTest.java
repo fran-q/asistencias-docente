@@ -1,5 +1,7 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
 import edu.cent35.asistencias.dto.ReporteFiltroDto;
 import edu.cent35.asistencias.model.Asistencia;
@@ -16,6 +18,7 @@ import edu.cent35.asistencias.model.MotivoCargaManual;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,8 +51,13 @@ class ReporteAsistenciaServiceTest {
 
     @InjectMocks private ReporteAsistenciaService service;
 
+    @AfterEach
+    void limpiarTenant() { TenantContext.clear(); }
+
     @BeforeEach
     void setUp() {
+        // El reporte pasa el tenant explicito a la consulta desde ADR-0016.
+        TenantContext.set(1L);
         // El tope viene de application.properties; sin fijarlo, en el test unitario vale 0
         // y todo reporte saldria vacio por truncamiento.
         ReflectionTestUtils.setField(service, "maxFilas", 2000);
@@ -58,7 +66,7 @@ class ReporteAsistenciaServiceTest {
     @Test
     @DisplayName("reporte: rango por defecto = mes actual hasta hoy")
     void reporte_rangoDefault() {
-        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any()))
+        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any(), any()))
             .thenReturn(List.of());
 
         List<AsistenciaReporteRowDto> filas = service.reporte(new ReporteFiltroDto());
@@ -83,7 +91,7 @@ class ReporteAsistenciaServiceTest {
     @DisplayName("reporte: enriquece con motivo manual y justificación")
     void reporte_enriquece() {
         Asistencia a = construirAsistenciaAutomatica();
-        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any()))
+        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any(), any()))
             .thenReturn(List.of(a));
 
         AsistenciaManual manual = AsistenciaManual.builder()
@@ -126,8 +134,7 @@ class ReporteAsistenciaServiceTest {
             .horaFin(LocalTime.of(20, 0))
             .comision(comision)
             .build();
-        Docente docente = Docente.builder()
-            .dni("12345678").nombre("Juana").apellido("Pérez").build();
+        Docente docente = Docente.builder().persona(DatosDePrueba.personaConDni("12345678", "Juana", "Pérez")).build();
 
         return Asistencia.builder()
             .id(1L)

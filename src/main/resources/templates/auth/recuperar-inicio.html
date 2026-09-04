@@ -34,7 +34,7 @@
                 </small>
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full">Enviarme el código</button>
+            <button type="submit" class="btn btn--primary btn--full" data-texto-enviando="Enviando...">Enviarme el código</button>
         </form>
 
         <p class="login-card__ayuda">
@@ -42,6 +42,7 @@
         </p>
     </main>
 
-    <script th:src="@{/js/toast.js}" defer></script>
+    <script th:src="@{/js/comun/toast.js}" defer></script>
+    <script th:src="@{/js/comun/envio-form.js}" defer></script>
 </body>
 </html>

@@ -64,7 +64,7 @@ public class ConstanciaArcoService {
         doc.add(parrafo(institucion + " — Ley 25.326 y Resolución AAIP 255/2022", SUBTITULO, 18));
 
         doc.add(parrafo("Titular del dato", ETIQUETA, 2));
-        doc.add(parrafo(docente.getNombreCompleto() + " — DNI " + docente.getDni()
+        doc.add(parrafo(docente.getNombreCompleto() + " — DNI " + docente.getPersona().getDni()
                         + (docente.getLegajo() != null ? " — Legajo " + docente.getLegajo() : ""),
                         CUERPO, 14));
 
@@ -106,7 +106,7 @@ public class ConstanciaArcoService {
 
     // Nombre de archivo con el DNI, que es como la institución archiva estos papeles.
     public String nombreArchivo(Docente docente) {
-        return "constancia_arco_" + docente.getDni() + ".pdf";
+        return "constancia_arco_" + docente.getPersona().getDni() + ".pdf";
     }
 
     private Paragraph parrafo(String texto, Font fuente, float espacioDespues) {

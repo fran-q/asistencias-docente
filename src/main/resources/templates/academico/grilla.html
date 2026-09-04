@@ -28,6 +28,26 @@
                             th:selected="${c.id == carreraIdSeleccionada}"
                             th:text="|${c.codigo} — ${c.nombre}|">CARR — Nombre</option>
                 </select>
+
+                <!--
+                  Filtro por anio del plan.
+
+                  Sin el, una carrera de tres anios apila las tres cohortes en las mismas
+                  franjas y la grilla deja de servir para lo unico que sirve: ver que esta
+                  libre y que se superpone. "Todos" se conserva porque tambien sirve, para
+                  encontrar a un docente con dos clases a la misma hora en anios distintos.
+
+                  Las opciones se acotan a la duracion de la carrera: ofrecer 5to en una
+                  tecnicatura de tres es invitar a un filtro que no puede devolver nada.
+                -->
+                <label for="anio" style="margin-left:1rem;">Año:</label>
+                <select id="anio" name="anio" onchange="this.form.submit()">
+                    <option value="" th:selected="${anioSeleccionado == null}">Todos</option>
+                    <option th:each="n : ${#numbers.sequence(1, grilla != null ? grilla.duracionAnios : 1)}"
+                            th:value="${n}"
+                            th:selected="${anioSeleccionado != null and anioSeleccionado == n}"
+                            th:text="|${n}° año|">1° año</option>
+                </select>
             </form>
         </div>
 
@@ -39,9 +59,18 @@
 
         <!-- Si hay carrera seleccionada pero NO tiene horarios -->
         <div th:if="${grilla != null and grilla.totalHorarios == 0}" class="card">
-            <p class="text-muted">
+            <!-- Con el filtro de año puesto, "no hay nada" tiene dos causas muy distintas: la
+                 carrera no tiene horarios, o los tiene pero ninguno de ese año. Decir siempre
+                 lo primero manda a cargar horarios que quizá ya existan. -->
+            <p class="text-muted" th:if="${grilla.anioFiltrado == null}">
                 La carrera <strong th:text="${grilla.carreraNombre}">Nombre</strong> no tiene
                 horarios activos cargados todavía.
+            </p>
+            <p class="text-muted" th:unless="${grilla.anioFiltrado == null}">
+                <strong th:text="${grilla.carreraNombre}">Nombre</strong> no tiene horarios
+                activos en <strong th:text="|${grilla.anioFiltrado}° año|">1° año</strong>.
+                Puede que sí tenga en otros: probá con
+                <a th:href="@{/grilla(carreraId=${grilla.carreraId})}">todos los años</a>.
             </p>
             <p><a th:href="@{/horarios/nuevo}">Creá el primer horario</a>.</p>
         </div>
@@ -96,7 +125,7 @@
                 Pasá el mouse por un bloque para ver el detalle.
             </small>
         </p>
-        <script th:src="@{/js/grilla-detalle.js}" defer></script>
+        <script th:src="@{/js/academico/grilla-detalle.js}" defer></script>
 
     </section>
 </body>

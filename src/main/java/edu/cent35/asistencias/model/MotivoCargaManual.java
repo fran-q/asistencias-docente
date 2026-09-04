@@ -1,6 +1,8 @@
 package edu.cent35.asistencias.model;
 
 import jakarta.persistence.Column;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -40,4 +42,22 @@ public class MotivoCargaManual {
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;
+
+    /**
+     * Cuándo se dio de baja este motivo. NULL = sigue vigente.
+     *
+     * <p>Acompaña a {@code activo} por la misma regla que el resto del sistema: saber que algo
+     * está inactivo no dice desde cuándo, y {@code actualizado_en} no sirve porque cambia con
+     * cualquier edición posterior.
+     */
+    @Column(name = "fecha_baja")
+    private LocalDate fechaBaja;
+
+    /**
+     * Cuándo se creó esta fila del catálogo. La escribe la base; la aplicación solo la lee.
+     *
+     * <p>Igual que en {@code roles}: la columna existía desde V012 sin entidad que la mapeara.
+     */
+    @Column(name = "creado_en", insertable = false, updatable = false)
+    private LocalDateTime creadoEn;
 }

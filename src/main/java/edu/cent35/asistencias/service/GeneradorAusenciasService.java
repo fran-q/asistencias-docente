@@ -22,9 +22,10 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Job programado que materializa las ausencias del día (RF-19): por cada horario que ya
- * terminó y cuyo docente no marcó, crea una Asistencia AUSENTE con método AUTOMATICO y
- * hora_registrada = hora_fin, de modo que se pueda justificar y entre en los reportes.
+ * Job programado que cierra el día: primero cierra los bloques de presencia que quedaron sin
+ * marca de salida e imputa lo que cada docente cubrió (RF-79 a RF-81), y recién después
+ * materializa las ausencias de los horarios que nadie marcó (RF-19), con método AUTOMATICO y
+ * hora_registrada = hora_fin, de modo que se puedan justificar y entren en los reportes.
  * Como el scheduler no pasa por TenantInterceptor, itera las instituciones activas seteando
  * y limpiando el TenantContext a mano, y es idempotente: el UNIQUE de la base resuelve la
  * carrera contra un pase facial simultáneo y correrlo dos veces no duplica nada.
@@ -37,6 +38,7 @@ public class GeneradorAusenciasService {
     private final InstitucionRepository institucionRepository;
     private final HorarioRepository horarioRepository;
     private final AsistenciaRepository asistenciaRepository;
+    private final BloquePresenciaService bloquePresenciaService;
 
     @Value("${app.asistencia.ausencias-habilitado:true}")
     private boolean habilitado;
@@ -51,6 +53,7 @@ public class GeneradorAusenciasService {
         LocalDate hoy = LocalDate.now();
         LocalTime ahora = LocalTime.now();
         int totalCreadas = 0;
+        int totalCerrados = 0;
 
         for (Institucion institucion : institucionRepository.findAll()) {
             if (Boolean.FALSE.equals(institucion.getActivo())) continue;
@@ -58,6 +61,11 @@ public class GeneradorAusenciasService {
                 // Propagacion manual del tenant: los hilos del scheduler no
                 // pasan por TenantInterceptor (ver javadoc de TenantContext).
                 TenantContext.set(institucion.getId());
+                // El orden no es indistinto: cerrar los bloques imputa las clases que el
+                // docente efectivamente cubrio, y esas ya no son candidatas a ausencia. Al
+                // reves, la ausencia se escribiria primero y la imputacion chocaria contra el
+                // UNIQUE, dejando como ausente una clase que si se dio.
+                totalCerrados += bloquePresenciaService.cerrarBloquesVencidos(hoy, ahora);
                 totalCreadas += generarParaInstitucion(institucion.getId(), hoy, ahora);
             } catch (RuntimeException ex) {
                 // Una institucion con error no debe frenar a las demas.
@@ -67,8 +75,9 @@ public class GeneradorAusenciasService {
                 TenantContext.clear();
             }
         }
-        if (totalCreadas > 0) {
-            log.info("Job de ausencias: {} ausencia(s) generada(s) en total.", totalCreadas);
+        if (totalCerrados > 0 || totalCreadas > 0) {
+            log.info("Job de cierre del dia: {} bloque(s) cerrado(s) sin marca de salida, "
+                     + "{} ausencia(s) generada(s).", totalCerrados, totalCreadas);
         }
     }
 

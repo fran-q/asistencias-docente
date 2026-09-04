@@ -47,18 +47,25 @@ public class DocenteFormDto {
              message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefono;
 
+    // Viene en true solo cuando el pedido vuelve desde la pantalla de aviso, ya confirmado por
+    // alguien que vio a quien alcanza el cambio. Nunca lo tipea un usuario.
+    private boolean confirmado;
+
     // La fecha de alta no viaja en el formulario: la fija el sistema al crear el docente y
     // despues no se edita. Ver DocenteService.crear.
 
-    // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
+    // Precarga el formulario con los datos actuales, para el modo edición. El formulario sigue
+    // siendo uno solo aunque los datos vengan de dos tablas: quien edita un docente no tiene por
+    // qué saber que su identidad vive en personas y su vínculo en docentes.
     public static DocenteFormDto from(Docente d) {
+        Persona p = d.getPersona();
         return DocenteFormDto.builder()
-            .dni(d.getDni())
+            .dni(p.getDni())
             .legajo(d.getLegajo())
-            .nombre(d.getNombre())
-            .apellido(d.getApellido())
-            .email(d.getEmail())
-            .telefono(d.getTelefono())
+            .nombre(p.getNombre())
+            .apellido(p.getApellido())
+            .email(p.getEmail())
+            .telefono(p.getTelefono())
             .build();
     }
 }

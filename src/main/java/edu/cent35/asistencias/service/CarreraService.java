@@ -49,6 +49,33 @@ public class CarreraService {
     }
 
     // Crea una carrera con código único dentro de la institución.
+    /**
+     * Las materias de una carrera, activas primero.
+     *
+     * <p>Pasa por {@link #buscarPorId} a proposito: esa es la que valida que la carrera sea de
+     * la institucion actual. Consultar las materias directamente por carreraId devolveria las
+     * de otra institucion si alguien prueba identificadores.
+     */
+    @Transactional(readOnly = true)
+    public List<Materia> materiasDe(Long carreraId) {
+        buscarPorId(carreraId);
+        // Solo las activas. Esta pantalla es el plan de estudios tal como se dicta hoy, no
+        // el historial: una materia dada de baja sigue en la base porque hay asistencias
+        // colgando de ella, pero ya no forma parte del plan. Mezclarlas hacia que el plan
+        // creciera con cada correccion y dejara de poder leerse de un vistazo.
+        List<Materia> materias = materiaRepository
+            .findByCarreraIdOrderByActivoDescNombreAsc(carreraId).stream()
+            .filter(m -> Boolean.TRUE.equals(m.getActivo()))
+            .toList();
+        // El docente titular es lazy y la sesion se cierra al salir de este metodo: la
+        // plantilla lo pediria despues y reventaria con LazyInitializationException. Se lo
+        // toca aca, que es donde la sesion todavia esta abierta.
+        for (Materia m : materias) {
+            if (m.getDocenteTitular() != null) m.getDocenteTitular().getNombreCompleto();
+        }
+        return materias;
+    }
+
     @Transactional
     public Carrera crear(String codigo, String nombre, Short duracionAnios) {
         Long tenantId = TenantContext.getRequired();

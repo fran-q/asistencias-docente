@@ -47,9 +47,20 @@ public class GrillaService {
         return carreraRepository.findByActivoTrueOrderByNombreAsc();
     }
 
-    // Construye la grilla con los horarios activos de una carrera.
+    /**
+     * Construye la grilla con los horarios activos de una carrera, opcionalmente acotada a un
+     * año del plan.
+     *
+     * <p><b>Por qué el año.</b> Una carrera de tres años dicta las tres cohortes en las mismas
+     * franjas, así que la grilla completa apila bloques encima de otros y deja de servir para
+     * lo único que sirve una grilla: ver qué está libre y qué se superpone. Filtrando por año
+     * se ve el horario de un curso, que es como se arma en la realidad.
+     *
+     * <p>Con {@code anio} en null se muestran todos, que sigue siendo útil para detectar a un
+     * docente que quedó con dos clases a la misma hora en años distintos.
+     */
     @Transactional(readOnly = true)
-    public GrillaSemanalDto cargarGrillaPara(Long carreraId) {
+    public GrillaSemanalDto cargarGrillaPara(Long carreraId, Short anio) {
         Long tenantId = TenantContext.getRequired();
 
         Carrera carrera = carreraRepository.findById(carreraId)
@@ -62,6 +73,15 @@ public class GrillaService {
 
         List<Horario> horarios = horarioRepository.findActivosPorCarrera(carreraId, tenantId);
 
+        // El filtro por anio se aplica en memoria y no en la consulta a proposito: son los
+        // horarios de UNA carrera, decenas como mucho, y agregar una variante de la query
+        // por un filtro opcional obliga a mantener dos consultas que hacen casi lo mismo.
+        if (anio != null) {
+            horarios = horarios.stream()
+                .filter(h -> anio.equals(h.getComision().getMateria().getAnio()))
+                .toList();
+        }
+
         List<GrillaSemanalDto.GrillaItem> items = new ArrayList<>(horarios.size());
         for (Horario h : horarios) {
             items.add(toGridItem(h));
@@ -73,6 +93,8 @@ public class GrillaService {
             .carreraId(carrera.getId())
             .carreraCodigo(carrera.getCodigo())
             .carreraNombre(carrera.getNombre())
+            .duracionAnios(carrera.getDuracionAnios())
+            .anioFiltrado(anio)
             .totalHorarios(horarios.size())
             .horaMin(GRID_INICIO)
             .horaMax(GRID_FIN)

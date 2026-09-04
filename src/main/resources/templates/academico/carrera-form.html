@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="${modo == 'crear'} ? 'Nueva carrera - Asistencias' : 'Editar carrera - Asistencias'">Carrera</title>
+    <title th:text="${modo == 'crear'} ? 'Nueva carrera - Visum' : 'Editar carrera - Visum'">Carrera</title>
 </head>
 <body>
     <section class="carreras-form">
@@ -58,7 +58,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
-                            th:text="${modo == 'crear'} ? 'Crear carrera' : 'Guardar cambios'">Guardar</button>
+                            th:text="${modo == 'crear'} ? 'Crear carrera' : 'Guardar cambios'" data-texto-enviando="Guardando...">Guardar</button>
                     <a th:href="@{/carreras}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>

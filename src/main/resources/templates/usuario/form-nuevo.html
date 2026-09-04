@@ -7,12 +7,16 @@
 <body>
     <section class="usuarios-form">
         <header class="page-header">
-            <h1>Nuevo usuario</h1>
+            <h1>Nuevo administrador</h1>
             <p class="page-header__subtitle">
-                Creá una cuenta de Institución o de Administrador. La contraseña
-                inicial la elegís vos y conviene que la persona la cambie en su
-                primer ingreso. Antes de poder usar el sistema va a tener que
-                confirmar su correo con el código que le llega.
+                Las cuentas que se crean acá son siempre de <strong>Administrador</strong> y
+                quedan ligadas a esta institución. La cuenta de la institución existe una
+                sola vez y se crea al darla de alta, así que no hay rol para elegir.
+            </p>
+            <p class="page-header__subtitle">
+                La contraseña inicial la elegís vos y conviene que la persona la cambie en su
+                primer ingreso. Antes de poder usar el sistema va a tener que confirmar su
+                correo con el código que le llega.
             </p>
         </header>
 
@@ -48,8 +52,8 @@
                         <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
                     </div>
                     <div class="form-group">
-                        <label for="apellido">Apellido <span class="required">*</span></label>
-                        <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                        <label for="apellido">Apellido</label>
+                        <input type="text" id="apellido" th:field="*{apellido}" maxlength="80"
                                th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
                         <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">err</span>
                     </div>
@@ -60,29 +64,37 @@
                         <label for="password">Contraseña inicial <span class="required">*</span></label>
                         <div class="password-input">
                             <input type="password" id="password" th:field="*{password}" required
-                                   minlength="6" maxlength="60" autocomplete="new-password"
+                                   minlength="6" maxlength="20" autocomplete="new-password"
                                    th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
                             <button type="button" class="password-toggle"
                                     aria-label="Mostrar contraseña"></button>
                         </div>
-                        <small class="form-hint">Mínimo 6 caracteres.</small>
+                        <small class="form-hint">Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</span>
                     </div>
+                    <!--
+                      Repetir la contrasena no es ceremonia: el campo esta enmascarado, asi
+                      que quien la escribe no la ve, y encima es la clave con la que OTRA
+                      persona va a entrar por primera vez. Un error de tipeo no se descubre
+                      aca; se descubre cuando esa persona no puede entrar y nadie sabe si el
+                      problema es la clave o la cuenta.
+                    -->
                     <div class="form-group">
-                        <label for="rol">Rol <span class="required">*</span></label>
-                        <select id="rol" th:field="*{rol}" required
-                                th:classappend="${#fields.hasErrors('rol')} ? 'is-invalid'">
-                            <option value="">Elegí un rol</option>
-                            <option th:each="r : ${roles}" th:value="${r}"
-                                    th:text="${r.name() == 'INSTITUCION'} ? 'Institución' : 'Administrador'">Rol</option>
-                        </select>
-                        <small class="form-hint">Institución administra las cuentas; Administrador no.</small>
-                        <span class="form-error" th:if="${#fields.hasErrors('rol')}" th:errors="*{rol}">err</span>
+                        <label for="confirmacion">Repetir la contraseña <span class="required">*</span></label>
+                        <div class="password-input">
+                            <input type="password" id="confirmacion" th:field="*{confirmacion}" required
+                                   maxlength="60" autocomplete="new-password"
+                                   th:classappend="${#fields.hasErrors('confirmacion')} ? 'is-invalid'">
+                            <button type="button" class="password-toggle"
+                                    aria-label="Mostrar contraseña"></button>
+                        </div>
+                        <small class="form-hint">Tiene que coincidir con la anterior.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}" th:errors="*{confirmacion}">err</span>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn--primary">Crear usuario</button>
+                    <button type="submit" class="btn btn--primary" data-texto-enviando="Creando...">Crear usuario</button>
                     <a th:href="@{/usuarios}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>

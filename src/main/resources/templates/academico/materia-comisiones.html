@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Comisiones de la materia - Visum</title>
+</head>
+<body>
+    <section class="academico">
+        <header class="page-header">
+            <h1>
+                <code th:text="${materia.codigo}">COD</code>
+                <span th:text="${materia.nombre}">Materia</span>
+            </h1>
+            <p class="page-header__subtitle">
+                <span th:text="${materia.carrera.nombre}">Carrera</span> ·
+                <span th:text="${materia.anio}">1</span>° año ·
+                titular
+                <span th:if="${materia.docenteTitular != null}"
+                      th:text="${materia.docenteTitular.nombreCompleto}">Docente</span>
+                <span th:unless="${materia.docenteTitular != null}" class="text-muted">sin asignar</span>
+            </p>
+        </header>
+
+        <div class="card">
+            <p>
+                <span th:text="${#lists.size(comisiones)}">0</span> comisiones cargadas.
+                <a th:href="@{/comisiones/nueva}" class="btn btn--primary btn--sm"
+                   style="margin-left:1rem;">+ Nueva comisión</a>
+                <a th:href="@{/carreras/{id}/materias(id=${materia.carrera.id})}"
+                   class="btn btn--ghost btn--sm">Volver a la carrera</a>
+                <a th:href="@{/materias/{id}/editar(id=${materia.id})}"
+                   class="btn btn--ghost btn--sm">Editar la materia</a>
+            </p>
+        </div>
+
+        <div class="card" th:if="${#lists.isEmpty(comisiones)}">
+            <p class="text-muted">
+                Esta materia todavía no tiene comisiones. Sin comisión no hay horarios, y sin
+                horarios nunca hay una clase en curso contra la cual marcar asistencia.
+                <a th:href="@{/comisiones/nueva}">Creá la primera comisión</a>.
+            </p>
+        </div>
+
+        <!--
+          Un recuadro por comision con sus franjas. Los horarios se muestran acá y no en otra
+          pantalla porque son lo que decide si la comision sirve: una comision sin franjas
+          existe pero no puede recibir ninguna marca.
+        -->
+        <div class="card" th:each="c : ${comisiones}"
+             th:classappend="${!c.activo} ? 'row--inactive'">
+            <h2>
+                Comisión <span th:text="${c.codigo}">A</span>
+                <span th:if="${c.activo}" class="badge badge--success">Activa</span>
+                <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>
+            </h2>
+
+            <dl class="kv">
+                <dt>Docente asignado</dt>
+                <dd>
+                    <span th:if="${c.docenteAsignado != null}"
+                          th:text="${c.docenteAsignado.nombreCompleto}">Docente</span>
+                    <span th:unless="${c.docenteAsignado != null}" class="badge badge--warning">
+                        Sin docente asignado
+                    </span>
+                </dd>
+            </dl>
+
+            <h3 style="margin-top:1rem;">Horarios</h3>
+
+            <p class="text-muted" th:if="${#lists.isEmpty(horariosPorComision.get(c.id))}">
+                Sin horarios cargados. Esta comisión no puede registrar asistencia todavía.
+                <a th:href="@{/horarios/nuevo}">Cargá su primera franja</a>.
+            </p>
+
+            <div class="table-scroll" th:unless="${#lists.isEmpty(horariosPorComision.get(c.id))}">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>Inicio</th>
+                            <th>Fin</th>
+                            <th>Tolerancia</th>
+                            <th>Estado</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="h : ${horariosPorComision.get(c.id)}"
+                            th:classappend="${!h.activo} ? 'row--inactive'">
+                            <td th:text="${h.dia.etiqueta}">Lunes</td>
+                            <td th:text="${#temporals.format(h.horaInicio, 'HH:mm')}">00:00</td>
+                            <td th:text="${#temporals.format(h.horaFin, 'HH:mm')}">00:00</td>
+                            <td>
+                                <span th:text="${h.toleranciaMin}">15</span> min
+                            </td>
+                            <td>
+                                <span th:if="${h.activo}" class="badge badge--success">Activo</span>
+                                <span th:unless="${h.activo}" class="badge badge--danger">Inactivo</span>
+                            </td>
+                            <td class="table__actions">
+                                <a th:href="@{/horarios/{id}/editar(id=${h.id})}"
+                                   class="btn btn--ghost btn--sm">Editar</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <a th:href="@{/comisiones/{id}/editar(id=${c.id})}"
+                   class="btn btn--ghost btn--sm">Editar la comisión</a>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="${modo == 'crear'} ? 'Nuevo docente - Asistencias' : 'Editar docente - Asistencias'">Docente</title>
+    <title th:text="${modo == 'crear'} ? 'Nuevo docente - Visum' : 'Editar docente - Visum'">Docente</title>
 </head>
 <body>
     <section class="docentes-form">
@@ -79,7 +79,7 @@
 
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
-                            th:text="${modo == 'crear'} ? 'Crear docente' : 'Guardar cambios'">Guardar</button>
+                            th:text="${modo == 'crear'} ? 'Crear docente' : 'Guardar cambios'" data-texto-enviando="Guardando...">Guardar</button>
                     <a th:href="@{/docentes}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
@@ -218,9 +218,69 @@
                       data-confirm-detail="Borrado FÍSICO e irreversible del modelo facial (derecho de Cancelación, Ley 25.326). Se eliminan también los modelos históricos. Las asistencias ya registradas se conservan. Si el docente vuelve a dar su consentimiento, habrá que registrar su rostro de nuevo."
                       data-confirm-action="Suprimir definitivamente"
                       data-confirm-style="danger">
-                    <button type="submit" class="btn btn--ghost btn--danger">
+                    <button type="submit" class="btn btn--ghost btn--danger" data-texto-enviando="Suprimiendo...">
                         Suprimir datos biométricos (ARCO)
                     </button>
+                </form>
+            </div>
+        </div>
+
+        <!--
+          Ficha completa y baja del docente.
+
+          Este bloque reemplaza al boton "Datos" que estaba en el listado. La ficha ARCO
+          --acceso, rectificacion, cancelacion y oposicion, con constancia descargable-- es
+          una exigencia de la Ley 25.326 y no podia quedar sin camino: se movio aca, que es
+          donde ya se esta mirando a esta persona en particular.
+        -->
+        <div th:if="${modo == 'editar'}" class="card card--form">
+            <h2>Ficha y estado del docente</h2>
+
+            <dl class="kv" style="margin-top:1rem;">
+                <dt>Estado</dt>
+                <dd>
+                    <span th:if="${docente.activo}" class="badge badge--success">Activo</span>
+                    <span th:unless="${docente.activo}" class="badge badge--danger">Inactivo</span>
+                </dd>
+                <dt>Fecha de alta</dt>
+                <dd th:text="${#temporals.format(docente.fechaAlta, 'dd/MM/yyyy')}">-</dd>
+                <th:block th:if="${docente.fechaBaja != null}">
+                    <dt>Último día en funciones</dt>
+                    <dd th:text="${#temporals.format(docente.fechaBaja, 'dd/MM/yyyy')}">-</dd>
+                </th:block>
+            </dl>
+
+            <div class="form-actions" style="margin-top:1rem;">
+                <a th:href="@{/docentes/{id}/ficha(id=${docente.id})}" class="btn btn--ghost">
+                    Ver ficha completa y derechos ARCO
+                </a>
+
+                <!-- Igual que en el listado: si la baja no se puede, el boton lo dice de una
+                     vez en vez de abrir un cuadro para confirmar algo que va a fallar. -->
+                <button th:if="${docente.activo and motivoQueImpideLaBaja != null}"
+                        type="button" class="btn btn--ghost btn--danger"
+                        data-aviso-toast
+                        th:data-aviso-toast="${motivoQueImpideLaBaja}">Dar de baja</button>
+
+                <form th:if="${docente.activo and motivoQueImpideLaBaja == null}"
+                      th:action="@{/docentes/{id}/baja(id=${docente.id})}" method="post"
+                      class="inline-form"
+                      th:data-confirm="|¿Dar de baja a ${docente.nombreCompleto}?|"
+                      data-confirm-detail="Deja de figurar entre el personal activo y no va a poder marcar asistencia."
+                      data-confirm-action="Dar de baja"
+                      data-confirm-style="danger"
+                      data-confirm-date="fechaBaja"
+                      data-confirm-date-label="Último día en funciones"
+                      th:data-confirm-date-value="${hoy}"
+                      th:data-confirm-date-min="${docente.fechaAlta}"
+                      th:data-confirm-date-max="${hoy}">
+                    <button type="submit" class="btn btn--ghost btn--danger" data-texto-enviando="Dando de baja...">Dar de baja</button>
+                </form>
+
+                <form th:unless="${docente.activo}"
+                      th:action="@{/docentes/{id}/alta(id=${docente.id})}" method="post"
+                      class="inline-form">
+                    <button type="submit" class="btn btn--ghost" data-texto-enviando="Reactivando...">Reactivar docente</button>
                 </form>
             </div>
         </div>

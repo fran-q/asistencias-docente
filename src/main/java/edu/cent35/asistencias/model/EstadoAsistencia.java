@@ -10,10 +10,11 @@ package edu.cent35.asistencias.model;
  */
 public enum EstadoAsistencia {
 
-    // Marcó dentro de la ventana [hora_inicio - tolerancia, hora_inicio].
+    // Llegó dentro de la tolerancia del horario, contada hacia los dos lados del inicio
+    // (ADR-0018).
     PRESENTE,
 
-    // Marcó después de hora_inicio (se registra la hora exacta).
+    // Llegó pasada esa tolerancia (se registra la hora exacta).
     TARDE,
 
     // No marcó dentro del horario. Se calcula al listar o lo carga el admin manualmente.

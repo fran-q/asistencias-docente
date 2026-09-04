@@ -1,4 +1,10 @@
 package edu.cent35.asistencias.controller;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import java.util.Objects;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import edu.cent35.asistencias.service.ConfirmacionRequeridaException;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 
@@ -51,7 +57,10 @@ public class DocenteController {
         List<DocenteListItemDto> items = service.listar().stream()
             .map(d -> DocenteListItemDto.from(
                 d,
-                estados.getOrDefault(d.getId(), EstadoConsentimiento.NUNCA_OTORGADO)))
+                estados.getOrDefault(d.getId(), EstadoConsentimiento.NUNCA_OTORGADO),
+                // Solo tiene sentido preguntarlo para los que siguen activos: a un docente
+                // ya dado de baja no se le ofrece la baja.
+                Boolean.TRUE.equals(d.getActivo()) ? service.motivoQueImpideLaBaja(d.getId()) : null))
             .toList();
         model.addAttribute("docentes", items);
         // Tope del selector de fecha de baja: se resuelve en el servidor porque la fecha de
@@ -75,6 +84,7 @@ public class DocenteController {
     public String crear(@Valid @ModelAttribute("form") DocenteFormDto form,
                         BindingResult binding,
                         Model model,
+                        @AuthenticationPrincipal UsuarioAutenticado actual,
                         RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
@@ -83,15 +93,45 @@ public class DocenteController {
         }
         try {
             Docente d = service.crear(form.getDni(), form.getLegajo(), form.getNombre(),
-                form.getApellido(), form.getEmail(), form.getTelefono());
+                form.getApellido(), form.getEmail(), form.getTelefono(), form.isConfirmado(),
+                actual.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje",
                 "Docente '" + d.getNombreCompleto() + "' creado correctamente.");
             return "redirect:/docentes";
+        } catch (ConfirmacionRequeridaException ex) {
+            // El DNI ya pertenece a alguien. No se escribió nada: se muestra a quién alcanza y
+            // el mismo formulario vuelve por su cuenta si alguien confirma.
+            prepararConfirmacion(model, ex, form, "/docentes/nuevo", "/docentes/nuevo");
+            return "identidad/confirmar";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
             model.addAttribute("modo", "crear");
             return "docente/form";
         }
+    }
+
+    /**
+     * Deja en el modelo lo que necesita la pantalla de confirmación.
+     *
+     * <p>El formulario entero viaja como campos ocultos en vez de guardarse en la sesión: si
+     * alguien abandona la pantalla, no queda ningún alta a medias esperando, y el segundo intento
+     * llega por el mismo endpoint que el primero, con la confirmación puesta.
+     */
+    private void prepararConfirmacion(Model model, ConfirmacionRequeridaException ex,
+                                      DocenteFormDto form, String accion, String volverA) {
+        Map<String, String> campos = new LinkedHashMap<>();
+        campos.put("dni", form.getDni());
+        campos.put("legajo", form.getLegajo());
+        campos.put("nombre", form.getNombre());
+        campos.put("apellido", form.getApellido());
+        campos.put("email", form.getEmail());
+        campos.put("telefono", form.getTelefono());
+        campos.values().removeIf(Objects::isNull);
+
+        model.addAttribute("impacto", ex.getImpacto());
+        model.addAttribute("camposOcultos", campos);
+        model.addAttribute("accion", accion);
+        model.addAttribute("volverA", volverA);
     }
 
     // Abre el formulario de edición con los datos actuales.
@@ -111,6 +151,7 @@ public class DocenteController {
                              @Valid @ModelAttribute("form") DocenteFormDto form,
                              BindingResult binding,
                              Model model,
+                             @AuthenticationPrincipal UsuarioAutenticado actual,
                              RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
@@ -119,9 +160,16 @@ public class DocenteController {
         }
         try {
             service.actualizar(id, form.getDni(), form.getLegajo(), form.getNombre(),
-                form.getApellido(), form.getEmail(), form.getTelefono());
+                form.getApellido(), form.getEmail(), form.getTelefono(), form.isConfirmado(),
+                actual.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje", "Docente actualizado correctamente.");
             return "redirect:/docentes";
+        } catch (ConfirmacionRequeridaException ex) {
+            // Esta persona tambien tiene cuenta: el cambio de nombre se ve en pantallas que quien
+            // edita no esta mirando, asi que se avisa antes de escribir.
+            prepararConfirmacion(model, ex, form,
+                "/docentes/" + id + "/editar", "/docentes/" + id + "/editar");
+            return "identidad/confirmar";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
             agregarDatosEdicion(id, model);
@@ -143,6 +191,12 @@ public class DocenteController {
             .ifPresent(m -> model.addAttribute("modeloFacial", m));
         // Supresion ARCO (RNF-14): tambien contempla modelos historicos
         model.addAttribute("tieneModelosBiometricos", modeloFacialService.tieneModelos(id));
+        // Por que no se puede dar de baja, o null si se puede. La pantalla lo usa para
+        // avisar de una vez en lugar de abrir un cuadro de confirmacion que va a fallar.
+        model.addAttribute("motivoQueImpideLaBaja", service.motivoQueImpideLaBaja(id));
+        // Tope del selector de fecha de baja, resuelto en el servidor: el reloj del
+        // cliente puede estar corrido.
+        model.addAttribute("hoy", LocalDate.now());
     }
 
     // Da de baja el docente en la fecha indicada y vuelve al listado con el resultado.
@@ -151,9 +205,11 @@ public class DocenteController {
     public String darDeBaja(@PathVariable Long id,
                             @RequestParam(required = false)
                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaBaja,
+                            @AuthenticationPrincipal UsuarioAutenticado actual,
                             RedirectAttributes redirect) {
         try {
-            service.darDeBaja(id, fechaBaja != null ? fechaBaja : LocalDate.now());
+            service.darDeBaja(id, fechaBaja != null ? fechaBaja : LocalDate.now(),
+                actual.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje", "Docente dado de baja.");
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("flashError", ex.getMessage());

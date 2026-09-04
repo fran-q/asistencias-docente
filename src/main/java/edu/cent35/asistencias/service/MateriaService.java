@@ -40,7 +40,7 @@ public class MateriaService {
         // Touch para inicializar carrera y titular antes de que los use el template.
         materias.forEach(m -> {
             if (m.getCarrera() != null) m.getCarrera().getCodigo();
-            if (m.getDocenteTitular() != null) m.getDocenteTitular().getDni();
+            if (m.getDocenteTitular() != null) m.getDocenteTitular().getPersona().getDni();
         });
         return materias;
     }
@@ -58,20 +58,43 @@ public class MateriaService {
         }
         // Touch para inicializar carrera y titular antes de que los use el template.
         if (m.getCarrera() != null) m.getCarrera().getCodigo();
-        if (m.getDocenteTitular() != null) m.getDocenteTitular().getDni();
+        if (m.getDocenteTitular() != null) m.getDocenteTitular().getPersona().getDni();
         return m;
     }
 
     // Docentes activos del tenant para el selector de "Titular".
     @Transactional(readOnly = true)
     public List<Docente> docentesActivosParaSelector() {
-        return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
+        return docenteRepository.listarVigentesDelTenant(TenantContext.getRequired());
     }
 
     // Lista las carreras activas del tenant para selectores de UI.
     @Transactional(readOnly = true)
     public List<Carrera> carrerasActivasParaSelector() {
         return carreraRepository.findByActivoTrueOrderByNombreAsc();
+    }
+
+    /**
+     * Las comisiones de una materia, activas primero.
+     *
+     * <p>Igual que en las materias de una carrera: se resuelve la materia con
+     * {@link #buscarPorId}, que es la que comprueba la institucion, antes de consultar.
+     */
+    @Transactional(readOnly = true)
+    public List<Comision> comisionesDe(Long materiaId) {
+        buscarPorId(materiaId);
+        // Solo las activas, igual que el plan de una carrera: una comision dada de baja ya
+        // no se dicta, y verla ahi confunde a quien esta armando el cuatrimestre.
+        List<Comision> comisiones = comisionRepository
+            .findByMateriaIdOrderByActivoDescCodigoAsc(materiaId).stream()
+            .filter(c -> Boolean.TRUE.equals(c.getActivo()))
+            .toList();
+        // Mismo motivo que en las materias de una carrera: el docente asignado es lazy y la
+        // sesion se cierra al salir de aca, asi que la plantilla no podria leerlo despues.
+        for (Comision c : comisiones) {
+            if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getNombreCompleto();
+        }
+        return comisiones;
     }
 
     @Transactional

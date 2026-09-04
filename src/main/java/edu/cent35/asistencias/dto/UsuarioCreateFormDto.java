@@ -2,6 +2,7 @@ package edu.cent35.asistencias.dto;
 import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.RolCodigo;
+import edu.cent35.asistencias.validacion.PasswordSegura;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -35,18 +36,31 @@ public class UsuarioCreateFormDto {
     @Size(max = 120)
     private String email;
 
-    @NotBlank(message = "La contraseña es obligatoria al crear")
-    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
+    @NotBlank(message = "La contraseña es obligatoria")
+    @PasswordSegura
     private String password;
 
     @NotBlank(message = "El nombre es obligatorio")
     @Size(max = 80)
     private String nombre;
 
-    @NotBlank(message = "El apellido es obligatorio")
+    // Opcional: una cuenta de institución no tiene apellido. Las que se crean acá son
+    // siempre de administrador y sí lo llevan, pero el DTO no es el lugar donde imponerlo.
     @Size(max = 80)
     private String apellido;
 
-    @NotNull(message = "Hay que asignar un rol")
-    private RolCodigo rol;
+    @NotBlank(message = "Repetí la contraseña")
+    private String confirmacion;
+
+    /**
+     * Si las dos contraseñas coinciden.
+     *
+     * <p>Se pide dos veces porque quien la escribe no la ve —el campo está enmascarado— y es
+     * la contraseña con la que otra persona va a entrar por primera vez. Un error de tipeo no
+     * se descubre acá: se descubre cuando esa persona no puede iniciar sesión y no hay forma
+     * de saber si el problema es la contraseña o la cuenta.
+     */
+    public boolean coincide() {
+        return password != null && password.equals(confirmacion);
+    }
 }

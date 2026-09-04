@@ -11,7 +11,16 @@ import edu.cent35.asistencias.repository.*;
 public final class TextoConsentimiento {
 
     // Versión vigente del texto (formato aaaa-mm-vN); incrementar al tocar el cuerpo.
-    public static final String VERSION_ACTUAL = "2026-05-v1";
+    //
+    // v2 (2026-08): el punto 3 decía que el sistema procesa un "embedding" del rostro.
+    // No es lo que hace: el motor es LBPH, que entrena un modelo de histogramas de
+    // patrones binarios locales, no un vector de embedding (ver ADR-0007, "Desviación
+    // aceptada del RF-08"). Todo lo que el texto le promete al docente sigue siendo
+    // cierto —es una representación matemática, va cifrada, no permite reconstruir la
+    // cara, las imágenes se descartan—, pero nombraba una tecnología que no se usa.
+    // El texto nuevo describe el dato sin atarlo a un algoritmo, así que sigue siendo
+    // exacto si algún día el motor cambia.
+    public static final String VERSION_ACTUAL = "2026-08-v2";
 
     // Cuerpo que se muestra tal cual en la pantalla de aceptación.
     public static final String CUERPO = """
@@ -34,11 +43,14 @@ public final class TextoConsentimiento {
            para ninguna otra finalidad, ni se compartiran con terceros.
 
         3. DATOS QUE SE TRATARAN
-           El sistema procesa una representacion matematica (embedding) del
-           rostro del docente, NO una fotografia. Los embeddings se almacenan
-           cifrados y no permiten reconstruir la imagen original. Las
-           imagenes captadas durante el proceso de registro inicial se
-           descartan inmediatamente despues de generar el embedding.
+           El sistema NO almacena fotografias del docente. De las imagenes
+           captadas durante el registro deriva un modelo matematico del
+           rostro: un conjunto de valores numericos con los que se compara
+           una imagen nueva para decidir si corresponde a la misma persona.
+           Ese modelo se almacena cifrado, no permite reconstruir la imagen
+           original ni obtener a partir de el una fotografia del docente, y
+           las imagenes de las que se derivo se descartan inmediatamente
+           despues de generarlo.
 
         4. CONSERVACION
            Los datos biometricos se conservaran mientras dure la relacion

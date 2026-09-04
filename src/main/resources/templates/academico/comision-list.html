@@ -19,11 +19,15 @@
 
         <div class="filtro" data-filtro-tabla="#tabla-comisiones">
             <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
-                   placeholder="Buscar por código, materia, carrera o docente...">
+                   placeholder="Buscar por código, materia, carrera o docente..." autocomplete="off">
             <select class="filtro__estado" aria-label="Filtrar por estado">
-                <option value="">Todos los estados</option>
-                <option value="activo">Solo activos</option>
+                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
+                     ahi porque hay historial colgando de el, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
+                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
+                <option value="">Todos los estados</option>
             </select>
             <span class="filtro__resultado"></span>
         </div>
@@ -76,13 +80,13 @@
                                       data-confirm-detail="Si tiene horarios activos no se va a poder dar de baja. Podés reactivarla después."
                                       data-confirm-action="Dar de baja"
                                       data-confirm-style="danger">
-                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger" data-texto-enviando="Dando de baja...">Dar de baja</button>
                                 </form>
 
                                 <form th:unless="${c.activo}"
                                       th:action="@{/comisiones/{id}/alta(id=${c.id})}" method="post"
                                       class="inline-form">
-                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Reactivando...">Reactivar</button>
                                 </form>
                             </td>
                         </tr>

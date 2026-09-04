@@ -92,4 +92,9 @@ public class Materia extends BaseTenantEntity {
     @UpdateTimestamp
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
+
+    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // anteriores a V017, que no lo registraban. Ver ADR-0016.
+    @Column(name = "dado_de_baja_por")
+    private Long dadoDeBajaPor;
 }

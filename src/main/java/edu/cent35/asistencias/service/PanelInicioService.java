@@ -9,6 +9,7 @@ import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.ModeloFacial;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
+import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -46,6 +47,7 @@ public class PanelInicioService {
     private final ConsentimientoBiometricoRepository consentimientoRepository;
     private final ModeloFacialRepository modeloFacialRepository;
     private final ComisionRepository comisionRepository;
+    private final BloquePresenciaRepository bloquePresenciaRepository;
 
     // Cuantas clases en curso se muestran como maximo, para que el panel no crezca sin limite.
     private static final int MAX_EN_CURSO = 6;
@@ -71,7 +73,7 @@ public class PanelInicioService {
 
         List<Horario> clasesDeHoy = horarioRepository.findActivosDelDiaConDocente(
             (byte) hoy.getDayOfWeek().getValue(), tenantId);
-        List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(hoy);
+        List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(TenantContext.getRequired(), hoy);
 
         return new PanelInicioDto(
             clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora),
@@ -207,7 +209,20 @@ public class PanelInicioService {
     private List<PanelInicioDto.Pendiente> pendientes(Long tenantId) {
         List<PanelInicioDto.Pendiente> lista = new ArrayList<>();
 
-        List<Docente> activos = docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
+        // Va primero porque es lo unico de esta lista que hay que resolver HOY: los demas son
+        // cargas incompletas de configuracion, y esto es una jornada ya ocurrida cuyo registro
+        // dice una hora que nadie observo. La salida es obligatoria (RF-79), asi que su falta
+        // no se descarta en silencio.
+        long salidasPendientes = bloquePresenciaRepository.countPendientesDeCierre(tenantId);
+        if (salidasPendientes > 0) {
+            lista.add(new PanelInicioDto.Pendiente(salidasPendientes,
+                salidasPendientes == 1 ? "salida sin registrar" : "salidas sin registrar",
+                "El sistema completó la hora para no dejar al docente sin asistencia, pero "
+                + "nadie la observó. Confirmala o corregila.",
+                "/asistencias/bloques/pendientes"));
+        }
+
+        List<Docente> activos = docenteRepository.listarVigentesDelTenant(TenantContext.getRequired());
 
         Set<Long> conConsentimiento = new HashSet<>();
         consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(tenantId).forEach(v -> {

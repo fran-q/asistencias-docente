@@ -33,23 +33,16 @@
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
     <!--
-      Anti-parpadeo del navbar (ver navbar.js). El navbar decide hamburguesa
-      vs. links completos midiendo el ancho con JS, así que cada página llegaba
-      del servidor en modo desktop y colapsaba a hamburguesa al cargar. Este
-      script aplica, ANTES del primer paint, el modo detectado en la navegación
-      anterior (guardado en sessionStorage), y suprime transiciones durante la
-      carga para que el drawer no "aparezca deslizando". navbar.js quita
-      nav-preload tras el primer paint.
+      Suprime las transiciones del navbar durante la carga, para que el modo que
+      se aplique enseguida no se vea "deslizando". navbar.js lo quita tras el
+      primer frame y a partir de ahí las interacciones sí animan.
+
+      El modo (hamburguesa vs. links completos) NO se decide acá: hace falta que
+      el navbar exista para poder medirlo, así que eso ocurre en el script que va
+      inmediatamente después del <header>.
     -->
     <script>
-        (function () {
-            try {
-                document.body.classList.add('nav-preload');
-                if (sessionStorage.getItem('navCompact') === '1') {
-                    document.body.classList.add('nav-compact');
-                }
-            } catch (e) { /* sin sessionStorage: cae al comportamiento previo */ }
-        })();
+        document.body.classList.add('nav-preload');
     </script>
 
     <!-- ============ NAVBAR ============ -->
@@ -130,6 +123,11 @@
                        sec:authorize="hasRole('INSTITUCION')">Usuarios del sistema</a>
                     <a th:href="@{/mi-institucion}" class="navbar__sublink"
                        sec:authorize="hasRole('INSTITUCION')">Mi institución</a>
+                    <!-- Va en Personal y no en Asistencias aunque habilite el pase: lo que se
+                         administra acá es la configuración del establecimiento, igual que Mi
+                         institución, y no algo que se haga durante una clase. -->
+                    <a th:href="@{/puestos}" class="navbar__sublink"
+                       sec:authorize="hasRole('INSTITUCION')">Puestos de captura</a>
                 </div>
             </div>
         </nav>
@@ -153,6 +151,40 @@
             </form>
         </div>
     </header>
+
+    <!--
+      Modo del navbar, decidido ANTES del primer paint.
+
+      Por que va acá y no arriba. El modo se decide midiendo si los enlaces entran
+      en el ancho disponible, y para medir el navbar tiene que existir: acaba de
+      cerrarse el <header>, así que ya está en el DOM y todavía no se pintó nada.
+
+      Por que no lo hace navbar.js. Ese script va con defer, o sea que corre recién
+      en DOMContentLoaded, y el navegador puede pintar antes. Cuando gana el paint
+      --se midió: primer paint a 336 ms contra DOMContentLoaded a 366 ms-- la página
+      aparece un instante con el menú entero desplegado y después salta al drawer
+      cerrado. Es una carrera: a veces se ve y a veces no, y se ve más seguido en
+      máquinas lentas, que es donde peor queda.
+
+      Por que no alcanzaba con sessionStorage. La versión anterior guardaba el modo
+      de la navegación anterior y lo reponía acá arriba. Servía a partir de la
+      segunda página, pero no en la primera de la sesión --el valor todavía no
+      existe--, ni cuando quedó guardado el modo de una ventana ancha, ni en modo
+      privado. Medir no tiene ninguno de esos huecos.
+
+      El script es síncrono a propósito: bloquea el parseo unos milisegundos y a
+      cambio garantiza que lo primero que se pinta ya es el modo correcto.
+    -->
+    <script>
+        (function () {
+            var navbar = document.querySelector('.navbar');
+            // +1 de margen: scrollWidth y clientWidth pueden diferir por redondeo de
+            // subpixel aunque no haya nada que desbordar.
+            if (navbar && navbar.scrollWidth > navbar.clientWidth + 1) {
+                document.body.classList.add('nav-compact');
+            }
+        })();
+    </script>
 
     <!-- Backdrop oscuro detras del drawer en pantallas chicas -->
     <div class="navbar__backdrop" aria-hidden="true"></div>
@@ -186,14 +218,15 @@
                   data-error=${flashError}"
          hidden></div>
 
-    <script th:src="@{/js/migas.js}" defer></script>
-    <script th:src="@{/js/tema.js}" defer></script>
-    <script th:src="@{/js/form-validacion.js}" defer></script>
-    <script th:src="@{/js/toast.js}" defer></script>
-    <script th:src="@{/js/password-ui.js}" defer></script>
-    <script th:src="@{/js/table-scroll.js}" defer></script>
-    <script th:src="@{/js/confirm-modal.js}" defer></script>
-    <script th:src="@{/js/navbar.js}" defer></script>
-    <script th:src="@{/js/filtro-tabla.js}" defer></script>
+    <script th:src="@{/js/comun/migas.js}" defer></script>
+    <script th:src="@{/js/comun/tema.js}" defer></script>
+    <script th:src="@{/js/comun/form-validacion.js}" defer></script>
+    <script th:src="@{/js/comun/envio-form.js}" defer></script>
+    <script th:src="@{/js/comun/toast.js}" defer></script>
+    <script th:src="@{/js/comun/password-ui.js}" defer></script>
+    <script th:src="@{/js/comun/table-scroll.js}" defer></script>
+    <script th:src="@{/js/comun/confirm-modal.js}" defer></script>
+    <script th:src="@{/js/comun/navbar.js}" defer></script>
+    <script th:src="@{/js/comun/filtro-tabla.js}" defer></script>
 </body>
 </html>

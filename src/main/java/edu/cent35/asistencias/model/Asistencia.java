@@ -78,6 +78,18 @@ public class Asistencia extends BaseTenantEntity {
     @JoinColumn(name = "horario_id", nullable = false)
     private Horario horario;
 
+    /**
+     * Bloque de presencia que cubre esta clase (ADR-0017).
+     *
+     * <p><b>NULL a propósito</b> en las asistencias anteriores a V019 y en las que se
+     * carguen sin bloque asociado. Ese NULL significa "registro previo a la marca de
+     * salida", que no es lo mismo que un dato que se perdió: rellenarlo hacia atrás
+     * inventaría bloques que nunca existieron.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bloque_id")
+    private BloquePresencia bloque;
+
     @Column(nullable = false)
     private LocalDate fecha;
 

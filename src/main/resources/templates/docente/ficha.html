@@ -28,7 +28,7 @@
             <h2>Datos personales</h2>
             <dl class="kv">
                 <dt>DNI</dt>
-                <dd th:text="${docente.dni}">00000000</dd>
+                <dd th:text="${docente.persona.dni}">00000000</dd>
 
                 <dt>Legajo</dt>
                 <dd>
@@ -38,14 +38,14 @@
 
                 <dt>Correo</dt>
                 <dd>
-                    <span th:if="${docente.email}" th:text="${docente.email}">a@b.c</span>
-                    <span th:unless="${docente.email}" class="text-muted">Sin cargar</span>
+                    <span th:if="${docente.persona.email}" th:text="${docente.persona.email}">a@b.c</span>
+                    <span th:unless="${docente.persona.email}" class="text-muted">Sin cargar</span>
                 </dd>
 
                 <dt>Teléfono</dt>
                 <dd>
-                    <span th:if="${docente.telefono}" th:text="${docente.telefono}">000</span>
-                    <span th:unless="${docente.telefono}" class="text-muted">Sin cargar</span>
+                    <span th:if="${docente.persona.telefono}" th:text="${docente.persona.telefono}">000</span>
+                    <span th:unless="${docente.persona.telefono}" class="text-muted">Sin cargar</span>
                 </dd>
 
                 <dt>Estado</dt>
@@ -70,45 +70,11 @@
             </dl>
         </div>
 
-        <!-- Los datos sensibles y los derechos sobre ellos, que la ley obliga a poder
-             consultar y ejercer. -->
+        <!-- La constancia y la vuelta al listado. Antes vivian dentro de un recuadro
+             "Datos biometricos" que repetia el estado del consentimiento y del modelo
+             facial, que ya se ven en la pantalla de edicion del docente. Dos lugares
+             diciendo lo mismo se desincronizan solos. -->
         <div class="card card--form">
-            <h2>Datos biométricos</h2>
-            <p class="text-muted arco__nota">Ley 25.326 y Resolución AAIP 255/2022.</p>
-            <dl class="kv">
-
-                <dt>Dato biométrico</dt>
-                <dd>
-                    <span th:if="${tieneModelo}" class="badge badge--warning">Modelo facial registrado</span>
-                    <span th:unless="${tieneModelo}" class="badge badge--success">Sin modelo facial</span>
-                    <p class="text-muted arco__nota">
-                        El sistema <strong>no guarda fotografías</strong>: guarda un modelo
-                        matemático cifrado del que no se puede reconstruir la imagen.
-                    </p>
-                </dd>
-
-                <dt>Consentimiento</dt>
-                <dd>
-                    <span th:text="${estadoConsentimiento}" class="badge">ACTIVO</span>
-                    <ul class="arco__historial" th:if="${!#lists.isEmpty(historial)}">
-                        <li th:each="c : ${historial}">
-                            <span th:text="${#temporals.format(c.fechaConsentimiento, 'dd/MM/yyyy')}">01/01/2026</span>
-                            — otorgado<span th:if="${c.fechaRevocacion}"
-                                  th:text="|, revocado el ${#temporals.format(c.fechaRevocacion, 'dd/MM/yyyy')}|"></span>
-                        </li>
-                    </ul>
-                    <p class="text-muted arco__nota" th:if="${#lists.isEmpty(historial)}">
-                        No se registran consentimientos.
-                    </p>
-                </dd>
-
-                <dt>Asistencias</dt>
-                <dd class="text-muted">
-                    Se conservan como registro administrativo aunque se supriman los datos
-                    biométricos, sin ninguna referencia a ellos.
-                </dd>
-            </dl>
-
             <div class="form-actions">
                 <a th:href="@{/docentes/{id}/ficha/constancia(id=${docente.id})}"
                    class="btn btn--ghost">⬇ Descargar constancia</a>
@@ -118,7 +84,12 @@
 
         <!-- LOS OTROS TRES DERECHOS -->
         <div class="card card--form">
-            <h2>Ejercer un derecho</h2>
+            <h2>Acciones sobre datos biométricos</h2>
+            <p class="text-muted arco__nota">
+                Las cuatro operaciones que la <strong>Ley 25.326</strong> y la
+                <strong>Resolución AAIP 255/2022</strong> reconocen sobre un dato sensible:
+                acceso, rectificación, cancelación y oposición.
+            </p>
 
             <ul class="arco__derechos">
                 <li>

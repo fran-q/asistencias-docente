@@ -1,5 +1,7 @@
 package edu.cent35.asistencias.dto;
 
+import edu.cent35.asistencias.validacion.CuitValido;
+import edu.cent35.asistencias.validacion.PasswordSegura;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -47,20 +49,16 @@ public class AltaInstitucionFormDto {
     private String email;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
+    @PasswordSegura
     private String password;
 
     @NotBlank(message = "Repetí la contraseña")
-    @Size(max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
     private String confirmacion;
 
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(max = 80, message = "El nombre no puede superar los 80 caracteres")
-    private String nombre;
-
-    @NotBlank(message = "El apellido es obligatorio")
-    @Size(max = 80, message = "El apellido no puede superar los 80 caracteres")
-    private String apellido;
+    // Acá estaban el nombre y el apellido de una persona, y se sacaron en V018. Lo que se da de
+    // alta es un establecimiento, no alguien: la cuenta que nace de este formulario representa a
+    // la institución. Las personas concretas que la administran se cargan después, desde adentro
+    // del sistema, cada una con su propia cuenta y su identidad.
 
     // Indica si la contraseña y su repetición son iguales.
     public boolean coincide() {

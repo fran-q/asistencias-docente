@@ -20,11 +20,15 @@
 
         <div class="filtro" data-filtro-tabla="#tabla-usuarios">
             <input type="search" class="filtro__texto" aria-label="Buscar usuario"
-                   placeholder="Buscar por usuario, nombre o correo...">
+                   placeholder="Buscar por usuario, nombre o correo..." autocomplete="off">
             <select class="filtro__estado" aria-label="Filtrar por estado">
-                <option value="">Todos los estados</option>
-                <option value="activo">Solo activos</option>
+                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
+                     ahi porque hay historial colgando de el, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
+                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
+                <option value="">Todos los estados</option>
             </select>
             <span class="filtro__resultado"></span>
         </div>
@@ -75,9 +79,11 @@
                                   th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yy HH:mm')}">-</span>
                             <span th:unless="${u.ultimoLogin}" class="text-muted">Nunca</span>
                         </td>
-                        <!-- Cambiar la contraseña se hace desde la ficha del usuario, no desde
-                             acá: es una acción sobre esa cuenta en particular y conviene tener
-                             a la vista de quién se trata antes de tocarla. -->
+                        <!-- Solo "Editar". La contraseña de otra cuenta no se cambia desde
+                             ningún lado del sistema: todo cambio exige un código enviado al
+                             correo de su dueño, así que quien se quedó afuera lo recupera
+                             desde el login. Y la baja vive adentro de Editar, donde se ve de
+                             quién es la cuenta antes de desactivarla. -->
                         <td class="table__actions">
                             <a th:href="@{/usuarios/{id}/editar(id=${u.id})}"
                                class="btn btn--ghost btn--sm">Editar</a>

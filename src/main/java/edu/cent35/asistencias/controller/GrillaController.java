@@ -32,6 +32,7 @@ public class GrillaController {
     // Arma la grilla semanal de la carrera elegida, o de la primera si no se eligió ninguna.
     @GetMapping
     public String mostrar(@RequestParam(name = "carreraId", required = false) Long carreraId,
+                          @RequestParam(name = "anio", required = false) Short anio,
                           Model model) {
 
         List<Carrera> carreras = grillaService.carrerasActivasParaSelector();
@@ -43,10 +44,11 @@ public class GrillaController {
         }
 
         if (carreraId != null) {
-            GrillaSemanalDto grilla = grillaService.cargarGrillaPara(carreraId);
+            GrillaSemanalDto grilla = grillaService.cargarGrillaPara(carreraId, anio);
             model.addAttribute("grilla", grilla);
         }
         model.addAttribute("carreraIdSeleccionada", carreraId);
+        model.addAttribute("anioSeleccionado", anio);
 
         // Dias para el header de la grilla (1=Lunes ... 7=Domingo)
         model.addAttribute("dias", edu.cent35.asistencias.model.DiaSemana.values());

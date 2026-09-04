@@ -1,6 +1,7 @@
 package edu.cent35.asistencias.model;
 
 import jakarta.persistence.Column;
+import java.time.LocalDateTime;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,6 +26,7 @@ import lombok.ToString;
 @Table(name = "roles")
 @Getter
 @Setter
+@lombok.Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(of = {"id", "codigo"})
@@ -39,4 +41,18 @@ public class Rol {
 
     @Column(nullable = false, length = 120)
     private String descripcion;
+
+    /**
+     * Cuándo se creó esta fila del catálogo.
+     *
+     * <p>La escribe la base con su valor por defecto; la aplicación solo la lee, y por eso va
+     * como {@code insertable = false, updatable = false}. Los roles se siembran en la migración
+     * V001 y ninguna pantalla los edita.
+     *
+     * <p>Existía en la base desde V012 sin que ninguna entidad la mapeara: la columna estaba y
+     * el sistema no podía verla. Mapearla no agrega comportamiento, cierra la diferencia entre
+     * lo que la base guarda y lo que la aplicación conoce.
+     */
+    @Column(name = "creado_en", insertable = false, updatable = false)
+    private LocalDateTime creadoEn;
 }

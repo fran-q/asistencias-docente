@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Salidas pendientes - Visum</title>
+</head>
+<body>
+    <section class="bloques-pendientes">
+        <header class="page-header">
+            <h1>Salidas pendientes</h1>
+            <p class="page-header__subtitle">
+                Jornadas en las que el docente registró su entrada pero nadie registró la
+                salida. El sistema completó la hora con el fin de la última clase para no
+                dejarlo sin asistencia, pero <strong>esa hora no la observó nadie</strong>:
+                hasta que se confirme, el registro queda marcado como pendiente.
+            </p>
+        </header>
+
+        <div th:if="${flashMensaje}" class="alert alert--success" role="alert">
+            <p th:text="${flashMensaje}">ok</p>
+        </div>
+        <div th:if="${flashError}" class="alert alert--error" role="alert">
+            <p th:text="${flashError}">error</p>
+        </div>
+
+        <div th:object="${form}" th:if="${bloqueEnEdicion != null}">
+            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+            </div>
+            <div th:if="${#fields.hasAnyErrors()}" class="alert alert--error" role="alert">
+                <p th:each="err : ${#fields.allErrors()}" th:text="${err}">Error</p>
+            </div>
+        </div>
+
+        <table class="table table--tarjetas" role="table">
+            <thead role="rowgroup">
+                <tr role="row">
+                    <th role="columnheader">Docente</th>
+                    <th role="columnheader">Fecha</th>
+                    <th role="columnheader">Entrada</th>
+                    <th role="columnheader">Salida presumida</th>
+                    <th role="columnheader">Confirmar salida</th>
+                </tr>
+            </thead>
+            <tbody role="rowgroup">
+                <tr th:if="${#lists.isEmpty(pendientes)}" role="row">
+                    <td role="cell" colspan="5" class="table__empty">
+                        No hay salidas pendientes. Todas las jornadas tienen su hora de salida
+                        confirmada.
+                    </td>
+                </tr>
+                <tr th:each="b : ${pendientes}" role="row">
+                    <td role="cell" data-label="Docente" th:text="${b.docente.nombreCompleto}">Pérez, Juana</td>
+                    <td role="cell" data-label="Fecha" th:text="${#temporals.format(b.fecha, 'dd/MM/yyyy')}">01/09/2026</td>
+                    <td role="cell" data-label="Entrada" th:text="${#temporals.format(b.horaEntrada, 'HH:mm')}">18:00</td>
+                    <td role="cell" data-label="Salida presumida">
+                        <span th:text="${#temporals.format(b.horaSalida, 'HH:mm')}">22:00</span>
+                        <small class="form-hint">la completó el sistema</small>
+                    </td>
+                    <td role="cell" data-label="Confirmar salida">
+                        <form th:action="@{/asistencias/bloques/{id}/cerrar(id=${b.id})}"
+                              method="post" novalidate class="form-inline">
+                            <input type="time" name="horaSalida" required
+                                   aria-label="Hora de salida"
+                                   th:value="${#temporals.format(b.horaSalida, 'HH:mm')}">
+
+                            <select name="motivoId" required aria-label="Motivo del cierre manual">
+                                <option value="">Motivo…</option>
+                                <option th:each="m : ${motivos}"
+                                        th:value="${m.id}" th:text="${m.descripcion}">motivo</option>
+                            </select>
+
+                            <input type="text" name="detalle" maxlength="2000"
+                                   aria-label="Detalle del cierre"
+                                   placeholder="Detalle (obligatorio si elegís Otro)">
+
+                            <button type="submit" class="btn btn--primary"
+                                    data-texto-enviando="Guardando…">Confirmar</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p class="form-hint" th:unless="${#lists.isEmpty(pendientes)}">
+            Confirmar la salida deja asentado <strong>quién</strong> lo hizo y <strong>por
+            qué</strong>. Si la hora que ponés es anterior a la presumida, las clases que
+            queden fuera de ese rango siguen marcadas y hay que revisarlas en el listado del
+            día: quitar una asistencia es otra operación.
+        </p>
+    </section>
+</body>
+</html>

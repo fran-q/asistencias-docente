@@ -5,7 +5,7 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ModeloFacialService;
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +73,7 @@ public class RegistroFacialController {
     @ResponseBody
     public RegistroFacialResultadoDto registrar(@PathVariable Long docenteId,
                                                 @RequestBody RegistroFacialDto body,
-                                                @AuthenticationPrincipal CustomUserDetails principal) {
+                                                @AuthenticationPrincipal UsuarioAutenticado principal) {
         try {
             List<byte[]> capturas = body.capturas().stream()
                 .map(RegistroFacialController::decodificarDataUrl)
@@ -97,7 +97,7 @@ public class RegistroFacialController {
     // asistencias históricas se conservan.
     @PostMapping("/suprimir")
     public String suprimir(@PathVariable Long docenteId,
-                           @AuthenticationPrincipal CustomUserDetails principal,
+                           @AuthenticationPrincipal UsuarioAutenticado principal,
                            RedirectAttributes redirect) {
         try {
             int suprimidos = modeloFacialService

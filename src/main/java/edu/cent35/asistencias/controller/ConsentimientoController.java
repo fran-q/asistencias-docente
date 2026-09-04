@@ -8,7 +8,7 @@ import edu.cent35.asistencias.service.TextoConsentimiento;
 import edu.cent35.asistencias.model.EstadoConsentimiento;
 import edu.cent35.asistencias.model.MetodoConsentimiento;
 import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -81,7 +81,7 @@ public class ConsentimientoController {
                           @Valid @ModelAttribute("form") ConsentimientoOtorgarFormDto form,
                           BindingResult binding,
                           HttpServletRequest request,
-                          @AuthenticationPrincipal CustomUserDetails principal,
+                          @AuthenticationPrincipal UsuarioAutenticado principal,
                           Model model,
                           RedirectAttributes redirect) {
 
@@ -154,7 +154,7 @@ public class ConsentimientoController {
                           @Valid @ModelAttribute("form") ConsentimientoRevocarFormDto form,
                           BindingResult binding,
                           HttpServletRequest request,
-                          @AuthenticationPrincipal CustomUserDetails principal,
+                          @AuthenticationPrincipal UsuarioAutenticado principal,
                           Model model,
                           RedirectAttributes redirect) {
 

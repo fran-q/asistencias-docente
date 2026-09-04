@@ -50,20 +50,76 @@ public class CanalConsola implements CanalDeCodigos {
             """);
     }
 
-    // Escribe el codigo en la consola en vez de enviarlo. El marco no es adorno: el punto
-    // de este canal es poder encontrarlo de un vistazo entre las lineas de Hibernate.
+    /**
+     * Escribe el código en la terminal en vez de enviarlo por correo.
+     *
+     * <p><b>El recuadro va por {@code System.out} y no por el log.</b> El logger le antepone
+     * marca de tiempo, hilo y nombre de clase a cada línea, que es justo lo que rompe el marco;
+     * y además queda a merced del nivel configurado. Este canal existe para una sola cosa —que
+     * alguien lea el código en su terminal— así que se imprime directo.
+     *
+     * <p>Al log va una sola línea, para que quede constancia en el archivo sin repetir el
+     * recuadro entero por duplicado en la pantalla.
+     *
+     * <p>Si {@code hibernate.format_sql} está activo el recuadro se pierde igual entre las
+     * consultas: cada una ocupa treinta líneas. Conviene tenerlo apagado en el perfil local.
+     */
     @Override
     public void enviarCodigo(Usuario usuario, PropositoCodigo proposito, String email, String codigo) {
-        log.warn("""
+        // Marco en ASCII puro y sin acentos, a proposito: la consola de Windows no usa UTF-8,
+        // asi que los bordes de caja y las tildes salen como signos de pregunta y el recuadro
+        // queda ilegible justo donde tiene que leerse.
+        System.out.println("""
 
-            ┌─────────────────────────────────────────────────────────────┐
-            │  CODIGO DE UN SOLO USO  (modo consola, no se envio correo)  │
-            ├─────────────────────────────────────────────────────────────┤
-            │  Para      : {} <{}>
-            │  Motivo    : {}
-            │  CODIGO    : {}
-            └─────────────────────────────────────────────────────────────┘
-            """, usuario.getNombre(), email, describir(proposito), codigo);
+            +---------------------------------------------------------------+
+            |   CODIGO DE UN SOLO USO - modo consola, no se envio correo     |
+            +---------------------------------------------------------------+
+            |   Para    : %s <%s>
+            |   Motivo  : %s
+            |
+            |   CODIGO  :  %s
+            |
+            +---------------------------------------------------------------+
+            """.formatted(usuario.getNombreParaMostrar(), email, describir(proposito), codigo));
+        System.out.flush();
+
+        log.warn("Codigo de un solo uso emitido por consola para {} ({})",
+                 email, describir(proposito));
+    }
+
+    /**
+     * Escribe en la terminal que el pedido no emitió ningún código, y por qué.
+     *
+     * <p>Es el complemento del recuadro de arriba: sin esto, un pedido para una cuenta que no
+     * existe y un canal roto se ven exactamente igual desde la consola —no aparece nada— y no
+     * hay forma de saber cuál de los dos pasó. Sale con el mismo ancho y el mismo marco para
+     * que se lea como parte de la misma conversación.
+     *
+     * <p>Lo que ve el navegador no cambia: sigue diciendo lo mismo exista o no la cuenta. Esa
+     * propiedad es de la respuesta HTTP y se sostiene en {@code RecuperacionController}; acá
+     * solo se está contando lo que pasó del lado del servidor, en una consola que en desarrollo
+     * ya muestra los códigos en claro.
+     */
+    @Override
+    public void noSeEmitio(String identificador, String motivo) {
+        // Mismo criterio que enviarCodigo: ASCII puro y por System.out, para que el marco no
+        // quede roto por el prefijo del logger ni por la codificacion de la consola de Windows.
+        System.out.println("""
+
+            +---------------------------------------------------------------+
+            |   NO SE EMITIO NINGUN CODIGO - modo consola                   |
+            +---------------------------------------------------------------+
+            |   Se pidio para : %s
+            |   Motivo        : %s
+            |
+            |   La pantalla igual dice "si la cuenta existe...": contesta lo
+            |   mismo exista o no, a proposito (ADR-0009). Este aviso sale
+            |   solo por consola.
+            +---------------------------------------------------------------+
+            """.formatted(vacioSiEnBlanco(identificador), motivo));
+        System.out.flush();
+
+        log.warn("No se emitio ningun codigo para '{}': {}", identificador, motivo);
     }
 
     // Nombre corto del canal, para los logs y el aviso de arranque.
@@ -72,10 +128,15 @@ public class CanalConsola implements CanalDeCodigos {
         return "consola";
     }
 
+    // Un identificador vacio impreso como nada deja la linea muda; conviene nombrarlo.
+    private String vacioSiEnBlanco(String identificador) {
+        return identificador == null || identificador.isBlank() ? "(vacio)" : identificador.trim();
+    }
+
     private String describir(PropositoCodigo proposito) {
         return switch (proposito) {
-            case VERIFICACION_EMAIL -> "confirmar la dirección de correo";
-            case RECUPERACION_PASSWORD -> "recuperar la contraseña";
+            case VERIFICACION_EMAIL -> "confirmar la direccion de correo";
+            case RECUPERACION_PASSWORD -> "recuperar la contrasena";
         };
     }
 }

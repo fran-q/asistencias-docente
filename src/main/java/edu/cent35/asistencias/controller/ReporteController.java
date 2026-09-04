@@ -168,7 +168,9 @@ public class ReporteController {
             "id", "fecha", "dia_semana", "hora_inicio", "hora_fin",
             "carrera", "materia_codigo", "materia_nombre", "comision",
             "docente_dni", "docente_apellido", "docente_nombre",
-            "hora_registrada", "estado", "metodo",
+            "hora_registrada", "hora_salida", "salida_presumida",
+            "minutos_programados", "minutos_efectivos",
+            "estado", "metodo",
             "motivo_carga_manual", "detalle_carga_manual", "usuario_registro",
             "justificada", "motivo_justificacion"));
     }
@@ -189,6 +191,12 @@ public class ReporteController {
             csv(f.getDocenteApellido()),
             csv(f.getDocenteNombre()),
             csvTime(f.getHoraRegistrada()),
+            csvTime(f.getHoraSalida()),
+            csv(f.getHoraSalida() == null ? "" : (f.isSalidaPresumida() ? "SI" : "NO")),
+            csv(f.getMinutosProgramados()),
+            // Vacio, no cero: cero dice "no dio la clase" y vacio dice "no tenemos el dato".
+            // En la planilla esa diferencia decide si el promedio de horas es una mentira.
+            csv(f.getMinutosEfectivos()),
             csv(f.getEstado()),
             csv(f.getMetodo()),
             csv(f.getMotivoManual()),

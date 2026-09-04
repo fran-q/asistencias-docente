@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.PanelInicioDto;
 import edu.cent35.asistencias.model.Asistencia;
@@ -61,6 +62,7 @@ class PanelInicioServiceTest {
     @Mock private ConsentimientoBiometricoRepository consentimientoRepository;
     @Mock private ModeloFacialRepository modeloFacialRepository;
     @Mock private ComisionRepository comisionRepository;
+    @Mock private edu.cent35.asistencias.repository.BloquePresenciaRepository bloquePresenciaRepository;
 
     @InjectMocks private PanelInicioService service;
 
@@ -72,13 +74,13 @@ class PanelInicioServiceTest {
             ZoneId.systemDefault()));
 
         // Por defecto no hay nada cargado a medias: cada test agrega lo suyo.
-        when(docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc()).thenReturn(List.of());
+        when(docenteRepository.listarVigentesDelTenant(any())).thenReturn(List.of());
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of());
         when(modeloFacialRepository.findActivosDelTenant(anyLong())).thenReturn(List.of());
         when(comisionRepository.findActivasDelTenant(anyLong())).thenReturn(List.of());
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong())).thenReturn(List.of());
-        when(asistenciaRepository.findDelDia(any())).thenReturn(List.of());
+        when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of());
     }
 
     @AfterEach
@@ -129,7 +131,7 @@ class PanelInicioServiceTest {
         Horario h2 = horario(20L, sinMarca, 10, 0, 12, 0);
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
             .thenReturn(List.of(h1, h2));
-        when(asistenciaRepository.findDelDia(any()))
+        when(asistenciaRepository.findDelDia(any(), any()))
             .thenReturn(List.of(marca(conMarca, h1, EstadoAsistencia.PRESENTE, 10, 5)));
 
         PanelInicioDto panel = service.armar();
@@ -172,7 +174,7 @@ class PanelInicioServiceTest {
         Horario h2 = horario(20L, dos, 8, 0, 10, 0);
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
             .thenReturn(List.of(h1, h2));
-        when(asistenciaRepository.findDelDia(any())).thenReturn(List.of(
+        when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(uno, h1, EstadoAsistencia.PRESENTE, 8, 0),
             marca(dos, h2, EstadoAsistencia.TARDE, 8, 30)));
 
@@ -191,7 +193,7 @@ class PanelInicioServiceTest {
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
             .thenReturn(List.of(h));
         // La escribe el generador de ausencias al cierre del dia.
-        when(asistenciaRepository.findDelDia(any()))
+        when(asistenciaRepository.findDelDia(any(), any()))
             .thenReturn(List.of(marca(d, h, EstadoAsistencia.AUSENTE, 10, 0)));
 
         PanelInicioDto.ResumenDelDia r = service.armar().resumen();
@@ -212,7 +214,7 @@ class PanelInicioServiceTest {
         Horario h2 = horario(20L, falto, 8, 0, 10, 0);
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
             .thenReturn(List.of(h1, h2));
-        when(asistenciaRepository.findDelDia(any())).thenReturn(List.of(
+        when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(vino, h1, EstadoAsistencia.PRESENTE, 8, 0),
             marca(falto, h2, EstadoAsistencia.AUSENTE, 10, 0)));
 
@@ -236,7 +238,7 @@ class PanelInicioServiceTest {
         Horario h3 = horario(30L, sinMarcar, 10, 0, 12, 0);
         when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
             .thenReturn(List.of(h1, h2, h3));
-        when(asistenciaRepository.findDelDia(any())).thenReturn(List.of(
+        when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(conDosClases, h1, EstadoAsistencia.PRESENTE, 8, 0),
             marca(conDosClases, h2, EstadoAsistencia.PRESENTE, 10, 0)));
 
@@ -269,7 +271,7 @@ class PanelInicioServiceTest {
     void pendientes_noDuplicaAlDocenteSinConsentimiento() {
         Docente sinNada = docente(1L, "Pérez");
         Docente soloConsentimiento = docente(2L, "García");
-        when(docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc())
+        when(docenteRepository.listarVigentesDelTenant(any()))
             .thenReturn(List.of(sinNada, soloConsentimiento));
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of(vista(2L, true)));
@@ -290,7 +292,7 @@ class PanelInicioServiceTest {
     @DisplayName("pendientes: el docente con consentimiento y rostro no aparece")
     void pendientes_docenteCompletoNoAparece() {
         Docente completo = docente(1L, "Pérez");
-        when(docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc())
+        when(docenteRepository.listarVigentesDelTenant(any()))
             .thenReturn(List.of(completo));
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of(vista(1L, true)));
@@ -304,7 +306,7 @@ class PanelInicioServiceTest {
     @DisplayName("pendientes: el consentimiento revocado cuenta como faltante")
     void pendientes_consentimientoRevocado() {
         Docente revocado = docente(1L, "Pérez");
-        when(docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc())
+        when(docenteRepository.listarVigentesDelTenant(any()))
             .thenReturn(List.of(revocado));
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of(vista(1L, false)));
@@ -340,8 +342,7 @@ class PanelInicioServiceTest {
     // ========================================================================
 
     private Docente docente(Long id, String apellido) {
-        Docente d = Docente.builder()
-            .id(id).nombre("Nombre").apellido(apellido).dni("3000000" + id).activo(true).build();
+        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni("3000000" + id, "Nombre", apellido)).id(id).activo(true).build();
         d.setInstitucionId(TENANT_A);
         return d;
     }
@@ -381,5 +382,43 @@ class PanelInicioServiceTest {
             @Override public Long getDocenteId() { return docenteId; }
             @Override public Boolean getVigente() { return vigente; }
         };
+    }
+
+    @Test
+    @DisplayName("pendientes: las salidas sin registrar se anuncian primero")
+    void pendientesSalidasSinRegistrar() {
+        // Va primero porque es lo unico de la lista que hay que resolver hoy: los demas son
+        // cargas incompletas de configuracion (RF-79).
+        when(bloquePresenciaRepository.countPendientesDeCierre(TENANT_A)).thenReturn(3L);
+        // Tiene que haber OTRO pendiente, si no el de salidas es el unico y quedaria primero
+        // aunque el codigo lo agregara al final: el test no probaria el orden.
+        Comision sinDocente = Comision.builder()
+            .id(1L).codigo("A").materia(materia()).docenteAsignado(null).activo(true).build();
+        when(comisionRepository.findActivasDelTenant(anyLong())).thenReturn(List.of(sinDocente));
+        when(horarioRepository.countByComisionIdAndActivoTrue(1L)).thenReturn(3L);
+
+        PanelInicioDto panel = service.armar();
+
+        assertThat(panel.pendientes()).hasSize(2);
+        assertThat(panel.pendientes()).extracting(PanelInicioDto.Pendiente::titulo)
+            .containsExactly("salidas sin registrar", "comisiones sin docente asignado");
+
+        PanelInicioDto.Pendiente primero = panel.pendientes().get(0);
+        assertThat(primero.cantidad()).isEqualTo(3L);
+        assertThat(primero.url()).isEqualTo("/asistencias/bloques/pendientes");
+        // El texto tiene que decir que esa hora no la observo nadie: es la diferencia entre
+        // un dato medido y uno completado por el sistema.
+        assertThat(primero.detalle()).contains("nadie la observó");
+    }
+
+    @Test
+    @DisplayName("pendientes: sin salidas pendientes no se anuncia la fila")
+    void sinSalidasPendientesNoHayFila() {
+        when(bloquePresenciaRepository.countPendientesDeCierre(TENANT_A)).thenReturn(0L);
+
+        PanelInicioDto panel = service.armar();
+
+        assertThat(panel.pendientes())
+            .noneMatch(pd -> pd.titulo().contains("salida"));
     }
 }

@@ -21,6 +21,9 @@ package edu.cent35.asistencias.dto;
  * @param progresoMs         milisegundos ya sostenidos, para dibujar el avance
  * @param objetivoMs         milisegundos que hay que sostener en total
  * @param mensaje            texto para mostrar al operador
+ * @param tipoDeMarca        "ENTRADA" o "SALIDA" cuando quedó registrada; null si no.
+ *                           La pantalla las tiene que poder distinguir de un vistazo: son dos
+ *                           hechos opuestos y confundirlos hace leer mal el registro (RF-20)
  */
 public record PaseAsistenciaResultadoDto(
     boolean rostroDetectado,
@@ -39,7 +42,8 @@ public record PaseAsistenciaResultadoDto(
     boolean confirmando,
     Long progresoMs,
     Long objetivoMs,
-    String mensaje
+    String mensaje,
+    String tipoDeMarca
 ) {
 
     // No se detectó ninguna cara en el frame.
@@ -49,7 +53,7 @@ public record PaseAsistenciaResultadoDto(
             null, null, null, null,
             false, false, null, null,
             false, null, null,
-            "No se detectó ningún rostro.");
+            "No se detectó ningún rostro.", null);
     }
 
     /**
@@ -66,7 +70,7 @@ public record PaseAsistenciaResultadoDto(
             x, y, ancho, alto,
             false, false, null, null,
             false, null, null,
-            motivo);
+            motivo, null);
     }
 
     /**
@@ -80,7 +84,7 @@ public record PaseAsistenciaResultadoDto(
             null, null, null, null,
             false, false, null, null,
             false, null, null,
-            motivo);
+            motivo, null);
     }
 
     // Se identificó al docente, pero en este momento no tiene ninguna clase en curso.
@@ -93,7 +97,7 @@ public record PaseAsistenciaResultadoDto(
             x, y, ancho, alto,
             false, false, null, null,
             false, null, null,
-            motivo);
+            motivo, null);
     }
 
     // Se identificó al docente pero todavía no se sostuvo lo suficiente como para marcar.
@@ -107,19 +111,48 @@ public record PaseAsistenciaResultadoDto(
             x, y, ancho, alto,
             false, false, null, null,
             true, progresoMs, objetivoMs,
-            "Sostené la posición…");
+            "Sostené la posición…", null);
     }
 
-    // Se identificó al docente y quedó registrada su asistencia.
-    public static PaseAsistenciaResultadoDto marcado(Long docenteId, String nombre, double distancia,
-                                                     int x, int y, int ancho, int alto,
-                                                     boolean yaEstaba, String estado, String claseLabel) {
-        String prefijo = yaEstaba ? "Ya estaba marcado: " : "Asistencia marcada: ";
+    /**
+     * El docente registró su <b>entrada</b>: se abrió su bloque de presencia y quedó marcada la
+     * clase que está dando (RF-74).
+     *
+     * <p>{@code yaEstaba} viaja en false siempre. Un bloque abierto no se vuelve a abrir: la
+     * segunda pasada por la cámara es la salida, no una marca repetida.
+     */
+    public static PaseAsistenciaResultadoDto entradaRegistrada(Long docenteId, String nombre,
+                                                               double distancia,
+                                                               int x, int y, int ancho, int alto,
+                                                               String estado, String claseLabel) {
+        String detalle = (claseLabel == null || claseLabel.isBlank())
+            ? estado
+            : estado + " en " + claseLabel;
         return new PaseAsistenciaResultadoDto(
             true, true, docenteId, nombre, distancia,
             x, y, ancho, alto,
-            true, yaEstaba, estado, claseLabel,
+            true, false, estado, claseLabel,
             false, null, null,
-            prefijo + estado + " en " + claseLabel);
+            "Entrada registrada: " + detalle, "ENTRADA");
+    }
+
+    /**
+     * El docente registró su <b>salida</b>: se cerró su bloque y quedaron imputadas las clases
+     * que cubrió (RF-74, RF-78).
+     *
+     * <p>No lleva {@code estadoAsistencia}: el estado describe cómo <i>llegó</i>, y al irse eso
+     * ya está decidido. Lo que se informa acá es la permanencia y si el retiro fue anticipado.
+     */
+    public static PaseAsistenciaResultadoDto salidaRegistrada(Long docenteId, String nombre,
+                                                              double distancia,
+                                                              int x, int y, int ancho, int alto,
+                                                              String resumen, boolean anticipada) {
+        String prefijo = anticipada ? "Salida registrada (anticipada): " : "Salida registrada: ";
+        return new PaseAsistenciaResultadoDto(
+            true, true, docenteId, nombre, distancia,
+            x, y, ancho, alto,
+            true, false, null, resumen,
+            false, null, null,
+            prefijo + resumen, "SALIDA");
     }
 }

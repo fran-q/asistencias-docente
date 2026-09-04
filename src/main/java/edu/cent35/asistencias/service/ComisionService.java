@@ -46,7 +46,7 @@ public class ComisionService {
                     c.getMateria().getCarrera().getCodigo();
                 }
             }
-            if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getDni();
+            if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getPersona().getDni();
         });
         return comisiones;
     }
@@ -65,14 +65,14 @@ public class ComisionService {
         // Touch para inicializar lazy
         c.getMateria().getCodigo();
         if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
-        if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getDni();
+        if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getPersona().getDni();
         return c;
     }
 
     // Docentes activos del tenant - para el selector del form.
     @Transactional(readOnly = true)
     public List<Docente> docentesActivosParaSelector() {
-        return docenteRepository.findByActivoTrueOrderByApellidoAscNombreAsc();
+        return docenteRepository.listarVigentesDelTenant(TenantContext.getRequired());
     }
 
     // Solo las activas, para poblar el combo del formulario de horarios.

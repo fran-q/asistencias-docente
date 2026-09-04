@@ -41,11 +41,48 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Indica si el email ya está tomado en esa institución.
     boolean existsByEmailAndInstitucionId(String email, Long institucionId);
 
-    // Lista los usuarios activos de una institucion.
-    List<Usuario> findByInstitucionIdAndActivoTrueOrderByApellidoAscNombreAsc(Long institucionId);
+    // La cuenta de acceso de una persona, si la tiene. Se usa para avisar, antes de editar una
+    // identidad desde la pantalla de docentes, que el cambio tambien alcanza a su cuenta.
+    @Query("""
+        SELECT u FROM Usuario u
+        JOIN FETCH u.persona p
+        WHERE p.institucionId = :institucionId
+          AND p.id = :personaId
+        """)
+    Optional<Usuario> cuentaDe(@Param("institucionId") Long institucionId,
+                               @Param("personaId") Long personaId);
 
-    // Lista todos los usuarios de una institucion (activos e inactivos).
-    List<Usuario> findByInstitucionIdOrderByActivoDescApellidoAscNombreAsc(Long institucionId);
+    /**
+     * Lista los usuarios activos de una institucion, ordenados por el nombre de su persona.
+     *
+     * <p><b>LEFT JOIN y no JOIN, desde V018.</b> La cuenta institucional no tiene persona, y un
+     * JOIN comun la dejaria afuera del listado: la unica cuenta que administra el sistema
+     * desapareceria de la pantalla que administra las cuentas.
+     *
+     * <p><b>Y por eso el WHERE del tenant se corrio a la raiz.</b> Antes filtraba por
+     * {@code p.institucionId}, que ademas de acotar hacia de JOIN implicito. Con cuentas sin
+     * persona ese filtro nunca se cumpliria para ellas, asi que ahora acota por
+     * {@code u.institucionId}: Usuario es tenant-scoped por si mismo y no depende de que haya
+     * alguien del otro lado.
+     */
+    @Query("""
+        SELECT u FROM Usuario u
+        LEFT JOIN FETCH u.persona p
+        WHERE u.institucionId = :institucionId
+          AND u.activo = true
+        ORDER BY p.apellido ASC, p.nombre ASC
+        """)
+    List<Usuario> listarActivosDelTenant(@Param("institucionId") Long institucionId);
+
+    // Lista todos los usuarios de una institucion, activos e inactivos. Mismo criterio que el
+    // anterior: LEFT JOIN para no perder la cuenta institucional y el tenant acotado en la raiz.
+    @Query("""
+        SELECT u FROM Usuario u
+        LEFT JOIN FETCH u.persona p
+        WHERE u.institucionId = :institucionId
+        ORDER BY u.activo DESC, p.apellido ASC, p.nombre ASC
+        """)
+    List<Usuario> listarDelTenant(@Param("institucionId") Long institucionId);
 
     // Cuenta usuarios activos de un rol; evita que la institucion se quede sin cuenta INSTITUCION.
     long countByInstitucionIdAndRolCodigoAndActivoTrue(Long institucionId, String rolCodigo);

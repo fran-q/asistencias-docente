@@ -14,6 +14,7 @@
     --accent:       #e87722;
     --success:      #2e8b57;
     --danger:       #e74c3c;
+    --danger-hover: #c0392b;
     --warning:      #f39c12;
     --border:       #353a45;
     /* Fondo de la marca. No es --primary: ese azul esta elegido para texto sobre fondo
@@ -35,6 +36,67 @@
     --font-sans:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
                     'Helvetica Neue', Arial, sans-serif;
     --font-mono:    'Consolas', 'Cascadia Code', 'Fira Code', monospace;
+
+    /* ---- Escala de movimiento ----
+       Antes habia seis duraciones sueltas (0.15s, .15s, 0.2s, 0.22s, 0.25s, .3s) y
+       tres criterios de easing conviviendo. No se notaba una por una, pero hacia que
+       dos elementos vecinos respondieran a distinto ritmo. Tres escalones alcanzan:
+
+         rapido  respuesta directa al puntero (color, borde, elevacion)
+         base    algo aparece o desaparece en su lugar (toast, modal, submenu)
+         lento   algo recorre distancia o cambia de tamano (drawer, barra)
+
+       El easing es el mismo en todo: salida rapida y frenada larga, que es como se
+       lee "el sistema ya respondio" sin que el movimiento pida atencion. */
+    --t-rapido:     120ms;
+    --t-base:       180ms;
+    --t-lento:      260ms;
+    --ease:         cubic-bezier(0.22, 0.68, 0.28, 1);
+
+    /* ---- Paleta de la grilla horaria ----
+       Un color por dia. Estaban hardcodeados abajo, en las reglas de .grilla__item,
+       y tres de ellos repetian por casualidad el valor de --primary, --success y
+       --accent: al tocar un token la grilla se desincronizaba sin que nada avisara.
+       Aca quedan nombrados y el tema claro los puede corregir. */
+    --dia-lun:      #4a9eff;
+    --dia-mar:      #2e8b57;
+    --dia-mie:      #e87722;
+    --dia-jue:      #b86fdc;
+    --dia-vie:      #d63864;
+    --dia-sab:      #6c757d;
+    --dia-dom:      #4d4d6b;
+
+    /* ---- Estado sobre fondo tenido ----
+       Badges, alerts, toasts y feedback pintan texto de color sobre un tinte del
+       MISMO color. Ahi no sirve --success ni --danger: esos estan calibrados como
+       texto sobre el fondo de la pagina, y sobre su propio tinte se empastan.
+
+       Estaban resueltos con hex sueltos repartidos por la hoja (#6cdfa6, #ff8a7a,
+       #f7c26b...). Como eran valores fijos, el tema claro nunca los toco: el badge
+       ACTIVO quedaba en 2.58:1 y el de INSTITUCION en 1.69:1, ambos ilegibles.
+       Nombrados aca, cada tema define los suyos. */
+    --tinte-success:       rgba(46, 139, 87, 0.2);
+    --tinte-danger:        rgba(231, 76, 60, 0.2);
+    --tinte-warning:       rgba(243, 156, 18, 0.2);
+    --tinte-accent:        rgba(232, 119, 34, 0.2);
+    --tinte-info:          rgba(74, 144, 226, 0.2);
+    --tinte-neutral:       rgba(160, 164, 171, 0.18);
+
+    --sobre-tinte-success: #6cdfa6;
+    --sobre-tinte-danger:  #ff8a7a;
+    --sobre-tinte-warning: #f7c26b;
+    --sobre-tinte-accent:  #ffb37a;
+    --sobre-tinte-info:    #8bbcf0;
+    /* No reusa --text-muted: ese gris sobre el tinte neutro da 4.29:1 y se queda
+       corto. Subido lo justo para llegar a 4.99:1 sin dejar de leerse apagado. */
+    --sobre-tinte-neutral: #adb1b8;
+
+    /* Borde del mismo color que el tinte, un poco mas marcado, para alerts y
+       botones destructivos. El suave es para el fondo de hover, donde el tinte
+       normal ya seria demasiado. */
+    --borde-success:       rgba(46, 139, 87, 0.4);
+    --borde-danger:        rgba(231, 76, 60, 0.4);
+    --tinte-danger-suave:  rgba(231, 76, 60, 0.08);
 }
 
 /* ============================================================================
@@ -61,9 +123,47 @@
     --accent:       #b85c10;
     --success:      #1b6b3a;
     --danger:       #b3261e;
+    --danger-hover: #8c1d16;
     --warning:      #8a5a00;
     --border:       #d4d8de;
     --marca-fondo:  #10457f;
+
+    /* Los bloques de la grilla llevan texto blanco encima, asi que el color es
+       fondo y no texto: los siete se bajaron hasta pasar 4.5:1 contra el blanco.
+       Con los valores del tema oscuro el lunes quedaba en 2.6:1 --el bloque se
+       leia como una mancha celeste-- y el sabado en 3.9:1. */
+    --dia-lun:      #1565c0;
+    --dia-mar:      #1b6b3a;
+    --dia-mie:      #b85c10;
+    --dia-jue:      #7b3fa0;
+    --dia-vie:      #a81f4a;
+    --dia-sab:      #4f565d;
+    --dia-dom:      #3d3d55;
+
+    /* Sobre fondo claro el tinte es casi blanco, asi que el texto va oscuro. Los
+       seis pares se midieron contra el tinte ya mezclado con el blanco de la
+       tarjeta, no contra el blanco puro, que es lo que ve el ojo:
+         success 5.36:1 · danger 5.20:1 · warning 4.73:1
+         accent  5.69:1 · info   4.68:1 · neutral 5.22:1
+       El acento no puede reusar --accent: #b85c10 sobre su propio tinte da 3.73:1
+       y no llega. Por eso este es el unico que define un valor propio. */
+    --tinte-success:       rgba(27, 107, 58, 0.16);
+    --tinte-danger:        rgba(179, 38, 30, 0.14);
+    --tinte-warning:       rgba(138, 90, 0, 0.16);
+    --tinte-accent:        rgba(184, 92, 16, 0.16);
+    --tinte-info:          rgba(21, 101, 192, 0.14);
+    --tinte-neutral:       rgba(90, 96, 105, 0.14);
+
+    --sobre-tinte-success: var(--success);
+    --sobre-tinte-danger:  var(--danger);
+    --sobre-tinte-warning: var(--warning);
+    --sobre-tinte-accent:  #8f4409;
+    --sobre-tinte-info:    var(--primary);
+    --sobre-tinte-neutral: var(--text-muted);
+
+    --borde-success:       rgba(27, 107, 58, 0.35);
+    --borde-danger:        rgba(179, 38, 30, 0.35);
+    --tinte-danger-suave:  rgba(179, 38, 30, 0.07);
 }
 
 /* ============================================================================
@@ -98,6 +198,30 @@
 .skip-link:focus {
     left: 0;
     text-decoration: none;
+}
+
+/* ============================================================================
+ *  MOVIMIENTO REDUCIDO (WCAG 2.3.3)
+ *
+ *  Quien pidio menos movimiento en su sistema operativo lo pidio por algo: para
+ *  parte de las personas con trastorno vestibular una animacion de desplazamiento
+ *  produce mareo real. La hoja ya respetaba el contraste y el foco, pero animaba
+ *  igual para todos.
+ *
+ *  No se apaga el movimiento con display ni se quitan las reglas: se lo reduce a
+ *  1ms. Asi las transiciones siguen EXISTIENDO --el codigo que espera un evento
+ *  transitionend o animationend sigue recibiendolo, que es lo que se rompe cuando
+ *  uno pone transition: none-- pero terminan antes de que el ojo las registre.
+ *
+ *  scroll-behavior va aparte porque no es ni transicion ni animacion.
+ * ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
 }
 
 /* ========== Reset minimo ========== */
@@ -202,7 +326,7 @@ code {
     color: var(--text-muted);
     padding: var(--space-xs) 0;
     border-bottom: 2px solid transparent;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
     white-space: nowrap;            /* nunca wrappear el texto del link en 2 lineas */
 }
 .navbar__link:hover {
@@ -234,7 +358,7 @@ code {
     font-size: inherit;
     cursor: pointer;
     white-space: nowrap;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
 }
 .navbar__grupo-boton:hover { color: var(--text); }
 
@@ -249,7 +373,7 @@ code {
 .nav-flecha {
     flex-shrink: 0;
     opacity: 0.6;
-    transition: transform 0.15s;
+    transition: transform var(--t-rapido) var(--ease);
 }
 .navbar__grupo--abierto .nav-flecha { transform: rotate(180deg); }
 
@@ -418,13 +542,19 @@ code {
     border-radius: var(--radius);
     color: var(--text);
     text-align: center;
-    transition: border-color .15s ease, background-color .15s ease;
+    transition: border-color     var(--t-rapido) var(--ease),
+                background-color var(--t-rapido) var(--ease),
+                transform        var(--t-rapido) var(--ease);
 }
+/* El mismo pixel que se levanta en los botones: los contadores tambien son
+   enlaces, y conviene que todo lo que se puede tocar responda igual. */
 .home__numero:hover {
     border-color: var(--primary);
     background-color: var(--bg-elev-2);
+    transform: translateY(-1px);
     text-decoration: none;
 }
+.home__numero:active { transform: translateY(0); transition-duration: 60ms; }
 .home__numero-valor { font-size: 1.9rem; font-weight: 600; line-height: 1; }
 .home__numero-label { font-size: 0.8rem; color: var(--text-muted); }
 .home__numero--ok      .home__numero-valor { color: var(--success); }
@@ -443,7 +573,7 @@ code {
     height: 100%;
     background-color: var(--success);
     border-radius: 999px;
-    transition: width .3s ease;
+    transition: width var(--t-lento) var(--ease);
 }
 
 /* ---- Requiere atencion ---- */
@@ -483,15 +613,81 @@ code {
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition: background-color var(--t-rapido) var(--ease),
+                border-color     var(--t-rapido) var(--ease),
+                color            var(--t-rapido) var(--ease),
+                transform        var(--t-rapido) var(--ease),
+                box-shadow       var(--t-rapido) var(--ease);
     text-align: center;
+}
+
+/* El boton se levanta un pixel al pasar el mouse y se hunde al apretarlo. Es poco
+   a proposito: un pixel no llama la atencion, pero confirma que el click entro
+   --sobre todo en las acciones de tabla, donde el resultado aparece recien despues
+   de recargar y hasta entonces la pantalla no daba ninguna senal. */
+.btn:hover  { transform: translateY(-1px); }
+.btn:active { transform: translateY(0);    transition-duration: 60ms; }
+
+/* Un boton deshabilitado no responde: si se levantara estaria mintiendo. */
+.btn:disabled,
+.btn[aria-disabled="true"] {
+    transform: none;
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+/* ---- Envio en curso ----
+   El boton que se apreto queda bloqueado y con un disco girando al lado mientras
+   el formulario viaja. Se distingue de un boton deshabilitado comun: aquel esta
+   apagado porque no se puede usar, este porque ya se esta usando. Por eso conserva
+   el color pleno en vez de bajar a 0.55 --si se apagara, se leeria como que el
+   click no entro, que es justo lo contrario de lo que paso. */
+.btn--enviando:disabled,
+.btn--enviando {
+    opacity: 1;
+    cursor: progress;
+}
+.btn--enviando::before {
+    content: '';
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    margin-right: 0.5em;
+    vertical-align: -0.1em;
+    border: 2px solid currentColor;
+    /* Un solo lado transparente: el hueco es lo que deja ver que gira. Con el
+       disco entero lleno no se notaria el giro. */
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: btn-girando 620ms linear infinite;
+}
+@keyframes btn-girando {
+    to { transform: rotate(360deg); }
+}
+
+/* Con movimiento reducido el disco no gira --seria un giro infinito, lo mas
+   molesto de todo para quien pidio menos movimiento-- pero el boton igual tiene
+   que verse ocupado. Queda quieto y a media tinta, que alcanza para distinguirlo.
+
+   Va con selector propio y no dentro del bloque global de 1ms: ahi la animacion
+   seguiria corriendo, solo que tan rapido que el disco titilaria. */
+@media (prefers-reduced-motion: reduce) {
+    .btn--enviando::before {
+        animation: none;
+        opacity: 0.6;
+    }
 }
 
 .btn--primary {
     background-color: var(--primary);
     color: #fff;
 }
-.btn--primary:hover { background-color: var(--primary-hover); }
+.btn--primary:hover {
+    background-color: var(--primary-hover);
+    /* La sombra usa el azul de la marca y no negro: sobre fondo oscuro una sombra
+       negra no se ve, y el halo del propio color si. */
+    box-shadow: 0 2px 8px rgba(31, 95, 168, 0.35);
+}
 
 .btn--ghost {
     background-color: transparent;
@@ -502,12 +698,12 @@ code {
 
 .btn--ghost.btn--danger {
     color: var(--danger);
-    border-color: rgba(231, 76, 60, 0.4);
+    border-color: var(--borde-danger);
 }
 .btn--ghost.btn--danger:hover {
-    color: #ff8a7a;
+    color: var(--sobre-tinte-danger);
     border-color: var(--danger);
-    background-color: rgba(231, 76, 60, 0.08);
+    background-color: var(--tinte-danger-suave);
 }
 
 .btn--full { width: 100%; }
@@ -546,7 +742,7 @@ code {
     border-radius: var(--radius);
     font-family: inherit;
     font-size: 0.95rem;
-    transition: border-color 0.15s;
+    transition: border-color var(--t-rapido) var(--ease);
 }
 
 .form-group input:focus,
@@ -592,14 +788,14 @@ code {
     border: 1px solid transparent;
 }
 .alert--error {
-    background-color: rgba(231, 76, 60, 0.15);
-    border-color: rgba(231, 76, 60, 0.4);
-    color: #ff8a7a;
+    background-color: var(--tinte-danger);
+    border-color: var(--borde-danger);
+    color: var(--sobre-tinte-danger);
 }
 .alert--success {
-    background-color: rgba(46, 139, 87, 0.15);
-    border-color: rgba(46, 139, 87, 0.4);
-    color: #6cdfa6;
+    background-color: var(--tinte-success);
+    border-color: var(--borde-success);
+    color: var(--sobre-tinte-success);
 }
 
 /* ========== Login (pagina dedicada, sin navbar) ========== */
@@ -759,6 +955,16 @@ code {
     font-size: 0.85rem;
 }
 
+/* Dato que ocupa el lugar de un campo pero no se edita: el rol de una cuenta, el
+   estado de una institucion. Toma la misma altura que un input para que la fila no
+   se desalinee cuando al lado hay uno de verdad. */
+.form-static {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    margin: 0;
+}
+
 .form-error {
     display: block;
     margin-top: var(--space-xs);
@@ -808,26 +1014,32 @@ code {
     letter-spacing: 0.5px;
 }
 .badge--success {
-    background-color: rgba(46, 139, 87, 0.2);
-    color: #6cdfa6;
+    background-color: var(--tinte-success);
+    color: var(--sobre-tinte-success);
 }
 .badge--danger {
-    background-color: rgba(231, 76, 60, 0.2);
-    color: #ff8a7a;
+    background-color: var(--tinte-danger);
+    color: var(--sobre-tinte-danger);
 }
 .badge--accent {
-    background-color: rgba(232, 119, 34, 0.2);
-    color: #ffb37a;
+    background-color: var(--tinte-accent);
+    color: var(--sobre-tinte-accent);
 }
 .badge--neutral {
-    background-color: rgba(160, 164, 171, 0.18);
+    background-color: var(--tinte-neutral);
     color: var(--text-muted);
+}
+/* Rol de institucion: la cuenta que representa al establecimiento. Se distingue de
+   los administradores porque no es una persona y no se puede dar de baja. */
+.badge--info {
+    background-color: var(--tinte-info);
+    color: var(--sobre-tinte-info);
 }
 /* Estado que pide atencion pero no es un error: consentimiento sin firmar,
    correo sin verificar. Faltaba, asi que esos badges se veian sin color. */
 .badge--warning {
-    background-color: rgba(243, 156, 18, 0.2);
-    color: #f7c26b;
+    background-color: var(--tinte-warning);
+    color: var(--sobre-tinte-warning);
 }
 
 /* ========== Tablas ========== */
@@ -861,11 +1073,21 @@ code {
     border-bottom: 1px solid var(--border);
 }
 .table tbody tr:last-child td { border-bottom: none; }
+/* El resaltado de fila entraba de golpe. Con la transicion el ojo sigue de una fila
+   a la otra en vez de ver parpadear dos. Solo el color: mover la fila desalinearia
+   las columnas. */
+.table tbody tr { transition: background-color var(--t-rapido) var(--ease); }
 .table tbody tr:hover { background-color: var(--bg-elev-2); }
 .table .row--inactive { opacity: 0.6; }
 .table .row--inactive code { text-decoration: line-through; }
-.table__actions { text-align: right; white-space: nowrap; }
-.table__actions .btn--sm { margin-left: var(--space-xs); }
+/* Columna de acciones: encabezado y botones alineados entre si.
+   El encabezado estaba a la izquierda y los botones a la derecha, cada uno en una
+   punta de la misma columna. No era el HTML: ".table thead th" (0,2,1) le gana por
+   especificidad a ".table__actions" (0,1,0), asi que el text-align: right nunca
+   llegaba al <th>. Por eso el selector de abajo nombra las dos cosas. */
+.table thead th.table__actions,
+.table__actions { text-align: center; white-space: nowrap; }
+.table__actions .btn--sm { margin: 0 calc(var(--space-xs) / 2); }
 .table__empty {
     text-align: center;
     color: var(--text-muted);
@@ -944,8 +1166,8 @@ code {
     color: var(--text-muted);
     font-size: 0.95rem;
 }
-.captura__feedback--ok       { color: #6cdfa6; font-weight: 600; }
-.captura__feedback--corregir { color: #f7c26b; font-weight: 600; }
+.captura__feedback--ok       { color: var(--sobre-tinte-success); font-weight: 600; }
+.captura__feedback--corregir { color: var(--sobre-tinte-warning); font-weight: 600; }
 
 .captura__titulo-lateral {
     margin: 0 0 var(--space-sm);
@@ -1100,6 +1322,45 @@ code {
 .table-wrap::-webkit-scrollbar-track    { background: transparent; }
 .table-wrap .table { min-width: 720px; }
 
+/* ---- Aviso de que la tabla sigue ----
+   La tabla ya se desplazaba de costado, pero nada lo decia: en una ventana angosta
+   la columna de acciones queda cortada al medio y parece un error de maquetado, no
+   contenido que continua. La barra de scroll es fina y en Windows recien aparece al
+   usarla, asi que no alcanza como aviso.
+
+   El degradado se pinta sobre el borde que tiene contenido detras. Va como
+   background-attachment: local/scroll --no como pseudo-elemento-- porque el wrap
+   scrollea y un ::after quedaria pegado al contenido en vez de al marco. La clase
+   la pone table-scroll.js segun donde este el scroll. */
+.table-wrap { position: relative; }
+
+.table-wrap::before,
+.table-wrap::after {
+    content: '';
+    position: sticky;
+    top: 0;
+    display: block;
+    width: 28px;
+    height: 100%;
+    margin-bottom: -100%;   /* no ocupa lugar en el flujo */
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--t-base) var(--ease);
+    z-index: 3;             /* por encima del thead sticky, que va en 2 */
+}
+.table-wrap::before {
+    float: left;
+    left: 0;
+    background: linear-gradient(to right, var(--bg-elev), transparent);
+}
+.table-wrap::after {
+    float: right;
+    right: 0;
+    background: linear-gradient(to left, var(--bg-elev), transparent);
+}
+.table-wrap--mas-izq::before { opacity: 1; }
+.table-wrap--mas-der::after  { opacity: 1; }
+
 /* ============================================================================
  *  Select con busqueda
  *  El <select> real queda oculto detras; esto es solo la capa visible.
@@ -1201,13 +1462,19 @@ code {
 .seccion__tarjeta {
     margin-bottom: 0;
     color: inherit;
-    transition: border-color .15s ease, transform .15s ease;
+    transition: border-color var(--t-rapido) var(--ease),
+                transform    var(--t-rapido) var(--ease),
+                box-shadow   var(--t-rapido) var(--ease);
 }
+/* Se levanta 2px y no 1 como los botones: es una superficie mucho mas grande y con
+   un solo pixel el movimiento no se lee. La escala del gesto acompana al tamano. */
 .seccion__tarjeta:hover {
     border-color: var(--primary);
     transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
     text-decoration: none;
 }
+.seccion__tarjeta:active { transform: translateY(0); transition-duration: 60ms; }
 .seccion__tarjeta h2 {
     color: var(--primary);
     font-size: 1.05rem;
@@ -1314,7 +1581,7 @@ code {
     border-radius: var(--radius);
     color: var(--text-muted);
     cursor: pointer;
-    transition: color .15s, border-color .15s;
+    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
 }
 .tema-toggle:hover { color: var(--text); border-color: var(--primary); }
 /* Se muestra el icono del tema al que se va a cambiar, no el actual: el boton
@@ -1387,7 +1654,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    transition: color 0.15s, background-color 0.15s;
+    transition: color var(--t-rapido) var(--ease), background-color var(--t-rapido) var(--ease);
 }
 .password-toggle svg {
     width: 20px;
@@ -1436,7 +1703,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     line-height: 1.4;
     opacity: 0;
     transform: translateX(20px);
-    transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+    transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease);
 }
 .toast--in  { opacity: 1; transform: translateX(0); }
 .toast--out { opacity: 0; transform: translateX(20px); }
@@ -1474,16 +1741,16 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .toast__close:hover { color: var(--text); background: var(--bg-elev-2); }
 
 .toast--success { border-left-color: var(--success); }
-.toast--success .toast__icon { background: rgba(46, 139, 87, 0.2); color: #6cdfa6; }
+.toast--success .toast__icon { background: var(--tinte-success); color: var(--sobre-tinte-success); }
 
 .toast--warning { border-left-color: var(--warning); }
-.toast--warning .toast__icon { background: rgba(243, 156, 18, 0.2); color: #ffd089; }
+.toast--warning .toast__icon { background: var(--tinte-warning); color: var(--sobre-tinte-warning); }
 
 .toast--error   { border-left-color: var(--danger); }
-.toast--error   .toast__icon { background: rgba(231, 76, 60, 0.2); color: #ff8a7a; }
+.toast--error   .toast__icon { background: var(--tinte-danger); color: var(--sobre-tinte-danger); }
 
 .toast--info    { border-left-color: var(--primary); }
-.toast--info    .toast__icon { background: rgba(74, 158, 255, 0.2); color: #9ec5ff; }
+.toast--info    .toast__icon { background: var(--tinte-info); color: var(--sobre-tinte-info); }
 
 /* ========== Modal de confirmación ========== */
 .modal-overlay {
@@ -1499,7 +1766,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     padding: var(--space-lg);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease-out;
+    transition: opacity var(--t-base) var(--ease);
 }
 .modal-overlay--in {
     opacity: 1;
@@ -1515,7 +1782,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     width: 100%;
     box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
     transform: scale(0.94);
-    transition: transform 0.2s ease-out;
+    transition: transform var(--t-base) var(--ease);
 }
 .modal-overlay--in .modal {
     transform: scale(1);
@@ -1525,7 +1792,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: rgba(74, 158, 255, 0.18);
+    background: var(--tinte-info);
     color: var(--primary);
     display: flex;
     align-items: center;
@@ -1535,7 +1802,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .modal__icon svg { display: block; }
 
 .modal--danger .modal__icon {
-    background: rgba(231, 76, 60, 0.18);
+    background: var(--tinte-danger);
     color: var(--danger);
 }
 
@@ -1596,7 +1863,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     color: #fff;
 }
 .btn--danger-solid:hover {
-    background-color: #c0392b;
+    background-color: var(--danger-hover);
 }
 
 /* ========== Boton hamburguesa + drawer responsive ========== */
@@ -1615,7 +1882,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     border-radius: var(--radius);
     color: var(--text);
     cursor: pointer;
-    transition: background-color 0.15s, border-color 0.15s;
+    transition: background-color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
 }
 .navbar__toggle:hover {
     background: var(--bg-elev-2);
@@ -1637,7 +1904,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     z-index: 998;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease-out;
+    transition: opacity var(--t-base) var(--ease);
     display: none;                 /* Default: oculto */
 }
 
@@ -1680,7 +1947,7 @@ body.nav-compact .navbar__menu {
     border-right: 1px solid var(--border);
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
     transform: translateX(-100%);
-    transition: transform 0.25s ease-out;
+    transition: transform var(--t-lento) var(--ease);
     z-index: 999;
     overflow-y: auto;
 }
@@ -1840,7 +2107,7 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     font-size: 0.72rem;
     overflow: hidden;
     cursor: pointer;
-    transition: opacity 0.15s, transform 0.15s;
+    transition: opacity var(--t-rapido) var(--ease), transform var(--t-rapido) var(--ease);
     text-decoration: none;
     line-height: 1.25;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -1866,13 +2133,13 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
 }
 
 /* Variar el color de los items por dia para que sea mas legible */
-.grilla__item[style*="grid-column: 2"] { background: #4a9eff; }   /* Lun */
-.grilla__item[style*="grid-column: 3"] { background: #2e8b57; }   /* Mar */
-.grilla__item[style*="grid-column: 4"] { background: #e87722; }   /* Mie */
-.grilla__item[style*="grid-column: 5"] { background: #b86fdc; }   /* Jue */
-.grilla__item[style*="grid-column: 6"] { background: #d63864; }   /* Vie */
-.grilla__item[style*="grid-column: 7"] { background: #6c757d; }   /* Sab */
-.grilla__item[style*="grid-column: 8"] { background: #4d4d6b; }   /* Dom */
+.grilla__item[style*="grid-column: 2"] { background: var(--dia-lun); }   /* Lun */
+.grilla__item[style*="grid-column: 3"] { background: var(--dia-mar); }   /* Mar */
+.grilla__item[style*="grid-column: 4"] { background: var(--dia-mie); }   /* Mie */
+.grilla__item[style*="grid-column: 5"] { background: var(--dia-jue); }   /* Jue */
+.grilla__item[style*="grid-column: 6"] { background: var(--dia-vie); }   /* Vie */
+.grilla__item[style*="grid-column: 7"] { background: var(--dia-sab); }   /* Sab */
+.grilla__item[style*="grid-column: 8"] { background: var(--dia-dom); }   /* Dom */
 
 .grilla__footer {
     margin-top: var(--space);
@@ -2062,6 +2329,42 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     margin: 0;
     font-size: 1.15rem;
     font-weight: 600;
+    transition: color var(--t-base) var(--ease);
+}
+
+/* Los cuatro estados del pase. Antes el color lo escribia pase-asistencia.js como
+   estilo inline, con hex de otra paleta y sin manera de responder al tema claro. */
+.pase__mensaje--success { color: var(--success); }
+.pase__mensaje--error   { color: var(--danger); }
+.pase__mensaje--warn    { color: var(--warning); }
+.pase__mensaje--info    { color: var(--text); font-weight: 400; }
+
+/* Confirmacion de marca. Es la unica animacion de la pantalla y dura poco menos de
+   medio segundo: quien toma asistencia esta mirando la camara y al docente, no el
+   panel, asi que el aviso tiene que alcanzar con verlo de reojo.
+
+   Escala apenas 1.04 y vuelve. Mas que eso empuja el texto de abajo y se lee como
+   un salto; menos, no se registra. */
+@keyframes pase-confirma {
+    0%   { transform: scale(1);    }
+    35%  { transform: scale(1.04); }
+    100% { transform: scale(1);    }
+}
+.pase__mensaje--confirma {
+    animation: pase-confirma 420ms var(--ease);
+    transform-origin: left center;
+}
+
+/* El panel entero da un destello verde muy tenue en el mismo momento. Es lo que se
+   ve con vision periferica cuando la vista esta en otro lado. */
+@keyframes pase-destello {
+    0%   { background-color: transparent; }
+    30%  { background-color: var(--tinte-success); }
+    100% { background-color: transparent; }
+}
+.pase__estado:has(.pase__mensaje--confirma) {
+    animation: pase-destello 700ms var(--ease);
+    border-radius: var(--radius);
 }
 
 .pase__clase {
@@ -2131,4 +2434,198 @@ body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea sc
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+
+/* ============================================================================
+ *  PUESTO DE CAPTURA NO AUTORIZADO
+ *  La pantalla a la que se llega cuando se intenta abrir el pase o el registro
+ *  del rostro desde un equipo que no esta habilitado (ADR-0015).
+ *
+ *  No se parece a la pagina de error a proposito. Un error dice que algo se
+ *  rompio; esto dice que el sistema funciona y que falta estar en otra maquina.
+ *  Por eso usa las tarjetas normales del sistema y ofrece a donde ir, en vez
+ *  del cartel centrado de error.html.
+ * ========================================================================== */
+.puesto__nota {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.puesto__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+}
+
+.puesto__subtitulo {
+    margin: var(--space-xl) 0 var(--space);
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* A lo ancho de un telefono los dos botones se apilan: uno al lado del otro
+   quedan por debajo del minimo de 44 px que necesita un objetivo tactil. */
+@media (max-width: 480px) {
+    .puesto__acciones .btn { width: 100%; }
+}
+
+/* ============================================================================
+ *  TABLAS COMO TARJETAS EN PANTALLA ANGOSTA
+ *
+ *  Las tablas de listado declaran min-width: 720px, asi que en un telefono de
+ *  360 px habia que desplazarse el doble del ancho de la pantalla para leer una
+ *  fila entera. El degradado del borde avisa que hay mas, pero avisar de un mal
+ *  camino no lo arregla.
+ *
+ *  Debajo de 760 px --justo donde la tabla empezaria a desplazarse-- cada fila
+ *  pasa a ser una tarjeta y cada celda una linea "etiqueta: valor". La etiqueta
+ *  sale de data-label, que las plantillas ponen en cada <td>, porque el <thead>
+ *  deja de estar a la vista y sin el los valores quedan sueltos sin decir de que
+ *  son.
+ *
+ *  Por que los roles ARIA. Cambiar el display de los elementos de una tabla hace
+ *  que Chrome y Safari le saquen la semantica de tabla al arbol de
+ *  accesibilidad: deja de anunciarse como tabla, con sus filas y sus celdas.
+ *  Declarar role="table" / "row" / "cell" a mano la repone. Los roles van
+ *  siempre en el HTML, no solo en movil: en escritorio coinciden con los
+ *  implicitos, asi que no cambian nada.
+ * ========================================================================== */
+@media (max-width: 760px) {
+
+    /* El contenedor deja de ser una caja con scroll propio: ya no hay nada que
+       desplazar de costado, y limitarle el alto agregaria un segundo scroll
+       adentro de la pagina. */
+    .table-wrap:has(.table--tarjetas) {
+        overflow: visible;
+        max-height: none;
+        min-height: 0;
+    }
+    /* Los degradados de borde avisaban de un desplazamiento que ya no existe. */
+    .table-wrap:has(.table--tarjetas)::before,
+    .table-wrap:has(.table--tarjetas)::after { display: none; }
+
+    .table--tarjetas,
+    .table--tarjetas tbody,
+    .table--tarjetas tr,
+    .table--tarjetas td { display: block; width: auto; }
+
+    /* El selector repite .table-wrap porque asi lo declara la regla de escritorio
+       (.table-wrap .table { min-width: 720px }) y una media query no suma
+       especificidad: con .table a secas el ancho minimo seguia ganando y la tarjeta
+       se desbordaba 720 px igual. */
+    .table-wrap .table--tarjetas { min-width: 0; font-size: 0.95rem; }
+
+    /* El encabezado se oculta sin sacarlo del arbol de accesibilidad: display:none
+       lo haria desaparecer tambien para un lector de pantalla, y las etiquetas de
+       columna son justamente lo que da sentido a cada valor. */
+    .table--tarjetas thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .table--tarjetas tbody tr {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background-color: var(--bg-elev);
+        padding: var(--space-sm) var(--space);
+        margin-bottom: var(--space-sm);
+    }
+    .table--tarjetas tbody tr:last-child { margin-bottom: 0; }
+    /* En tarjetas el resaltado al pasar el mouse no aporta --se toca, no se
+       apunta-- y en un telefono queda pegado despues del toque. */
+    .table--tarjetas tbody tr:hover { background-color: var(--bg-elev); }
+
+    .table--tarjetas tbody td {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: var(--space);
+        padding: 6px 0;
+        border-bottom: 1px solid var(--border);
+        text-align: right;
+    }
+    .table--tarjetas tbody tr td:last-child { border-bottom: none; }
+
+    /* La etiqueta de la columna, delante del valor. */
+    .table--tarjetas tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 auto;
+        margin-right: var(--space);
+        color: var(--text-muted);
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: left;
+    }
+    /* Una celda sin data-label no dibuja el hueco de la etiqueta. */
+    .table--tarjetas tbody td:not([data-label])::before { content: none; }
+
+    /* Celdas de dos partes: un valor principal y un dato secundario en <small>
+       --el codigo de la materia con su nombre, el docente con su DNI--. Los tres
+       elementos (etiqueta, valor, secundario) compiten por el mismo renglon, y el
+       del medio es el que se comprime: TUP-004 se partia en TUP- / 004.
+
+       El secundario baja a su propio renglon cuando no entra, y el valor principal
+       no se encoge ni se corta por la mitad. Un codigo partido no es un codigo. */
+    .table--tarjetas tbody td { flex-wrap: wrap; }
+    .table--tarjetas tbody td > code,
+    .table--tarjetas tbody td > .badge {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+    /* flex-shrink en 0 y no en 1: un elemento flexible se encoge ANTES de bajar de
+       renglon, asi que con shrink el secundario se quedaba en la linea metido en una
+       columna finita partiendo su texto. Con 0 se mantiene entero y, cuando no entra,
+       baja completo. max-width lo acota si el solo es mas ancho que la tarjeta. */
+    .table--tarjetas tbody td > small {
+        flex: 0 0 auto;
+        max-width: 100%;
+        /* Solo en el renglon compartido lo empuja space-between; cuando baja queda
+           unico en su linea y sin esto se pega a la izquierda, contra la columna de
+           valores que va toda a la derecha. */
+        margin-left: auto;
+        text-align: right;
+    }
+
+    /* Las acciones van abajo, a lo ancho y con altura de dedo: los 44 px son el
+       minimo de un objetivo tactil, y los botones de tabla son de 24. */
+    .table--tarjetas tbody td.table__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        justify-content: flex-start;
+        padding-top: var(--space-sm);
+        text-align: left;
+    }
+    .table--tarjetas tbody td.table__actions::before { content: none; }
+    .table--tarjetas tbody td.table__actions .btn--sm {
+        flex: 1 1 auto;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+    }
+    .table--tarjetas tbody td.table__actions .inline-form { display: contents; }
+
+    /* El estado vacio no es una fila de datos: no lleva recuadro ni etiquetas. */
+    .table--tarjetas tbody tr:has(.table__empty) {
+        border: none;
+        background: none;
+        padding: 0;
+    }
+    .table--tarjetas td.table__empty {
+        display: block;
+        text-align: center;
+        border-bottom: none;
+    }
+    .table--tarjetas td.table__empty::before { content: none; }
 }

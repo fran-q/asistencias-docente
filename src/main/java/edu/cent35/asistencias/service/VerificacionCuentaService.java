@@ -67,6 +67,47 @@ public class VerificacionCuentaService {
     }
 
     // ========================================================================
+    //  Cambio de la propia contrasena, ya con sesion iniciada
+    // ========================================================================
+
+    /**
+     * Manda un código de un solo uso al correo de la cuenta para autorizar el cambio de su
+     * contraseña.
+     *
+     * <p><b>Por qué hace falta si la persona ya inició sesión.</b> Una sesión abierta prueba
+     * que alguien entró con esa contraseña en algún momento, no que quien está frente a la
+     * pantalla ahora sea el dueño de la cuenta. Una sesión olvidada abierta alcanza para
+     * quedarse con la cuenta para siempre: basta con cambiarle la contraseña. El código exige
+     * además acceso al correo, que es lo único que el sistema sabe que le pertenece.
+     *
+     * <p>Usa el mismo propósito que la recuperación pública porque es el mismo acto —acreditar
+     * el control del correo para fijar una contraseña nueva—; lo único que cambia es desde
+     * dónde se pide.
+     */
+    @Transactional
+    public void enviarCodigoParaCambiarPassword(Long usuarioId, String ip) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + usuarioId));
+
+        String codigo = codigoService.emitir(
+            usuario, PropositoCodigo.RECUPERACION_PASSWORD, usuario.getEmail(), ip);
+        notificador.enviarCodigo(
+            usuario, PropositoCodigo.RECUPERACION_PASSWORD, usuario.getEmail(), codigo);
+        log.info("Codigo de cambio de contrasena emitido para el usuario {}", usuarioId);
+    }
+
+    /**
+     * Comprueba el código del cambio de contraseña. No cambia nada por sí solo: el código se
+     * consume acá y la contraseña se fija en el paso siguiente.
+     */
+    @Transactional
+    public CodigoVerificacionService.Resultado validarCodigoParaCambiarPassword(
+            Long usuarioId, String codigoIngresado) {
+        return codigoService.validar(
+            usuarioId, PropositoCodigo.RECUPERACION_PASSWORD, codigoIngresado);
+    }
+
+    // ========================================================================
     //  Recuperacion de contrasena (sin sesion)
     // ========================================================================
 
@@ -77,15 +118,18 @@ public class VerificacionCuentaService {
      */
     @Transactional
     public Optional<Long> iniciarRecuperacion(String usuarioOEmail, String ip) {
-        Optional<Usuario> quizas = buscarPorUsuarioOEmail(usuarioOEmail);
-        if (quizas.isEmpty()) {
-            log.info("Recuperacion pedida para un identificador inexistente; se responde igual que si existiera");
+        Busqueda busqueda = buscarPorUsuarioOEmail(usuarioOEmail);
+        if (!busqueda.hayCuenta()) {
+            log.info("Recuperacion sin codigo emitido ({}); se responde igual que si existiera",
+                     busqueda.motivo());
+            notificador.noSeEmitio(usuarioOEmail, busqueda.motivo());
             return Optional.empty();
         }
 
-        Usuario usuario = quizas.get();
+        Usuario usuario = busqueda.usuario();
         if (Boolean.FALSE.equals(usuario.getActivo())) {
             log.warn("Recuperacion pedida para la cuenta inactiva {}", usuario.getId());
+            notificador.noSeEmitio(usuarioOEmail, "la cuenta existe pero esta dada de baja");
             return Optional.empty();
         }
 
@@ -98,6 +142,8 @@ public class VerificacionCuentaService {
             // Ni el limite de reenvios ni una caida del SMTP deben delatar que la cuenta existe.
             log.warn("No se pudo emitir el codigo de recuperacion para {}: {}",
                      usuario.getId(), ex.toString());
+            notificador.noSeEmitio(usuarioOEmail,
+                "la cuenta existe, pero la emision fallo: " + ex.getMessage());
         }
         return Optional.of(usuario.getId());
     }
@@ -124,24 +170,58 @@ public class VerificacionCuentaService {
     //  helpers
     // ========================================================================
 
+    /**
+     * Lo que dio buscar la cuenta a recuperar: o hay una, o hay un motivo por el cual no.
+     *
+     * <p>Antes esto era un {@code Optional} vacío y los cuatro motivos posibles —no existe, hay
+     * varias, está de baja, falló la emisión— quedaban indistinguibles. Se los separa porque el
+     * motivo tiene que llegar al log y al canal de consola: a la respuesta HTTP no llega nunca,
+     * y de eso se ocupa quien llama.
+     */
+    private record Busqueda(Usuario usuario, String motivo) {
+
+        static Busqueda encontrada(Usuario usuario) {
+            return new Busqueda(usuario, null);
+        }
+
+        static Busqueda ninguna(String motivo) {
+            return new Busqueda(null, motivo);
+        }
+
+        boolean hayCuenta() {
+            return usuario != null;
+        }
+    }
+
     // Acepta indistintamente el nombre de usuario o el correo; si hay ambiguedad entre
     // instituciones no elige ninguno, igual que hace el login.
-    private Optional<Usuario> buscarPorUsuarioOEmail(String entrada) {
+    private Busqueda buscarPorUsuarioOEmail(String entrada) {
         if (entrada == null || entrada.isBlank()) {
-            return Optional.empty();
+            return Busqueda.ninguna("no se ingreso ningun usuario ni correo");
         }
         String limpio = entrada.trim();
 
         List<Usuario> porUsername = usuarioRepository.findByUsername(limpio);
         if (porUsername.size() == 1) {
-            return Optional.of(porUsername.get(0));
+            return Busqueda.encontrada(porUsername.get(0));
         }
         if (porUsername.size() > 1) {
             log.warn("Identificador '{}' ambiguo entre instituciones; no se emite codigo", limpio);
-            return Optional.empty();
+            return Busqueda.ninguna(
+                "ese usuario existe en " + porUsername.size() + " instituciones distintas; "
+                + "hay que entrar el correo para saber de cual se trata");
         }
 
         List<Usuario> porEmail = usuarioRepository.findByEmailIgnoreCase(limpio);
-        return porEmail.size() == 1 ? Optional.of(porEmail.get(0)) : Optional.empty();
+        if (porEmail.size() == 1) {
+            return Busqueda.encontrada(porEmail.get(0));
+        }
+        if (porEmail.size() > 1) {
+            log.warn("Correo '{}' ambiguo entre instituciones; no se emite codigo", limpio);
+            return Busqueda.ninguna(
+                "ese correo esta cargado en " + porEmail.size() + " cuentas de distintas "
+                + "instituciones; no hay forma de elegir una");
+        }
+        return Busqueda.ninguna("no existe ninguna cuenta con ese usuario ni con ese correo");
     }
 }

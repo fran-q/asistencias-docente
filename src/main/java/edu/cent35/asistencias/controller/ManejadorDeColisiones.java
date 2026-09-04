@@ -55,6 +55,14 @@ public class ManejadorDeColisiones {
             "Esa asistencia ya figura como carga manual.");
         MENSAJES.put("ck_docentes_baja_posterior_al_alta",
             "La fecha de baja no puede ser anterior a la fecha de alta del docente.");
+        MENSAJES.put("uq_puestos_captura_nombre",
+            "Ya hay un puesto con ese nombre en esta institución. Elegí otro para poder "
+            + "distinguirlos cuando haya que revocar uno.");
+        // Colisión de tokens: dos valores de 256 bits al azar coincidiendo. No va a pasar,
+        // pero si pasara el mensaje no puede hablar de tokens ni sugerir que el equipo hizo
+        // algo mal: quien lo lea solo apretó "autorizar este equipo".
+        MENSAJES.put("uq_puestos_captura_token",
+            "No se pudo autorizar el equipo. Volvé a intentarlo.");
     }
 
     private static final String MENSAJE_GENERICO =

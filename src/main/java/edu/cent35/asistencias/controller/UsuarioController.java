@@ -1,8 +1,12 @@
 package edu.cent35.asistencias.controller;
+import java.util.Objects;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import edu.cent35.asistencias.service.ConfirmacionRequeridaException;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.UsuarioService;
 import edu.cent35.asistencias.model.RolCodigo;
 import edu.cent35.asistencias.model.Usuario;
@@ -58,19 +62,25 @@ public class UsuarioController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new UsuarioCreateFormDto());
         }
-        model.addAttribute("roles", RolCodigo.values());
         return "usuario/form-nuevo";
     }
 
-    // Da de alta un admin de la institución; la contraseña se hashea antes de guardarse.
+    /**
+     * Da de alta una cuenta de administrador. La contraseña se hashea antes de guardarse.
+     *
+     * <p>No recibe el rol: el servicio siempre crea ADMIN. La cuenta de institución existe una
+     * sola vez y nace en el alta pública del establecimiento, así que acá no hay nada que elegir.
+     */
     @PostMapping("/nuevo")
     public String crear(@Valid @org.springframework.web.bind.annotation.ModelAttribute("form") UsuarioCreateFormDto form,
                         BindingResult binding,
                         Model model,
                         RedirectAttributes redirect) {
 
+        if (!form.coincide()) {
+            binding.rejectValue("confirmacion", "error.match", "Las contraseñas no coinciden");
+        }
         if (binding.hasErrors()) {
-            model.addAttribute("roles", RolCodigo.values());
             return "usuario/form-nuevo";
         }
 
@@ -80,15 +90,13 @@ public class UsuarioController {
                 form.getEmail(),
                 form.getPassword(),
                 form.getNombre(),
-                form.getApellido(),
-                form.getRol()
+                form.getApellido()
             );
             redirect.addFlashAttribute("flashMensaje",
                 "Usuario '" + creado.getUsername() + "' creado correctamente.");
             return "redirect:/usuarios";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("roles", RolCodigo.values());
             return "usuario/form-nuevo";
         }
     }
@@ -103,22 +111,31 @@ public class UsuarioController {
             model.addAttribute("form", UsuarioEditFormDto.from(u));
         }
         model.addAttribute("usuario", u);
-        model.addAttribute("roles", RolCodigo.values());
+        // La pantalla cambia segun el rol: una institucion lleva un solo campo de nombre y no
+        // ofrece la baja. Se resuelve aca y no en la plantilla porque Thymeleaf no puede leer
+        // constantes de una clase Java.
+        model.addAttribute("esInstitucion",
+            RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo()));
         return "usuario/form-editar";
     }
 
-    // Edita los datos de la cuenta, sin tocar username ni contraseña.
+    /**
+     * Edita los datos de la cuenta. No toca el username, la contraseña ni el rol.
+     *
+     * <p>El rol quedó fuera del formulario y fuera del servicio: una cuenta no cambia de rol
+     * nunca. Si alguien tiene que pasar a otro rol, se le da de baja la cuenta y se le crea
+     * otra, para que el historial quede partido donde efectivamente cambió quién era.
+     */
     @PostMapping("/{id}/editar")
     public String actualizar(@PathVariable Long id,
                              @Valid @org.springframework.web.bind.annotation.ModelAttribute("form") UsuarioEditFormDto form,
                              BindingResult binding,
                              Model model,
-                             @AuthenticationPrincipal CustomUserDetails actual,
+                             @AuthenticationPrincipal UsuarioAutenticado actual,
                              RedirectAttributes redirect) {
 
         if (binding.hasErrors()) {
-            model.addAttribute("usuario", usuarioService.buscarPorId(id));
-            model.addAttribute("roles", RolCodigo.values());
+            reponerContexto(id, model);
             return "usuario/form-editar";
         }
 
@@ -128,53 +145,55 @@ public class UsuarioController {
                 form.getNombre(),
                 form.getApellido(),
                 form.getEmail(),
-                form.getRol(),
                 form.getActivo(),
-                actual.getUsuarioId()
+                actual.getUsuarioId(),
+                form.isConfirmado()
             );
             redirect.addFlashAttribute("flashMensaje", "Usuario actualizado correctamente.");
             return "redirect:/usuarios";
+        } catch (ConfirmacionRequeridaException ex) {
+            // Esta cuenta pertenece a alguien que ademas da clases: el cambio de nombre se ve en
+            // la ficha del docente y en los listados de asistencia. Se avisa antes de escribir.
+            Map<String, String> campos = new LinkedHashMap<>();
+            campos.put("nombre", form.getNombre());
+            campos.put("apellido", form.getApellido());
+            campos.put("email", form.getEmail());
+            campos.put("activo", String.valueOf(form.getActivo()));
+            campos.values().removeIf(Objects::isNull);
+
+            model.addAttribute("impacto", ex.getImpacto());
+            model.addAttribute("camposOcultos", campos);
+            model.addAttribute("accion", "/usuarios/" + id + "/editar");
+            model.addAttribute("volverA", "/usuarios/" + id + "/editar");
+            return "identidad/confirmar";
         } catch (IllegalArgumentException ex) {
             binding.reject("error.global", ex.getMessage());
-            model.addAttribute("usuario", usuarioService.buscarPorId(id));
-            model.addAttribute("roles", RolCodigo.values());
+            reponerContexto(id, model);
             return "usuario/form-editar";
         }
     }
 
-    // ============================================================
-    //  Reset de password (form separado)
-    // ============================================================
-    @GetMapping("/{id}/password")
-    public String formPassword(@PathVariable Long id, Model model) {
+    // Repone lo que la pantalla de edicion necesita cuando el formulario vuelve con errores.
+    // Si falta "esInstitucion", la plantilla lo evalua como falso y muestra la baja de una
+    // cuenta que no se puede dar de baja.
+    private void reponerContexto(Long id, Model model) {
         Usuario u = usuarioService.buscarPorId(id);
-        if (!model.containsAttribute("form")) {
-            model.addAttribute("form", new PasswordResetDto());
-        }
         model.addAttribute("usuario", u);
-        return "usuario/form-password";
+        model.addAttribute("esInstitucion",
+            RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo()));
     }
 
-    // Asigna una contraseña nueva a la cuenta elegida.
-    @PostMapping("/{id}/password")
-    public String resetearPassword(@PathVariable Long id,
-                                   @Valid @org.springframework.web.bind.annotation.ModelAttribute("form") PasswordResetDto form,
-                                   BindingResult binding,
-                                   Model model,
-                                   RedirectAttributes redirect) {
-
-        if (binding.hasErrors() || !form.coincide()) {
-            if (!form.coincide()) {
-                binding.rejectValue("confirmacion", "error.match", "Las contraseñas no coinciden");
-            }
-            model.addAttribute("usuario", usuarioService.buscarPorId(id));
-            return "usuario/form-password";
-        }
-
-        usuarioService.resetearPassword(id, form.getNuevaPassword());
-        redirect.addFlashAttribute("flashMensaje", "Contraseña reseteada correctamente.");
-        return "redirect:/usuarios";
-    }
+    // ============================================================
+    //  Por qué no hay pantalla para cambiarle la contraseña a otro
+    // ============================================================
+    //  Existía /usuarios/{id}/password, donde la institución le fijaba una contraseña
+    //  nueva a cualquier cuenta. Se eliminó al exigir que TODO cambio de contraseña
+    //  acredite el control del correo con un código de un solo uso: si el código va al
+    //  dueño de la cuenta, que un tercero elija la contraseña deja de tener sentido.
+    //
+    //  Quien se quedó afuera usa "¿Olvidaste tu contraseña?" en el login y recibe su
+    //  propio código. De paso desaparece que un administrador conozca la clave con la
+    //  que otra persona entra, que es justamente lo que un hash existe para evitar.
 
     // ============================================================
     //  Manejador de "no encontrado" - camufla cross-tenant

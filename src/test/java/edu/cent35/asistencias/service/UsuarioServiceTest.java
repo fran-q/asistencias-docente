@@ -1,4 +1,6 @@
 package edu.cent35.asistencias.service;
+import edu.cent35.asistencias.repository.PersonaRepository;
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.repository.*;
 
@@ -44,6 +46,8 @@ class UsuarioServiceTest {
 
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private RolRepository rolRepository;
+    @Mock private PersonaRepository personaRepository;
+    @Mock private PersonaService personaService;
     @Mock private PasswordEncoder passwordEncoder;
 
     @InjectMocks private UsuarioService service;
@@ -54,9 +58,11 @@ class UsuarioServiceTest {
     @BeforeEach
     void setUp() {
         TenantContext.set(TENANT_A);
+        // La cuenta y la identidad se guardan por separado desde ADR-0016.
+        lenient().when(personaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        rolInstitucion = new Rol((short) 1, RolCodigo.INSTITUCION.name(), "Institucion");
-        rolAdmin       = new Rol((short) 2, RolCodigo.ADMIN.name(),       "Admin");
+        rolInstitucion = Rol.builder().id((short) 1).codigo(RolCodigo.INSTITUCION.name()).descripcion("Institucion").build();
+        rolAdmin       = Rol.builder().id((short) 2).codigo(RolCodigo.ADMIN.name()).descripcion("Admin").build();
 
         // lenient: algunos tests no usan password encoder ni repo de roles
         lenient().when(passwordEncoder.encode(any())).thenReturn("hash-fake");
@@ -80,7 +86,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.existsByEmailAndInstitucionId("n@x.com", TENANT_A)).thenReturn(false);
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Usuario creado = service.crear("nuevo", "n@x.com", "pass1234", "Pepe", "Perez", RolCodigo.ADMIN);
+        Usuario creado = service.crear("nuevo", "n@x.com", "pass1234", "Pepe", "Perez");
 
         assertThat(creado.getUsername()).isEqualTo("nuevo");
         assertThat(creado.getInstitucionId()).isEqualTo(TENANT_A);
@@ -94,7 +100,7 @@ class UsuarioServiceTest {
     void crear_usernameDuplicado() {
         when(usuarioRepository.existsByUsernameAndInstitucionId("dup", TENANT_A)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("dup", "x@x.com", "pass1234", "P", "P", RolCodigo.ADMIN))
+        assertThatThrownBy(() -> service.crear("dup", "x@x.com", "pass1234", "P", "P"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("username");
         verify(usuarioRepository, never()).save(any());
@@ -106,7 +112,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.existsByUsernameAndInstitucionId(any(), any())).thenReturn(false);
         when(usuarioRepository.existsByEmailAndInstitucionId("dup@x.com", TENANT_A)).thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("u", "dup@x.com", "pass1234", "P", "P", RolCodigo.ADMIN))
+        assertThatThrownBy(() -> service.crear("u", "dup@x.com", "pass1234", "P", "P"))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("email");
         verify(usuarioRepository, never()).save(any());
@@ -124,10 +130,9 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(u));
         when(usuarioRepository.existsByEmailAndInstitucionId("otro@x.com", TENANT_A))
             .thenReturn(false);
-        when(rolRepository.findByCodigo("ADMIN")).thenReturn(Optional.of(rolAdmin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.actualizar(10L, "N", "A", "otro@x.com", RolCodigo.ADMIN, true, USUARIO_ACTUAL);
+        service.actualizar(10L, "N", "A", "otro@x.com", true, USUARIO_ACTUAL);
 
         assertThat(u.getEmailVerificadoEn())
             .as("la direccion anterior estaba comprobada; esta no, asi que hay que "
@@ -142,12 +147,10 @@ class UsuarioServiceTest {
         java.time.LocalDateTime cuando = java.time.LocalDateTime.now().minusDays(3);
         u.setEmailVerificadoEn(cuando);
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(u));
-        when(rolRepository.findByCodigo("ADMIN")).thenReturn(Optional.of(rolAdmin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Se edita el nombre, no el correo.
-        service.actualizar(10L, "Nombre nuevo", "A", u.getEmail(),
-                           RolCodigo.ADMIN, true, USUARIO_ACTUAL);
+        service.actualizar(10L, "Nombre nuevo", "A", u.getEmail(), true, USUARIO_ACTUAL);
 
         assertThat(u.getEmailVerificadoEn())
             .as("bloquear a alguien por editarle el nombre seria un castigo sin motivo")
@@ -161,59 +164,81 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("actualizar: rechaza desactivarse a si mismo")
     void actualizar_noAutoDesactivar() {
-        Usuario yo = usuarioActivo(USUARIO_ACTUAL, RolCodigo.INSTITUCION);
+        Usuario yo = usuarioActivo(USUARIO_ACTUAL, RolCodigo.ADMIN);
         when(usuarioRepository.findById(USUARIO_ACTUAL)).thenReturn(Optional.of(yo));
 
         assertThatThrownBy(() -> service.actualizar(
-            USUARIO_ACTUAL, "N", "A", "yo@x.com", RolCodigo.INSTITUCION,
-            /*activo=*/ false, USUARIO_ACTUAL))
+            USUARIO_ACTUAL, "N", "A", "yo@x.com", /*activo=*/ false, USUARIO_ACTUAL))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("desactivarte");
     }
 
     @Test
-    @DisplayName("actualizar: rechaza degradarse a si mismo de INSTITUCION a ADMIN")
-    void actualizar_noAutoDegradar() {
-        Usuario yo = usuarioActivo(USUARIO_ACTUAL, RolCodigo.INSTITUCION);
-        when(usuarioRepository.findById(USUARIO_ACTUAL)).thenReturn(Optional.of(yo));
+    @DisplayName("actualizar: una cuenta de INSTITUCION no se puede dar de baja")
+    void actualizar_institucionNoSeDaDeBaja() {
+        // Es la unica cuenta que administra el establecimiento. Desactivarla por error
+        // deja al colegio sin nadie que pueda entrar a repararlo.
+        Usuario institucion = usuarioActivo(50L, RolCodigo.INSTITUCION);
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(institucion));
 
         assertThatThrownBy(() -> service.actualizar(
-            USUARIO_ACTUAL, "N", "A", "yo@x.com", RolCodigo.ADMIN,
-            true, USUARIO_ACTUAL))
+            50L, "Colegio", null, "col@x.com", /*activo=*/ false, USUARIO_ACTUAL))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("degradarte");
+            .hasMessageContaining("no se puede dar de baja");
+
+        verify(usuarioRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("actualizar: rechaza dejar a la institucion sin INSTITUCION activo")
-    void actualizar_noQuedarSinInstitucion() {
-        Usuario otroSuper = usuarioActivo(50L, RolCodigo.INSTITUCION);
-        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(otroSuper));
-        when(usuarioRepository.countByInstitucionIdAndRolCodigoAndActivoTrue(
-            TENANT_A, RolCodigo.INSTITUCION.name())).thenReturn(1L);  // este es el unico
-
-        assertThatThrownBy(() -> service.actualizar(
-            50L, "N", "A", "o@x.com", RolCodigo.INSTITUCION,
-            /*activo=*/ false, USUARIO_ACTUAL))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("al menos un");
-    }
-
-    @Test
-    @DisplayName("actualizar: permite desactivar si hay otro INSTITUCION activo")
-    void actualizar_okSiHayOtroSuper() {
-        Usuario otroSuper = usuarioActivo(50L, RolCodigo.INSTITUCION);
-        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(otroSuper));
-        when(usuarioRepository.countByInstitucionIdAndRolCodigoAndActivoTrue(
-            TENANT_A, RolCodigo.INSTITUCION.name())).thenReturn(2L);
+    @DisplayName("actualizar: una cuenta ADMIN si se puede dar de baja")
+    void actualizar_adminSiSeDaDeBaja() {
+        Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Usuario actualizado = service.actualizar(
-            50L, "N", "A", "o@x.com", RolCodigo.INSTITUCION,
-            /*activo=*/ false, USUARIO_ACTUAL);
+            50L, "N", "A", "o@x.com", /*activo=*/ false, USUARIO_ACTUAL);
 
         assertThat(actualizado.getActivo()).isFalse();
         verify(usuarioRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("actualizar: no toca el rol aunque la cuenta cambie de datos")
+    void actualizar_noCambiaElRol() {
+        // El rol no es un parametro del metodo: no hay forma de pedir el cambio ni
+        // armando la peticion a mano. Este test lo fija para que no vuelva a agregarse.
+        Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario actualizado = service.actualizar(
+            50L, "Otro", "Nombre", "otro@x.com", true, USUARIO_ACTUAL);
+
+        assertThat(actualizado.getRol().getCodigo()).isEqualTo(RolCodigo.ADMIN.name());
+    }
+
+    @Test
+    @DisplayName("crear: siempre crea ADMIN, nunca INSTITUCION")
+    void crear_siempreAdmin() {
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario creado = service.crear("nuevo2", "n2@x.com", "pass1234", "Ana", "Diaz");
+
+        assertThat(creado.getRol().getCodigo()).isEqualTo(RolCodigo.ADMIN.name());
+    }
+
+    @Test
+    @DisplayName("crear: un apellido en blanco se guarda como NULL, no como cadena vacia")
+    void crear_apellidoEnBlancoEsNull() {
+        // NULL significa "no corresponde" --una institucion no es una persona--; la
+        // cadena vacia diria "tiene apellido y es el vacio", que no quiere decir nada.
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario creado = service.crear("sinape", "s@x.com", "pass1234", "Colegio", "   ");
+
+        assertThat(creado.getPersona().getApellido()).isNull();
+        assertThat(creado.getNombreParaMostrar()).isEqualTo("Colegio");
     }
 
     // ====================================================================
@@ -245,24 +270,7 @@ class UsuarioServiceTest {
     @DisplayName("listarMiInstitucion: delega al repo con el tenant del contexto")
     void listarMiInstitucion_filtraPorTenant() {
         service.listarMiInstitucion();
-        verify(usuarioRepository).findByInstitucionIdOrderByActivoDescApellidoAscNombreAsc(TENANT_A);
-    }
-
-    // ====================================================================
-    //  RESET PASSWORD
-    // ====================================================================
-
-    @Test
-    @DisplayName("resetearPassword: hashea y guarda")
-    void resetearPassword_ok() {
-        Usuario u = usuarioActivo(50L, RolCodigo.ADMIN);
-        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(u));
-
-        service.resetearPassword(50L, "nueva1234");
-
-        assertThat(u.getPasswordHash()).isEqualTo("hash-fake");
-        verify(passwordEncoder).encode("nueva1234");
-        verify(usuarioRepository).save(u);
+        verify(usuarioRepository).listarDelTenant(TENANT_A);
     }
 
     // ====================================================================
@@ -270,16 +278,7 @@ class UsuarioServiceTest {
     // ====================================================================
     private Usuario usuarioActivo(Long id, RolCodigo rolCodigo) {
         Rol r = rolCodigo == RolCodigo.INSTITUCION ? rolInstitucion : rolAdmin;
-        Usuario u = Usuario.builder()
-            .id(id)
-            .username("u" + id)
-            .email("u" + id + "@x.com")
-            .passwordHash("h")
-            .nombre("N")
-            .apellido("A")
-            .activo(true)
-            .rol(r)
-            .build();
+        Usuario u = Usuario.builder().persona(DatosDePrueba.persona("N", "A")).id(id).username("u" + id).email("u" + id + "@x.com").passwordHash("h").activo(true).rol(r).build();
         u.setInstitucionId(TENANT_A);
         return u;
     }

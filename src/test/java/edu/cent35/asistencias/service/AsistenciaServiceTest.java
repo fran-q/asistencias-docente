@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.Comision;
@@ -103,11 +104,36 @@ class AsistenciaServiceTest {
     }
 
     @Test
-    @DisplayName("marcarAutomatica: TARDE si llega después del hora_inicio")
+    @DisplayName("marcarAutomatica: PRESENTE si llega dentro de la tolerancia posterior")
+    void marcarAutomatica_presenteDentroDeLaToleranciaPosterior() {
+        // ADR-0018: con tolerancia 15, llegar 18:05 a una clase de las 18:00 es PRESENTE.
+        // Hasta ese ADR el código lo daba TARDE, contra lo que dicen el RF-19 y el glosario.
+        // Es el caso que distingue las dos definiciones de tolerancia: el otro test de esta
+        // clase usa las 18:30, que es TARDE con cualquiera de las dos.
+        Docente docente = docenteActivoA();
+        Horario horario = horarioLunes18a20Tolerancia15(docente);
+        LocalDateTime instante = unLunesA(18, 5);
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+            .thenReturn(List.of(horario));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
+            .thenReturn(Optional.empty());
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
+            DOCENTE_ID, null, 50.0, instante);
+
+        assertThat(r.marcada()).isTrue();
+        assertThat(r.asistencia().getEstado()).isEqualTo(EstadoAsistencia.PRESENTE);
+    }
+
+    @Test
+    @DisplayName("marcarAutomatica: TARDE si llega pasada la tolerancia")
     void marcarAutomatica_tarde() {
         Docente docente = docenteActivoA();
         Horario horario = horarioLunes18a20Tolerancia15(docente);
-        // 18:30 → TARDE
+        // 18:30 → pasada la tolerancia de 15 min → TARDE
         LocalDateTime instante = unLunesA(18, 30);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
@@ -314,7 +340,7 @@ class AsistenciaServiceTest {
         when(horarioRepository.findById(HORARIO_ID)).thenReturn(Optional.of(horarioDeLunes));
 
         assertThatThrownBy(() -> service.marcarManual(
-                DOCENTE_ID, HORARIO_ID, unSabado, LocalTime.of(18, 5),
+                DOCENTE_ID, HORARIO_ID, unSabado,
                 EstadoAsistencia.TARDE, (short) 1, null, USUARIO_ID))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Sábado")
@@ -342,12 +368,61 @@ class AsistenciaServiceTest {
         when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Asistencia guardada = service.marcarManual(
-            DOCENTE_ID, HORARIO_ID, unLunes, LocalTime.of(18, 5),
+            DOCENTE_ID, HORARIO_ID, unLunes,
             EstadoAsistencia.TARDE, (short) 1, null, USUARIO_ID);
 
         assertThat(guardada.getFecha()).isEqualTo(unLunes);
         assertThat(guardada.getEstado()).isEqualTo(EstadoAsistencia.TARDE);
         verify(asistenciaManualRepository).save(any());
+    }
+
+    @Test
+    @DisplayName("marcarManual: rechaza cargarle la clase de un docente a otro")
+    void marcarManual_rechazaDocenteAjeno() {
+        // La clase la dicta el docente A; se intenta cargarsela al docente B.
+        Docente titular = docenteActivoA();
+        Horario horario = horarioLunes18a20Tolerancia15(titular);
+        Docente otro = Docente.builder().persona(DatosDePrueba.personaConDni("99999999", "Otro", "Docente")).id(999L).activo(true).build();
+        otro.setInstitucionId(TENANT_A);
+        LocalDate unLunes = LocalDate.of(2026, 5, 25);
+
+        when(docenteRepository.findById(999L)).thenReturn(Optional.of(otro));
+        when(horarioRepository.findById(HORARIO_ID)).thenReturn(Optional.of(horario));
+
+        assertThatThrownBy(() -> service.marcarManual(
+                999L, HORARIO_ID, unLunes,
+                EstadoAsistencia.PRESENTE, (short) 1, null, USUARIO_ID))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Esa clase la dicta");
+
+        verify(asistenciaRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("marcarManual: la hora la pone el sistema, no quien carga")
+    void marcarManual_horaDelSistema() {
+        // Lo que se asienta es cuando el administrador declara el hecho. Antes la hora era
+        // un campo libre y se podia escribir cualquiera, incluso fuera de la franja.
+        Docente docente = docenteActivoA();
+        Horario horario = horarioLunes18a20Tolerancia15(docente);
+        LocalDate unLunes = LocalDate.of(2026, 5, 25);
+
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
+        when(horarioRepository.findById(HORARIO_ID)).thenReturn(Optional.of(horario));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, unLunes))
+            .thenReturn(Optional.empty());
+        when(motivoCargaManualRepository.findById((short) 1)).thenReturn(Optional.of(motivoActivo()));
+        when(usuarioRepository.findById(USUARIO_ID)).thenReturn(Optional.of(new Usuario()));
+        when(asistenciaRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        LocalTime antes = LocalTime.now().minusMinutes(1);
+        Asistencia guardada = service.marcarManual(
+            DOCENTE_ID, HORARIO_ID, unLunes,
+            EstadoAsistencia.PRESENTE, (short) 1, null, USUARIO_ID);
+
+        assertThat(guardada.getHoraRegistrada())
+            .as("la hora asentada es la del momento de la carga")
+            .isAfterOrEqualTo(antes.withSecond(0).withNano(0));
     }
 
     // ========================================================================
@@ -362,9 +437,7 @@ class AsistenciaServiceTest {
 
     // Docente activo del tenant A.
     private Docente docenteActivoA() {
-        Docente d = Docente.builder()
-            .id(DOCENTE_ID).dni("12345678").nombre("Juana").apellido("Pérez").activo(true)
-            .build();
+        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni("12345678", "Juana", "Pérez")).id(DOCENTE_ID).activo(true).build();
         d.setInstitucionId(TENANT_A);
         return d;
     }

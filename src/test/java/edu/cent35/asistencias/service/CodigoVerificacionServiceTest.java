@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.model.CodigoVerificacion;
 import edu.cent35.asistencias.model.PropositoCodigo;
 import edu.cent35.asistencias.model.Usuario;
@@ -221,7 +222,7 @@ class CodigoVerificacionServiceTest {
 
     // Usuario minimo del tenant A.
     private Usuario usuario() {
-        Usuario u = Usuario.builder().id(USUARIO_ID).username("test").nombre("Test").build();
+        Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Test")).id(USUARIO_ID).username("test").build();
         u.setInstitucionId(TENANT);
         return u;
     }

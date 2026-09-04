@@ -29,6 +29,10 @@ import java.util.List;
 @Slf4j
 public class HorarioService {
 
+    // Una franja no puede durar mas de seis horas: mas que eso casi siempre es un error de
+    // tipeo en la hora de fin, y no se nota hasta que el pase acepta marcas toda la tarde.
+    private static final int MAX_DURACION_MIN = 6 * 60;
+
     private static final short MAX_TOLERANCIA_MIN = 120;
 
     private final HorarioRepository horarioRepository;
@@ -52,6 +56,17 @@ public class HorarioService {
     }
 
     // Busca un horario del tenant actual; responde "no encontrado" si es de otra institución.
+    /**
+     * Los horarios de una comisión, sin importar si están activos.
+     *
+     * <p>Los inactivos también se devuelven: la pantalla los muestra apagados, y ocultarlos
+     * haría parecer que la comisión nunca tuvo esa franja.
+     */
+    @Transactional(readOnly = true)
+    public List<Horario> deLaComision(Long comisionId) {
+        return horarioRepository.findByComisionIdOrderByDiaSemanaAscHoraInicioAsc(comisionId);
+    }
+
     @Transactional(readOnly = true)
     public Horario buscarPorId(Long id) {
         Long tenantId = TenantContext.getRequired();
@@ -91,7 +106,7 @@ public class HorarioService {
         }
 
         validarHoras(horaInicio, horaFin);
-        validarTolerancia(toleranciaMin);
+        validarTolerancia(toleranciaMin, horaInicio, horaFin);
         validarSinSolapamiento(comisionId, dia, horaInicio, horaFin, null);
 
         Horario h = Horario.builder()
@@ -141,7 +156,7 @@ public class HorarioService {
         }
 
         validarHoras(horaInicio, horaFin);
-        validarTolerancia(toleranciaMin);
+        validarTolerancia(toleranciaMin, horaInicio, horaFin);
         validarSinSolapamiento(comisionId, dia, horaInicio, horaFin, id);
 
         h.setDia(dia);
@@ -205,22 +220,59 @@ public class HorarioService {
     }
 
     // Exige ambas horas y que la de fin sea posterior a la de inicio.
+    /**
+     * La franja tiene que empezar antes de terminar y no puede durar más de 6 horas.
+     *
+     * <p>El tope existe porque una franja de doce horas casi siempre es un error de tipeo
+     * —08:00 a 20:00 en vez de 08:00 a 10:00— y no se nota hasta que el pase acepta marcas
+     * toda la tarde. Seis horas cubren con holgura hasta un taller de jornada completa.
+     */
     private void validarHoras(LocalTime inicio, LocalTime fin) {
         if (inicio == null || fin == null) {
             throw new IllegalArgumentException("Hora de inicio y de fin son obligatorias.");
         }
         if (!fin.isAfter(inicio)) {
             throw new IllegalArgumentException(
-                "La hora de fin (" + fin + ") debe ser posterior a la hora de inicio (" + inicio + ").");
+                "La hora de fin (" + fin + ") tiene que ser posterior a la de inicio ("
+                + inicio + "). Una clase no puede terminar antes de empezar.");
+        }
+        long minutos = java.time.Duration.between(inicio, fin).toMinutes();
+        if (minutos > MAX_DURACION_MIN) {
+            throw new IllegalArgumentException(
+                "La franja dura " + (minutos / 60) + " h " + (minutos % 60) + " min y el máximo es "
+                + (MAX_DURACION_MIN / 60) + " horas. Si la clase se dicta en dos tramos, cargá "
+                + "una franja por tramo.");
         }
     }
 
     // Acepta null (se guarda 15 por defecto) o un valor entre 0 y 120 minutos.
-    private void validarTolerancia(Short toleranciaMin) {
+    /**
+     * La tolerancia no puede pasar de media hora ni durar más que la propia clase.
+     *
+     * <p>La tolerancia es el margen alrededor del horario: cuánto antes del inicio se puede
+     * marcar la entrada, hasta cuándo llegar sigue contando como PRESENTE, y desde cuándo
+     * irse ya cuenta como salida en hora (ADR-0018). Que supere la duración de la clase es
+     * un sinsentido: el margen sería más largo que la clase a la que corresponde. Y el tope
+     * de media hora es el mismo que aplica {@link Horario#toleranciaEfectiva()}.
+     */
+    private void validarTolerancia(Short toleranciaMin, LocalTime inicio, LocalTime fin) {
         if (toleranciaMin == null) return;
-        if (toleranciaMin < 0 || toleranciaMin > MAX_TOLERANCIA_MIN) {
+        if (toleranciaMin < 0) {
+            throw new IllegalArgumentException("La tolerancia no puede ser negativa.");
+        }
+        if (toleranciaMin > Horario.MINUTOS_MAXIMOS_DE_TOLERANCIA) {
             throw new IllegalArgumentException(
-                "La tolerancia debe estar entre 0 y " + MAX_TOLERANCIA_MIN + " minutos.");
+                "La tolerancia no puede pasar de " + Horario.MINUTOS_MAXIMOS_DE_TOLERANCIA
+                + " minutos: es el margen alrededor del horario, y con más que eso un "
+                + "docente marcaría una clase que todavía falta mucho para dar.");
+        }
+        if (inicio != null && fin != null) {
+            long duracion = java.time.Duration.between(inicio, fin).toMinutes();
+            if (toleranciaMin > duracion) {
+                throw new IllegalArgumentException(
+                    "La tolerancia (" + toleranciaMin + " min) no puede superar la duración de "
+                    + "la clase (" + duracion + " min).");
+            }
         }
     }
 

@@ -8,6 +8,7 @@ import edu.cent35.asistencias.model.MetodoConsentimiento;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.repository.DocenteRepository;
+import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.UsuarioRepository;
@@ -50,6 +51,8 @@ public class ConsentimientoBiometricoService {
     private final ConsentimientoBiometricoRepository consentimientoRepository;
     private final DocenteRepository docenteRepository;
     private final UsuarioRepository usuarioRepository;
+    private final ModeloFacialRepository modeloFacialRepository;
+    private final IdentificacionFacialService identificacionFacialService;
 
     // Estado del consentimiento del docente segun su ultimo registro, o NUNCA_OTORGADO si no hay.
     @Transactional(readOnly = true)
@@ -185,9 +188,47 @@ public class ConsentimientoBiometricoService {
         vigente.setUserAgentRevocacion(trimToNull(userAgent));
 
         ConsentimientoBiometrico saved = consentimientoRepository.save(vigente);
+
+        darDeBajaElModeloFacial(docente.getId());
+
         log.info("Consentimiento revocado: id={}, docente_id={}, revocado_por={}",
                  saved.getId(), docente.getId(), admin.getId());
         return saved;
+    }
+
+    /**
+     * Deja fuera de uso el modelo facial del docente al revocarse su consentimiento.
+     *
+     * <p><b>Por qué hace falta.</b> Marcar el consentimiento como no vigente no alcanzaba: el
+     * pase compara contra los modelos <i>activos</i> del tenant y no mira el consentimiento,
+     * así que un docente que revocaba seguía siendo reconocido y seguía recibiendo marcas
+     * automáticas. La regla es que sin consentimiento vigente no se registra <b>ni se usa</b>
+     * un rostro (ADR-0005, RNF-13, Ley 25.326), y la segunda mitad no se estaba cumpliendo.
+     *
+     * <p><b>Baja lógica, no borrado.</b> Revocar es el derecho de oposición y no obliga a
+     * suprimir: el modelo queda cifrado e inactivo. El borrado físico es el derecho de
+     * cancelación y tiene su propio camino, {@code ModeloFacialService.suprimirDatosBiometricos}.
+     *
+     * <p><b>Volver a otorgar el consentimiento no reactiva nada</b>, a propósito. Reactivar
+     * exigiría distinguir un modelo dado de baja por revocación de uno dado de baja por
+     * re-registro (RF-09), que comparten la misma columna. Hay que registrar el rostro de
+     * nuevo, que además es coherente con que el consentimiento sea informado y actual; el
+     * panel de inicio ya lista a los docentes sin modelo facial, así que el pendiente se ve.
+     */
+    private void darDeBajaElModeloFacial(Long docenteId) {
+        modeloFacialRepository.findByDocenteIdAndActivoTrue(docenteId).ifPresent(modelo -> {
+            // Evictar ANTES de persistir la baja, igual que en la supresion ARCO: mientras
+            // siga cargado en memoria el reconocimiento lo sigue usando aunque la fila diga
+            // que esta inactivo.
+            identificacionFacialService.evictarModelo(modelo.getId());
+
+            modelo.setActivo(false);
+            modelo.setFechaBaja(LocalDateTime.now());
+            modeloFacialRepository.save(modelo);
+
+            log.info("Modelo facial dado de baja por revocacion de consentimiento: "
+                     + "id={}, docente_id={}", modelo.getId(), docenteId);
+        });
     }
 
     // ----------------------------------------------------------------------

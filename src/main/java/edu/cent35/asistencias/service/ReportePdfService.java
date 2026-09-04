@@ -37,9 +37,11 @@ public class ReportePdfService {
 
     // Anchos relativos de las columnas. La materia y el docente son los que se leen,
     // asi que se llevan el espacio; la fecha y la hora tienen largo fijo.
-    private static final float[] ANCHOS = {1.1f, 1.6f, 2.6f, 1.0f, 2.2f, 0.9f, 1.1f, 1.1f};
+    private static final float[] ANCHOS =
+        {1.1f, 1.6f, 2.4f, 0.9f, 2.0f, 0.8f, 0.8f, 1.2f, 1.0f, 1.0f};
     private static final String[] CABECERAS = {
-        "Fecha", "Horario", "Materia", "Comisión", "Docente", "Marca", "Estado", "Método"
+        "Fecha", "Horario", "Materia", "Comisión", "Docente",
+        "Entra", "Sale", "Dictado", "Estado", "Método"
     };
 
     private static final Font FUENTE_TITULO   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
@@ -71,6 +73,18 @@ public class ReportePdfService {
                 doc.add(vacio);
             } else {
                 doc.add(tabla(filas));
+                // Un asterisco sin referencia es peor que no ponerlo: quien recibe el PDF
+                // impreso no tiene a quien preguntarle que significa. Solo se aclara si hay
+                // alguna, para no ensuciar los reportes donde todas las salidas se marcaron.
+                boolean hayPresumidas = filas.stream()
+                    .anyMatch(f -> f.getHoraSalida() != null && f.isSalidaPresumida());
+                if (hayPresumidas) {
+                    doc.add(new Paragraph(" "));
+                    doc.add(new Paragraph(
+                        "* Hora de salida completada por el sistema: nadie la registró. "
+                        + "La asistencia es válida; el dato de salida está pendiente de "
+                        + "confirmación.", FUENTE_SUBTITULO));
+                }
             }
         } catch (Exception e) {
             // El stream ya puede llevar bytes escritos, asi que no hay forma de devolver una
@@ -137,6 +151,8 @@ public class ReportePdfService {
             agregar(t, texto(f.getComisionCodigo()), fondo);
             agregar(t, texto(f.getDocenteApellido()) + ", " + texto(f.getDocenteNombre()), fondo);
             agregar(t, f.getHoraRegistrada() == null ? "—" : f.getHoraRegistrada().format(HORA), fondo);
+            agregar(t, salida(f), fondo);
+            agregar(t, dictado(f), fondo);
             agregar(t, estado(f), fondo);
             agregar(t, texto(f.getMetodo()), fondo);
         }
@@ -165,5 +181,28 @@ public class ReportePdfService {
 
     private String texto(String s) {
         return s == null ? "" : s;
+    }
+
+    /**
+     * La hora de salida, marcando cuando la presumió el sistema.
+     *
+     * <p>El asterisco no es decoración: en un PDF que se imprime y se archiva, una hora
+     * observada y una completada por el sistema no pueden verse iguales. La referencia va al
+     * pie del documento.
+     */
+    private String salida(AsistenciaReporteRowDto f) {
+        if (f.getHoraSalida() == null) return "—";
+        return f.getHoraSalida().format(HORA) + (f.isSalidaPresumida() ? " *" : "");
+    }
+
+    /**
+     * Minutos dictados sobre programados.
+     *
+     * <p>Guion cuando no hay dato, que no es lo mismo que cero: cero dice que no dio la clase
+     * y el guion, que de esa fila no se sabe.
+     */
+    private String dictado(AsistenciaReporteRowDto f) {
+        if (f.getMinutosEfectivos() == null) return "—";
+        return f.getMinutosEfectivos() + "/" + f.getMinutosProgramados();
     }
 }

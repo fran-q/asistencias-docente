@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoConsentimiento;
@@ -327,19 +328,14 @@ class ModeloFacialServiceTest {
     // ========================================================================
 
     private Docente docenteActivoA() {
-        Docente d = Docente.builder()
-            .id(DOCENTE_ID).dni("12345678").nombre("Juana").apellido("Pérez").activo(true)
-            .build();
+        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni("12345678", "Juana", "Pérez")).id(DOCENTE_ID).activo(true).build();
         d.setInstitucionId(TENANT_A);
         return d;
     }
 
     // Usuario administrador del tenant A.
     private Usuario usuarioA() {
-        Usuario u = Usuario.builder()
-            .id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com")
-            .passwordHash("xxx").nombre("Admin").apellido("Test").activo(true)
-            .build();
+        Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Admin", "Test")).id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com").passwordHash("xxx").activo(true).build();
         u.setInstitucionId(TENANT_A);
         return u;
     }

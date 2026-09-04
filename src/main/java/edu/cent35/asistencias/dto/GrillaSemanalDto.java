@@ -20,6 +20,12 @@ public class GrillaSemanalDto {
     String carreraCodigo;
     String carreraNombre;
 
+    /** Cuantos anios dura la carrera: acota las opciones del filtro. */
+    Short duracionAnios;
+
+    /** Anio por el que se filtro, o null si se muestran todos. */
+    Short anioFiltrado;
+
     int totalHorarios;
     LocalTime horaMin;        // hora minima visible en la grilla (default 07:00)
     LocalTime horaMax;        // hora maxima visible en la grilla (default 23:00)

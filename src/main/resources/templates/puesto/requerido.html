@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <title th:text="${bloqueado} ? 'Puesto no autorizado - Visum' : 'Puestos de captura - Visum'">Puestos de captura - Visum</title>
+</head>
+<body>
+    <section class="puesto">
+
+        <!-- Se llega acá de dos maneras: chocándose con el bloqueo, o desde el menú. La
+             pantalla es la misma porque lo que se hace es lo mismo; cambia el encabezado,
+             porque quien vino a mirar no necesita que le expliquen un bloqueo que no tuvo. -->
+        <header class="page-header" th:if="${bloqueado}">
+            <h1>Este equipo no puede capturar</h1>
+            <p class="page-header__subtitle">
+                El pase de asistencia y el registro del rostro funcionan solo desde un equipo
+                autorizado por la institución. No es por el tamaño de la pantalla: es por la
+                máquina.
+            </p>
+        </header>
+
+        <header class="page-header" th:unless="${bloqueado}">
+            <h1>Puestos de captura</h1>
+            <p class="page-header__subtitle">
+                Los equipos desde los que se puede tomar asistencia por cámara y registrar
+                rostros. El resto del sistema funciona desde cualquier dispositivo.
+            </p>
+        </header>
+
+        <!-- Ya hay un equipo autorizado y este no es uno: no se ofrece autorizarlo. Un
+             equipo nuevo solo se habilita desde uno que ya lo esté, si no cualquiera con la
+             cuenta institucional se autoriza a sí mismo desde donde quiera (ADR-0015). -->
+        <div class="card" th:if="${bloqueado and hayAlguno}">
+            <p>
+                Tu institución ya tiene un equipo autorizado y <strong>este no es uno</strong>.
+                Para tomar asistencia o registrar rostros, usá el equipo autorizado.
+            </p>
+            <p class="puesto__nota" th:if="${puedeDesignar}">
+                Si querés sumar esta computadora, hay que autorizarla <strong>desde el equipo
+                que ya está habilitado</strong>: entrá ahí y agregala desde la pantalla de
+                puestos. No se puede habilitar una máquina a distancia.
+            </p>
+            <p class="puesto__nota">
+                Desde este equipo sí podés hacer todo lo demás: ver el listado del día,
+                justificar ausencias, cargar asistencia manual y sacar reportes.
+            </p>
+            <div class="puesto__acciones">
+                <a th:href="@{/asistencias}" class="btn btn--primary">Ir al listado del día</a>
+                <a th:href="@{/}" class="btn btn--ghost">Volver al inicio</a>
+            </div>
+        </div>
+
+        <!-- Designar. Solo la cuenta institucional: habilitar un equipo es autorizar el
+             tratamiento de datos sensibles en esa máquina. -->
+        <div class="card" th:if="${puedeAutorizarEsteEquipo}">
+            <h2>Autorizar este equipo</h2>
+            <p th:unless="${hayAlguno}" class="alert alert--warning" role="alert">
+                Tu institución todavía no tiene ningún equipo autorizado, así que por ahora
+                nadie puede tomar asistencia. Si esta es la computadora de secretaría,
+                autorizala acá.
+            </p>
+            <p th:if="${hayAlguno}">
+                Estás en un equipo autorizado, así que podés sumar otro. Se autoriza
+                <strong>este</strong> equipo y este navegador: no hay forma de habilitar otra
+                máquina a distancia.
+            </p>
+
+            <form th:action="@{/puestos/designar}" method="post" novalidate>
+                <!-- Un nombre repetido no es un error de formato del campo, asi que no lo
+                     puede reportar la validacion del navegador: llega del servidor y se
+                     muestra acá, junto al formulario que hay que corregir. -->
+                <div th:if="${error}" class="alert alert--error" role="alert">
+                    <p th:text="${error}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="nombre">Nombre del puesto <span class="required">*</span></label>
+                    <input type="text" id="nombre" name="nombre" required maxlength="80"
+                           placeholder="Secretaría PC-1">
+                    <small class="form-hint">
+                        Es el nombre con el que vas a reconocer este equipo cuando haya que
+                        revocarlo. Que diga dónde está, no quién lo usa.
+                    </small>
+                </div>
+                <button type="submit" class="btn btn--primary"
+                        data-texto-enviando="Autorizando...">Autorizar este equipo</button>
+            </form>
+        </div>
+
+        <!-- Los puestos ya cargados, para poder revocar el que ya no corresponda. -->
+        <h2 class="puesto__subtitulo" th:if="${puedeDesignar and !#lists.isEmpty(puestos)}">Equipos autorizados</h2>
+        <div class="card card--no-padding" th:if="${puedeDesignar and !#lists.isEmpty(puestos)}">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Puesto</th>
+                            <th>Estado</th>
+                            <th>Último uso</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${puestos}" th:classappend="${!p.activo} ? 'row--inactive'">
+                            <td th:text="${p.nombre}">Secretaría PC-1</td>
+                            <td>
+                                <span th:if="${p.activo}" class="badge badge--success">Autorizado</span>
+                                <span th:unless="${p.activo}" class="badge badge--neutral">Revocado</span>
+                            </td>
+                            <td th:text="${p.ultimoUsoEn != null}
+                                         ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yy HH:mm')}
+                                         : 'Nunca'">—</td>
+                            <td class="table__actions">
+                                <form th:if="${p.activo}"
+                                      th:action="@{/puestos/{id}/revocar(id=${p.id})}"
+                                      method="post" class="inline-form"
+                                      data-confirm="¿Revocar este puesto?"
+                                      data-confirm-detail="El equipo deja de poder tomar asistencia en cuanto haga la próxima petición. Se puede volver a autorizar desde esa misma máquina."
+                                      data-confirm-action="Revocar"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--danger btn--sm"
+                                            data-texto-enviando="Revocando...">Revocar</button>
+                                </form>
+                                <span th:unless="${p.activo}" class="text-muted">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </section>
+</body>
+</html>

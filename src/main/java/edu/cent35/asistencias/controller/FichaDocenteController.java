@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.model.ConsentimientoBiometrico;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
@@ -64,7 +64,7 @@ public class FichaDocenteController {
     // Constancia en PDF de lo que la institución trata sobre esta persona.
     @GetMapping("/constancia")
     public void constancia(@PathVariable Long docenteId,
-                           @AuthenticationPrincipal CustomUserDetails principal,
+                           @AuthenticationPrincipal UsuarioAutenticado principal,
                            HttpServletResponse response) throws IOException {
         Docente d = docenteService.buscarPorId(docenteId);
         List<ConsentimientoBiometrico> historial = consentimientoService.historialDe(docenteId);

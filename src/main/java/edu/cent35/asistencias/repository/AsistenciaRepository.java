@@ -24,23 +24,30 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     @Query("""
         SELECT a FROM Asistencia a
         JOIN FETCH a.docente d
+        JOIN FETCH d.persona per
         JOIN FETCH a.comision c
         JOIN FETCH c.materia m
         JOIN FETCH a.horario h
-        WHERE a.fecha = :fecha
+        LEFT JOIN FETCH a.bloque b
+        WHERE per.institucionId = :tenantId
+          AND a.fecha = :fecha
         ORDER BY a.horaRegistrada DESC, a.id DESC
     """)
-    List<Asistencia> findDelDia(@Param("fecha") LocalDate fecha);
+    List<Asistencia> findDelDia(@Param("tenantId") Long tenantId,
+                                @Param("fecha") LocalDate fecha);
 
     // Filas del reporte: solo el rango de fechas es obligatorio, el resto de filtros son opcionales.
     @Query("""
         SELECT a FROM Asistencia a
         JOIN FETCH a.docente d
+        JOIN FETCH d.persona per
         JOIN FETCH a.comision c
         JOIN FETCH c.materia m
         LEFT JOIN FETCH m.carrera
         JOIN FETCH a.horario h
-        WHERE a.fecha BETWEEN :desde AND :hasta
+        LEFT JOIN FETCH a.bloque b
+        WHERE per.institucionId = :tenantId
+          AND a.fecha BETWEEN :desde AND :hasta
           AND (:docenteId IS NULL OR d.id = :docenteId)
           AND (:materiaId IS NULL OR m.id = :materiaId)
           AND (:carreraId IS NULL OR m.carrera.id = :carreraId)
@@ -49,6 +56,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         ORDER BY a.fecha DESC, a.horaRegistrada DESC, a.id DESC
     """)
     List<Asistencia> findParaReporte(
+        @Param("tenantId")  Long tenantId,
         @Param("desde")     LocalDate desde,
         @Param("hasta")     LocalDate hasta,
         @Param("docenteId") Long docenteId,
@@ -62,9 +70,11 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
     @Query("""
         SELECT COUNT(a) FROM Asistencia a
         JOIN a.docente d
+        JOIN d.persona per
         JOIN a.comision c
         JOIN c.materia m
-        WHERE a.fecha BETWEEN :desde AND :hasta
+        WHERE per.institucionId = :tenantId
+          AND a.fecha BETWEEN :desde AND :hasta
           AND (:docenteId IS NULL OR d.id = :docenteId)
           AND (:materiaId IS NULL OR m.id = :materiaId)
           AND (:carreraId IS NULL OR m.carrera.id = :carreraId)
@@ -72,6 +82,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
           AND (:metodo    IS NULL OR a.metodo = :metodo)
     """)
     long contarParaReporte(
+        @Param("tenantId")  Long tenantId,
         @Param("desde")     LocalDate desde,
         @Param("hasta")     LocalDate hasta,
         @Param("docenteId") Long docenteId,
@@ -79,4 +90,12 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("carreraId") Long carreraId,
         @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
         @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
+
+    /**
+     * Las asistencias imputadas a un bloque, de la primera clase a la última.
+     *
+     * <p>Se usa al corregir una salida: si la hora nueva deja clases afuera, hay que poder
+     * decir cuáles quedaron marcadas por un rango que ya no existe.
+     */
+    List<Asistencia> findByBloqueIdOrderByHoraRegistradaAsc(Long bloqueId);
 }

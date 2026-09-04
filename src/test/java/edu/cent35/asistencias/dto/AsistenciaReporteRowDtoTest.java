@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.dto;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
@@ -59,8 +60,7 @@ class AsistenciaReporteRowDtoTest {
             .toleranciaMin((short) 15)
                         .activo(true)
             .build();
-        Docente docente = Docente.builder()
-            .id(4L).dni("30123456").nombre("Juan").apellido("Pérez").activo(true).build();
+        Docente docente = Docente.builder().persona(DatosDePrueba.personaConDni("30123456", "Juan", "Pérez")).id(4L).activo(true).build();
 
         return Asistencia.builder()
             .id(5L).docente(docente).comision(comision).horario(horario)

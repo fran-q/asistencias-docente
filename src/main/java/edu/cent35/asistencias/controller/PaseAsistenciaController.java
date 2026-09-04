@@ -2,7 +2,6 @@ package edu.cent35.asistencias.controller;
 
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.service.ConfirmacionIdentidad;
 import edu.cent35.asistencias.service.PaseAsistenciaService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;

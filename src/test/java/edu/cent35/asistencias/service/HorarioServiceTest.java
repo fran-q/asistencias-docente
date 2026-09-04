@@ -82,7 +82,7 @@ class HorarioServiceTest {
                 LocalTime.of(10, 0), LocalTime.of(9, 0),
                 (short) 15))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("posterior a la hora de inicio");
+            .hasMessageContaining("posterior a la de inicio");
         verify(horarioRepository, never()).save(any());
     }
 
@@ -97,13 +97,13 @@ class HorarioServiceTest {
     }
 
     @Test
-    @DisplayName("crear: rechaza tolerancia > 120")
+    @DisplayName("crear: rechaza tolerancia mayor a media hora")
     void crear_toleranciaAlta() {
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(8, 0), LocalTime.of(10, 0),
-                (short) 130))
+                (short) 45))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("0 y 120");
+            .hasMessageContaining("no puede pasar de 30 minutos");
     }
 
     @Test
@@ -113,7 +113,7 @@ class HorarioServiceTest {
                 LocalTime.of(8, 0), LocalTime.of(10, 0),
                 (short) -5))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("0 y 120");
+            .hasMessageContaining("no puede ser negativa");
     }
 
     @Test
@@ -222,5 +222,27 @@ class HorarioServiceTest {
         Materia mat = Materia.builder().id(2L).codigo("MAT").nombre("Mat").carrera(car).activo(true).build();
         mat.setInstitucionId(TENANT_A);
         return Comision.builder().id(COMISION_ID).codigo("A").materia(mat).activo(true).build();
+    }
+
+    @Test
+    @DisplayName("crear: rechaza una franja de mas de seis horas")
+    void crear_rechazaFranjaDemasiadoLarga() {
+        // 08:00 a 20:00 casi siempre es un error de tipeo en la hora de fin, y no se nota
+        // hasta que el pase acepta marcas toda la tarde.
+        assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
+                LocalTime.of(8, 0), LocalTime.of(20, 0), (short) 15))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("el máximo es 6 horas");
+    }
+
+    @Test
+    @DisplayName("crear: rechaza tolerancia mayor que la duracion de la clase")
+    void crear_toleranciaMayorQueLaClase() {
+        // Una clase de 20 minutos con 30 de tolerancia deja la ventana para marcar mas
+        // larga que la clase a la que corresponde.
+        assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
+                LocalTime.of(8, 0), LocalTime.of(8, 20), (short) 30))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("no puede superar la duración de la clase");
     }
 }

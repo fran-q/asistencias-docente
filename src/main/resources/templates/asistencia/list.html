@@ -23,7 +23,7 @@
             <div class="form-group" style="margin:0;">
                 <label for="fecha">Fecha</label>
                 <input type="date" id="fecha" name="fecha"
-                       th:value="${fecha}">
+                       th:value="${fecha}" autocomplete="off">
             </div>
             <div class="form-group" style="margin:0;">
                 <label for="estado">Estado</label>
@@ -36,46 +36,58 @@
                 </select>
             </div>
             <div class="form-actions" style="margin:0;">
-                <button type="submit" class="btn btn--primary">Aplicar</button>
+                <button type="submit" class="btn btn--primary" data-texto-enviando="Aplicando...">Aplicar</button>
                 <a th:href="@{/asistencias}" class="btn btn--ghost">Limpiar</a>
             </div>
         </form>
 
         <div class="card card--no-padding" style="margin-top:1rem;">
             <div class="table-wrap">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Hora</th>
-                            <th>Docente</th>
-                            <th>Materia</th>
-                            <th>Comisión</th>
-                            <th>Horario</th>
-                            <th>Estado</th>
-                            <th>Método</th>
-                            <th>Confianza</th>
-                            <th class="table__actions">Acciones</th>
+                <table class="table table--tarjetas" role="table">
+                    <thead role="rowgroup">
+                        <tr role="row">
+                            <th role="columnheader">Entrada</th>
+                            <th role="columnheader">Salida</th>
+                            <th role="columnheader">Docente</th>
+                            <th role="columnheader">Materia</th>
+                            <th role="columnheader">Comisión</th>
+                            <th role="columnheader">Horario</th>
+                            <th role="columnheader">Estado</th>
+                            <th role="columnheader">Método</th>
+                            <th role="columnheader">Confianza</th>
+                            <th role="columnheader" class="table__actions">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                         <tr th:each="a : ${asistencias}"
-                            th:classappend="${a.calculada} ? 'row--inactive'">
-                            <td>
+                            th:classappend="${a.calculada} ? 'row--inactive'" role="row">
+                            <td role="cell" data-label="Entrada">
                                 <span th:if="${a.horaRegistrada != null}"
                                       th:text="${#temporals.format(a.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
                                 <span th:unless="${a.horaRegistrada != null}" class="text-muted">—</span>
                             </td>
-                            <td th:text="${a.docenteNombre}">Apellido, Nombre</td>
-                            <td th:text="${a.materiaNombre}">Matemática</td>
-                            <td><code th:text="${a.comisionCodigo}">A</code></td>
-                            <td>
+                            <!-- Vacía mientras el docente siga adentro, y en los registros
+                                 anteriores a la marca de salida. Una hora presumida se marca
+                                 como tal: no la observó nadie. -->
+                            <td role="cell" data-label="Salida">
+                                <span th:if="${a.horaSalida != null}"
+                                      th:text="${#temporals.format(a.horaSalida, 'HH:mm')}">22:00</span>
+                                <small th:if="${a.horaSalida != null and a.salidaPresumida}"
+                                       class="text-muted" title="La completó el sistema: nadie registró la salida">
+                                    presumida</small>
+                                <span th:unless="${a.horaSalida != null}" class="text-muted">—</span>
+                            </td>
+                            <td role="cell" data-label="Docente" th:text="${a.docenteNombre}">Apellido, Nombre</td>
+                            <td role="cell" data-label="Materia" th:text="${a.materiaNombre}">Matemática</td>
+                            <td role="cell" data-label="Comisión"><code th:text="${a.comisionCodigo}">A</code></td>
+                            <td role="cell" data-label="Horario">
                                 <span th:text="${a.diaLabel}">Lunes</span>
                                 <small class="text-muted"
                                        th:text="|${#temporals.format(a.horaInicio,'HH:mm')}–${#temporals.format(a.horaFin,'HH:mm')}|">
                                     18:00–20:00
                                 </small>
                             </td>
-                            <td>
+                            <td role="cell" data-label="Estado">
                                 <span th:if="${a.estado.name() == 'PRESENTE'}"
                                       class="badge badge--success">Presente</span>
                                 <span th:if="${a.estado.name() == 'TARDE'}"
@@ -83,19 +95,19 @@
                                 <span th:if="${a.estado.name() == 'AUSENTE'}"
                                       class="badge badge--danger">Ausente</span>
                             </td>
-                            <td>
+                            <td role="cell" data-label="Método">
                                 <span th:if="${a.metodo != null}"
                                       th:text="${a.metodo}">AUTOMATICO</span>
                                 <span th:unless="${a.metodo != null}"
                                       class="text-muted">—</span>
                             </td>
-                            <td>
+                            <td role="cell" data-label="Confianza">
                                 <span th:if="${a.confianza != null}"
                                       th:text="${#numbers.formatDecimal(a.confianza, 1, 4)}">0.8521</span>
                                 <span th:unless="${a.confianza != null}"
                                       class="text-muted">—</span>
                             </td>
-                            <td class="table__actions">
+                            <td role="cell" class="table__actions">
                                 <a th:if="${a.id != null and a.estado.name() == 'AUSENTE'}"
                                    th:href="@{/asistencias/{id}/justificar(id=${a.id})}"
                                    class="btn btn--ghost btn--sm">Justificar</a>
@@ -104,8 +116,8 @@
                                 </span>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(asistencias)}">
-                            <td colspan="9" class="table__empty">
+                        <tr th:if="${#lists.isEmpty(asistencias)}" role="row">
+                            <td role="cell" colspan="10" class="table__empty">
                                 Sin asistencias para esta fecha con los filtros seleccionados.
                             </td>
                         </tr>

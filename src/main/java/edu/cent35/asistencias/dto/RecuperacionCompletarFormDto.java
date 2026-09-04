@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.dto;
 
+import edu.cent35.asistencias.validacion.PasswordSegura;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -25,13 +26,12 @@ public class RecuperacionCompletarFormDto {
     private String codigo;
 
     @NotBlank(message = "La nueva contraseña es obligatoria")
-    @Size(min = 6, max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
+    @PasswordSegura
     private String nuevaPassword;
 
     // Mismo tope que la contraseña: si no coincide se rechaza igual, pero no tiene sentido
     // aceptar un texto de largo distinto al del campo que se está repitiendo.
     @NotBlank(message = "Repetí la contraseña")
-    @Size(max = 60, message = "La contraseña debe tener entre 6 y 60 caracteres")
     private String confirmacion;
 
     // Indica si la contraseña y su repetición son iguales.

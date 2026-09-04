@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
 import edu.cent35.asistencias.dto.ReporteFiltroDto;
 import edu.cent35.asistencias.model.Asistencia;
@@ -46,6 +47,7 @@ public class ReporteAsistenciaService {
         LocalDate hasta = filtro.getHasta() != null ? filtro.getHasta() : hoy;
         if (desde.isAfter(hasta)) return 0;
         return asistenciaRepository.contarParaReporte(
+            TenantContext.getRequired(),
             desde, hasta, filtro.getDocenteId(), filtro.getMateriaId(),
             filtro.getCarreraId(), filtro.getEstado(), filtro.getMetodo());
     }
@@ -72,6 +74,7 @@ public class ReporteAsistenciaService {
         }
 
         List<Asistencia> asistencias = asistenciaRepository.findParaReporte(
+            TenantContext.getRequired(),
             desde, hasta,
             filtro.getDocenteId(), filtro.getMateriaId(), filtro.getCarreraId(),
             filtro.getEstado(), filtro.getMetodo());

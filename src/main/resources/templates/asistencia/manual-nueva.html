@@ -29,7 +29,7 @@
                             <option value="">-- Elegir docente --</option>
                             <option th:each="d : ${docentes}"
                                     th:value="${d.id}"
-                                    th:text="|${d.apellido}, ${d.nombre} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.dni}|">
+                                    th:text="|${d.nombreCompleto} — ${d.legajo != null ? 'Leg. ' + d.legajo : 'DNI ' + d.persona.dni}|">
                                 Apellido, Nombre
                             </option>
                         </select>
@@ -42,12 +42,19 @@
                         <select id="horarioId" th:field="*{horarioId}" required
                                 th:classappend="${#fields.hasErrors('horarioId')} ? 'is-invalid'">
                             <option value="">-- Elegir horario --</option>
+                            <!-- Cada opcion lleva el docente de su comision. El JS de abajo
+                                 usa ese dato para dejar a la vista solo las clases del
+                                 docente elegido: elegir docente y clase por separado
+                                 permitia marcarle asistencia a alguien en la clase de otro.
+                                 El servidor lo rechaza igual, pero mejor no ofrecerlo. -->
                             <option th:each="h : ${horarios}"
                                     th:value="${h.id}"
-                                    th:text="|${h.comision.materia.codigo} - ${h.comision.codigo}: ${h.dia} ${#temporals.format(h.horaInicio,'HH:mm')}-${#temporals.format(h.horaFin,'HH:mm')}|">
-                                MAT - A: Lun 18:00-20:00
+                                    th:attr="data-docente=${h.comision.docenteAsignado != null ? h.comision.docenteAsignado.id : ''}"
+                                    th:text="|${h.comision.materia.nombre} — Comisión ${h.comision.codigo} · ${h.dia} ${#temporals.format(h.horaInicio,'HH:mm')}-${#temporals.format(h.horaFin,'HH:mm')}|">
+                                Matemática — Comisión A · Lunes 18:00-20:00
                             </option>
                         </select>
+                        <small class="form-hint" id="aviso-clases"></small>
                         <span class="form-error" th:if="${#fields.hasErrors('horarioId')}"
                               th:errors="*{horarioId}">err</span>
                     </div>
@@ -63,11 +70,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="horaRegistrada">Hora <span class="required">*</span></label>
-                        <input type="time" id="horaRegistrada" th:field="*{horaRegistrada}" required
-                               th:classappend="${#fields.hasErrors('horaRegistrada')} ? 'is-invalid'">
-                        <span class="form-error" th:if="${#fields.hasErrors('horaRegistrada')}"
-                              th:errors="*{horaRegistrada}">err</span>
+                        <label>Hora del registro</label>
+                        <p class="form-static text-muted">La pone el sistema al guardar</p>
+                        <small class="form-hint">
+                            Se asienta el momento en que <strong>vos</strong> cargás el dato, no
+                            una hora a elección. Lo que queda registrado es tu declaración de
+                            que este docente estuvo o no estuvo en esta clase.
+                        </small>
                     </div>
                 </div>
 
@@ -109,12 +118,64 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn--primary">Guardar asistencia</button>
+                    <button type="submit" class="btn btn--primary" data-texto-enviando="Guardando...">Guardar asistencia</button>
                     <a th:href="@{/asistencias}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
         </div>
-        <script th:src="@{/js/select-buscable.js}" defer></script>
-    </section>
+        <script th:src="@{/js/comun/select-buscable.js}" defer></script>
+        <!--
+      Deja a la vista solo las clases del docente elegido. Es comodidad: el servidor
+      revalida igual, porque el formulario se puede armar a mano y porque entre que se
+      dibuja la pantalla y se envia, otra persona puede haber reasignado la comision.
+    -->
+    <script th:inline="javascript">
+    /*<![CDATA[*/
+    (function () {
+        'use strict';
+        document.addEventListener('DOMContentLoaded', function () {
+            var docente = document.getElementById('docenteId');
+            var horario = document.getElementById('horarioId');
+            var aviso   = document.getElementById('aviso-clases');
+            if (!docente || !horario) return;
+
+            var todas = Array.prototype.slice.call(horario.options);
+
+            function filtrar() {
+                var elegido = docente.value;
+                var visibles = 0;
+
+                // Se sacan del DOM en vez de ocultarlas: hidden + disabled las deja igual
+                // en el arbol de accesibilidad y un lector de pantalla las seguiria leyendo.
+                horario.innerHTML = '';
+                todas.forEach(function (o) {
+                    if (!o.value) { horario.appendChild(o); return; }
+                    if (!elegido || o.dataset.docente === elegido) {
+                        horario.appendChild(o);
+                        visibles++;
+                    }
+                });
+
+                if (aviso) {
+                    if (!elegido) {
+                        aviso.textContent = 'Elegí primero el docente para ver sus clases.';
+                    } else if (visibles === 0) {
+                        aviso.textContent = 'Este docente no está asignado a ninguna comisión '
+                                          + 'con horarios cargados.';
+                    } else {
+                        aviso.textContent = visibles === 1
+                            ? 'Tiene 1 clase asignada.'
+                            : 'Tiene ' + visibles + ' clases asignadas.';
+                    }
+                }
+            }
+
+            docente.addEventListener('change', filtrar);
+            filtrar();
+        });
+    })();
+    /*]]>*/
+    </script>
+</section>
 </body>
 </html>

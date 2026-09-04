@@ -2,6 +2,7 @@ package edu.cent35.asistencias.model;
 
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.BaseTenantEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -57,7 +59,8 @@ public class Usuario extends BaseTenantEntity {
     private Long id;
 
     // Institucion del usuario, de solo lectura: el id se maneja desde BaseTenantEntity.
-    @ManyToOne(fetch = FetchType.LAZY)
+    // Eager porque su nombre es el que se muestra cuando la cuenta no tiene persona (V018).
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "institucion_id", insertable = false, updatable = false)
     private Institucion institucion;
 
@@ -79,11 +82,41 @@ public class Usuario extends BaseTenantEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(nullable = false, length = 80)
-    private String nombre;
+    /**
+     * Quién es el dueño de esta cuenta, o {@code null} si la cuenta es la institución misma.
+     *
+     * <p><b>NULL no es un dato faltante: es la distinción.</b> Una cuenta de rol INSTITUCION
+     * representa al establecimiento, no a una persona física, así que no tiene identidad
+     * personal detrás (V018). Las cuentas de administrador y las de docente sí.
+     *
+     * <p>Se trae eager por el mismo motivo que el rol: el nombre para mostrar aparece en la
+     * barra de navegación de todas las pantallas, y con {@code open-in-view=false} una
+     * relación perezosa acá reventaría al renderizar, fuera ya de la transacción.
+     */
+    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "persona_id")
+    private Persona persona;
 
-    @Column(nullable = false, length = 80)
-    private String apellido;
+    /**
+     * Cómo nombrar a esta cuenta en pantalla.
+     *
+     * <p>Si hay persona detrás, su nombre. Si no la hay es la cuenta institucional, y entonces
+     * lo que corresponde mostrar es el nombre del establecimiento: es exactamente lo que esa
+     * cuenta representa. El username queda como último recurso y no debería usarse nunca.
+     */
+    public String getNombreParaMostrar() {
+        if (persona != null) {
+            return persona.getNombreParaMostrar();
+        }
+        return institucion != null ? institucion.getNombre() : username;
+    }
+
+    // true si esta cuenta representa al establecimiento y no a alguien concreto. Se decide por
+    // la ausencia de persona y no por el codigo del rol: es el dato estructural, y no depende
+    // de que el catalogo de roles diga lo que uno espera.
+    public boolean esCuentaInstitucional() {
+        return persona == null;
+    }
 
     @Column(nullable = false)
     @Builder.Default
@@ -103,4 +136,24 @@ public class Usuario extends BaseTenantEntity {
     @UpdateTimestamp
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
+
+    /**
+     * Deja la persona en la misma institución que la cuenta.
+     *
+     * <p>No es una comodidad: es el invariante del que dependen las consultas. Todas filtran por
+     * {@code persona.institucionId}, así que una persona guardada en otra institución que su
+     * cuenta haría que esa cuenta desapareciera de los listados. Dejarlo librado a que cada
+     * llamador se acuerde es la clase de cosa que se olvida una vez y no se nota.
+     */
+    @PrePersist
+    private void alinearInstitucionDeLaPersona() {
+        if (persona != null && persona.getInstitucionId() == null) {
+            persona.setInstitucionId(getInstitucionId());
+        }
+    }
+
+    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // anteriores a V017, que no lo registraban. Ver ADR-0016.
+    @Column(name = "dado_de_baja_por")
+    private Long dadoDeBajaPor;
 }

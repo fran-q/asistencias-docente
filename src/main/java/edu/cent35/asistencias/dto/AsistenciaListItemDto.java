@@ -4,6 +4,7 @@ import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import lombok.Builder;
 import lombok.Value;
@@ -51,6 +52,24 @@ public class AsistenciaListItemDto {
     // Sólo presente si metodo == AUTOMATICO.
     BigDecimal confianza;
 
+    /**
+     * Hora en que el docente se retiró, tomada de su bloque de presencia (RF-74).
+     *
+     * <p>Null en las marcas anteriores a V019, en las cargas manuales sin bloque y mientras
+     * el docente siga adentro. Que esté vacía no es un error: significa que todavía no se fue
+     * o que ese registro es de antes de que existiera la marca de salida.
+     */
+    LocalTime horaSalida;
+
+    /**
+     * Si esa hora la completó el sistema en vez de observarla (RF-80).
+     *
+     * <p>Se muestra distinto a propósito. Un cierre por reconocimiento, uno cargado por un
+     * admin y una hora presumida tienen distinto valor probatorio, y verlos iguales en el
+     * listado es exactamente lo que hace que después nadie sepa cuál es cuál.
+     */
+    boolean salidaPresumida;
+
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static AsistenciaListItemDto from(Asistencia a) {
         Horario h = a.getHorario();
@@ -67,6 +86,9 @@ public class AsistenciaListItemDto {
             .horaInicio(h.getHoraInicio())
             .horaFin(h.getHoraFin())
             .fecha(a.getFecha())
+            .horaSalida(a.getBloque() == null ? null : a.getBloque().getHoraSalida())
+            .salidaPresumida(a.getBloque() != null
+                && a.getBloque().getOrigenSalida() == OrigenMarca.PRESUNTO)
             .horaRegistrada(a.getHoraRegistrada())
             .estado(a.getEstado())
             .metodo(a.getMetodo())

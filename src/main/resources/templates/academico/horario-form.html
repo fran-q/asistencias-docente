@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="${modo == 'crear'} ? 'Nuevo horario - Asistencias' : 'Editar horario - Asistencias'">Horario</title>
+    <title th:text="${modo == 'crear'} ? 'Nuevo horario - Visum' : 'Editar horario - Visum'">Horario</title>
 </head>
 <body>
     <section class="horarios-form">
@@ -44,12 +44,20 @@
                             th:field="*{comisionId}" required
                             th:classappend="${#fields.hasErrors('comisionId')} ? 'is-invalid'">
                         <option value="">-- Elegir comisión --</option>
+                        <!-- El nombre de la materia va en la opcion, no solo su codigo:
+                             "TUP-003 — A" no dice nada, y elegir la comision equivocada
+                             recien se nota cuando alguien marca asistencia en la clase de
+                             otro. -->
                         <option th:each="c : ${comisiones}"
                                 th:value="${c.id}"
-                                th:text="|${c.materia.codigo} — ${c.codigo}${!c.activo ? ' (inactiva)' : ''}|">
-                            MAT — A
+                                th:text="|${c.materia.codigo} ${c.materia.nombre} — Comisión ${c.codigo}|">
+                            MAT-001 Matemática — Comisión A
                         </option>
                     </select>
+                    <!-- Repite la materia debajo del campo, en chico. Lo llena academico-form.js
+                         al elegir: el desplegable buscable se cierra y deja el texto adentro,
+                         asi que sin esto hay que volver a abrirlo para recordar que se eligio. -->
+                    <small class="form-hint" id="comision-materia"></small>
 
                     <th:block th:unless="${modo == 'crear'}">
                         <p class="campo-fijo"
@@ -81,9 +89,9 @@
                     <div class="form-group">
                         <label for="toleranciaMin">Tolerancia (minutos) <span class="required">*</span></label>
                         <input type="number" id="toleranciaMin" th:field="*{toleranciaMin}"
-                               min="0" max="120" required
+                               min="0" max="30" required
                                th:classappend="${#fields.hasErrors('toleranciaMin')} ? 'is-invalid'">
-                        <small class="form-hint">Default 15 min. Entre 0 y 120.</small>
+                        <small class="form-hint">Cuántos minutos <strong>antes</strong> del inicio se permite marcar. Por defecto 15; el máximo es 30 y nunca puede superar la duración de la clase.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('toleranciaMin')}" th:errors="*{toleranciaMin}">err</span>
                     </div>
                 </div>
@@ -122,11 +130,11 @@
 
 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
-                            th:text="${modo == 'crear'} ? 'Crear horario' : 'Guardar cambios'">Guardar</button>
+                            th:text="${modo == 'crear'} ? 'Crear horario' : 'Guardar cambios'" data-texto-enviando="Guardando...">Guardar</button>
                     <a th:href="@{/horarios}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
-        <script th:src="@{/js/hora-picker.js}" defer></script>
+        <script th:src="@{/js/academico/hora-picker.js}" defer></script>
         </div>
 
         <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
@@ -138,7 +146,9 @@
                                 ${horario.activo}, 'Activo', 'Inactivo',
                                 ${horario.creadoEn}, ${horario.actualizadoEn}, ~{})}"></div>
         </th:block>
-        <script th:src="@{/js/select-buscable.js}" defer></script>
+        <script th:src="@{/js/comun/select-buscable.js}" defer></script>
+        <!-- Repite la materia de la comision elegida debajo del campo. -->
+        <script th:src="@{/js/academico/academico-form.js}" defer></script>
     </section>
 </body>
 </html>

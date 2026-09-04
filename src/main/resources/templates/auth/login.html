@@ -36,7 +36,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full">Ingresar</button>
+            <button type="submit" class="btn btn--primary btn--full" data-texto-enviando="Ingresando...">Ingresar</button>
         </form>
 
         <p class="login-card__ayuda">
@@ -56,7 +56,8 @@
     <div th:if="${param.logout}" id="flash-data"
          data-success="Sesión cerrada correctamente." hidden></div>
 
-    <script th:src="@{/js/toast.js}" defer></script>
-    <script th:src="@{/js/password-ui.js}" defer></script>
+    <script th:src="@{/js/comun/toast.js}" defer></script>
+    <script th:src="@{/js/comun/envio-form.js}" defer></script>
+    <script th:src="@{/js/comun/password-ui.js}" defer></script>
 </body>
 </html>

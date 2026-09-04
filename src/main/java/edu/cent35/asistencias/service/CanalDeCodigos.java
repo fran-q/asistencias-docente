@@ -26,6 +26,28 @@ public interface CanalDeCodigos {
      */
     void enviarCodigo(Usuario usuario, PropositoCodigo proposito, String email, String codigo);
 
+    /**
+     * Avisa que un pedido de código no derivó en ningún envío, y por qué.
+     *
+     * <p><b>Para qué existe.</b> La recuperación de contraseña contesta lo mismo exista o no la
+     * cuenta (ADR-0009, decisión 5), así que cuando no sale ningún código la pantalla no lo dice
+     * —y no debe decirlo—. El problema es que la terminal tampoco lo decía: el pedido se perdía
+     * en silencio y quien estaba probando el flujo no podía distinguir "no existe esa cuenta" de
+     * "el canal está roto". Este aviso separa esos dos casos sin tocar lo que ve el navegador.
+     *
+     * <p><b>Por omisión no hace nada</b>, y tiene que seguir siendo así en el canal de correo:
+     * no hay a quién escribirle —la casilla puede no existir— y avisarle a la persona sería
+     * exactamente revelar lo que la decisión oculta. Lo implementa el canal de consola, que ya
+     * es de desarrollo y donde el código sale en claro de todos modos.
+     *
+     * @param identificador lo que se tipeó en la pantalla: un usuario, un correo, o nada
+     * @param motivo por qué no se emitió, en texto llano y para que lo lea una persona
+     */
+    default void noSeEmitio(String identificador, String motivo) {
+        // Sin destinatario no hay nada que enviar. Ver el javadoc: el silencio es la conducta
+        // correcta para el canal de correo, no un hueco por completar.
+    }
+
     /** Nombre corto del canal, para los logs y para el aviso de arranque. */
     String nombre();
 }

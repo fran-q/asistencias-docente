@@ -34,7 +34,22 @@
                     </div>
                 </div>
 
-                <div class="form-row">
+                <!--
+                  Una cuenta de institucion no es una persona: tiene un nombre, no un nombre
+                  y un apellido. Por eso la pantalla muestra un campo o dos segun el rol, y
+                  el apellido admite NULL en la base (migracion V014).
+                -->
+                <div class="form-row" th:if="${esInstitucion}">
+                    <div class="form-group">
+                        <label for="nombre">Nombre de la institución <span class="required">*</span></label>
+                        <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
+                               th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
+                        <small class="form-hint">Cómo se llama el establecimiento. Es la cuenta que lo representa, no una persona.</small>
+                        <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
+                    </div>
+                </div>
+
+                <div class="form-row" th:unless="${esInstitucion}">
                     <div class="form-group">
                         <label for="nombre">Nombre <span class="required">*</span></label>
                         <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
@@ -42,32 +57,56 @@
                         <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">err</span>
                     </div>
                     <div class="form-group">
-                        <label for="apellido">Apellido <span class="required">*</span></label>
-                        <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
+                        <label for="apellido">Apellido</label>
+                        <input type="text" id="apellido" th:field="*{apellido}" maxlength="80"
                                th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
                         <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">err</span>
                     </div>
                 </div>
 
                 <div class="form-row">
+                    <!--
+                      El rol dejo de ser un desplegable porque no se puede cambiar. Un rol no
+                      es un atributo de la cuenta: es lo que la cuenta ES, y cambiarlo reescribe
+                      hacia atras el sentido de todo lo que hizo. Se muestra como dato.
+                    -->
                     <div class="form-group">
-                        <label for="rol">Rol</label>
-                        <select id="rol" th:field="*{rol}">
-                            <option th:each="r : ${roles}" th:value="${r}"
-                                    th:text="${r.name() == 'INSTITUCION'} ? 'Institución' : 'Administrador'">Rol</option>
-                        </select>
+                        <label>Rol</label>
+                        <p class="form-static">
+                            <span class="badge"
+                                  th:classappend="${esInstitucion} ? 'badge--info' : 'badge--neutral'"
+                                  th:text="${esInstitucion} ? 'Institución' : 'Administrador'">Rol</span>
+                        </p>
+                        <small class="form-hint">
+                            No se puede cambiar. Si esta persona tiene que pasar a otro rol,
+                            dale de baja esta cuenta y creá una nueva.
+                        </small>
                     </div>
-                    <div class="form-group">
+
+                    <!-- La cuenta de la institucion no se da de baja desde aca: es la unica
+                         que administra el establecimiento, y desactivarla por error lo deja
+                         sin nadie que pueda entrar a repararlo. El servidor lo rechaza igual
+                         aunque el campo se mande a mano. -->
+                    <div class="form-group" th:unless="${esInstitucion}">
                         <label class="checkbox-label">
                             <input type="checkbox" th:field="*{activo}">
                             <span>Cuenta activa</span>
                         </label>
                         <small class="form-hint">Si la desactivás, no va a poder iniciar sesión.</small>
                     </div>
+                    <div class="form-group" th:if="${esInstitucion}">
+                        <label>Estado</label>
+                        <p class="form-static"><span class="badge badge--success">Activa</span></p>
+                        <input type="hidden" th:field="*{activo}">
+                        <small class="form-hint">
+                            La cuenta de la institución no se puede dar de baja: es la única
+                            que administra usuarios y datos del establecimiento.
+                        </small>
+                    </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn--primary">Guardar cambios</button>
+                    <button type="submit" class="btn btn--primary" data-texto-enviando="Guardando...">Guardar cambios</button>
                     <a th:href="@{/usuarios}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
@@ -98,10 +137,16 @@
                 la propia persona desde <em>Mi cuenta</em> al iniciar sesión.
             </p>
 
-            <div class="form-actions" style="margin-top:1rem;">
-                <a th:href="@{/usuarios/{id}/password(id=${usuario.id})}"
-                   class="btn btn--ghost">Cambiar contraseña</a>
-            </div>
+            <!-- La contrasena de otra cuenta ya no se fija desde aca. Todo cambio de
+                 contrasena exige un codigo enviado al correo de su dueno, asi que quien se
+                 quedo afuera usa la recuperacion del login. De paso ningun administrador
+                 conoce la clave con la que entra otra persona. -->
+            <p class="text-muted">
+                <strong>¿Esta persona no puede entrar?</strong> Tiene que usar
+                <em>¿Olvidaste tu contraseña?</em> en la pantalla de inicio de sesión: el
+                código de un solo uso le llega a su propio correo. Desde acá no se le puede
+                fijar una contraseña, para que nadie más que ella la conozca.
+            </p>
         </div>
     </section>
 </body>

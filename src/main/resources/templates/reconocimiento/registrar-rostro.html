@@ -12,7 +12,7 @@
             <h1>Registrar rostro</h1>
             <p class="page-header__subtitle">
                 <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
-                &middot; DNI <span th:text="${docente.dni}">12345678</span>
+                &middot; DNI <span th:text="${docente.persona.dni}">12345678</span>
             </p>
         </header>
 
@@ -107,7 +107,7 @@
             </aside>
         </div>
 
-        <script th:src="@{/js/registro-facial.js}" defer></script>
+        <script th:src="@{/js/facial/registro-facial.js}" defer></script>
     </section>
 </body>
 </html>

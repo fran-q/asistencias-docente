@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.controller;
 
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.AltaPendiente;
 import edu.cent35.asistencias.service.AltaInstitucionService;
-import edu.cent35.asistencias.service.AltaPendiente;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

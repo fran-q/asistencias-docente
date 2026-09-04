@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${impacto.motivo.name() == 'ALTA_SOBRE_PERSONA_EXISTENTE'}
+                    ? 'Ese documento ya está registrado - Visum'
+                    : 'El cambio alcanza a más de un rol - Visum'">Confirmar</title>
+</head>
+<body>
+<section class="identidad-confirmar">
+
+    <!-- Caso 1: el DNI ya existe. Puede ser un reingreso legítimo o un error de tipeo. -->
+    <div th:if="${impacto.motivo.name() == 'ALTA_SOBRE_PERSONA_EXISTENTE'}">
+        <h1>Ese documento ya está registrado</h1>
+
+        <p>
+            El DNI <strong th:text="${impacto.dni}">00000000</strong> ya corresponde a una persona
+            cargada en esta institución.
+        </p>
+
+        <dl>
+            <dt>Figura como</dt>
+            <dd th:text="${impacto.nombreRegistrado}">Pérez, Juan</dd>
+
+            <dt th:if="${impacto.cambiaLosDatos}">Vos ingresaste</dt>
+            <dd th:if="${impacto.cambiaLosDatos}" th:text="${impacto.nombrePropuesto}">Gómez, Ana</dd>
+        </dl>
+
+        <p th:if="${impacto.cambiaLosDatos}" class="alerta alerta-atencion">
+            Los nombres no coinciden. Si te equivocaste de documento, volvé y corregilo: confirmar
+            acá le cambia el nombre a la persona que ya estaba cargada.
+        </p>
+
+        <p th:unless="${impacto.cambiaLosDatos}">
+            Los datos coinciden con los que ya estaban, así que confirmar no modifica su
+            información.
+        </p>
+    </div>
+
+    <!-- Caso 2: la identidad se edita y esa persona cumple más de un rol. -->
+    <div th:unless="${impacto.motivo.name() == 'ALTA_SOBRE_PERSONA_EXISTENTE'}">
+        <h1>El cambio alcanza a más de un rol</h1>
+
+        <p>
+            Estás por modificar los datos de
+            <strong th:text="${impacto.nombreRegistrado}">Pérez, Juan</strong>.
+        </p>
+    </div>
+
+    <!-- Los roles que tiene hoy: es lo que hace visible el alcance real del cambio. -->
+    <div class="identidad-roles">
+        <p><strong>Esta persona tiene en el sistema:</strong></p>
+        <ul>
+            <li th:if="${impacto.tieneCuenta}">
+                Una <strong>cuenta de administrador</strong>
+                (usuario <span th:text="${impacto.usernameCuenta}">jperez</span>)
+            </li>
+            <li th:if="${impacto.periodosDocentes > 0}">
+                <strong th:text="${impacto.periodosDocentes}">1</strong>
+                <span th:text="${impacto.periodosDocentes == 1} ? 'período como docente' : 'períodos como docente'">período como docente</span><span
+                      th:if="${impacto.tieneVinculoVigente}">, uno de ellos vigente</span>
+            </li>
+            <li th:if="${!impacto.tieneCuenta and impacto.periodosDocentes == 0}">
+                Solo esta identidad, sin cuenta ni vínculos activos.
+            </li>
+        </ul>
+    </div>
+
+    <p th:if="${impacto.alcanzaVariosRoles}" class="alerta alerta-atencion">
+        Los datos de identidad son los mismos para todos sus roles. Si confirmás, el cambio se va a
+        ver también en las otras pantallas donde aparece esta persona.
+    </p>
+
+    <!-- El formulario original vuelve entero, con la confirmación puesta. Nada quedó guardado
+         entre un paso y el otro: si se abandona acá, no se modificó nada. -->
+    <form th:action="@{${accion}}" method="post">
+        <input type="hidden" th:each="campo : ${camposOcultos}"
+               th:name="${campo.key}" th:value="${campo.value}">
+        <input type="hidden" name="confirmado" value="true">
+
+        <div class="form-acciones">
+            <a th:href="@{${volverA}}" class="btn btn-secundario">Volver y corregir</a>
+            <button type="submit" class="btn btn-primario"
+                    th:text="${impacto.motivo.name() == 'ALTA_SOBRE_PERSONA_EXISTENTE'}
+                             ? 'Sí, es la misma persona'
+                             : 'Sí, modificar en todos sus roles'">Confirmar</button>
+        </div>
+    </form>
+
+</section>
+</body>
+</html>

@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.service.AsistenciaService;
@@ -82,7 +82,6 @@ public class AsistenciaController {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", AsistenciaManualFormDto.builder()
                 .fecha(LocalDate.now())
-                .horaRegistrada(LocalTime.now().withSecond(0).withNano(0))
                 .estado(EstadoAsistencia.PRESENTE)
                 .build());
         }
@@ -94,7 +93,7 @@ public class AsistenciaController {
     @PostMapping("/manual/nueva")
     public String crearManual(@Valid @ModelAttribute("form") AsistenciaManualFormDto form,
                               BindingResult binding,
-                              @AuthenticationPrincipal CustomUserDetails principal,
+                              @AuthenticationPrincipal UsuarioAutenticado principal,
                               Model model,
                               RedirectAttributes redirect) {
         if (binding.hasErrors()) {
@@ -104,7 +103,7 @@ public class AsistenciaController {
         try {
             Asistencia a = asistenciaService.marcarManual(
                 form.getDocenteId(), form.getHorarioId(), form.getFecha(),
-                form.getHoraRegistrada(), form.getEstado(),
+                form.getEstado(),
                 form.getMotivoId(), form.getDetalleAdicional(),
                 principal.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje",
@@ -149,7 +148,7 @@ public class AsistenciaController {
     public String justificar(@PathVariable Long id,
                              @Valid @ModelAttribute("form") JustificacionAusenciaFormDto form,
                              BindingResult binding,
-                             @AuthenticationPrincipal CustomUserDetails principal,
+                             @AuthenticationPrincipal UsuarioAutenticado principal,
                              Model model,
                              RedirectAttributes redirect) {
         if (binding.hasErrors()) {

@@ -89,4 +89,9 @@ public class ModeloFacial {
     // Null mientras el modelo está activo; se completa al darlo de baja.
     @Column(name = "fecha_baja")
     private LocalDateTime fechaBaja;
+
+    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // anteriores a V017, que no lo registraban. Ver ADR-0016.
+    @Column(name = "dado_de_baja_por")
+    private Long dadoDeBajaPor;
 }

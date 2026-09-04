@@ -87,6 +87,6 @@ public class NotificadorEmailService implements CanalDeCodigos {
             --
             Asistencias - Gestión de asistencia con reconocimiento facial
             Este es un mensaje automático, no respondas a esta dirección.
-            """.formatted(usuario.getNombre(), motivo, codigo, minutosVigencia);
+            """.formatted(usuario.getNombreParaMostrar(), motivo, codigo, minutosVigencia);
     }
 }

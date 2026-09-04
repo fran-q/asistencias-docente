@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 /**
  * Pantallas de alta, edición, baja y reactivación de carreras (RF-11), para los roles
@@ -51,6 +53,28 @@ public class CarreraController {
     // ============================================================
     //  Alta
     // ============================================================
+    /**
+     * Las materias que hoy conforman esta carrera.
+     *
+     * <p>Existe porque el listado general de materias no responde la pregunta "¿qué tiene
+     * cargado este plan?": hay que filtrar por carrera y contar a ojo. Acá se ve el plan
+     * completo y agrupado por año, que es como está escrito en el papel del que se copia.
+     */
+    @GetMapping("/{id}/materias")
+    public String materiasDeLaCarrera(@PathVariable Long id, Model model) {
+        Carrera c = service.buscarPorId(id);
+        List<Materia> materias = service.materiasDe(id);
+        model.addAttribute("carrera", c);
+        model.addAttribute("materias", materias);
+        // Agrupadas por anio para que se lea como un plan de estudios y no como una lista
+        // suelta. TreeMap para que los anios salgan en orden y no en el del hash.
+        model.addAttribute("porAnio", materias.stream().collect(
+            Collectors.groupingBy(Materia::getAnio, TreeMap::new, Collectors.toList())));
+        model.addAttribute("activas",
+            materias.stream().filter(x -> Boolean.TRUE.equals(x.getActivo())).count());
+        return "academico/carrera-materias";
+    }
+
     @GetMapping("/nueva")
     public String formNueva(Model model) {
         if (!model.containsAttribute("form")) {

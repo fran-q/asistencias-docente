@@ -29,19 +29,33 @@ public class DocenteListItemDto {
     // Estado del consentimiento biometrico (Sprint 3 Fase D).
     EstadoConsentimiento estadoConsentimiento;
 
+    /**
+     * Por qué no se le puede dar de baja, o null si se puede.
+     *
+     * <p>Viaja hasta la pantalla para que el botón sepa si abrir el cuadro de confirmación o
+     * avisar de una vez. Confirmar algo que va a fallar es pedirle a alguien que decida sobre
+     * una operación imposible.
+     */
+    String motivoQueImpideLaBaja;
+
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
-    public static DocenteListItemDto from(Docente d, EstadoConsentimiento estadoConsentimiento) {
+    // La persona se lee acá dentro, con la transacción todavía abierta: es LAZY, así que el
+    // docente tiene que venir de una consulta con JOIN FETCH.
+    public static DocenteListItemDto from(Docente d, EstadoConsentimiento estadoConsentimiento,
+                                          String motivoQueImpideLaBaja) {
+        Persona p = d.getPersona();
         return DocenteListItemDto.builder()
             .id(d.getId())
-            .dni(d.getDni())
+            .dni(p.getDni())
             .legajo(d.getLegajo())
-            .nombreCompleto(d.getNombreCompleto())
-            .email(d.getEmail())
-            .telefono(d.getTelefono())
+            .nombreCompleto(p.getNombreCompleto())
+            .email(p.getEmail())
+            .telefono(p.getTelefono())
             .fechaAlta(d.getFechaAlta())
             .fechaBaja(d.getFechaBaja())
             .activo(Boolean.TRUE.equals(d.getActivo()))
             .estadoConsentimiento(estadoConsentimiento)
+            .motivoQueImpideLaBaja(motivoQueImpideLaBaja)
             .build();
     }
 }

@@ -1,4 +1,5 @@
 package edu.cent35.asistencias.service;
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.repository.*;
 
@@ -48,6 +49,8 @@ class ConsentimientoBiometricoServiceTest {
     @Mock private ConsentimientoBiometricoRepository consentimientoRepository;
     @Mock private DocenteRepository docenteRepository;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private ModeloFacialRepository modeloFacialRepository;
+    @Mock private IdentificacionFacialService identificacionFacialService;
     @InjectMocks private ConsentimientoBiometricoService service;
 
     @BeforeEach void setUp() { TenantContext.set(TENANT_A); }
@@ -209,6 +212,8 @@ class ConsentimientoBiometricoServiceTest {
         when(usuarioRepository.findById(USUARIO_ACTUAL_ID))
             .thenReturn(Optional.of(usuarioDeTenant(TENANT_A)));
         when(consentimientoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(modeloFacialRepository.findByDocenteIdAndActivoTrue(DOCENTE_ID))
+            .thenReturn(Optional.empty());
 
         ConsentimientoBiometrico revocado = service.revocar(
             DOCENTE_ID, "El docente lo solicitó", IP, UA, USUARIO_ACTUAL_ID);
@@ -255,11 +260,59 @@ class ConsentimientoBiometricoServiceTest {
         when(usuarioRepository.findById(USUARIO_ACTUAL_ID))
             .thenReturn(Optional.of(usuarioDeTenant(TENANT_A)));
         when(consentimientoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(modeloFacialRepository.findByDocenteIdAndActivoTrue(DOCENTE_ID))
+            .thenReturn(Optional.empty());
 
         ConsentimientoBiometrico revocado = service.revocar(
             DOCENTE_ID, "   ", IP, UA, USUARIO_ACTUAL_ID);
 
         assertThat(revocado.getMotivoRevocacion()).isNull();
+    }
+
+    @Test
+    @DisplayName("revocar: da de baja el modelo facial y lo evicta del cache")
+    void revocar_dejaElRostroFueraDeUso() {
+        // Marcar el consentimiento como no vigente no alcanzaba: el pase compara contra los
+        // modelos ACTIVOS del tenant y no mira el consentimiento, asi que un docente que
+        // revocaba seguia siendo reconocido. Regla dura: sin consentimiento vigente no se
+        // registra NI SE USA un rostro (ADR-0005, RNF-13).
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoRepository.findByDocenteIdAndVigenteTrue(DOCENTE_ID))
+            .thenReturn(Optional.of(consentimientoVigente()));
+        when(usuarioRepository.findById(USUARIO_ACTUAL_ID))
+            .thenReturn(Optional.of(usuarioDeTenant(TENANT_A)));
+        when(consentimientoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        ModeloFacial modelo = ModeloFacial.builder().id(777L).activo(true).build();
+        when(modeloFacialRepository.findByDocenteIdAndActivoTrue(DOCENTE_ID))
+            .thenReturn(Optional.of(modelo));
+
+        service.revocar(DOCENTE_ID, "Lo pidio el docente", IP, UA, USUARIO_ACTUAL_ID);
+
+        assertThat(modelo.getActivo()).isFalse();
+        assertThat(modelo.getFechaBaja()).isNotNull();
+        verify(identificacionFacialService).evictarModelo(777L);
+        verify(modeloFacialRepository).save(modelo);
+    }
+
+    @Test
+    @DisplayName("revocar: es baja logica, no borrado - eso es el derecho de cancelacion")
+    void revocar_noBorraElModelo() {
+        // Revocar es el derecho de oposicion y no obliga a suprimir: el modelo queda cifrado
+        // e inactivo. El borrado fisico tiene su propio camino (ARCO / cancelacion).
+        when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
+        when(consentimientoRepository.findByDocenteIdAndVigenteTrue(DOCENTE_ID))
+            .thenReturn(Optional.of(consentimientoVigente()));
+        when(usuarioRepository.findById(USUARIO_ACTUAL_ID))
+            .thenReturn(Optional.of(usuarioDeTenant(TENANT_A)));
+        when(consentimientoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(modeloFacialRepository.findByDocenteIdAndActivoTrue(DOCENTE_ID))
+            .thenReturn(Optional.of(ModeloFacial.builder().id(777L).activo(true).build()));
+
+        service.revocar(DOCENTE_ID, null, IP, UA, USUARIO_ACTUAL_ID);
+
+        verify(modeloFacialRepository, never()).delete(any());
+        verify(modeloFacialRepository, never()).deleteAll(any());
     }
 
     // ========================================================================
@@ -272,19 +325,14 @@ class ConsentimientoBiometricoServiceTest {
 
     // Docente del tenant indicado.
     private Docente docenteDeTenant(Long tenantId) {
-        Docente d = Docente.builder()
-            .id(DOCENTE_ID).dni("99888777").nombre("Juana").apellido("Pérez").activo(true)
-            .build();
+        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni("99888777", "Juana", "Pérez")).id(DOCENTE_ID).activo(true).build();
         d.setInstitucionId(tenantId);
         return d;
     }
 
     // Usuario administrador del tenant indicado.
     private Usuario usuarioDeTenant(Long tenantId) {
-        Usuario u = Usuario.builder()
-            .id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com")
-            .passwordHash("xxx").nombre("Admin").apellido("Test").activo(true)
-            .build();
+        Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Admin", "Test")).id(USUARIO_ACTUAL_ID).username("admin").email("a@x.com").passwordHash("xxx").activo(true).build();
         u.setInstitucionId(tenantId);
         return u;
     }

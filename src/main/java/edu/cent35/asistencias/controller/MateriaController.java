@@ -24,6 +24,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import edu.cent35.asistencias.service.HorarioService;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * Pantallas de alta, edición, baja y reactivación de materias (RF-12), para los roles
@@ -38,6 +41,7 @@ import java.util.List;
 public class MateriaController {
 
     private final MateriaService service;
+    private final HorarioService horarioService;
 
     // Muestra el listado de las materias.
     @GetMapping
@@ -50,6 +54,28 @@ public class MateriaController {
     }
 
     // Abre el formulario de alta vacío.
+    /**
+     * Las comisiones que tiene cargadas esta materia, con sus horarios.
+     *
+     * <p>Misma idea que las materias de una carrera: saber en cuántas divisiones se abrió una
+     * materia y quién dicta cada una obligaba a filtrar el listado general de comisiones. Los
+     * horarios se muestran acá mismo porque son lo que decide si la comisión sirve: sin
+     * franjas nunca hay una clase en curso contra la cual marcar asistencia.
+     */
+    @GetMapping("/{id}/comisiones")
+    public String comisionesDeLaMateria(@PathVariable Long id, Model model) {
+        Materia materia = service.buscarPorId(id);
+        List<Comision> comisiones = service.comisionesDe(id);
+        Map<Long, List<Horario>> horarios = new LinkedHashMap<>();
+        for (Comision c : comisiones) {
+            horarios.put(c.getId(), horarioService.deLaComision(c.getId()));
+        }
+        model.addAttribute("materia", materia);
+        model.addAttribute("comisiones", comisiones);
+        model.addAttribute("horariosPorComision", horarios);
+        return "academico/materia-comisiones";
+    }
+
     @GetMapping("/nueva")
     public String formNueva(Model model) {
         if (!model.containsAttribute("form")) {

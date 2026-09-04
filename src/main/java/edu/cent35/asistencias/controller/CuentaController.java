@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.config.CustomUserDetails;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.dto.CodigoFormDto;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.UsuarioRepository;
@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import edu.cent35.asistencias.dto.CambioPasswordDto;
 import edu.cent35.asistencias.service.UsuarioService;
 import org.springframework.web.bind.annotation.RequestMapping;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.web.bind.annotation.RequestParam;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -39,7 +43,7 @@ public class CuentaController {
 
     // Muestra el correo de la cuenta y si ya fue confirmado.
     @GetMapping
-    public String ver(@AuthenticationPrincipal CustomUserDetails principal, Model model) {
+    public String ver(@AuthenticationPrincipal UsuarioAutenticado principal, Model model) {
         prepararModelo(principal, model);
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new CodigoFormDto());
@@ -52,7 +56,7 @@ public class CuentaController {
 
     // Emite un codigo nuevo y lo manda al correo de la cuenta.
     @PostMapping("/enviar-codigo")
-    public String enviarCodigo(@AuthenticationPrincipal CustomUserDetails principal,
+    public String enviarCodigo(@AuthenticationPrincipal UsuarioAutenticado principal,
                                HttpServletRequest request,
                                RedirectAttributes redirect) {
         try {
@@ -72,7 +76,7 @@ public class CuentaController {
 
     // Confirma el correo si el codigo ingresado es el correcto.
     @PostMapping("/verificar")
-    public String verificar(@AuthenticationPrincipal CustomUserDetails principal,
+    public String verificar(@AuthenticationPrincipal UsuarioAutenticado principal,
                             @Valid @ModelAttribute("form") CodigoFormDto form,
                             BindingResult binding,
                             Model model,
@@ -97,7 +101,7 @@ public class CuentaController {
     }
 
     // Carga los datos de la cuenta logueada que la pantalla necesita mostrar.
-    private void prepararModelo(CustomUserDetails principal, Model model) {
+    private void prepararModelo(UsuarioAutenticado principal, Model model) {
         Usuario usuario = usuarioRepository.findById(principal.getUsuarioId()).orElseThrow();
         model.addAttribute("usuario", usuario);
         model.addAttribute("verificado", usuario.getEmailVerificadoEn() != null);
@@ -123,38 +127,129 @@ public class CuentaController {
         return request.getRemoteAddr();
     }
 
-    // Cambio de la propia contrasena. Vive en Mi cuenta y no en el listado de usuarios
-    // porque es la unica pantalla a la que todos los roles llegan sobre si mismos.
+    // ========================================================================
+    //  Cambio de la propia contrasena, en dos pasos
+    //
+    //  Paso 1  POST /password/codigo     pide el codigo y lo manda al correo
+    //  Paso 2  POST /password/verificar  comprueba el codigo y abre la ventana
+    //  Paso 3  POST /password            fija la contrasena nueva, dos veces
+    //
+    //  Por que en dos pasos y no todo junto. Se puede pedir el codigo y la
+    //  contrasena en un mismo formulario, pero entonces un codigo mal tipeado
+    //  descarta tambien la contrasena recien escrita y hay que rehacer todo.
+    //  Separarlos hace que cada error cueste solo su propio paso.
+    // ========================================================================
+
+    // Cuanto dura la autorizacion una vez validado el codigo. Corta a proposito: es el
+    // tiempo de escribir una contrasena, no el de dejar la pantalla abierta toda la tarde.
+    private static final Duration VENTANA_CAMBIO = Duration.ofMinutes(10);
+
+    // Marca en la sesion de que cuenta y hasta cuando quedo autorizado el cambio. Se guarda
+    // el id ademas del vencimiento porque una sesion puede cambiar de usuario al re-loguear,
+    // y una autorizacion emitida para otra cuenta no puede seguir valiendo.
+    private static final String AUTORIZACION = "cambioPasswordAutorizadoPara";
+    private static final String AUTORIZACION_VENCE = "cambioPasswordVence";
+
+    // Paso 1: manda el codigo al correo de la cuenta.
+    @PostMapping("/password/codigo")
+    public String pedirCodigoDeCambio(@AuthenticationPrincipal UsuarioAutenticado principal,
+                                      HttpServletRequest request,
+                                      HttpSession sesion,
+                                      RedirectAttributes redirect) {
+        sesion.removeAttribute(AUTORIZACION);
+        sesion.removeAttribute(AUTORIZACION_VENCE);
+        try {
+            verificacionService.enviarCodigoParaCambiarPassword(
+                principal.getUsuarioId(), ipDe(request));
+            redirect.addFlashAttribute("flashMensaje",
+                "Te enviamos un código a tu correo. Vence en unos minutos.");
+            redirect.addFlashAttribute("pasoPassword", "codigo");
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+        } catch (RuntimeException ex) {
+            log.warn("No se pudo enviar el codigo de cambio de contrasena: {}", ex.toString());
+            redirect.addFlashAttribute("flashError",
+                "No pudimos enviar el correo en este momento. Probá de nuevo en un rato.");
+        }
+        return "redirect:/mi-cuenta";
+    }
+
+    // Paso 2: comprueba el codigo. Recien si es correcto se habilita el formulario.
+    @PostMapping("/password/verificar")
+    public String verificarCodigoDeCambio(@AuthenticationPrincipal UsuarioAutenticado principal,
+                                          @RequestParam(name = "codigo", required = false) String codigo,
+                                          HttpSession sesion,
+                                          RedirectAttributes redirect) {
+
+        CodigoVerificacionService.Resultado resultado =
+            verificacionService.validarCodigoParaCambiarPassword(principal.getUsuarioId(), codigo);
+
+        if (resultado != CodigoVerificacionService.Resultado.OK) {
+            redirect.addFlashAttribute("errorCodigoPassword", mensajeDe(resultado));
+            redirect.addFlashAttribute("pasoPassword", "codigo");
+            return "redirect:/mi-cuenta";
+        }
+
+        sesion.setAttribute(AUTORIZACION, principal.getUsuarioId());
+        sesion.setAttribute(AUTORIZACION_VENCE, LocalDateTime.now().plus(VENTANA_CAMBIO));
+        redirect.addFlashAttribute("pasoPassword", "nueva");
+        return "redirect:/mi-cuenta";
+    }
+
+    // Paso 3: fija la contrasena nueva. Sin la autorizacion del paso 2 no hace nada.
     @PostMapping("/password")
-    public String cambiarPassword(@AuthenticationPrincipal CustomUserDetails principal,
+    public String cambiarPassword(@AuthenticationPrincipal UsuarioAutenticado principal,
                                   @Valid @ModelAttribute("formPassword") CambioPasswordDto form,
                                   BindingResult binding,
+                                  HttpSession sesion,
                                   RedirectAttributes redirect) {
+
+        if (!estaAutorizado(principal, sesion)) {
+            // Se comprueba en el servidor y no confiando en que la pantalla haya mostrado el
+            // paso correcto: el formulario del paso 3 se puede enviar directamente.
+            sesion.removeAttribute(AUTORIZACION);
+            sesion.removeAttribute(AUTORIZACION_VENCE);
+            redirect.addFlashAttribute("flashError",
+                "La autorización venció o no se validó ningún código. Empezá de nuevo.");
+            return "redirect:/mi-cuenta";
+        }
 
         if (!form.coincide()) {
             binding.rejectValue("confirmacion", "error.match", "Las contraseñas no coinciden");
-        }
-        if (form.esLaMisma()) {
-            binding.rejectValue("nuevaPassword", "error.igual",
-                "La contraseña nueva tiene que ser distinta de la actual");
         }
         if (binding.hasErrors()) {
             redirect.addFlashAttribute(
                 "org.springframework.validation.BindingResult.formPassword", binding);
             redirect.addFlashAttribute("formPassword", form);
+            redirect.addFlashAttribute("pasoPassword", "nueva");
             return "redirect:/mi-cuenta";
         }
 
         try {
-            usuarioService.cambiarPasswordPropia(
-                principal.getUsuarioId(), form.getActual(), form.getNuevaPassword());
-            redirect.addFlashAttribute("flashMensaje", "Contraseña cambiada correctamente.");
+            usuarioService.fijarPasswordPropia(principal.getUsuarioId(), form.getNuevaPassword());
         } catch (IllegalArgumentException ex) {
-            binding.rejectValue("actual", "error.actual", ex.getMessage());
+            binding.rejectValue("nuevaPassword", "error.igual", ex.getMessage());
             redirect.addFlashAttribute(
                 "org.springframework.validation.BindingResult.formPassword", binding);
             redirect.addFlashAttribute("formPassword", form);
+            redirect.addFlashAttribute("pasoPassword", "nueva");
+            return "redirect:/mi-cuenta";
         }
+
+        // La autorizacion se consume: sirvio para un cambio y para uno solo.
+        sesion.removeAttribute(AUTORIZACION);
+        sesion.removeAttribute(AUTORIZACION_VENCE);
+        redirect.addFlashAttribute("flashMensaje", "Contraseña cambiada correctamente.");
         return "redirect:/mi-cuenta";
+    }
+
+    // Si esta sesion valido un codigo para ESTA cuenta y la ventana sigue abierta.
+    private boolean estaAutorizado(UsuarioAutenticado principal, HttpSession sesion) {
+        Object para = sesion.getAttribute(AUTORIZACION);
+        Object vence = sesion.getAttribute(AUTORIZACION_VENCE);
+        return para instanceof Long id
+            && id.equals(principal.getUsuarioId())
+            && vence instanceof LocalDateTime cuando
+            && LocalDateTime.now().isBefore(cuando);
     }
 }

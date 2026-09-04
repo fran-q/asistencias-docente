@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * Datos que viajan entre el formulario de la asistencia y el controlador. Lleva las anotaciones de
@@ -32,8 +31,8 @@ public class AsistenciaManualFormDto {
     @PastOrPresent(message = "La fecha no puede ser futura")
     private LocalDate fecha;
 
-    @NotNull(message = "Indicá la hora")
-    private LocalTime horaRegistrada;
+    // La hora ya no se pide: la pone el sistema al guardar, porque lo que se asienta es
+    // cuando el administrador declara el hecho, no una hora que se pueda elegir a gusto.
 
     @NotNull(message = "Elegí el estado a registrar")
     private EstadoAsistencia estado;

@@ -82,14 +82,12 @@ una coma. El historial anterior a agosto de 2026 la conserva.
 ```
 Documentacion/
 ├── 1-catedra/          Guía, requerimientos y diagrama de BD originales de la cátedra
-├── 2-requerimientos/   Requerimientos, alcance, casos de uso, DFD y DER
+├── 2-requerimientos/   Requerimientos, alcance, casos de uso y DER
 ├── 3-legal/            Consentimiento biométrico y Ley 25.326
-├── 4-arquitectura/     Los 14 ADR, referencia técnica y deuda técnica
-├── 5-diagramas/        Diagramas en Mermaid
-├── 6-manuales/         Manual del administrador y manual técnico
-├── 7-informes/         Correcciones, calibración del umbral y revisión de UI/UX
-├── 8-defensa/          Apuntes, preguntas del tribunal y guiones
-└── 9-imprimibles/      Versiones PDF listas para imprimir
+├── 4-arquitectura/     Los 14 ADR, referencia técnica, normalización y deuda técnica
+├── 5-informes/         Calibración del umbral, revisión de UI/UX y bitácoras
+├── 6-defensa/          Dossier, preguntas del tribunal y guiones
+└── 7-imprimibles/      Versiones PDF listas para imprimir
 ```
 
 Su índice es `Documentacion/README.md`, que explica por dónde entrar según lo que

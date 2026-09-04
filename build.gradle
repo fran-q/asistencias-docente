@@ -44,6 +44,7 @@ dependencies {
 	// (javacpp.platform). Ver ADR-0007.
 	implementation 'org.bytedeco:javacv:1.5.11'
 	implementation 'org.bytedeco:opencv-platform:4.10.0-1.5.11'
+	testImplementation 'com.microsoft.playwright:playwright:1.61.0'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'      // Driver nativo MariaDB
@@ -63,12 +64,68 @@ tasks.withType(JavaCompile).configureEach {
 	options.encoding = 'UTF-8'
 }
 
+// Los unitarios (Mockito, sin contexto de Spring) y los de integracion
+// (@SpringBootTest sobre H2) se corren por separado: `test` es la vuelta rapida
+// mientras se programa, `integrationTest` es la que levanta el contexto.
+// Los de integracion viven en el paquete `integracion` y se llaman *IT.
 tasks.named('test') {
 	useJUnitPlatform()
+	exclude '**/integracion/**'
+}
+
+tasks.register('integrationTest', Test) {
+	group = 'verification'
+	description = 'Corre solo los tests de integracion (@SpringBootTest sobre H2)'
+	useJUnitPlatform()
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	include '**/integracion/**'
+	shouldRunAfter tasks.named('test')
+}
+
+// Sin este dependsOn, `./gradlew build` dejaria de correr los tests de
+// integracion y nadie se enteraria: la build seguiria en verde con trece clases
+// sin ejecutar. Es la misma forma de fallo que TD-007, donde un aspecto quedo
+// inactivo en silencio y 107 tests en verde no lo detectaron.
+tasks.named('check') {
+	dependsOn tasks.named('integrationTest')
 }
 
 // Al correr ./gradlew bootRun activa automaticamente el perfil "local"
 // para cargar application-local.properties con las credenciales de XAMPP.
 bootRun {
 	args = ['--spring.profiles.active=local']
+}
+
+// El perfil local tiene que estar en src/main/resources para que bootRun lo
+// encuentre en el classpath, pero no tiene por que viajar dentro del JAR: ahi
+// son las credenciales de XAMPP metidas en un artefacto que se entrega o se
+// comparte. El .gitignore cuida el repositorio publico y no el empaquetado.
+// bootRun no se ve afectado: lee de build/resources/main, no del JAR.
+// Va sobre TODAS las tareas Jar y no solo sobre bootJar: el plugin de Spring Boot
+// tambien genera asistencias-x.x.x-plain.jar con la tarea `jar`, y excluirlo solo
+// de bootJar dejaba las credenciales dentro del otro. Cualquier empaquetado nuevo
+// queda cubierto por el withType.
+tasks.withType(Jar).configureEach {
+	exclude 'application-local.properties'
+}
+
+// === Playwright: descarga de binarios de navegador ===
+// Playwright no reutiliza el Chrome del sistema: baja sus propios binarios,
+// ligados a la version de la libreria. Hay que volver a correr esta tarea
+// cada vez que se suba la version de Playwright en dependencies.
+tasks.register('instalarNavegadores', JavaExec) {
+	group = 'playwright'
+	description = 'Descarga los binarios de navegador que usa Playwright'
+
+	// La clase CLI viene con la dependencia declarada en testImplementation,
+	// por eso el classpath tiene que ser el de test y no el de main.
+	classpath = sourceSets.test.runtimeClasspath
+	mainClass = 'com.microsoft.playwright.CLI'
+
+	// El proyecto fija toolchain 21; se usa el mismo launcher para no depender
+	// del JVM con el que arranque el daemon de Gradle.
+	javaLauncher = javaToolchains.launcherFor(java.toolchain)
+
+	args = ['install', 'chromium']
 }

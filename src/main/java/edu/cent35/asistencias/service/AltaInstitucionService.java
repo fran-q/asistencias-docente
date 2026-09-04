@@ -1,6 +1,9 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.model.Persona;
+import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.AltaPendiente;
 import edu.cent35.asistencias.model.Cuit;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Rol;
@@ -34,6 +37,7 @@ public class AltaInstitucionService {
     private final InstitucionRepository institucionRepository;
     private final UsuarioRepository usuarioRepository;
     private final RolRepository rolRepository;
+    private final PersonaRepository personaRepository;
     private final PasswordEncoder passwordEncoder;
     // La interfaz y no la clase: cual sale por correo y cual por consola lo decide
     // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
@@ -71,8 +75,10 @@ public class AltaInstitucionService {
 
         // El usuario todavia no existe, asi que se arma uno de paso solo para el saludo del
         // correo. No se guarda: el notificador unicamente lee su nombre.
+        // Usuario de paso, solo para el saludo del correo: no se guarda. Se lo nombra con la
+        // institucion porque es a la institucion a la que se le esta confirmando el alta.
         Usuario destinatario = Usuario.builder()
-            .nombre(form.getNombre().trim())
+            .username(form.getNombreInstitucion().trim())
             .build();
 
         try {
@@ -138,12 +144,13 @@ public class AltaInstitucionService {
             .orElseThrow(() -> new IllegalStateException(
                 "Falta el rol INSTITUCION: la base no esta inicializada correctamente."));
 
+        // Sin persona a proposito (V018): esta cuenta representa al establecimiento y no a
+        // alguien concreto. Su nombre para mostrar sale de la institucion. Las personas que la
+        // administren se cargan despues, cada una con su cuenta y su identidad.
         Usuario usuario = Usuario.builder()
             .username(form.getUsername().trim())
             .email(form.getEmail().trim())
             .passwordHash(passwordEncoder.encode(form.getPassword()))
-            .nombre(form.getNombre().trim())
-            .apellido(form.getApellido().trim())
             .rol(rol)
             .activo(true)
             .emailVerificadoEn(LocalDateTime.now())

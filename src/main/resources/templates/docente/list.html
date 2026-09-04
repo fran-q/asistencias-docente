@@ -20,58 +20,75 @@
 
         <div class="filtro" data-filtro-tabla="#tabla-docentes">
             <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
-                   placeholder="Buscar por DNI, legajo, nombre o correo...">
+                   placeholder="Buscar por DNI, legajo, nombre o correo..." autocomplete="off">
             <select class="filtro__estado" aria-label="Filtrar por estado">
-                <option value="">Todos los estados</option>
-                <option value="activo">Solo activos</option>
+                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
+                     ahi porque hay historial colgando de el, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
+                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
+                <option value="">Todos los estados</option>
             </select>
             <span class="filtro__resultado"></span>
         </div>
 
         <div class="card card--no-padding">
             <div class="table-wrap">
-                <table class="table" id="tabla-docentes">
-                    <thead>
-                        <tr>
-                            <th>DNI</th>
-                            <th>Legajo</th>
-                            <th>Apellido, Nombre</th>
-                            <th>Estado</th>
-                            <th class="table__actions">Acciones</th>
+                <table class="table table--tarjetas" id="tabla-docentes" role="table">
+                    <thead role="rowgroup">
+                        <tr role="row">
+                            <th role="columnheader">DNI</th>
+                            <th role="columnheader">Legajo</th>
+                            <th role="columnheader">Apellido, Nombre</th>
+                            <th role="columnheader">Estado</th>
+                            <th role="columnheader" class="table__actions">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody role="rowgroup">
                         <tr th:each="d : ${docentes}" data-fila th:attr="data-estado=${d.activo} ? 'activo' : 'inactivo'"
-                            th:classappend="${!d.activo} ? 'row--inactive'">
-                            <td><code th:text="${d.dni}">DNI</code></td>
-                            <td>
+                            th:classappend="${!d.activo} ? 'row--inactive'" role="row">
+                            <td role="cell" data-label="DNI"><code th:text="${d.dni}">DNI</code></td>
+                            <td role="cell" data-label="Legajo">
                                 <code th:if="${d.legajo}" th:text="${d.legajo}">L</code>
                                 <span th:unless="${d.legajo}" class="text-muted">—</span>
                             </td>
-                            <td th:text="${d.nombreCompleto}">Apellido, Nombre</td>
-                            <td>
+                            <td role="cell" data-label="Docente" th:text="${d.nombreCompleto}">Apellido, Nombre</td>
+                            <td role="cell" data-label="Estado">
                                 <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
                                 <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
                             </td>
-                            <td class="table__actions">
+                            <td role="cell" class="table__actions">
+                                <!-- Un solo boton hacia la ficha de edicion. La ficha completa
+                                     (datos personales y derechos ARCO) y el modelo facial viven
+                                     adentro: son operaciones sobre UNA persona, y conviene tener
+                                     a la vista de quien se trata antes de tocarlas. -->
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
-                                <!-- La ficha completa: todo lo que el sistema sabe de esta
-                                     persona, incluidos sus derechos sobre esos datos. -->
-                                <a th:href="@{/docentes/{id}/ficha(id=${d.id})}"
-                                   class="btn btn--ghost btn--sm"
-                                   title="Ver todos los datos de esta persona">Datos</a>
+                                <!--
+                                  Dos botones distintos segun se pueda o no dar de baja.
 
-                                <!-- La fecha se pide en el modal porque la baja suele cargarse
-                                     dias despues del hecho: forzar "hoy" falsearia el registro.
-                                     El rango la acota entre el alta del docente y hoy. -->
-                                <form th:if="${d.activo}"
+                                  Cuando NO se puede --es titular de materias o esta asignado a
+                                  comisiones-- el boton avisa de una vez, sin abrir el cuadro de
+                                  confirmacion. Confirmar algo que va a fallar es pedirle a
+                                  alguien que decida sobre una operacion imposible: antes eran
+                                  tres pasos (abrir, elegir fecha, enviar) para llegar a un "no".
+                                -->
+                                <button th:if="${d.activo and d.motivoQueImpideLaBaja != null}"
+                                        type="button"
+                                        class="btn btn--ghost btn--sm btn--danger"
+                                        data-aviso-toast
+                                        th:data-aviso-toast="${d.motivoQueImpideLaBaja}">Dar de baja</button>
+
+                                <!-- Y cuando SI se puede, el cuadro con la fecha. Se pide porque
+                                     la baja suele cargarse dias despues del hecho: forzar "hoy"
+                                     falsearia el registro. El rango la acota entre el alta y hoy. -->
+                                <form th:if="${d.activo and d.motivoQueImpideLaBaja == null}"
                                       th:action="@{/docentes/{id}/baja(id=${d.id})}" method="post"
                                       class="inline-form"
                                       th:data-confirm="|¿Dar de baja a ${d.nombreCompleto}?|"
-                                      data-confirm-detail="Si es titular de materias o está asignado a comisiones activas, no se va a poder. Reasignalas primero."
+                                      data-confirm-detail="La cuenta deja de figurar entre el personal activo y no va a poder marcar asistencia."
                                       data-confirm-action="Dar de baja"
                                       data-confirm-style="danger"
                                       data-confirm-date="fechaBaja"
@@ -79,23 +96,23 @@
                                       th:data-confirm-date-value="${hoy}"
                                       th:data-confirm-date-min="${d.fechaAlta}"
                                       th:data-confirm-date-max="${hoy}">
-                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger">Dar de baja</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger" data-texto-enviando="Dando de baja...">Dar de baja</button>
                                 </form>
 
                                 <form th:unless="${d.activo}"
                                       th:action="@{/docentes/{id}/alta(id=${d.id})}" method="post"
                                       class="inline-form">
-                                    <button type="submit" class="btn btn--ghost btn--sm">Reactivar</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Reactivando...">Reactivar</button>
                                 </form>
                             </td>
                         </tr>
-                        <tr class="table__empty-fila" hidden>
-                            <td colspan="5" class="table__empty">
+                        <tr class="table__empty-fila" hidden role="row">
+                            <td role="cell" colspan="5" class="table__empty">
                                 Ningún docente coincide con la búsqueda.
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(docentes)}">
-                            <td colspan="5" class="table__empty">
+                        <tr th:if="${#lists.isEmpty(docentes)}" role="row">
+                            <td role="cell" colspan="5" class="table__empty">
                                 Todavía no cargaste ningún docente.
                                 <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
                             </td>

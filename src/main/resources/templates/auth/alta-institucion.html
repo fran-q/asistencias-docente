@@ -11,7 +11,7 @@
         <header class="login-card__header">
             <div class="login-card__logo" aria-hidden="true">V</div>
             <h1>Nueva institución</h1>
-            <p class="login-card__subtitle">Crea la institución y su primera cuenta de gestión</p>
+            <p class="login-card__subtitle">Registrá el establecimiento y su acceso al sistema</p>
         </header>
 
         <form th:action="@{/alta-institucion}" th:object="${form}" method="post" class="login-form" novalidate>
@@ -35,7 +35,11 @@
                        th:classappend="${#fields.hasErrors('nombreInstitucion')} ? 'is-invalid'">
                 <span class="form-error" th:if="${#fields.hasErrors('nombreInstitucion')}"
                       th:errors="*{nombreInstitucion}">Error</span>
-                <small class="form-hint">No puede repetirse con el de otra institución del sistema.</small>
+                <small class="form-hint">
+                    El nombre completo y oficial. Es el que va a figurar en los reportes y en las
+                    constancias de datos biométricos, así que tiene que identificar al
+                    establecimiento tal cual es. No puede repetirse con el de otra institución.
+                </small>
             </div>
 
             <div class="form-group">
@@ -48,29 +52,30 @@
             </div>
 
             <hr class="separador">
-            <h2 class="form-seccion">Primera cuenta de gestión</h2>
+            <h2 class="form-seccion">Acceso de la institución</h2>
+            <p class="form-hint form-hint--seccion">
+                Esta cuenta representa al establecimiento, no a una persona. Con ella vas a poder
+                crear después las cuentas de quienes lo administren, cada una a nombre de su
+                titular.
+            </p>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="nombre">Nombre <span class="required">*</span></label>
-                    <input type="text" id="nombre" th:field="*{nombre}" required maxlength="80"
-                           th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
-                    <span class="form-error" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">Error</span>
-                </div>
-                <div class="form-group">
-                    <label for="apellido">Apellido <span class="required">*</span></label>
-                    <input type="text" id="apellido" th:field="*{apellido}" required maxlength="80"
-                           th:classappend="${#fields.hasErrors('apellido')} ? 'is-invalid'">
-                    <span class="form-error" th:if="${#fields.hasErrors('apellido')}" th:errors="*{apellido}">Error</span>
-                </div>
-            </div>
-
+            <!-- El usuario se pide DESPUES del nombre completo y descrito como su version
+                 corta, no como un segundo nombre que hay que inventar. El nombre largo es el
+                 dato legal y no se puede acortar; este es el que se tipea en cada ingreso, asi
+                 que conviene que sea breve y facil de recordar. -->
             <div class="form-group">
-                <label for="username">Usuario <span class="required">*</span></label>
+                <label for="username">Nombre corto o siglas <span class="required">*</span></label>
                 <input type="text" id="username" th:field="*{username}" required maxlength="60"
-                       autocomplete="username"
+                       autocomplete="username" placeholder="utn-frtdf"
+                       data-sugerir-desde="nombreInstitucion"
                        th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
                 <span class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Error</span>
+                <small class="form-hint">
+                    Es con lo que vas a entrar al sistema, así que conviene algo corto: las
+                    siglas del establecimiento, o el nombre resumido. Se propone uno a partir
+                    del nombre de arriba y lo podés cambiar. Solo letras, números, punto, guion
+                    y guion bajo.
+                </small>
             </div>
 
             <div class="form-group">
@@ -88,11 +93,12 @@
                 <div class="form-group">
                     <label for="password">Contraseña <span class="required">*</span></label>
                     <div class="password-input">
-                        <input type="password" id="password" th:field="*{password}" required
+                        <input type="password" id="password" th:field="*{password}" required minlength="6" maxlength="20"
                                autocomplete="new-password"
                                th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
                         <button type="button" class="password-toggle" aria-label="Mostrar contraseña"></button>
                     </div>
+                    <small class="form-hint">Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
                     <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</span>
                 </div>
                 <div class="form-group">
@@ -108,7 +114,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn--primary btn--full">Enviar código al correo</button>
+            <button type="submit" class="btn btn--primary btn--full" data-texto-enviando="Enviando...">Enviar código al correo</button>
         </form>
 
         <p class="login-card__ayuda">
@@ -116,7 +122,9 @@
         </p>
     </main>
 
-    <script th:src="@{/js/toast.js}" defer></script>
-    <script th:src="@{/js/password-ui.js}" defer></script>
+    <script th:src="@{/js/comun/toast.js}" defer></script>
+    <script th:src="@{/js/comun/envio-form.js}" defer></script>
+    <script th:src="@{/js/comun/password-ui.js}" defer></script>
+    <script th:src="@{/js/comun/sugerir-usuario.js}" defer></script>
 </body>
 </html>

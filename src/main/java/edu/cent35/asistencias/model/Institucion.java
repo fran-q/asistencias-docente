@@ -54,6 +54,22 @@ public class Institucion {
     @Column(name = "telefono_contacto", length = 30)
     private String telefonoContacto;
 
+    /**
+     * Minutos de hueco entre dos clases consecutivas que las mantienen dentro del mismo
+     * bloque de presencia (RF-76, ADR-0017). Menor o igual: un bloque. Mayor: dos.
+     *
+     * <p>Vive en la institución y no en una constante porque lo determina la realidad
+     * edilicia: un instituto con recreos de quince minutos y otro con turnos separados por
+     * cuarenta y cinco no pueden compartir el número.
+     *
+     * <p>Agrupa <b>horarios de la grilla</b>, no pasadas frente a la cámara. Es la
+     * confusión fácil de cometer con este valor: se puede calcular qué bloques tiene un
+     * docente antes de que el docente aparezca.
+     */
+    @Column(name = "umbral_separacion_min", nullable = false)
+    @Builder.Default
+    private Short umbralSeparacionMin = (short) 60;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

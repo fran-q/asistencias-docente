@@ -32,7 +32,7 @@ public class UsuarioListItemDto {
             .id(u.getId())
             .username(u.getUsername())
             .email(u.getEmail())
-            .nombreCompleto(u.getNombre() + " " + u.getApellido())
+            .nombreCompleto(u.getNombreParaMostrar())
             .rolCodigo(u.getRol().getCodigo())
             .activo(Boolean.TRUE.equals(u.getActivo()))
             .emailVerificado(u.getEmailVerificadoEn() != null)

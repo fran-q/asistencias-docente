@@ -11,7 +11,7 @@
             <p class="page-header__subtitle">
                 Vas a revocar el consentimiento vigente de
                 <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>
-                (DNI <span th:text="${docente.dni}">12345678</span>).
+                (DNI <span th:text="${docente.persona.dni}">12345678</span>).
                 Esta acción queda registrada con tu usuario, fecha, IP y navegador
                 con fines de auditoría.
             </p>
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="form-actions" style="margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn--primary btn--danger">Revocar consentimiento</button>
+                    <button type="submit" class="btn btn--primary btn--danger" data-texto-enviando="Revocando...">Revocar consentimiento</button>
                     <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>
