@@ -8,10 +8,11 @@ Esquema gestionado exclusivamente por Flyway. Hibernate solo valida.
 
 ---
 
-## Tablas vigentes: 19
+## Tablas vigentes: 22
 
 El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` (V017) y
-`bloques_presencia` (V019). De V020 en adelante solo se agregan columnas e índices, no tablas.
+`bloques_presencia` (V019), `ciclos_lectivos` y `periodos_lectivos` (V023) y
+`dias_no_laborables` (V024).
 
 > Nota: el `CHANGELOG.md` dice "esquema completo de 16 tablas" en el Sprint 0. En ese
 > momento eran 15 — `auditoria` existía y `codigos_verificacion` y `puestos_captura`
@@ -39,9 +40,12 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 
 | Tabla | Qué guarda | Tenant-scoped |
 |---|---|---|
+| `ciclos_lectivos` | El año calendario de cursada: 2026, 2027. Con su estado y sus fechas (V023). | Sí |
+| `periodos_lectivos` | Tramo del ciclo en que corre una comisión: anual, cuatrimestral (V023). | Sí (denormalizado) |
+| `dias_no_laborables` | Feriados y receso. El job de ausencias los saltea (V024). | Sí |
 | `carreras` | Programas académicos. Código único por institución. | Sí |
 | `materias` | Asociadas a carrera y opcionalmente a docente titular. | Sí (denormalizado) |
-| `comisiones` | Varias por materia, cada una con su docente asignado y cupo. | Vía materia |
+| `comisiones` | Varias por materia, cada una con su docente asignado. Desde V023 pertenece a un período, y por él a un año. | Vía materia |
 | `horarios` | Día ISO (1=lunes), hora inicio/fin, tolerancia por horario. | Vía comisión |
 
 ### Asistencia
@@ -170,6 +174,34 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V020__cierre_manual_del_bloque` | Quién cerró el bloque a mano y por qué: `cerrado_por_usuario_id`, `motivo_cierre_id`, `detalle_cierre` (RF-83) |
 | `V021__limite_de_cambio_de_password` | `usuarios.password_cambiada_en` y el destrabe administrativo: una contraseña nueva cada 24 h |
 | `V022__un_solo_puesto_habilitado` | Índice único sobre columna generada: una institución no puede tener dos puestos habilitados a la vez (ADR-0015) |
+| `V023__ciclos_y_periodos_lectivos` | Tablas `ciclos_lectivos` y `periodos_lectivos`; `comisiones.periodo_id` y el UNIQUE por materia, código y período |
+| `V024__dias_no_laborables` | Tabla `dias_no_laborables`: los días de adentro del ciclo en los que no se dicta clase |
+
+### Invariantes que agregaron V023 y V024
+
+**El año calendario existe, y no es `materias.anio`.** Esa columna es el año *del plan*
+—primero, segundo, tercero— y no cambia cuando cambia el almanaque. El año calendario vive en
+`ciclos_lectivos.anio`, y lo que lo conecta con la oferta es la cadena
+`comision → periodo → ciclo`.
+
+**El período es una tabla y no un enum.** Hay materias anuales y cuatrimestrales. Con un enum,
+las fechas de corte quedarían repartidas entre columnas del ciclo y un `switch` en Java, y cada
+consumidor tendría que ramificar por tipo para saber si una fecha cae adentro. Siendo tabla,
+"Anual" y "1er cuatrimestre" son la misma clase de cosa y todos preguntan lo mismo:
+`fecha BETWEEN p.fecha_inicio AND p.fecha_fin`.
+
+**El `UNIQUE` de comisiones pasó a incluir el período.** Antes era `(materia_id, codigo)`, lo
+que impedía que existiera "Matemática I — Comisión A" en 2026 y otra vez en 2027: para dar la
+misma materia el año siguiente había que pisar la comisión anterior, y con eso el año viejo
+dejaba de poder reconstruirse.
+
+**Un ciclo cerrado congela la estructura, no las asistencias.** Comisiones, horarios y períodos
+quedan de solo lectura; justificar una ausencia o cargar una asistencia manual de ese año se
+sigue pudiendo. Un reclamo o una inspección llegan casi siempre después de terminado el año.
+
+**Los días no laborables no llevan baja lógica.** Es la excepción junto con la supresión ARCO:
+nada referencia a esas filas, así que una baja lógica solo dejaría basura marcada como inactiva
+en el listado.
 
 ### Invariantes que agregaron V021 y V022
 

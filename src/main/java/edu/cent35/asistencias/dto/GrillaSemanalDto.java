@@ -25,6 +25,10 @@ public class GrillaSemanalDto {
 
     /** Anio por el que se filtro, o null si se muestran todos. */
     Short anioFiltrado;
+    // El ciclo que se esta viendo. Null cuando la institucion todavia no abrio ninguno: la
+    // grilla sale vacia y la pantalla lo explica, en vez de mostrar una cuadricula muda.
+    Long cicloId;
+    Short cicloAnio;
 
     int totalHorarios;
     LocalTime horaMin;        // hora minima visible en la grilla (default 07:00)

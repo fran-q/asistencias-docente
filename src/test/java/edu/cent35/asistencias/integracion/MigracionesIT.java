@@ -153,11 +153,19 @@ class MigracionesIT {
             // V017. Historial de cambios sobre los datos de identidad (ADR-0016).
             "cambios_identidad",
             // V019. Permanencia del docente con marca de entrada y de salida (ADR-0017).
-            "bloques_presencia");
+            "bloques_presencia",
+            // V023. El ano calendario de cursada y sus tramos.
+            "ciclos_lectivos", "periodos_lectivos",
+            // V024. Los dias de adentro del ciclo en los que no se dicta clase.
+            "dias_no_laborables");
 
         // 3) Y las columnas que el codigo da por sentadas, incluidas las que agregaron las
         //    migraciones tardias: si una migracion se perdiera, esto lo dice.
         assertThat(columnasDe("materias")).contains("anio", "docente_titular_id", "fecha_baja");
+        // V023. La comision se ata a un periodo, y con eso a un ano calendario.
+        assertThat(columnasDe("comisiones")).contains("periodo_id");
+        assertThat(columnasDe("ciclos_lectivos")).contains("anio", "fecha_inicio", "fecha_fin", "estado");
+        assertThat(columnasDe("periodos_lectivos")).contains("ciclo_id", "fecha_inicio", "fecha_fin", "orden");
         assertThat(columnasDe("carreras")).contains("duracion_anios", "fecha_baja");
         assertThat(columnasDe("usuarios")).contains("ultimo_login", "email_verificado_en", "fecha_baja");
         assertThat(columnasDe("horarios")).contains("tolerancia_min", "creado_en", "actualizado_en");

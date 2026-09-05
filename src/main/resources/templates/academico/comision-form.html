@@ -59,6 +59,30 @@
                     </div>
                 </div>
 
+                <!-- El periodo es lo que ubica la comision en un ano concreto (V023). Sin el,
+                     la oferta de todos los anos vuelve a mezclarse, que es justo lo que los
+                     ciclos vinieron a separar. Solo aparecen los de ciclos abiertos: ofrecer
+                     uno cerrado seria ofrecer algo que el servidor va a rechazar. -->
+                <div class="form-group">
+                    <label for="periodoId">Período <span class="required">*</span></label>
+                    <select id="periodoId" th:field="*{periodoId}" required
+                            th:classappend="${#fields.hasErrors('periodoId')} ? 'is-invalid'">
+                        <option value="">-- Elegir período --</option>
+                        <option th:each="p : ${periodos}"
+                                th:value="${p.id}"
+                                th:text="|${p.ciclo.anio} — ${p.nombre}|">2026 — Anual</option>
+                    </select>
+                    <small class="form-hint" th:if="${!#lists.isEmpty(periodos)}">
+                        En qué año y en qué tramo se dicta. La misma comisión puede repetirse
+                        el año que viene: son dos ofertas distintas de la misma materia.
+                    </small>
+                    <div class="alert alert--warning" th:if="${#lists.isEmpty(periodos)}" role="alert">
+                        No hay ningún ciclo lectivo abierto. Creá uno en
+                        <a th:href="@{/ciclos}">Ciclos lectivos</a> antes de cargar comisiones.
+                    </div>
+                    <span class="form-error" th:if="${#fields.hasErrors('periodoId')}" th:errors="*{periodoId}">err</span>
+                </div>
+
                 <div class="form-group">
                     <label for="docenteAsignadoId">Docente asignado</label>
                     <select id="docenteAsignadoId" data-buscable th:field="*{docenteAsignadoId}"

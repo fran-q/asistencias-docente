@@ -7,6 +7,72 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Ciclos lectivos y días sin clase
+
+**Período:** septiembre de 2026.
+
+Hasta acá el sistema no tenía noción del año calendario. Lo único que se le parecía era
+`materias.anio`, que es el año *del plan* —primero, segundo, tercero— y no cambia cuando cambia
+el almanaque.
+
+Eso tenía dos consecuencias que no se veían hasta que pasaba el tiempo. Dar la misma materia el
+año siguiente obligaba a pisar la comisión existente, y con eso el año anterior dejaba de poder
+reconstruirse. Y el job de ausencias, que no tenía forma de saber cuándo hay clases, generaba
+ausencias en enero, en el receso y en cada feriado.
+
+### Agregado
+
+- **Ciclos lectivos y períodos (V023).** El año calendario no existía en el sistema. Lo único
+  que se le parecía era `materias.anio`, que es el año del plan —primero, segundo, tercero—, no
+  2026 ni 2027.
+
+  Faltando eso, dar la misma materia el año siguiente obligaba a **pisar la comisión
+  existente**, porque un `UNIQUE (materia, código)` impedía repetirla. Al pisarla, el año
+  anterior dejaba de poder reconstruirse: los reportes de 2026 empezaban a mostrar el docente
+  de 2027.
+
+  Ahora la comisión pertenece a un **período** de un ciclo, y el `UNIQUE` incluye el período.
+  El período es una tabla y no un enum porque hay materias anuales y cuatrimestrales: siendo
+  tabla, "Anual" y "1er cuatrimestre" son la misma clase de cosa y todo el sistema pregunta lo
+  mismo —si la fecha cae adentro— en vez de ramificar por tipo.
+
+  Un ciclo cerrado **congela la estructura pero no las asistencias**: una inspección o un
+  reclamo llegan casi siempre después de terminado el año.
+
+- **Abrir el año que viene copiando el anterior.** Copia las comisiones activas y sus horarios
+  emparejando los períodos por nombre, sin tocar el historial. Se puede correr más de una vez
+  sin duplicar. Sin esto, cada marzo significaba recargar a mano toda la oferta de la
+  institución.
+
+- **Días sin clase (V024).** Feriados, receso, jornadas institucionales. Hasta ahora el job
+  generaba una ausencia AUTOMATICA por cada docente que tenía clase un feriado: no es un dato
+  incompleto, es uno **falso** —dice que alguien faltó un día en que la institución estaba
+  cerrada— y limpiarlo después cuesta más que no generarlo.
+
+  No bloquean tomar asistencia: si alguien viene a trabajar un feriado, la cámara lo registra
+  igual.
+
+### Corregido
+
+
+
+- **El job de ausencias no miraba el calendario.** Traía todos los horarios activos de ese día
+  de la semana, sin ningún límite de fechas. Generaba ausencias en enero y en el receso, y en
+  marzo de 2027 habría seguido generándolas con los horarios de 2026 hasta que alguien los
+  diera de baja a mano, uno por uno. Ahora el horario tiene que caer dentro de su período y su
+  ciclo tiene que estar activo, así que una materia cuatrimestral deja de generar ausencias
+  cuando termina su cuatrimestre sin que nadie tenga que acordarse de nada.
+
+- **Una materia quedaba atada para siempre por una comisión vieja.** Darla de baja se bloqueaba
+  si tenía comisiones activas, y una comisión de 2026 seguía contando en 2030. Ahora solo
+  cuentan las de ciclos abiertos.
+
+- **La grilla semanal mezclaba años.** Mostraba todos los horarios activos de la carrera, así
+  que en cuanto existiera 2027 el mismo casillero iba a mostrar las dos clases superpuestas.
+  Ahora es de un ciclo, con su selector.
+
+---
+
 ## Marca de salida y bloques de presencia
 
 **Período:** agosto–septiembre de 2026.

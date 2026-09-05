@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,6 +53,9 @@ class GeneradorAusenciasServiceTest {
     @Mock private HorarioRepository horarioRepository;
     @Mock private AsistenciaRepository asistenciaRepository;
     @Mock private BloquePresenciaService bloquePresenciaService;
+    // Desde V024 el job pregunta primero si el dia esta marcado como sin clases. Sin este
+    // mock la llamada es un NPE antes de llegar a los horarios.
+    @Mock private DiaNoLaborableService diaNoLaborableService;
 
     @InjectMocks private GeneradorAusenciasService service;
 
@@ -59,7 +63,7 @@ class GeneradorAusenciasServiceTest {
     @DisplayName("genera AUSENTE para horario terminado sin marca, con la convencion correcta")
     void generaAusencia() {
         Horario h = horarioLunes18a20();
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(h));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, LUNES))
             .thenReturn(Optional.empty());
@@ -85,7 +89,7 @@ class GeneradorAusenciasServiceTest {
     @Test
     @DisplayName("no genera si la clase todavia no termino")
     void noGenera_claseEnCurso() {
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horarioLunes18a20()));
 
         // 19:00 -> la clase de 18-20 esta corriendo
@@ -99,7 +103,7 @@ class GeneradorAusenciasServiceTest {
     @DisplayName("idempotente: no genera si ya existe una marca para (docente, horario, fecha)")
     void noGenera_yaHayMarca() {
         Horario h = horarioLunes18a20();
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(h));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, LUNES))
             .thenReturn(Optional.of(Asistencia.builder().id(99L)
@@ -116,7 +120,7 @@ class GeneradorAusenciasServiceTest {
     void noGenera_docenteInactivo() {
         Horario h = horarioLunes18a20();
         h.getComision().getDocenteAsignado().setActivo(false);
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(h));
 
         int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(21, 0));
@@ -130,7 +134,7 @@ class GeneradorAusenciasServiceTest {
     @DisplayName("carrera con el pase facial: el UNIQUE la resuelve y el job no explota")
     void carreraConPase_noExplota() {
         Horario h = horarioLunes18a20();
-        when(horarioRepository.findActivosDelDiaConDocente((byte) 1, TENANT_A))
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(h));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, LUNES))
             .thenReturn(Optional.empty());
@@ -173,13 +177,13 @@ class GeneradorAusenciasServiceTest {
         // dio, que es exactamente lo que RF-80 quiere evitar.
         Institucion inst = Institucion.builder().id(TENANT_A).nombre("CENT 35").activo(true).build();
         when(institucionRepository.findAll()).thenReturn(List.of(inst));
-        when(horarioRepository.findActivosDelDiaConDocente(any(), any())).thenReturn(List.of());
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), any())).thenReturn(List.of());
         ReflectionTestUtils.setField(service, "habilitado", true);
 
         service.ejecutar();
 
         InOrder orden = inOrder(bloquePresenciaService, horarioRepository);
         orden.verify(bloquePresenciaService).cerrarBloquesVencidos(any(), any());
-        orden.verify(horarioRepository).findActivosDelDiaConDocente(any(), any());
+        orden.verify(horarioRepository).findActivosDelDiaConDocente(any(), any(), any());
     }
 }

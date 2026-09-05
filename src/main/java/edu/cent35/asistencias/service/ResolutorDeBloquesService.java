@@ -122,7 +122,7 @@ public class ResolutorDeBloquesService {
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();   // 1..7 ISO
 
         List<Horario> horariosDelDia =
-            horarioRepository.findHoyParaDocente(docenteId, diaSemana, tenantId);
+            horarioRepository.findHoyParaDocente(docenteId, diaSemana, fecha, tenantId);
 
         return agrupar(horariosDelDia, umbralDelTenant(tenantId));
     }

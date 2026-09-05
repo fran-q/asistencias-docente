@@ -39,6 +39,8 @@ public class GeneradorAusenciasService {
     private final HorarioRepository horarioRepository;
     private final AsistenciaRepository asistenciaRepository;
     private final BloquePresenciaService bloquePresenciaService;
+    // Los feriados y el receso: el ciclo pone el limite grueso, esto resuelve lo de adentro.
+    private final DiaNoLaborableService diaNoLaborableService;
 
     @Value("${app.asistencia.ausencias-habilitado:true}")
     private boolean habilitado;
@@ -81,12 +83,30 @@ public class GeneradorAusenciasService {
         }
     }
 
-    // Genera las ausencias de una institución en la fecha y hora dadas; público para testearlo
-    // sin depender del scheduler. Devuelve cuántas creó.
+    /**
+     * Genera las ausencias de una institución en la fecha y hora dadas; público para testearlo
+     * sin depender del scheduler. Devuelve cuántas creó.
+     *
+     * <p><b>Dos filtros nuevos desde V023 y V024, y los dos evitan datos falsos.</b> La consulta
+     * ahora solo trae horarios cuyo período contiene esta fecha y cuyo ciclo está activo: antes
+     * traía todo horario activo de ese día de la semana, así que generaba ausencias en enero y
+     * habría seguido generándolas en 2027 con los horarios de 2026.
+     *
+     * <p>Y si el día está marcado como sin clases, no genera nada. Un feriado producía una
+     * ausencia AUTOMATICA por cada docente que tenía clase, que no es un dato incompleto sino
+     * uno falso: dice que alguien faltó un día en que la institución estaba cerrada. Se corta
+     * antes de consultar los horarios porque no hay nada que evaluar.
+     */
     public int generarParaInstitucion(Long institucionId, LocalDate fecha, LocalTime ahora) {
+        if (diaNoLaborableService.esDiaSinClases(institucionId, fecha)) {
+            log.debug("Sin ausencias para la institucion {}: {} esta marcado como dia sin clases",
+                      institucionId, fecha);
+            return 0;
+        }
+
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
         List<Horario> horarios =
-            horarioRepository.findActivosDelDiaConDocente(diaSemana, institucionId);
+            horarioRepository.findActivosDelDiaConDocente(diaSemana, fecha, institucionId);
 
         int creadas = 0;
         for (Horario h : horarios) {

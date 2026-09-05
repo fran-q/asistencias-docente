@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Días sin clase - Visum</title>
+</head>
+<body>
+    <section class="dias-sin-clase">
+        <header class="page-header">
+            <div>
+                <h1>Días sin clase</h1>
+                <p class="page-header__subtitle">
+                    Feriados, receso, jornadas institucionales. El sistema no genera ausencias
+                    automáticas esos días.
+                </p>
+            </div>
+        </header>
+
+        <!-- Lo que la pantalla NO hace es tan importante como lo que hace: alguien podria
+             cargar un feriado esperando que la camara se apague. -->
+        <div class="card">
+            <p>
+                Marcar un día acá <strong>no impide tomar asistencia</strong>. Si alguien viene
+                a trabajar un feriado, la cámara lo registra igual y esa marca vale como
+                cualquier otra. Lo único que cambia es que el sistema no va a dar por ausente a
+                quien no vino.
+            </p>
+        </div>
+
+        <div th:if="${error}" class="alert alert--error" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <!-- ================= Selector de año ================= -->
+        <form th:action="@{/dias-sin-clase}" method="get" class="filtro">
+            <div class="form-group">
+                <label for="anio">Año</label>
+                <input type="number" id="anio" name="anio" min="2000" max="2200"
+                       th:value="${anioSeleccionado}"
+                       onchange="this.form.submit()">
+            </div>
+        </form>
+
+        <!-- ================= Listado ================= -->
+        <div class="card card--no-padding" th:if="${!#lists.isEmpty(dias)}">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Día</th>
+                            <th>Motivo</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="d : ${dias}">
+                            <td th:text="${#temporals.format(d.fecha, 'dd/MM/yyyy')}">25/05/2026</td>
+                            <td class="text-muted"
+                                th:text="${#temporals.dayOfWeekName(d.fecha)}">lunes</td>
+                            <td th:text="${d.motivo}">Revolución de Mayo</td>
+                            <td class="table__actions">
+                                <form th:action="@{/dias-sin-clase/{id}/borrar(id=${d.id})}"
+                                      method="post" class="inline-form"
+                                      data-confirm="¿Borrar este día?"
+                                      data-confirm-detail="Las ausencias que no se generaron ese día no se generan ahora por borrarlo. De acá en adelante, ese día vuelve a contar como día de clase."
+                                      data-confirm-action="Borrar"
+                                      data-confirm-style="danger">
+                                    <input type="hidden" name="anio" th:value="${anioSeleccionado}">
+                                    <button type="submit" class="btn btn--ghost btn--danger btn--sm">
+                                        Borrar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" th:if="${#lists.isEmpty(dias)}">
+            <p>
+                No hay ningún día cargado para <span th:text="${anioSeleccionado}">2026</span>.
+                Sin esto, un feriado genera una ausencia automática para cada docente que
+                tenía clase.
+            </p>
+        </div>
+
+        <!-- ================= Alta ================= -->
+        <div class="card">
+            <h2>Marcar un día</h2>
+            <form th:action="@{/dias-sin-clase}" method="post" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha">Fecha <span class="required">*</span></label>
+                        <input type="date" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="motivo">Motivo <span class="required">*</span></label>
+                        <input type="text" id="motivo" name="motivo" required maxlength="120"
+                               placeholder="Feriado nacional, receso de invierno, jornada...">
+                        <small class="form-hint">
+                            Dentro de un año nadie va a acordarse de por qué ese día estaba
+                            marcado.
+                        </small>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--primary"
+                        data-texto-enviando="Guardando...">Marcar día</button>
+            </form>
+        </div>
+
+    </section>
+</body>
+</html>

@@ -36,6 +36,7 @@ import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
@@ -78,8 +79,8 @@ class PanelInicioServiceTest {
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of());
         when(modeloFacialRepository.findActivosDelTenant(anyLong())).thenReturn(List.of());
-        when(comisionRepository.findActivasDelTenant(anyLong())).thenReturn(List.of());
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong())).thenReturn(List.of());
+        when(comisionRepository.findActivasEnFecha(any(), anyLong())).thenReturn(List.of());
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong())).thenReturn(List.of());
         when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of());
     }
 
@@ -94,7 +95,7 @@ class PanelInicioServiceTest {
     @DisplayName("enCurso: solo las clases con la ventana abierta, no todas las del día")
     void enCurso_filtraPorVentana() {
         Docente d = docente(1L, "Pérez");
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong())).thenReturn(List.of(
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong())).thenReturn(List.of(
             horario(10L, d, 10, 0, 12, 0),   // corriendo
             horario(20L, d, 14, 0, 16, 0),   // todavia no empezo
             horario(30L, d,  8, 0, 10, 0)    // ya termino
@@ -111,7 +112,7 @@ class PanelInicioServiceTest {
     void enCurso_respetaLaTolerancia() {
         Docente d = docente(1L, "Pérez");
         // Empieza 10:40 con 15 de tolerancia: la ventana abrio 10:25 y son las 10:30.
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(horario(10L, d, 10, 40, 12, 0)));
 
         PanelInicioDto panel = service.armar();
@@ -129,7 +130,7 @@ class PanelInicioServiceTest {
         Docente sinMarca = docente(2L, "García");
         Horario h1 = horario(10L, conMarca, 10, 0, 12, 0);
         Horario h2 = horario(20L, sinMarca, 10, 0, 12, 0);
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(h1, h2));
         when(asistenciaRepository.findDelDia(any(), any()))
             .thenReturn(List.of(marca(conMarca, h1, EstadoAsistencia.PRESENTE, 10, 5)));
@@ -151,7 +152,7 @@ class PanelInicioServiceTest {
     @DisplayName("resumen: una clase sin marca que todavía no terminó no es una ausencia")
     void resumen_noCuentaComoAusenteLoQueNoTermino() {
         Docente d = docente(1L, "Pérez");
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong())).thenReturn(List.of(
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong())).thenReturn(List.of(
             horario(10L, d, 14, 0, 16, 0),   // arranca a la tarde, sin marca
             horario(20L, d,  8, 0, 10, 0)    // ya termino, sin marca -> esa si es ausencia
         ));
@@ -172,7 +173,7 @@ class PanelInicioServiceTest {
         Docente dos = docente(2L, "García");
         Horario h1 = horario(10L, uno, 8, 0, 10, 0);
         Horario h2 = horario(20L, dos, 8, 0, 10, 0);
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(h1, h2));
         when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(uno, h1, EstadoAsistencia.PRESENTE, 8, 0),
@@ -190,7 +191,7 @@ class PanelInicioServiceTest {
     void resumen_cuentaLasAusenciasPersistidas() {
         Docente d = docente(1L, "Pérez");
         Horario h = horario(10L, d, 8, 0, 10, 0);
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(h));
         // La escribe el generador de ausencias al cierre del dia.
         when(asistenciaRepository.findDelDia(any(), any()))
@@ -212,7 +213,7 @@ class PanelInicioServiceTest {
         Docente falto = docente(2L, "García");
         Horario h1 = horario(10L, vino, 8, 0, 10, 0);
         Horario h2 = horario(20L, falto, 8, 0, 10, 0);
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(h1, h2));
         when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(vino, h1, EstadoAsistencia.PRESENTE, 8, 0),
@@ -236,7 +237,7 @@ class PanelInicioServiceTest {
         Horario h1 = horario(10L, conDosClases, 8, 0, 10, 0);
         Horario h2 = horario(20L, conDosClases, 10, 0, 12, 0);
         Horario h3 = horario(30L, sinMarcar, 10, 0, 12, 0);
-        when(horarioRepository.findActivosDelDiaConDocente(any(), anyLong()))
+        when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong()))
             .thenReturn(List.of(h1, h2, h3));
         when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of(
             marca(conDosClases, h1, EstadoAsistencia.PRESENTE, 8, 0),
@@ -325,7 +326,7 @@ class PanelInicioServiceTest {
         Comision sinHorarios = Comision.builder()
             .id(2L).codigo("B").materia(materia()).docenteAsignado(docente(1L, "Pérez"))
             .activo(true).build();
-        when(comisionRepository.findActivasDelTenant(anyLong()))
+        when(comisionRepository.findActivasEnFecha(any(), anyLong()))
             .thenReturn(List.of(sinDocente, sinHorarios));
         when(horarioRepository.countByComisionIdAndActivoTrue(1L)).thenReturn(3L);
         when(horarioRepository.countByComisionIdAndActivoTrue(2L)).thenReturn(0L);
@@ -394,7 +395,7 @@ class PanelInicioServiceTest {
         // aunque el codigo lo agregara al final: el test no probaria el orden.
         Comision sinDocente = Comision.builder()
             .id(1L).codigo("A").materia(materia()).docenteAsignado(null).activo(true).build();
-        when(comisionRepository.findActivasDelTenant(anyLong())).thenReturn(List.of(sinDocente));
+        when(comisionRepository.findActivasEnFecha(any(), anyLong())).thenReturn(List.of(sinDocente));
         when(horarioRepository.countByComisionIdAndActivoTrue(1L)).thenReturn(3L);
 
         PanelInicioDto panel = service.armar();

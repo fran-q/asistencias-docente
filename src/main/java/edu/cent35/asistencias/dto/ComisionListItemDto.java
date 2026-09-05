@@ -27,6 +27,11 @@ public class ComisionListItemDto {
     boolean activo;
     boolean materiaActiva;
     LocalDateTime actualizadoEn;
+    // A que ano y a que tramo pertenece esta oferta (V023). Sin esto el listado mezcla los
+    // anos sin decirlo, que es exactamente el problema que los ciclos vinieron a resolver.
+    Short cicloAnio;
+    String periodoNombre;
+    boolean cicloCerrado;
 
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static ComisionListItemDto from(Comision c) {
@@ -43,6 +48,10 @@ public class ComisionListItemDto {
             .activo(Boolean.TRUE.equals(c.getActivo()))
             .materiaActiva(Boolean.TRUE.equals(c.getMateria().getActivo()))
             .actualizadoEn(c.getActualizadoEn())
+            .cicloAnio(c.getPeriodo() != null ? c.getPeriodo().getCiclo().getAnio() : null)
+            .periodoNombre(c.getPeriodo() != null ? c.getPeriodo().getNombre() : null)
+            .cicloCerrado(c.getPeriodo() != null
+                && !c.getPeriodo().getCiclo().getEstado().admiteCambiosDeEstructura())
             .build();
     }
 }

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Ciclos lectivos - Visum</title>
+</head>
+<body>
+    <section class="ciclos-list">
+        <header class="page-header">
+            <div>
+                <h1>Ciclos lectivos</h1>
+                <p class="page-header__subtitle">
+                    El año calendario de cursada. Cada comisión pertenece a un período de un
+                    ciclo, y eso es lo que permite dictar la misma materia todos los años sin
+                    que cada oferta pise a la anterior.
+                </p>
+            </div>
+        </header>
+
+        <div th:if="${error}" class="alert alert--error" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <!-- ================= Listado ================= -->
+        <div class="card card--no-padding" th:if="${!#lists.isEmpty(ciclos)}">
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Año</th>
+                            <th>Desde</th>
+                            <th>Hasta</th>
+                            <th>Estado</th>
+                            <th>Períodos</th>
+                            <th class="table__actions">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${ciclos}"
+                            th:classappend="${c.estado.name() == 'CERRADO'} ? 'row--inactive'">
+                            <td><strong th:text="${c.anio}">2026</strong></td>
+                            <td th:text="${#temporals.format(c.fechaInicio, 'dd/MM/yyyy')}">01/03/2026</td>
+                            <td th:text="${#temporals.format(c.fechaFin, 'dd/MM/yyyy')}">15/12/2026</td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${c.estado.name() == 'ACTIVO'} ? 'badge--success'
+                                                    : (${c.estado.name() == 'CERRADO'} ? 'badge--neutral' : 'badge--warning')"
+                                      th:text="${c.estado.etiqueta}">Activo</span>
+                                <!-- Un ciclo activo cuyas fechas ya pasaron sigue tomando
+                                     asistencia y generando ausencias. No se cierra solo a
+                                     proposito --el cierre es una decision-- pero conviene
+                                     que se vea, o queda corriendo un ano entero de mas. -->
+                                <span class="badge badge--warning"
+                                      th:if="${c.estado.name() == 'ACTIVO' and c.fechaFin.isBefore(hoy)}"
+                                      title="Las fechas de este ciclo ya pasaron pero sigue activo: mientras lo esté, se le siguen generando ausencias.">
+                                    Vencido
+                                </span>
+                            </td>
+                            <td>
+                                <ul class="lista-plana">
+                                    <li th:each="p : ${c.periodos}"
+                                        th:text="|${p.nombre}: ${#temporals.format(p.fechaInicio, 'dd/MM')} a ${#temporals.format(p.fechaFin, 'dd/MM')}|">
+                                        Anual: 01/03 a 15/12
+                                    </li>
+                                </ul>
+                            </td>
+                            <td class="table__actions">
+                                <form th:if="${c.estado.name() == 'PREPARACION'}"
+                                      th:action="@{/ciclos/{id}/activar(id=${c.id})}" method="post"
+                                      class="inline-form"
+                                      data-confirm="¿Activar este ciclo?"
+                                      data-confirm-detail="Desde ese momento se toma asistencia contra su oferta y se generan sus ausencias. Solo puede haber un ciclo activo a la vez."
+                                      data-confirm-action="Activar">
+                                    <button type="submit" class="btn btn--ghost btn--sm">Activar</button>
+                                </form>
+                                <form th:if="${c.estado.name() != 'CERRADO'}"
+                                      th:action="@{/ciclos/{id}/cerrar(id=${c.id})}" method="post"
+                                      class="inline-form"
+                                      data-confirm="¿Cerrar el ciclo?"
+                                      data-confirm-detail="Su oferta queda congelada: no se van a poder editar sus comisiones ni sus horarios. Las asistencias de ese año sí se van a poder seguir corrigiendo. No se puede reabrir."
+                                      data-confirm-action="Cerrar"
+                                      data-confirm-style="danger">
+                                    <button type="submit" class="btn btn--ghost btn--danger btn--sm">Cerrar</button>
+                                </form>
+                                <span th:if="${c.estado.name() == 'CERRADO'}" class="text-muted">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card" th:if="${#lists.isEmpty(ciclos)}">
+            <p>
+                Todavía no hay ningún ciclo lectivo. Hasta que crees uno no vas a poder cargar
+                comisiones, porque cada comisión tiene que pertenecer a un año.
+            </p>
+        </div>
+
+        <!-- ================= Alta ================= -->
+        <div class="card">
+            <h2>Nuevo ciclo lectivo</h2>
+            <form th:action="@{/ciclos}" method="post" novalidate id="form-ciclo">
+                <div th:if="${error}" class="alert alert--error" role="alert">
+                    <p th:text="${error}">Error</p>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="anio">Año <span class="required">*</span></label>
+                        <input type="number" id="anio" name="anio" required min="2000" max="2200"
+                               th:value="${#temporals.format(hoy, 'yyyy')} + 1">
+                        <small class="form-hint">El año calendario: 2026, 2027.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Desde <span class="required">*</span></label>
+                        <input type="date" id="fechaInicio" name="fechaInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Hasta <span class="required">*</span></label>
+                        <input type="date" id="fechaFin" name="fechaFin" required>
+                    </div>
+                </div>
+
+                <h3 class="form-seccion">Períodos</h3>
+                <p class="form-hint form-hint--seccion">
+                    En qué tramos se divide el año. Si no dividís, cargá uno solo llamado
+                    "Anual" que cubra el ciclo entero. Los nombres son los que emparejan un año
+                    con el siguiente cuando se copia la oferta, así que conviene repetirlos tal
+                    cual de un ciclo al otro.
+                </p>
+
+                <div id="periodos">
+                    <div class="form-row periodo-fila">
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" name="periodoNombre" maxlength="60" value="Anual"
+                                   placeholder="Anual, 1er cuatrimestre...">
+                        </div>
+                        <div class="form-group">
+                            <label>Desde</label>
+                            <input type="date" name="periodoInicio">
+                        </div>
+                        <div class="form-group">
+                            <label>Hasta</label>
+                            <input type="date" name="periodoFin">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn--ghost btn--sm" id="agregar-periodo">
+                    + Agregar período
+                </button>
+
+                <div class="form-acciones">
+                    <button type="submit" class="btn btn--primary"
+                            data-texto-enviando="Creando...">Crear ciclo</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ================= Copiar la oferta ================= -->
+        <div class="card" th:if="${#lists.size(ciclos) >= 2}">
+            <h2>Copiar la oferta de un año a otro</h2>
+            <p>
+                Copia las comisiones activas y sus horarios, emparejando los períodos
+                <strong>por nombre</strong>. No copia asistencias ni nada del historial: eso
+                pertenece al año en que ocurrió. Se puede correr más de una vez sin duplicar.
+            </p>
+            <form th:action="@{/ciclos/{id}/copiar-desde(id=${ciclos[0].id})}" method="post"
+                  id="form-copiar"
+                  data-confirm="¿Copiar la oferta?"
+                  data-confirm-detail="Se crean comisiones y horarios nuevos en el ciclo destino. Las que ya existan se saltean."
+                  data-confirm-action="Copiar">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="origenId">Copiar desde</label>
+                        <select id="origenId" name="origenId" required>
+                            <option th:each="c : ${ciclos}" th:value="${c.id}"
+                                    th:text="${c.anio}">2026</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="destinoId">Hacia</label>
+                        <select id="destinoId" required
+                                onchange="document.getElementById('form-copiar').action = '/ciclos/' + this.value + '/copiar-desde';">
+                            <option th:each="c : ${ciclos}" th:value="${c.id}"
+                                    th:text="${c.anio}"
+                                    th:disabled="${c.estado.name() == 'CERRADO'}">2027</option>
+                        </select>
+                        <small class="form-hint">Un ciclo cerrado no puede recibir oferta.</small>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn--secondary"
+                        data-texto-enviando="Copiando...">Copiar oferta</button>
+            </form>
+        </div>
+
+    </section>
+
+    <script th:inline="javascript">
+        // Agrega una fila de periodo vacia. Se clona la primera para no repetir el markup:
+        // si cambian las clases o los names, cambian en un solo lugar.
+        document.getElementById('agregar-periodo')?.addEventListener('click', function () {
+            var contenedor = document.getElementById('periodos');
+            var copia = contenedor.querySelector('.periodo-fila').cloneNode(true);
+            copia.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+            contenedor.appendChild(copia);
+        });
+    </script>
+</body>
+</html>

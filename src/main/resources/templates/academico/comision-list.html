@@ -75,6 +75,7 @@
                 <table class="table table--acciones-fijas" id="tabla-comisiones" data-ordenable>
                     <thead>
                         <tr>
+                            <th data-orden="texto">Ciclo</th>
                             <th data-orden="texto">Código</th>
                             <th data-orden="texto">Materia</th>
                             <th data-orden="texto">Carrera</th>
@@ -86,6 +87,12 @@
                     <tbody>
                         <tr th:each="c : ${comisiones}" data-fila th:attr="data-estado=${c.activo} ? 'activo' : 'inactivo'"
                             th:classappend="${!c.activo} ? 'row--inactive'">
+                            <td>
+                                <strong th:text="${c.cicloAnio}">2026</strong>
+                                <small class="text-muted" th:text="${c.periodoNombre}">Anual</small>
+                                <span th:if="${c.cicloCerrado}" class="badge badge--neutral"
+                                      title="El ciclo está cerrado: esta comisión ya no se puede editar.">Cerrado</span>
+                            </td>
                             <td><code th:text="${c.codigo}">A</code></td>
                             <td>
                                 <code th:text="${c.materiaCodigo}">MAT</code>
@@ -130,12 +137,12 @@
                             </td>
                         </tr>
                         <tr class="table__empty-fila" hidden>
-                            <td colspan="6" class="table__empty">
+                            <td colspan="7" class="table__empty">
                                 Ninguna comisión coincide con la búsqueda.
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(comisiones)}">
-                            <td colspan="6" class="table__empty">
+                            <td colspan="7" class="table__empty">
                                 Todavía no cargaste ninguna comisión.
                                 <a th:href="@{/comisiones/nueva}">Creá la primera</a>.
                             </td>

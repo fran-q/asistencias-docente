@@ -28,15 +28,20 @@ import java.util.List;
 public class GrillaController {
 
     private final GrillaService grillaService;
+    private final edu.cent35.asistencias.service.CicloLectivoService cicloLectivoService;
 
     // Arma la grilla semanal de la carrera elegida, o de la primera si no se eligió ninguna.
     @GetMapping
     public String mostrar(@RequestParam(name = "carreraId", required = false) Long carreraId,
                           @RequestParam(name = "anio", required = false) Short anio,
+                          @RequestParam(name = "cicloId", required = false) Long cicloId,
                           Model model) {
 
         List<Carrera> carreras = grillaService.carrerasActivasParaSelector();
         model.addAttribute("carreras", carreras);
+        // El selector de ciclo: sin el, la grilla mostraria siempre el ano en curso y no habria
+        // forma de mirar como quedo armado el que viene mientras se lo prepara.
+        model.addAttribute("ciclos", cicloLectivoService.listar());
 
         // Auto-seleccionar la primera si no se paso nada
         if (carreraId == null && !carreras.isEmpty()) {
@@ -44,11 +49,12 @@ public class GrillaController {
         }
 
         if (carreraId != null) {
-            GrillaSemanalDto grilla = grillaService.cargarGrillaPara(carreraId, anio);
+            GrillaSemanalDto grilla = grillaService.cargarGrillaPara(carreraId, anio, cicloId);
             model.addAttribute("grilla", grilla);
         }
         model.addAttribute("carreraIdSeleccionada", carreraId);
         model.addAttribute("anioSeleccionado", anio);
+        model.addAttribute("cicloIdSeleccionado", cicloId);
 
         // Dias para el header de la grilla (1=Lunes ... 7=Domingo)
         model.addAttribute("dias", edu.cent35.asistencias.model.DiaSemana.values());

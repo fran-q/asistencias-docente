@@ -5,6 +5,7 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.service.ComisionService;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.model.Docente;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -75,7 +76,7 @@ public class ComisionController {
 
         try {
             Comision c = service.crear(form.getCodigo(), form.getMateriaId(),
-                form.getDocenteAsignadoId());
+                form.getDocenteAsignadoId(), form.getPeriodoId());
             redirect.addFlashAttribute("flashMensaje",
                 "Comisión '" + c.getCodigo() + "' creada correctamente.");
             return "redirect:/comisiones";
@@ -118,7 +119,7 @@ public class ComisionController {
 
         try {
             service.actualizar(id, form.getCodigo(), form.getMateriaId(),
-                form.getDocenteAsignadoId());
+                form.getDocenteAsignadoId(), form.getPeriodoId());
             redirect.addFlashAttribute("flashMensaje", "Comisión actualizada correctamente.");
             return "redirect:/comisiones";
         } catch (IllegalArgumentException ex) {
@@ -179,5 +180,16 @@ public class ComisionController {
             docentes.add(comisionActual.getDocenteAsignado());
         }
         model.addAttribute("docentes", docentes);
+
+        // Los periodos elegibles son los de ciclos abiertos. Si se esta editando una comision
+        // cuyo periodo ya no aparece --porque su ciclo se cerro mientras tanto-- se lo suma
+        // igual: sin eso el combo mostraria otro periodo seleccionado y guardar la mudaria de
+        // ano sin que nadie lo pidiera. El service igual va a rechazar el cambio.
+        List<PeriodoLectivo> periodos = new ArrayList<>(service.periodosParaSelector());
+        if (comisionActual != null && comisionActual.getPeriodo() != null
+                && periodos.stream().noneMatch(p -> p.getId().equals(comisionActual.getPeriodo().getId()))) {
+            periodos.add(comisionActual.getPeriodo());
+        }
+        model.addAttribute("periodos", periodos);
     }
 }

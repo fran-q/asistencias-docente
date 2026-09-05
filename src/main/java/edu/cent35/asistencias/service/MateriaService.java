@@ -182,11 +182,16 @@ public class MateriaService {
         if (Boolean.FALSE.equals(m.getActivo())) {
             throw new IllegalArgumentException("La materia ya está inactiva.");
         }
-        long comisionesActivas = comisionRepository.countByMateriaIdAndActivoTrue(id);
+        // Solo cuentan las de ciclos que siguen abiertos. Antes de V023 se contaban todas, y
+        // eso dejaba la materia atada para siempre: una comision de 2026 seguia siendo
+        // "activa" en 2030 e impedia sacar la materia del plan. Las de ciclos cerrados son
+        // historia, no oferta vigente.
+        long comisionesActivas = comisionRepository.contarActivasEnCiclosAbiertos(
+            id, edu.cent35.asistencias.config.TenantContext.getRequired());
         if (comisionesActivas > 0) {
             throw new IllegalArgumentException(
                 "No se puede dar de baja: la materia tiene " + comisionesActivas +
-                " comisión(es) activa(s). Dales de baja primero.");
+                " comisión(es) activa(s) en ciclos abiertos. Dales de baja primero.");
         }
         m.setActivo(false);
         m.setFechaBaja(java.time.LocalDate.now());

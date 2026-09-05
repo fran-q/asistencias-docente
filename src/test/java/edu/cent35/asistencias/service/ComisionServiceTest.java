@@ -25,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,9 +45,34 @@ class ComisionServiceTest {
     @Mock private MateriaRepository materiaRepository;
     @Mock private HorarioRepository horarioRepository;
     @Mock private DocenteRepository docenteRepository;
+    @Mock private PeriodoLectivoRepository periodoRepository;
+    @Mock private CicloLectivoService cicloLectivoService;
     @InjectMocks private ComisionService service;
 
-    @BeforeEach void setUp() { TenantContext.set(TENANT_A); }
+    // La comision vive en un periodo desde V023. El de los tests es de un ciclo abierto: los
+    // casos de ciclo cerrado se prueban aparte, en CicloLectivoServiceTest.
+    private static final Long PERIODO_ID = 70L;
+    private PeriodoLectivo periodo;
+
+    @BeforeEach
+    void setUp() {
+        TenantContext.set(TENANT_A);
+        CicloLectivo ciclo = CicloLectivo.builder()
+            .id(60L).anio((short) 2026)
+            .fechaInicio(java.time.LocalDate.of(2026, 3, 1))
+            .fechaFin(java.time.LocalDate.of(2026, 12, 15))
+            .estado(EstadoCiclo.ACTIVO)
+            .build();
+        ciclo.setInstitucionId(TENANT_A);
+        periodo = PeriodoLectivo.builder()
+            .id(PERIODO_ID).ciclo(ciclo).nombre("Anual")
+            .fechaInicio(ciclo.getFechaInicio()).fechaFin(ciclo.getFechaFin())
+            .build();
+        periodo.setInstitucionId(TENANT_A);
+        lenient().when(periodoRepository.porIdEnTenant(TENANT_A, PERIODO_ID))
+            .thenReturn(Optional.of(periodo));
+    }
+
     @AfterEach  void clear() { TenantContext.clear(); }
 
     @Test
@@ -55,7 +81,7 @@ class ComisionServiceTest {
         Materia ajena = materiaConTenant(TENANT_B);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(ajena));
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null, PERIODO_ID))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("La materia seleccionada no existe");
         verify(comisionRepository, never()).save(any());
@@ -66,15 +92,19 @@ class ComisionServiceTest {
     void crear_ok() {
         Materia m = materiaConTenant(TENANT_A);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
-        when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(false);
+        when(comisionRepository.existsByMateriaIdAndCodigoAndPeriodoId(MATERIA_ID, "A", PERIODO_ID))
+            .thenReturn(false);
         when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Comision c = service.crear("A", MATERIA_ID, null);
+        Comision c = service.crear("A", MATERIA_ID, null, PERIODO_ID);
 
         assertThat(c.getCodigo()).isEqualTo("A");
         assertThat(c.getMateria()).isSameAs(m);
         assertThat(c.getActivo()).isTrue();
         assertThat(c.getDocenteAsignado()).isNull();
+        assertThat(c.getPeriodo())
+            .as("sin periodo la comision no queda atada a ningun ano")
+            .isSameAs(periodo);
     }
 
     @Test
@@ -82,9 +112,10 @@ class ComisionServiceTest {
     void crear_codigoDuplicadoEnMateria() {
         Materia m = materiaConTenant(TENANT_A);
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(m));
-        when(comisionRepository.existsByMateriaIdAndCodigo(MATERIA_ID, "A")).thenReturn(true);
+        when(comisionRepository.existsByMateriaIdAndCodigoAndPeriodoId(MATERIA_ID, "A", PERIODO_ID))
+            .thenReturn(true);
 
-        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null))
+        assertThatThrownBy(() -> service.crear("A", MATERIA_ID, null, PERIODO_ID))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Ya existe");
     }
@@ -105,7 +136,8 @@ class ComisionServiceTest {
     @DisplayName("buscarPorId: cross-tenant via materia padre tira EntityNotFound")
     void buscarPorId_crossTenant() {
         Materia ajena = materiaConTenant(TENANT_B);
-        Comision c = Comision.builder().id(40L).codigo("A").materia(ajena).activo(true).build();
+        Comision c = Comision.builder().id(40L).codigo("A").materia(ajena).activo(true)
+            .periodo(periodo).build();
         when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
 
         assertThatThrownBy(() -> service.buscarPorId(40L))
@@ -120,14 +152,14 @@ class ComisionServiceTest {
         otra.setId(31L);
         otra.setCodigo("OTRA");
         Comision ocupante = Comision.builder()
-            .id(41L).codigo("A").materia(otra).activo(true).build();
+            .id(41L).codigo("A").materia(otra).activo(true).periodo(periodo).build();
 
         when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
         when(materiaRepository.findById(31L)).thenReturn(Optional.of(otra));
-        when(comisionRepository.findByMateriaIdAndCodigo(31L, "A"))
+        when(comisionRepository.findByMateriaIdAndCodigoAndPeriodoId(31L, "A", PERIODO_ID))
             .thenReturn(Optional.of(ocupante));
 
-        assertThatThrownBy(() -> service.actualizar(40L, "A", 31L, null))
+        assertThatThrownBy(() -> service.actualizar(40L, "A", 31L, null, PERIODO_ID))
             .as("el codigo no cambia, cambia la materia: la version anterior de la condicion "
                 + "se reducia a 'cambia el codigo' y dejaba pasar justo este caso, que despues "
                 + "rebotaba contra el UNIQUE de la base con un mensaje generico")
@@ -142,11 +174,12 @@ class ComisionServiceTest {
         when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(c.getMateria()));
         // La consulta la encuentra a ella misma: eso no es una colision.
-        when(comisionRepository.findByMateriaIdAndCodigo(MATERIA_ID, "A"))
+        when(comisionRepository.findByMateriaIdAndCodigoAndPeriodoId(MATERIA_ID, "A", PERIODO_ID))
             .thenReturn(Optional.of(c));
         when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(service.actualizar(40L, "A", MATERIA_ID, null).getCodigo()).isEqualTo("A");
+        assertThat(service.actualizar(40L, "A", MATERIA_ID, null, PERIODO_ID).getCodigo())
+            .isEqualTo("A");
     }
 
     // Materia asociada al tenant indicado.
@@ -161,6 +194,7 @@ class ComisionServiceTest {
     // Comisión activa colgando de una materia del tenant A.
     private Comision comisionActivaA() {
         return Comision.builder()
-            .id(40L).codigo("A").materia(materiaConTenant(TENANT_A)).activo(true).build();
+            .id(40L).codigo("A").materia(materiaConTenant(TENANT_A)).activo(true)
+            .periodo(periodo).build();
     }
 }

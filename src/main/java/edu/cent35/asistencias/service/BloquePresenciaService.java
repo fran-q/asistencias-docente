@@ -499,7 +499,7 @@ public class BloquePresenciaService {
         Long tenantId = TenantContext.getRequired();
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
 
-        return horarioRepository.findHoyParaDocente(docenteId, diaSemana, tenantId).stream()
+        return horarioRepository.findHoyParaDocente(docenteId, diaSemana, fecha, tenantId).stream()
             .filter(h -> h.getHoraInicio() != null && h.getHoraFin() != null)
             .filter(h -> entrada.isBefore(h.getHoraFin()) && salida.isAfter(h.getHoraInicio()))
             .sorted(Comparator.comparing(Horario::getHoraInicio).thenComparing(Horario::getId))

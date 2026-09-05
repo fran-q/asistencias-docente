@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -361,7 +363,7 @@ class ResolutorDeBloquesServiceTest {
 
     // Deja al docente con esos horarios el lunes, para los métodos que van al repositorio.
     private void unLunesConHorarios(Horario... horarios) {
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horarios));
     }
 

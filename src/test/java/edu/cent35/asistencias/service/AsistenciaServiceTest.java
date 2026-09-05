@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -89,7 +90,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(17, 55);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -115,7 +116,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(18, 5);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -137,7 +138,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(18, 30);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -159,7 +160,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(17, 0);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
 
         AsistenciaService.ResultadoMarca r = service.marcarAutomatica(
@@ -183,7 +184,7 @@ class AsistenciaServiceTest {
             .estado(EstadoAsistencia.PRESENTE).build();
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, fecha))
             .thenReturn(Optional.of(existente));
@@ -205,7 +206,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(18, 0);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horario));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -235,7 +236,7 @@ class AsistenciaServiceTest {
         LocalDate fecha = instante.toLocalDate();
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(anterior, siguiente));
         // La clase anterior YA está marcada; la siguiente no.
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, fecha))
@@ -266,7 +267,7 @@ class AsistenciaServiceTest {
         LocalDate fecha = instante.toLocalDate();
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(anterior, siguiente));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -287,7 +288,7 @@ class AsistenciaServiceTest {
         LocalDateTime instante = unLunesA(18, 10);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(comisionA, comisionB));   // llegan en orden "arbitrario"
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(any(), any(), any()))
             .thenReturn(Optional.empty());
@@ -311,7 +312,7 @@ class AsistenciaServiceTest {
             .estado(EstadoAsistencia.PRESENTE).build();
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
-        when(horarioRepository.findHoyParaDocente(DOCENTE_ID, (byte) 1, TENANT_A))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(h));
         when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, fecha))
             .thenReturn(Optional.of(existente));

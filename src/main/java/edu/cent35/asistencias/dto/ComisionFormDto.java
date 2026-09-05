@@ -39,12 +39,22 @@ public class ComisionFormDto {
     // Opcional: docente asignado a la comisión. Null = sin asignar.
     private Long docenteAsignadoId;
 
+    /**
+     * En qué tramo del ciclo se dicta esta comisión (V023).
+     *
+     * <p>Obligatorio: es lo que ubica la comisión en un año concreto. Sin él la oferta de todos
+     * los años volvería a mezclarse, que es justo lo que los ciclos vinieron a separar.
+     */
+    @NotNull(message = "Elegí el período en el que se dicta")
+    private Long periodoId;
+
     // Precarga el formulario con los datos actuales de la entidad, para el modo edición.
     public static ComisionFormDto from(Comision c) {
         return ComisionFormDto.builder()
             .codigo(c.getCodigo())
             .materiaId(c.getMateria().getId())
             .docenteAsignadoId(c.getDocenteAsignado() != null ? c.getDocenteAsignado().getId() : null)
+            .periodoId(c.getPeriodo() != null ? c.getPeriodo().getId() : null)
             .build();
     }
 }

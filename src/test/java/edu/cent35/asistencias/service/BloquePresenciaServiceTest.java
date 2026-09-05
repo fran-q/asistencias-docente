@@ -658,7 +658,7 @@ class BloquePresenciaServiceTest {
     }
 
     private void horariosDelDia(Horario... horarios) {
-        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), any(), eq(TENANT_A)))
+        when(horarioRepository.findHoyParaDocente(eq(DOCENTE_ID), any(), any(), eq(TENANT_A)))
             .thenReturn(List.of(horarios));
     }
 

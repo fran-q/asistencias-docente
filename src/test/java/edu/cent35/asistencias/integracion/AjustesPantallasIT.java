@@ -4,6 +4,10 @@ import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.model.CicloLectivo;
+import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.repository.CicloLectivoRepository;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.Horario;
@@ -61,6 +65,8 @@ class AjustesPantallasIT {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private InstitucionRepository institucionRepository;
+    @Autowired private CicloLectivoRepository cicloLectivoRepository;
+    @Autowired private PeriodoLectivoRepository periodoLectivoRepository;
     @Autowired private CarreraRepository carreraRepository;
     @Autowired private MateriaRepository materiaRepository;
     @Autowired private ComisionRepository comisionRepository;
@@ -96,7 +102,8 @@ class AjustesPantallasIT {
         materiaRepository.save(m);
 
         Comision com = comisionRepository.save(Comision.builder()
-            .codigo("A").materia(m).docenteAsignado(d).activo(true).build());
+            .codigo("A").materia(m).docenteAsignado(d).activo(true)
+            .periodo(periodoDe(tenantId)).build());
 
         horarioId = horarioRepository.save(Horario.builder()
             .comision(com).diaSemana((byte) 1)
@@ -824,5 +831,23 @@ class AjustesPantallasIT {
         Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Test", "Pantallas")).id(99L).username("test.pantallas").passwordHash("no-se-usa").activo(true).rol(r).emailVerificadoEn(LocalDateTime.now()).build();
         u.setInstitucionId(tenantId);
         return new UsuarioAutenticado(u);
+    }
+
+    // ------------------------------------------------------------------------
+    //  Ciclo lectivo para los datos de prueba (V023)
+    // ------------------------------------------------------------------------
+    //  La comision tiene periodo_id NOT NULL desde V023, asi que persistir una exige antes un
+    //  ciclo con al menos un periodo. Se crea uno anual por tenant, reutilizado por todo el
+    //  test: lo que estos casos prueban no es el calendario.
+    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un metodo
+    //  al siguiente pero la instancia del test no, asi que un cache por instancia intentaba
+    //  crear el mismo ciclo otra vez y chocaba contra uq_ciclos_inst_anio.
+    private PeriodoLectivo periodoDe(Long tenantId) {
+        return periodoLectivoRepository.seleccionablesDelTenant(tenantId).stream()
+            .findFirst()
+            .orElseGet(() -> cicloLectivoRepository
+                .save(DatosDePrueba.cicloAnualDelTenant(
+                    tenantId, java.time.LocalDate.now().getYear()))
+                .getPeriodos().get(0));
     }
 }

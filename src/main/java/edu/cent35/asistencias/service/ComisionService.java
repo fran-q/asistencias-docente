@@ -16,6 +16,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -29,6 +32,10 @@ import java.util.List;
 public class ComisionService {
 
     private final ComisionRepository comisionRepository;
+    private final PeriodoLectivoRepository periodoRepository;
+    // Para negarse a tocar la oferta de un ciclo cerrado. La regla vive en CicloLectivoService
+    // y se consulta desde aca: si solo la aplicara la pantalla de ciclos, no serviria de nada.
+    private final CicloLectivoService cicloLectivoService;
     private final MateriaRepository materiaRepository;
     private final HorarioRepository horarioRepository;
     private final DocenteRepository docenteRepository;
@@ -79,7 +86,9 @@ public class ComisionService {
     @Transactional(readOnly = true)
     public List<Comision> comisionesActivasParaSelector() {
         Long tenantId = TenantContext.getRequired();
-        List<Comision> cs = comisionRepository.findActivasDelTenant(tenantId);
+        // Acotado al ciclo de hoy: ofrecer comisiones de un ano que ya termino deja elegir
+        // una clase que no existe, y el rechazo llegaria recien al guardar.
+        List<Comision> cs = comisionRepository.findActivasEnFecha(LocalDate.now(), tenantId);
         cs.forEach(c -> {
             if (c.getMateria() != null) {
                 c.getMateria().getCodigo();
@@ -87,6 +96,34 @@ public class ComisionService {
             }
         });
         return cs;
+    }
+
+    /**
+     * Trae el período validando el tenant, y rechaza los de ciclos cerrados.
+     *
+     * <p>Responde "no encontrado" si es de otra institución, igual que el resto: decir "no
+     * autorizado" confirmaría que ese id existe en algún lado.
+     */
+    private PeriodoLectivo obtenerPeriodoValidado(Long periodoId, Long tenantId) {
+        if (periodoId == null) {
+            throw new IllegalArgumentException(
+                "Elegí el período en el que se dicta esta comisión.");
+        }
+        PeriodoLectivo periodo = periodoRepository.porIdEnTenant(tenantId, periodoId)
+            .orElseThrow(() -> new EntityNotFoundException("Período no encontrado: " + periodoId));
+
+        cicloLectivoService.exigirEstructuraEditable(periodo.getCiclo());
+        return periodo;
+    }
+
+    // Los periodos que se pueden elegir en el formulario: los de ciclos que aun admiten cambios.
+    @Transactional(readOnly = true)
+    public List<PeriodoLectivo> periodosParaSelector() {
+        List<PeriodoLectivo> ps =
+            periodoRepository.seleccionablesDelTenant(TenantContext.getRequired());
+        // Se toca el ciclo, que la plantilla lee para armar la etiqueta "2026 - 1er cuatrimestre".
+        ps.forEach(p -> p.getCiclo().getAnio());
+        return ps;
     }
 
     @Transactional(readOnly = true)
@@ -103,9 +140,17 @@ public class ComisionService {
         return ms;
     }
 
+    /**
+     * Crea una comisión bajo una materia activa, con código único dentro de esa materia y ese
+     * período.
+     *
+     * <p><b>El período entró desde V023</b> y es lo que ubica la comisión en un año concreto.
+     * El código dejó de ser único por materia y pasó a serlo por materia y período: "Comisión A"
+     * de 2026 y "Comisión A" de 2027 son dos ofertas distintas de la misma materia, y esa
+     * repetición es exactamente lo que antes estaba prohibido.
+     */
     @Transactional
-    // Crea una comisión bajo una materia activa, con código único dentro de esa materia.
-    public Comision crear(String codigo, Long materiaId, Long docenteAsignadoId) {
+    public Comision crear(String codigo, Long materiaId, Long docenteAsignadoId, Long periodoId) {
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
 
@@ -114,10 +159,13 @@ public class ComisionService {
                 "La materia '" + materia.getNombre() + "' está inactiva. Reactivala antes de crear comisiones.");
         }
 
+        PeriodoLectivo periodo = obtenerPeriodoValidado(periodoId, tenantId);
+
         String codigoNorm = codigo.trim();
-        if (comisionRepository.existsByMateriaIdAndCodigo(materiaId, codigoNorm)) {
+        if (comisionRepository.existsByMateriaIdAndCodigoAndPeriodoId(materiaId, codigoNorm, periodo.getId())) {
             throw new IllegalArgumentException(
-                "Ya existe una comisión '" + codigoNorm + "' en la materia '" + materia.getCodigo() + "'.");
+                "Ya existe una comisión '" + codigoNorm + "' en la materia '" + materia.getCodigo()
+                + "' para " + periodo.getNombre() + " " + periodo.getCiclo().getAnio() + ".");
         }
 
         Docente asignado = obtenerDocenteValidadoOrNull(docenteAsignadoId, tenantId, /*requireActivo*/ true);
@@ -126,21 +174,27 @@ public class ComisionService {
             .codigo(codigoNorm)
             .materia(materia)
             .docenteAsignado(asignado)
+            .periodo(periodo)
             .activo(true)
             .build();
 
         Comision saved = comisionRepository.save(c);
-        log.info("Comision creada: id={}, codigo={}, materia_id={}, docente_asignado_id={}",
-                 saved.getId(), saved.getCodigo(), materiaId, docenteAsignadoId);
+        log.info("Comision creada: id={}, codigo={}, materia_id={}, periodo_id={}, docente_asignado_id={}",
+                 saved.getId(), saved.getCodigo(), materiaId, periodo.getId(), docenteAsignadoId);
         return saved;
     }
 
     @Transactional
-    // Edita la comisión: código, materia y docente asignado.
-    public Comision actualizar(Long id, String codigo, Long materiaId, Long docenteAsignadoId) {
+    // Edita la comisión: código, materia, docente asignado y período.
+    public Comision actualizar(Long id, String codigo, Long materiaId, Long docenteAsignadoId,
+                               Long periodoId) {
         Comision c = buscarPorId(id);
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
+
+        // La comision de un ciclo cerrado no se toca: es la oferta de un ano que ya termino.
+        cicloLectivoService.exigirEstructuraEditable(c.getPeriodo().getCiclo());
+        PeriodoLectivo periodo = obtenerPeriodoValidado(periodoId, tenantId);
 
         boolean cambiaMateria = !materia.getId().equals(c.getMateria().getId());
         if (cambiaMateria && Boolean.FALSE.equals(materia.getActivo())) {
@@ -155,12 +209,13 @@ public class ComisionService {
         // terminaba rebotando contra el UNIQUE de la base, con un mensaje generico.
         String codigoNuevo = codigo.trim();
         boolean colisiona = comisionRepository
-            .findByMateriaIdAndCodigo(materiaId, codigoNuevo)
+            .findByMateriaIdAndCodigoAndPeriodoId(materiaId, codigoNuevo, periodo.getId())
             .filter(otra -> !otra.getId().equals(c.getId()))
             .isPresent();
         if (colisiona) {
             throw new IllegalArgumentException(
-                "Ya existe una comisión '" + codigoNuevo + "' en la materia '" + materia.getCodigo() + "'.");
+                "Ya existe una comisión '" + codigoNuevo + "' en la materia '" + materia.getCodigo()
+                + "' para " + periodo.getNombre() + " " + periodo.getCiclo().getAnio() + ".");
         }
 
         // Si NO cambia el docente asignado, permitir mantenerlo aunque ahora este inactivo (legacy).
@@ -169,6 +224,7 @@ public class ComisionService {
         boolean cambiaAsignado = !java.util.Objects.equals(asignadoActualId, docenteAsignadoId);
         Docente asignado = obtenerDocenteValidadoOrNull(docenteAsignadoId, tenantId, cambiaAsignado);
 
+        c.setPeriodo(periodo);
         c.setCodigo(codigoNuevo);
         c.setMateria(materia);
         c.setDocenteAsignado(asignado);

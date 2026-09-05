@@ -110,8 +110,11 @@ public class AsistenciaService {
         LocalTime ahora = instante.toLocalTime();
         byte diaSemana = (byte) instante.getDayOfWeek().getValue(); // 1..7 ISO
 
+        // La fecha va ademas del dia de la semana desde V023: el horario tiene que caer
+        // dentro de su periodo, o el pase abriria un bloque por una clase de un cuatrimestre
+        // ya terminado.
         List<Horario> horariosHoy = horarioRepository
-            .findHoyParaDocente(docenteId, diaSemana, tenantId);
+            .findHoyParaDocente(docenteId, diaSemana, fecha, tenantId);
 
         Optional<Horario> enCurso = elegirHorarioEnCurso(horariosHoy, ahora, docenteId, fecha);
         if (enCurso.isEmpty()) {
@@ -402,7 +405,7 @@ public class AsistenciaService {
 
         // 2) Horarios del día sin marca → AUSENTE calculada (si ya terminaron).
         List<Horario> horariosDia =
-            horarioRepository.findActivosDelDiaConDocente(diaSemana, tenantId);
+            horarioRepository.findActivosDelDiaConDocente(diaSemana, fecha, tenantId);
         for (Horario h : horariosDia) {
             Long docenteId = h.getComision().getDocenteAsignado().getId();
             String key = docenteId + ":" + h.getId();

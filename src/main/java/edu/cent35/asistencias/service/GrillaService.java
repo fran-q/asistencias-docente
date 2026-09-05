@@ -4,6 +4,7 @@ import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.dto.GrillaSemanalDto;
@@ -40,6 +41,8 @@ public class GrillaService {
 
     private final HorarioRepository horarioRepository;
     private final CarreraRepository carreraRepository;
+    // Para resolver que ciclo mostrar cuando la pantalla no trae uno elegido.
+    private final CicloLectivoService cicloLectivoService;
 
     // Carreras activas del tenant para popular el selector.
     @Transactional(readOnly = true)
@@ -58,9 +61,16 @@ public class GrillaService {
      *
      * <p>Con {@code anio} en null se muestran todos, que sigue siendo útil para detectar a un
      * docente que quedó con dos clases a la misma hora en años distintos.
+     *
+     * <p><b>La grilla es de un ciclo, desde V023.</b> Sin acotar, en cuanto exista 2027 el mismo
+     * casillero mostraría la clase de 2026 y la de 2027 superpuestas, y la grilla dejaría de
+     * servir para lo único que sirve: ver qué está libre y qué se pisa.
+     *
+     * @param cicloId el ciclo a mostrar; si viene null se usa el que corre hoy, y si no hay
+     *                ninguno, el más reciente
      */
     @Transactional(readOnly = true)
-    public GrillaSemanalDto cargarGrillaPara(Long carreraId, Short anio) {
+    public GrillaSemanalDto cargarGrillaPara(Long carreraId, Short anio, Long cicloId) {
         Long tenantId = TenantContext.getRequired();
 
         Carrera carrera = carreraRepository.findById(carreraId)
@@ -71,7 +81,13 @@ public class GrillaService {
             throw new EntityNotFoundException("Carrera no encontrada");
         }
 
-        List<Horario> horarios = horarioRepository.findActivosPorCarrera(carreraId, tenantId);
+        // Sin ciclo elegido la pantalla muestra el que corre hoy. Si la institucion todavia
+        // no abrio ninguno, la grilla queda vacia en vez de fallar: no hay oferta que mostrar,
+        // que es distinto de que algo se haya roto.
+        CicloLectivo ciclo = cicloLectivoService.cicloParaMostrar(cicloId).orElse(null);
+        List<Horario> horarios = ciclo == null
+            ? List.of()
+            : horarioRepository.findActivosPorCarreraYCiclo(carreraId, ciclo.getId(), tenantId);
 
         // El filtro por anio se aplica en memoria y no en la consulta a proposito: son los
         // horarios de UNA carrera, decenas como mucho, y agregar una variante de la query
@@ -95,6 +111,8 @@ public class GrillaService {
             .carreraNombre(carrera.getNombre())
             .duracionAnios(carrera.getDuracionAnios())
             .anioFiltrado(anio)
+            .cicloId(ciclo == null ? null : ciclo.getId())
+            .cicloAnio(ciclo == null ? null : ciclo.getAnio())
             .totalHorarios(horarios.size())
             .horaMin(GRID_INICIO)
             .horaMax(GRID_FIN)

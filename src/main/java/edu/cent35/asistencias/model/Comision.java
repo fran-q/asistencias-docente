@@ -35,12 +35,16 @@ import java.time.LocalDateTime;
  * El campo {@code docenteAsignadoId} se completa en Sprint 3 cuando
  * existan docentes gestionables. Por ahora puede ser null (V004 lo
  * habilito).
+ * <p>
+ * Desde V023 la comision pertenece ademas a un periodo lectivo, que es lo que
+ * la ubica en un ano calendario concreto.
  */
 @Entity
 @Table(
     name = "comisiones",
     uniqueConstraints = {
-        @UniqueConstraint(name = "uq_comisiones_materia_codigo", columnNames = {"materia_id", "codigo"})
+        @UniqueConstraint(name = "uq_comisiones_materia_codigo_periodo",
+                          columnNames = {"materia_id", "codigo", "periodo_id"})
     }
 )
 @Getter
@@ -65,6 +69,21 @@ public class Comision {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "docente_asignado_id")
     private Docente docenteAsignado;
+
+    /**
+     * El tramo del ciclo en el que corre esta comisión (V023).
+     *
+     * <p>Es lo que la ata a un año concreto, y por eso entró al UNIQUE: "Comisión A" de 2026 y
+     * "Comisión A" de 2027 son dos ofertas distintas de la misma materia. Antes de V023 esa
+     * repetición estaba prohibida y dar la misma materia el año siguiente obligaba a pisar la
+     * comisión anterior, con lo que el año viejo dejaba de poder reconstruirse.
+     *
+     * <p>LAZY: los listados que necesitan el período lo traen con JOIN FETCH, y los que no
+     * —el pase, la grilla— no tienen por qué pagar la consulta.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "periodo_id", nullable = false)
+    private PeriodoLectivo periodo;
 
     @Column(nullable = false)
     @Builder.Default

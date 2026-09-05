@@ -72,7 +72,7 @@ public class PanelInicioService {
         LocalTime ahora = LocalTime.now(clock);
 
         List<Horario> clasesDeHoy = horarioRepository.findActivosDelDiaConDocente(
-            (byte) hoy.getDayOfWeek().getValue(), tenantId);
+            (byte) hoy.getDayOfWeek().getValue(), hoy, tenantId);
         List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(TenantContext.getRequired(), hoy);
 
         return new PanelInicioDto(
@@ -258,7 +258,10 @@ public class PanelInicioService {
                 "/docentes"));
         }
 
-        List<Comision> comisiones = comisionRepository.findActivasDelTenant(tenantId);
+        // Las del ciclo que corre hoy: contar las de un ano cerrado como "sin docente"
+        // pondria en el panel un pendiente que ya no existe.
+        List<Comision> comisiones =
+            comisionRepository.findActivasEnFecha(LocalDate.now(clock), tenantId);
 
         long sinDocente = comisiones.stream()
             .filter(c -> c.getDocenteAsignado() == null)

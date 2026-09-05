@@ -83,6 +83,21 @@
                 <th:block sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
                     <p class="lateral__grupo">Académico</p>
 
+                    <!-- Ciclos y dias sin clase son solo institucionales: definen cuando el
+                         sistema toma asistencia y cuando genera ausencias, que no es una
+                         tarea del dia a dia. Van primero porque sin un ciclo no se puede
+                         cargar una comision. -->
+                    <th:block sec:authorize="hasRole('INSTITUCION')">
+                        <a th:href="@{/ciclos}" class="lateral__link">
+                            <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                            <span class="lateral__texto">Ciclos lectivos</span>
+                        </a>
+                        <a th:href="@{/dias-sin-clase}" class="lateral__link">
+                            <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                            <span class="lateral__texto">Días sin clase</span>
+                        </a>
+                    </th:block>
+
                     <a th:href="@{/carreras}" class="lateral__link">
                         <svg th:replace="~{layout/iconos :: libro}"></svg>
                         <span class="lateral__texto">Carreras</span>

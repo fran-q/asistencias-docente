@@ -104,7 +104,7 @@ class MateriaServiceTest {
     void darDeBaja_bloqueaSiTieneComisiones() {
         Materia m = materiaActivaA();
         when(materiaRepository.findById(20L)).thenReturn(Optional.of(m));
-        when(comisionRepository.countByMateriaIdAndActivoTrue(20L)).thenReturn(2L);
+        when(comisionRepository.contarActivasEnCiclosAbiertos(20L, TENANT_A)).thenReturn(2L);
 
         assertThatThrownBy(() -> service.darDeBaja(20L))
             .isInstanceOf(IllegalArgumentException.class)
