@@ -533,6 +533,130 @@ class AjustesPantallasIT {
     }
 
     /**
+     * Todo destino del menú aparece en la pantalla intermedia de su grupo.
+     *
+     * <p>Son dos listas que se escriben en lugares distintos —la barra lateral en
+     * {@code layout/base.html}, las tarjetas en {@code SeccionService}— y nada obliga a que
+     * coincidan. Ya se separaron una vez: al sumar Ciclos lectivos y Días sin clase al menú,
+     * la pantalla de Académico siguió ofreciendo cinco destinos de siete, y la miga de pan de
+     * esas dos pantallas mostraba el segmento crudo de la URL porque tampoco estaban en el
+     * mapa de {@code migas.js}.
+     *
+     * <p>No falla nada cuando pasa: el menú funciona, la pantalla intermedia funciona, y las
+     * dos muestran cosas distintas. Por eso hace falta comprobarlo.
+     *
+     * <p>Se lee el menú del archivo y no del HTML renderizado a propósito: lo que se quiere
+     * fijar es la convención de que agregar un destino implica agregarlo en los tres lados.
+     */
+    @Test
+    @DisplayName("Cada destino del menú está en la pantalla intermedia de su grupo")
+    void elMenuYLasPantallasIntermediasNoSeSeparan() throws Exception {
+        String base = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/templates/layout/base.html"));
+        String nav = base.substring(base.indexOf("id=\"lateral-nav\""), base.indexOf("lateral__pie"));
+
+        java.util.regex.Matcher m =
+            java.util.regex.Pattern.compile("th:href=\"@\\{(/[\\w/-]*)}\"").matcher(nav);
+        java.util.List<String> destinos = new java.util.ArrayList<>();
+        while (m.find()) {
+            if (!"/".equals(m.group(1))) destinos.add(m.group(1));
+        }
+        assertThat(destinos).as("si el menú quedó vacío, este test no está comprobando nada")
+            .hasSizeGreaterThan(5);
+
+        // Las tres intermedias juntas: un destino vive en una sola, pero cuál es no lo decide
+        // este test. Lo que importa es que ninguno quede afuera de las tres.
+        //
+        // Se recorta la grilla de tarjetas y NO se busca en la página entera. Toda pantalla
+        // trae la barra lateral, así que buscar el href en el HTML completo lo encuentra
+        // siempre: el test pasaba con Grilla semanal sacada del servicio a propósito, porque
+        // lo estaba leyendo del propio menú que decía comprobar.
+        StringBuilder intermedias = new StringBuilder();
+        for (String ruta : java.util.List.of("/academico", "/asistencia", "/personal")) {
+            String html = mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+            int desde = html.indexOf("seccion__tarjetas");
+            int hasta = html.indexOf("</section>", Math.max(desde, 0));
+            assertThat(desde).as("la pantalla %s no trae la grilla de tarjetas", ruta).isNotNegative();
+            assertThat(hasta).as("la pantalla %s no cierra su <section>", ruta).isGreaterThan(desde);
+            intermedias.append(html, desde, hasta);
+        }
+
+        String todas = intermedias.toString();
+        java.util.List<String> ausentes = destinos.stream()
+            .filter(d -> !todas.contains("href=\"" + d + "\""))
+            .toList();
+
+        assertThat(ausentes)
+            .as("estos destinos están en la barra lateral pero SeccionService no los ofrece; "
+                + "agregarlos también al mapa de migas.js")
+            .isEmpty();
+
+        // Y el mapa de las migas, que es el tercer lugar donde se olvidan.
+        String migas = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/static/js/comun/migas.js"));
+        java.util.List<String> sinMiga = destinos.stream()
+            .map(d -> d.substring(1).split("/")[0])
+            .distinct()
+            .filter(seg -> !migas.contains("'" + seg + "'"))
+            .toList();
+
+        assertThat(sinMiga)
+            .as("sin entrada en el MAPA de migas.js, la ruta muestra el segmento crudo de la URL")
+            .isEmpty();
+    }
+
+    /**
+     * Dentro de un grupo, cada destino tiene su propio icono.
+     *
+     * <p>El icono existe para reconocer el destino sin leer, en el menú y en la tarjeta. Dos
+     * destinos del mismo grupo con el mismo dibujo no aportan nada: pasan a ser adorno, y de
+     * paso hacen creer que son lo mismo. Ya pasó con Ciclos lectivos, Días sin clase y Grilla
+     * semanal, que compartían el calendario: tres de siete tarjetas iguales.
+     *
+     * <p>Se lee del archivo del menú porque es ahí donde se elige el icono al agregar una
+     * pantalla, y es el momento en que conviene enterarse.
+     */
+    @Test
+    @DisplayName("Dentro de un grupo no se repite ningún icono")
+    void losIconosDeUnGrupoNoSeRepiten() throws Exception {
+        String base = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/templates/layout/base.html"));
+        String nav = base.substring(base.indexOf("id=\"lateral-nav\""), base.indexOf("lateral__pie"));
+
+        // El menú va en orden, así que cada título de grupo abre una sección nueva.
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile(
+            "class=\"lateral__grupo\"|iconos :: (\\w+)}").matcher(nav);
+
+        java.util.List<java.util.List<String>> grupos = new java.util.ArrayList<>();
+        java.util.List<String> actual = new java.util.ArrayList<>();
+        while (m.find()) {
+            if (m.group(1) == null) {              // arranca un grupo
+                grupos.add(actual);
+                actual = new java.util.ArrayList<>();
+            } else {
+                actual.add(m.group(1));
+            }
+        }
+        grupos.add(actual);
+
+        assertThat(grupos).as("si no se detectó ningún grupo, el test no comprueba nada")
+            .hasSizeGreaterThan(3);
+
+        java.util.List<String> repetidos = new java.util.ArrayList<>();
+        for (java.util.List<String> g : grupos) {
+            java.util.Set<String> vistos = new java.util.HashSet<>();
+            g.stream().filter(i -> !vistos.add(i)).forEach(repetidos::add);
+        }
+
+        assertThat(repetidos)
+            .as("estos iconos aparecen dos veces dentro de un mismo grupo del menú")
+            .isEmpty();
+    }
+
+    /**
      * La fecha del panel de inicio sale en castellano.
      *
      * <p>Es el único lugar de la aplicación donde Java formatea un nombre de día o de mes: el

@@ -55,38 +55,50 @@ public class SeccionService {
         boolean esInstitucion = tieneRol(auth, "ROLE_INSTITUCION");
 
         return switch (grupo) {
-            case ACADEMICO -> List.of(
-                new SeccionDto("Carreras", "/carreras",
-                    "Los programas académicos de los que cuelga todo lo demás."),
-                new SeccionDto("Materias", "/materias",
-                    "Qué se dicta en cada carrera y en qué año."),
-                new SeccionDto("Comisiones", "/comisiones",
-                    "Las divisiones de cada materia y quién las dicta."),
-                new SeccionDto("Horarios", "/horarios",
-                    "Las franjas semanales contra las que se marca la asistencia."),
-                new SeccionDto("Grilla semanal", "/grilla",
-                    "Los horarios de una carrera vistos como calendario."));
+            case ACADEMICO -> {
+                List<SeccionDto> pantallas = new java.util.ArrayList<>();
+                // Ciclos y días sin clase son solo institucionales, igual que en la barra
+                // lateral, y van primero por el mismo motivo: sin un ciclo no se puede cargar
+                // una comisión.
+                if (esInstitucion) {
+                    pantallas.add(new SeccionDto("Ciclos lectivos", "/ciclos",
+                        "Los períodos en los que el sistema toma asistencia.", "calendario"));
+                    pantallas.add(new SeccionDto("Días sin clase", "/dias-sin-clase",
+                        "Feriados y suspensiones: no generan ausencia.", "calendarioX"));
+                }
+                pantallas.add(new SeccionDto("Carreras", "/carreras",
+                    "Los programas académicos de los que cuelga todo lo demás.", "libro"));
+                pantallas.add(new SeccionDto("Materias", "/materias",
+                    "Qué se dicta en cada carrera y en qué año.", "materia"));
+                pantallas.add(new SeccionDto("Comisiones", "/comisiones",
+                    "Las divisiones de cada materia y quién las dicta.", "personas"));
+                pantallas.add(new SeccionDto("Horarios", "/horarios",
+                    "Las franjas semanales contra las que se marca la asistencia.", "reloj"));
+                pantallas.add(new SeccionDto("Grilla semanal", "/grilla",
+                    "Los horarios de una carrera vistos como calendario.", "grilla"));
+                yield List.copyOf(pantallas);
+            }
 
             case ASISTENCIA -> List.of(
                 new SeccionDto("Pase de asistencia", "/asistencia/pase",
-                    "Reconocer al docente por cámara y registrar su asistencia."),
+                    "Reconocer al docente por cámara y registrar su asistencia.", "rostro"),
                 new SeccionDto("Listado del día", "/asistencias",
-                    "Las marcas de una fecha, con las ausencias calculadas."),
+                    "Las marcas de una fecha, con las ausencias calculadas.", "lista"),
                 new SeccionDto("Reportes", "/reportes",
-                    "Filtrar por período y exportar a CSV o PDF."));
+                    "Filtrar por período y exportar a CSV o PDF.", "grafico"));
 
             case PERSONAL -> {
                 List<SeccionDto> pantallas = new java.util.ArrayList<>();
                 pantallas.add(new SeccionDto("Docentes", "/docentes",
-                    "El personal docente, su consentimiento y su modelo facial."));
+                    "El personal docente, su consentimiento y su modelo facial.", "docente"));
                 // Solo el rol INSTITUCION administra cuentas y los datos de la institución.
                 if (esInstitucion) {
                     pantallas.add(new SeccionDto("Usuarios del sistema", "/usuarios",
-                        "Las cuentas que pueden entrar a la aplicación."));
+                        "Las cuentas que pueden entrar a la aplicación.", "monitor"));
                     pantallas.add(new SeccionDto("Mi institución", "/mi-institucion",
-                        "Nombre, CUIT y datos de contacto."));
+                        "Nombre, CUIT y datos de contacto.", "edificio"));
                     pantallas.add(new SeccionDto("Puestos de captura", "/puestos",
-                        "Los equipos desde los que se puede tomar asistencia por cámara."));
+                        "Los equipos desde los que se puede tomar asistencia por cámara.", "puesto"));
                 }
                 yield List.copyOf(pantallas);
             }

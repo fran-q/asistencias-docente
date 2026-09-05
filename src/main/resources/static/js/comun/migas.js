@@ -18,6 +18,8 @@
     // segun el rol --para el ADMIN, Personal va derecho a Docentes--. La clave del
     // grupo es la que se busca en los data-* del contenedor.
     var MAPA = {
+        'ciclos':     { etiqueta: 'Ciclos lectivos',    grupo: 'Académico',   clave: 'academico' },
+        'dias-sin-clase': { etiqueta: 'Días sin clase', grupo: 'Académico',   clave: 'academico' },
         'carreras':   { etiqueta: 'Carreras',           grupo: 'Académico',   clave: 'academico' },
         'materias':   { etiqueta: 'Materias',           grupo: 'Académico',   clave: 'academico' },
         'comisiones': { etiqueta: 'Comisiones',         grupo: 'Académico',   clave: 'academico' },

@@ -6,9 +6,22 @@
 </head>
 <body>
     <!--
-      Pantalla intermedia de un grupo del menú. Muestra qué hay adentro sin obligar a abrir
-      el desplegable y, sobre todo, le da destino a la miga de pan de ese grupo, que antes
-      lo nombraba y no llevaba a ningún lado.
+      Pantalla intermedia de un grupo del menú.
+
+      Con la barra lateral todos los destinos están a la vista, así que esta pantalla ya no
+      hace falta para descubrirlos. Sigue existiendo por otras dos razones, que no dependen
+      de cómo sea el menú:
+
+        · Le da destino a la miga de pan del grupo. Sin ella, "Inicio / Académico / Materias"
+          nombra un paso intermedio que no lleva a ningún lado, y una miga que nombra algo
+          inexistente es peor que no tenerla.
+
+        · Dice QUÉ es cada pantalla. El menú solo tiene lugar para el nombre; acá cada
+          destino viene con una línea que explica para qué sirve, que es lo que necesita
+          quien todavía no distingue "Comisiones" de "Horarios".
+
+      Las pantallas y su orden salen de SeccionService, el mismo que arma el destino del
+      grupo: si se agrega una al menú y no acá, las dos listas se separan sin que nada falle.
     -->
     <section class="seccion">
         <header class="page-header">
@@ -16,10 +29,21 @@
             <p class="page-header__subtitle" th:text="${grupo.descripcion}">Qué se hace acá.</p>
         </header>
 
-        <div class="seccion__tarjetas">
+        <!-- entra: las tarjetas aparecen escalonadas, con 70 ms de diferencia. Es lo que
+             hace que la grilla se lea en orden la primera vez en vez de aparecer de golpe. -->
+        <div class="seccion__tarjetas entra">
             <a th:each="p : ${pantallas}" th:href="@{${p.ruta()}}" class="card seccion__tarjeta">
-                <h2 th:text="${p.titulo()}">Pantalla</h2>
-                <p class="text-muted" th:text="${p.descripcion()}">Qué se hace ahí.</p>
+                <!-- El icono es el mismo que ese destino tiene en la barra lateral. El nombre
+                     del fragmento viaja en el DTO y se resuelve con __${...}__, que es
+                     preprocesamiento de Thymeleaf: se reemplaza antes de evaluar la expresión
+                     del fragmento, porque ~{layout/iconos :: ...} necesita un nombre literal. -->
+                <span class="seccion__icono" aria-hidden="true">
+                    <svg th:replace="~{layout/iconos :: __${p.icono()}__}"></svg>
+                </span>
+                <span class="seccion__texto">
+                    <h2 th:text="${p.titulo()}">Pantalla</h2>
+                    <p class="text-muted" th:text="${p.descripcion()}">Qué se hace ahí.</p>
+                </span>
             </a>
         </div>
     </section>

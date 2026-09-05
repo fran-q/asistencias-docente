@@ -81,7 +81,16 @@
                 </a>
 
                 <th:block sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                    <p class="lateral__grupo">Académico</p>
+                    <!-- El titulo del grupo lleva a su pantalla intermedia. Es lo que le da
+                         destino a la miga de pan --"Inicio / Academico / Materias" nombra ese
+                         paso y tiene que poder abrirse-- y de paso una pantalla que dice que
+                         es cada destino, cosa para la que el menu no tiene lugar.
+
+                         El destino depende del ROL y lo calcula el servidor: si en el grupo el
+                         usuario tiene una sola pantalla, va derecho a ella, porque una
+                         intermedia con una sola opcion es un clic que no decide nada. -->
+                    <a th:href="@{__${destinoAcademico}__}" class="lateral__grupo"
+                       th:title="|Ver todo: Académico|">Académico</a>
 
                     <!-- Ciclos y dias sin clase son solo institucionales: definen cuando el
                          sistema toma asistencia y cuando genera ausencias, que no es una
@@ -93,7 +102,7 @@
                             <span class="lateral__texto">Ciclos lectivos</span>
                         </a>
                         <a th:href="@{/dias-sin-clase}" class="lateral__link">
-                            <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                            <svg th:replace="~{layout/iconos :: calendarioX}"></svg>
                             <span class="lateral__texto">Días sin clase</span>
                         </a>
                     </th:block>
@@ -115,11 +124,12 @@
                         <span class="lateral__texto">Horarios</span>
                     </a>
                     <a th:href="@{/grilla}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                        <svg th:replace="~{layout/iconos :: grilla}"></svg>
                         <span class="lateral__texto">Grilla semanal</span>
                     </a>
 
-                    <p class="lateral__grupo">Asistencias</p>
+                    <a th:href="@{__${destinoAsistencia}__}" class="lateral__grupo"
+                       th:title="|Ver todo: Asistencias|">Asistencias</a>
 
                     <a th:href="@{/asistencia/pase}" class="lateral__link">
                         <svg th:replace="~{layout/iconos :: rostro}"></svg>
@@ -134,7 +144,8 @@
                         <span class="lateral__texto">Reportes</span>
                     </a>
 
-                    <p class="lateral__grupo">Personal</p>
+                    <a th:href="@{__${destinoPersonal}__}" class="lateral__grupo"
+                       th:title="|Ver todo: Personal|">Personal</a>
 
                     <a th:href="@{/docentes}" class="lateral__link">
                         <svg th:replace="~{layout/iconos :: docente}"></svg>

@@ -475,11 +475,19 @@ input, select, button, textarea { font-family: inherit; }
    enlaces del grupo, sin desplegable: hay alto de sobra y esconder los enlaces
    detrás de un segundo clic sólo agrega un paso. */
 .lateral__grupo {
+    display: block;
     margin: 14px 0 4px; padding: 0 12px;
     font-size: .7rem; font-weight: 600;
     text-transform: uppercase; letter-spacing: .08em;
     color: var(--text-dim);
+    text-decoration: none;
+    transition: color var(--t-fast) var(--ease);
 }
+/* Es un enlace a la pantalla intermedia del grupo, pero sigue leyéndose como un
+   título: apagado en reposo, porque si compitiera con los destinos de abajo la
+   lista pasaría a tener cuatro niveles de énfasis en vez de dos. El hover es todo
+   el aviso que necesita, y el cursor hace el resto. */
+.lateral__grupo:hover { color: var(--text); text-decoration: none; }
 
 .lateral__link {
     display: flex; align-items: center; gap: 11px;
@@ -524,9 +532,14 @@ input, select, button, textarea { font-family: inherit; }
 :root[data-lateral="cerrado"] .lateral__texto   { display: none; }
 :root[data-lateral="cerrado"] .lateral__link,
 :root[data-lateral="cerrado"] .lateral__colapsar { justify-content: center; padding: 0; }
+/* Colapsada, el titulo se vuelve un separador. pointer-events none porque sigue
+   siendo un enlace: sin esto queda una franja de 1px apretable entre dos iconos,
+   que solo se puede acertar de casualidad y lleva a una pantalla que no se
+   pidio. El acceso al grupo no se pierde: esta a un clic de expandir el menu. */
 :root[data-lateral="cerrado"] .lateral__grupo {
     height: 1px; margin: 10px 12px; padding: 0;
     background: var(--border); overflow: hidden; color: transparent;
+    pointer-events: none;
 }
 :root[data-lateral="cerrado"] .lateral__marca { justify-content: center; padding: 0; }
 
@@ -1719,6 +1732,24 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .seccion__tarjeta:active { transform: translateY(0); transition-duration: 60ms; }
 .seccion__tarjeta h2 { color: var(--primary); font-size: 1rem; margin-bottom: var(--space-xs); }
 .seccion__tarjeta p  { margin: 0; font-size: .88rem; color: var(--text-muted); }
+
+/* El icono de la tarjeta es el mismo que ese destino tiene en la barra lateral, y
+   ese es el punto: se reconoce el destino sin leer el titulo. Va en una pastilla
+   tenida en vez de suelto sobre la tarjeta --a 18px un trazo fino se pierde contra
+   el fondo-- y arriba, alineado con la primera linea del titulo. */
+.seccion__tarjeta { display: flex; align-items: flex-start; gap: var(--space); }
+.seccion__icono {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; flex-shrink: 0;
+    border-radius: var(--r);
+    background: var(--primary-tint); color: var(--primary);
+    transition: background var(--t-fast) var(--ease);
+}
+.seccion__icono svg { width: 19px; height: 19px; }
+.seccion__tarjeta:hover .seccion__icono { background: var(--primary-solid); color: #fff; }
+/* min-width 0: sin esto una descripcion larga no puede achicarse por debajo de su
+   ancho de contenido y estira la tarjeta fuera de la grilla. */
+.seccion__texto { min-width: 0; }
 
 /* ============================================================================
  *  GRILLA HORARIA SEMANAL
