@@ -20,8 +20,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
+    // /fonts/** va con el resto de los estáticos. No alcanza con permitirlo en
+    // SecurityConfig: los interceptores corren después, sobre cualquier ruta que no esté
+    // en esta lista, incluidas las que atiende el manejador de recursos. El de verificación
+    // respondía cada .woff2 con la redirección al login, así que el navegador recibía HTML
+    // donde esperaba una fuente y la aplicación caía a la tipografía del sistema sin avisar.
     private static final String[] SIN_INTERCEPTAR = {
-        "/css/**", "/js/**", "/img/**", "/webjars/**", "/actuator/**"
+        "/css/**", "/js/**", "/img/**", "/fonts/**", "/webjars/**", "/actuator/**"
     };
 
     /**

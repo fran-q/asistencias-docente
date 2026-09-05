@@ -84,4 +84,27 @@ public class Persona extends BaseTenantEntity {
     public String getNombreParaMostrar() {
         return apellido == null || apellido.isBlank() ? nombre : nombre + " " + apellido;
     }
+
+    /**
+     * Las dos letras del avatar de los listados: inicial del apellido e inicial del nombre.
+     *
+     * <p>Vive acá por el mismo motivo que los dos helpers de arriba. La plantilla solo tiene
+     * el nombre completo, que es "Apellido, Nombre": recortarle los dos primeros caracteres
+     * daría las dos primeras letras del apellido --"Ga" para García, María-- en vez de las
+     * iniciales. Y partir la cadena por la coma dentro del template es rearmar acá lo que
+     * este objeto ya sabe.
+     *
+     * <p>Tolera el apellido nulo de las cuentas institucionales, y el nombre de una sola
+     * letra: en esos casos devuelve lo que haya en vez de romperse.
+     */
+    public String getIniciales() {
+        String a = apellido == null ? "" : apellido.strip();
+        String n = nombre   == null ? "" : nombre.strip();
+        if (a.isEmpty()) {
+            // Sin apellido se usan las dos primeras del nombre, que es lo unico que hay.
+            return n.length() >= 2 ? n.substring(0, 2).toUpperCase() : n.toUpperCase();
+        }
+        String inicialNombre = n.isEmpty() ? "" : n.substring(0, 1);
+        return (a.substring(0, 1) + inicialNombre).toUpperCase();
+    }
 }

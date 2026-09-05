@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--
+  Panel de marca de las pantallas de acceso.
+
+  Vive acá y no copiado en login, recuperación y alta porque antes lo estaba y
+  ya se había desincronizado: cada tarjeta traía su propio subtítulo y una decía
+  "Asistencia docente con reconocimiento facial" mientras otra no decía nada.
+
+  Lo que se muestra es lo que el sistema hace, no una lista de características:
+  quien llega a esta pantalla ya sabe a qué viene, y lo que necesita confirmar
+  es que está en el lugar correcto.
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="panel" class="auth__marca">
+    <div class="auth__logo">
+        <span class="auth__logo-marca" aria-hidden="true">V</span>
+        <span class="auth__logo-texto">Visum</span>
+    </div>
+
+    <div class="auth__pitch">
+        <h2>La asistencia docente, resuelta antes de que empiece la clase.</h2>
+        <p>Reconocimiento facial, grilla horaria y reportes en un solo lugar.</p>
+        <ul class="auth__lista">
+            <li>
+                <svg th:replace="~{layout/iconos :: tilde}"></svg>
+                <span>Pase de asistencia sin planillas ni firmas</span>
+            </li>
+            <li>
+                <svg th:replace="~{layout/iconos :: tilde}"></svg>
+                <span>Carreras, materias, comisiones y horarios al día</span>
+            </li>
+            <li>
+                <svg th:replace="~{layout/iconos :: tilde}"></svg>
+                <span>Reportes exportables a PDF y CSV</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- El pie legal no es letra chica de relleno: el sistema trata datos
+         biométricos y quien entra tiene derecho a saber bajo qué marco. -->
+    <p class="auth__legal">
+        Ley 25.326 &middot; Resolución AAIP 255/2022<br>
+        Los datos biométricos se almacenan cifrados.
+    </p>
+</aside>
+
+</body>
+</html>

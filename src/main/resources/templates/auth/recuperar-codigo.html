@@ -1,78 +1,161 @@
 <!DOCTYPE html>
+<!--
+  Recuperación de acceso, paso 2: el código y la contraseña nueva.
+
+  Seis casillas y no un input de seis dígitos. El código llega por mail y se
+  copia a mano: con casillas se ve cuántos faltan sin contar caracteres, y el
+  script las encadena para que pegar el código completo lo distribuya solo.
+
+  El campo real que viaja al servidor es el hidden "codigo": el backend sigue
+  recibiendo el mismo string de seis dígitos que antes, así que no hay que tocar
+  el DTO ni el controlador.
+-->
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ingresar código - Visum</title>
+    <title>Ingresar el código - Visum</title>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
+            if (!t) {
+                t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            document.documentElement.setAttribute('data-tema', t);
+        })();
+    </script>
     <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
-<body class="login-body">
-    <main class="login-card">
-        <header class="login-card__header">
-            <div class="login-card__logo" aria-hidden="true">V</div>
-            <h1>Ingresá el código</h1>
-            <!--
-              El texto es siempre el mismo, exista o no la cuenta. Mostrar acá el correo
-              enmascarado revelaría qué usuarios están registrados: bastaría con probar
-              direcciones y mirar cuál responde distinto (ADR-0009).
-            -->
-            <p class="login-card__subtitle">
-                Si la cuenta existe, el código ya está en su correo
-            </p>
-        </header>
+<body>
+<div class="auth">
 
-        <form th:action="@{/recuperar/codigo}" th:object="${form}" method="post" class="login-form" novalidate>
+    <aside th:replace="~{auth/marca :: panel}"></aside>
 
-            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
-                <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
-            </div>
+    <main class="auth__panel">
+        <div class="auth__tema">
+            <button type="button" id="tema-toggle" class="btn-icono"
+                    aria-label="Cambiar entre modo claro y oscuro" title="Cambiar de tema">
+                <!-- Las clases tema-toggle__sol / __luna van dentro de los fragmentos:
+                     th:replace descarta los atributos del placeholder. -->
+                <svg th:replace="~{layout/iconos :: sol}"></svg>
+                <svg th:replace="~{layout/iconos :: luna}"></svg>
+            </button>
+        </div>
 
-            <div class="form-group">
-                <label for="codigo">Código de 6 dígitos</label>
-                <input type="text" id="codigo" th:field="*{codigo}" required autofocus
-                       inputmode="numeric" autocomplete="one-time-code" maxlength="10"
-                       th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
-                <span class="form-error" th:if="${#fields.hasErrors('codigo')}"
-                      th:errors="*{codigo}">Error</span>
-            </div>
+        <div class="auth__centro">
+            <div class="auth__form">
 
-            <div class="form-group">
-                <label for="nuevaPassword">Contraseña nueva</label>
-                <div class="password-input">
-                    <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}" required minlength="6" maxlength="20"
-                           autocomplete="new-password"
-                           th:classappend="${#fields.hasErrors('nuevaPassword')} ? 'is-invalid'">
-                    <button type="button" class="password-toggle" aria-label="Mostrar contraseña"></button>
+                <div class="auth__logo auth__logo--movil">
+                    <span class="auth__logo-marca" aria-hidden="true">V</span>
+                    <span class="auth__logo-texto">Visum</span>
                 </div>
-                <small class="form-hint">Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
-                <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"
-                      th:errors="*{nuevaPassword}">Error</span>
+
+                <a th:href="@{/recuperar}" class="auth__volver">
+                    <svg th:replace="~{layout/iconos :: flechaIzq}"></svg>
+                    <!-- Decía "Cambiar el destinatario", que era coherente cuando arriba se
+                         mostraba a qué correo se había mandado. Sin ese dato, nombra algo que
+                         no está en la pantalla. -->
+                    <span>Usar otro usuario o correo</span>
+                </a>
+
+                <h1>Ingresá el código</h1>
+                <!-- El diseño mostraba acá el correo enmascarado al que se mandó el código.
+                     No se puede: el paso anterior no confirma ni niega que la cuenta exista
+                     --si lo hiciera, se podrían averiguar los usuarios dados de alta probando
+                     de a uno-- y mostrar un destinatario lo confirmaría igual. Quien pidió el
+                     código sabe a qué casilla tiene acceso; quien está probando, no. -->
+                <p>Te lo enviamos por correo. Vence a los 15 minutos y sirve una sola vez.</p>
+
+                <form th:action="@{/recuperar/codigo}" method="post" th:object="${form}"
+                      data-codigo-form novalidate>
+                    <!-- Acá caen "el código no es correcto o el pedido venció" y el resultado
+                         de la validación. Son los únicos avisos del paso: sin este bloque, un
+                         código equivocado recarga la pantalla sin decir nada. -->
+                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                        <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                    </div>
+
+                    <input type="hidden" th:field="*{codigo}" data-codigo-valor>
+
+                    <!-- aria-label por casilla: un lector de pantalla necesita saber en
+                         cuál de los seis está parado. El grupo lleva su propia etiqueta. -->
+                    <div class="codigo-input" role="group" aria-label="Código de seis dígitos"
+                         data-codigo-casillas>
+                        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code"
+                               aria-label="Dígito 1" autofocus placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 2" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 3" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 4" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 5" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
+                    </div>
+
+                    <span class="form-error" th:if="${#fields.hasErrors('codigo')}"
+                          th:errors="*{codigo}">Error</span>
+
+                    <div class="auth__campos" style="margin-top:var(--space)">
+                        <div class="form-group" style="margin:0">
+                            <label for="nuevaPassword">Contraseña nueva</label>
+                            <div class="password-input">
+                                <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}"
+                                       required minlength="6" maxlength="20"
+                                       autocomplete="new-password"
+                                       th:errorclass="is-invalid">
+                                <button type="button" class="password-toggle"
+                                        aria-label="Mostrar contraseña"></button>
+                            </div>
+                            <!-- La regla es la de PasswordSeguraValidator, no otra: una pista
+                                 que pida algo distinto de lo que el servidor exige manda a
+                                 escribir una contraseña que después va a rechazar. -->
+                            <span class="form-hint">
+                                Entre 6 y 20 caracteres, con al menos una minúscula, una
+                                mayúscula y un número.
+                            </span>
+                            <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"
+                                  th:errors="*{nuevaPassword}">Error</span>
+                        </div>
+
+                        <div class="form-group" style="margin:0">
+                            <label for="confirmacion">Repetir la contraseña</label>
+                            <div class="password-input">
+                                <input type="password" id="confirmacion"
+                                       th:field="*{confirmacion}" required
+                                       autocomplete="new-password" th:errorclass="is-invalid">
+                                <button type="button" class="password-toggle"
+                                        aria-label="Mostrar contraseña"></button>
+                            </div>
+                            <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
+                                  th:errors="*{confirmacion}">Error</span>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn--lg btn--full"
+                                style="margin-top:5px" data-texto-enviando="Verificando...">
+                            Verificar y cambiar la contraseña
+                        </button>
+                    </div>
+                </form>
+
+                <!-- auth__nota y no login-card__ayuda: esa clase es de la tarjeta centrada
+                     vieja y era lo último que quedaba de ese marcado en las pantallas de
+                     acceso. Las dos están definidas, pero mezclar familias deja el estilo
+                     dependiendo de reglas que existen sólo por compatibilidad. -->
+                <p class="auth__nota">
+                    ¿No llegó? <a th:href="@{/recuperar}">Pedir otro código</a>
+                </p>
             </div>
-
-            <div class="form-group">
-                <label for="confirmacion">Repetir contraseña</label>
-                <div class="password-input">
-                    <input type="password" id="confirmacion" th:field="*{confirmacion}" required
-                           autocomplete="new-password"
-                           th:classappend="${#fields.hasErrors('confirmacion')} ? 'is-invalid'">
-                    <button type="button" class="password-toggle" aria-label="Mostrar contraseña"></button>
-                </div>
-                <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
-                      th:errors="*{confirmacion}">Error</span>
-            </div>
-
-            <button type="submit" class="btn btn--primary btn--full" data-texto-enviando="Cambiando...">Cambiar contraseña</button>
-        </form>
-
-        <p class="login-card__ayuda">
-            <a th:href="@{/recuperar}">Pedir un código nuevo</a>
-            &nbsp;·&nbsp;
-            <a th:href="@{/login}">Volver al inicio de sesión</a>
-        </p>
+        </div>
     </main>
+</div>
 
-    <script th:src="@{/js/comun/toast.js}" defer></script>
-    <script th:src="@{/js/comun/envio-form.js}" defer></script>
-    <script th:src="@{/js/comun/password-ui.js}" defer></script>
+<div id="flash-data"
+     th:attr="data-success=${flashMensaje}, data-error=${flashError}" hidden></div>
+
+<script th:src="@{/js/comun/tema.js}" defer></script>
+<script th:src="@{/js/comun/toast.js}" defer></script>
+<script th:src="@{/js/comun/envio-form.js}" defer></script>
+<script th:src="@{/js/comun/password-ui.js}" defer></script>
+<script th:src="@{/js/comun/codigo-input.js}" defer></script>
 </body>
 </html>

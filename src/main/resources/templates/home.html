@@ -1,39 +1,63 @@
 <!DOCTYPE html>
+<!--
+  Panel de inicio.
+
+  El inicio NO repite los accesos del menú: a "¿dónde voy?" ya contesta la barra
+  lateral. Contesta qué está pasando ahora y qué necesita que alguien haga algo.
+  El único acceso que queda es el del pase, que es la acción del día.
+
+  Respecto de la versión anterior sólo cambian tres cosas, todas de forma:
+
+    · La clase .entra en el contenedor de los tres bloques: entran escalonados,
+      con 70 ms de diferencia. Es lo que hace que la pantalla se lea de
+      izquierda a derecha la primera vez en vez de aparecer entera de golpe.
+
+    · La fecha arriba del saludo. El panel habla todo el tiempo de "hoy" y de
+      "ahora" sin decir en ningún momento qué día es; en una pantalla que se
+      deja abierta toda la jornada eso importa.
+
+    · "Lo que sigue" pasó al pie del primer bloque. Antes reemplazaba a la lista
+      de clases en curso cuando no había ninguna, así que en el momento del día
+      en que más se mira —justo antes de que arranque una clase— el bloque
+      mostraba una cosa o la otra, nunca las dos.
+
+  Los datos, los estados vacíos y los enlaces son los mismos.
+-->
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Inicio - Visum</title>
 </head>
 <body>
-    <!--
-      El inicio NO repite los accesos del menú: a "¿dónde voy?" ya contesta la barra de
-      navegación. Contesta qué está pasando ahora y qué necesita que alguien haga algo.
-      El único acceso que queda es el del pase, que es la acción del día.
-    -->
     <section class="home">
         <header class="page-header home__header">
             <div>
+                <p class="page-header__fecha"
+                   th:text="${#temporals.format(#temporals.createToday(), 'EEEE d ''de'' MMMM')}">
+                    Viernes 4 de septiembre
+                </p>
                 <h1>Hola, <span th:text="${username}">Usuario</span></h1>
                 <p class="page-header__subtitle">Así viene el día.</p>
             </div>
-            <a th:href="@{/asistencia/pase}" class="btn btn--primary home__pase">
-                Ir al pase de asistencia
+            <a th:href="@{/asistencia/pase}" class="btn btn--primary btn--lg home__pase">
+                <svg th:replace="~{layout/iconos :: rostro}"></svg>
+                <span>Ir al pase de asistencia</span>
             </a>
         </header>
 
-        <div class="home__paneles">
+        <div class="home__paneles entra">
 
         <!-- ============ AHORA MISMO ============ -->
         <div class="card home__bloque">
             <h2 class="home__titulo">Ahora mismo</h2>
 
             <!-- Sin nada en curso, el bloque anticipa lo que sigue en vez de quedarse
-                 diciendo que no hay nada: es la mayor parte del dia. -->
+                 diciendo que no hay nada: es la mayor parte del día. -->
             <p class="home__vacio" th:if="${panel.nadaMasHoy()}">
                 No hay clases en curso ni por venir hoy.
             </p>
 
-            <div th:if="${panel.hayProximas()}">
+            <div th:if="${panel.hayProximas() and panel.sinClasesAhora()}">
                 <p class="home__vacio home__proximas-titulo">
                     Nada en curso. Lo que sigue:
                 </p>
@@ -53,10 +77,9 @@
 
             <ul class="home__clases" th:unless="${panel.sinClasesAhora()}">
                 <!-- El modificador se concatena en vez de escribir las dos clases enteras:
-                     dos '__' en una misma expresion hacen que Thymeleaf tome lo del medio
-                     como preprocesado -es la sintaxis con la que el menu de base.html arma su
-                     href- y el render explota con un ParseException. Con un solo par de
-                     guiones bajos no hay nada que abrir y cerrar, asi que no se dispara. -->
+                     dos '__' en una misma expresión hacen que Thymeleaf tome lo del medio
+                     como preprocesado y el render explota con un ParseException. Con un
+                     solo par de guiones bajos no hay nada que abrir y cerrar. -->
                 <li th:each="c : ${panel.enCurso()}" class="home__clase"
                     th:classappend="'home__clase--' + (${c.marcada()} ? 'ok' : 'falta')">
                     <span class="home__clase-hora"
@@ -74,6 +97,16 @@
                     </span>
                 </li>
             </ul>
+
+            <!-- Con clases en curso, la próxima va al pie y en una línea: es un dato de
+                 contexto, no una lista para recorrer. -->
+            <p class="home__sigue"
+               th:if="${panel.hayProximas() and !panel.sinClasesAhora()}"
+               th:with="p=${panel.proximas()[0]}">
+                Lo que sigue:
+                <strong th:text="${#temporals.format(p.horaInicio(), 'HH:mm')} + ' '
+                               + ${p.docenteNombre()} + ' · ' + ${p.comisionCodigo()}">14:00 Docente · COM</strong>
+            </p>
         </div>
 
         <!-- ============ EL DIA EN NUMEROS ============ -->
@@ -84,7 +117,8 @@
                 Hoy no hay clases programadas.
             </p>
 
-            <div th:unless="${panel.resumen().sinClasesHoy()}">
+            <div th:unless="${panel.resumen().sinClasesHoy()}"
+                 style="display:flex;flex-direction:column;flex:1">
                 <!-- Cada número lleva al listado YA filtrado por ese estado: eso es lo que
                      lo diferencia de poner un acceso más al menú. -->
                 <div class="home__numeros">
@@ -143,6 +177,7 @@
                             <strong th:text="${p.titulo()}">Título</strong>
                             <span class="text-muted" th:text="${p.detalle()}">Detalle</span>
                         </span>
+                        <svg th:replace="~{layout/iconos :: flechaDer}"></svg>
                     </a>
                 </li>
             </ul>

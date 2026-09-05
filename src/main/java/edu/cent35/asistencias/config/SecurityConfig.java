@@ -36,7 +36,13 @@ public class SecurityConfig {
                 // (ADR-0010).
                 .requestMatchers("/login", "/recuperar/**", "/alta-institucion/**",
                                  "/alta-institucion",
-                                 "/css/**", "/js/**", "/img/**",
+                                 // /fonts/** va con el resto de lo estatico. Sin esta linea
+                                 // la peticion de cada .woff2 cae en anyRequest().authenticated()
+                                 // y se responde con la redireccion al login: el navegador
+                                 // recibe HTML donde esperaba una fuente, @font-face falla y la
+                                 // aplicacion vuelve a la tipografia del sistema sin decir por
+                                 // que. Cuesta de encontrar porque no rompe nada visible.
+                                 "/css/**", "/js/**", "/img/**", "/fonts/**",
                                  "/webjars/**", "/actuator/health").permitAll()
                 .anyRequest().authenticated()
             )

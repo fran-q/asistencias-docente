@@ -36,6 +36,28 @@
                     </small>
                 </dd>
             </dl>
+
+            <!--
+              Cerrar sesion vive aca y no en la barra.
+
+              Antes era un boton fijo en el rincon superior derecho: la unica accion
+              permanente de toda la aplicacion, y encima al borde de la pantalla, que en
+              el celular es donde cae el pulgar al agarrar el telefono. Salir sin querer
+              no rompe nada, pero en medio de una jornada de asistencia obliga a volver a
+              entrar, y el pase de asistencia se toma con la clase esperando.
+
+              Va en esta tarjeta y no al final de la pantalla porque abajo estan el
+              cambio de contrasena y la verificacion del correo: dejarlo despues de todo
+              eso obligaria a scrollear un formulario largo para hacer algo de un solo
+              click. Aca queda apenas debajo de los datos de la cuenta, que es lo primero
+              que se ve al entrar.
+            -->
+            <div class="form-actions">
+                <form th:action="@{/logout}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn--ghost"
+                            data-texto-enviando="Saliendo...">Cerrar sesión</button>
+                </form>
+            </div>
         </div>
 
         <!-- Todo lo que sigue solo tiene sentido mientras el correo no este confirmado. -->

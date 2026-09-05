@@ -1,4 +1,37 @@
 <!DOCTYPE html>
+<!--
+  Listado de docentes.
+
+  Es el listado de referencia: los cuatro catálogos (docentes, materias,
+  comisiones, horarios) comparten esta estructura, así que lo que se cambie acá
+  se replica igual en los otros tres.
+
+  Qué se agregó respecto de la versión anterior, y por qué:
+
+    · data-ordenable + data-orden en los <th>. Ordena en el navegador. En un
+      catálogo el listado completo ya vino en la página, así que ir al servidor
+      por otro orden sería un viaje para reacomodar filas que ya están acá.
+      Los listados que paginan por servidor (Asistencias, Reportes) NO lo usan:
+      ordenar sólo la página visible da un orden que parece global y no lo es.
+
+    · table--acciones-fijas. La columna de acciones queda pegada a la derecha
+      mientras la tabla se desplaza. Antes se iba de la vista justo cuando uno
+      terminaba de leer la fila, y había que volver de costado para llegar al
+      botón de la fila que ya había elegido.
+
+    · Selector de densidad. Las mismas pantallas se usan para revisar treinta
+      docentes de corrido y para corregir uno; un solo alto de fila sirve bien
+      para una de las dos cosas. La elección se guarda.
+
+    · Columna de correo y avatar con iniciales. El correo estaba sólo en la ficha,
+      así que para saber a quién escribirle había que entrar de a uno. El avatar
+      no decora: da un ancla visual para no equivocarse de fila en una tabla de
+      filas iguales.
+
+  El resto —el filtro que arranca en "activos", los dos botones distintos según
+  se pueda o no dar de baja, el modal con la fecha— es el mismo de antes y sigue
+  igual.
+-->
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -15,64 +48,130 @@
                     modelo facial para el reconocimiento automático.
                 </p>
             </div>
-            <a th:href="@{/docentes/nuevo}" class="btn btn--primary">+ Nuevo docente</a>
+            <a th:href="@{/docentes/nuevo}" class="btn btn--primary">
+                <svg th:replace="~{layout/iconos :: mas}"></svg>
+                <span>Nuevo docente</span>
+            </a>
         </header>
 
         <div class="filtro" data-filtro-tabla="#tabla-docentes">
-            <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
-                   placeholder="Buscar por DNI, legajo, nombre o correo..." autocomplete="off">
-            <select class="filtro__estado" aria-label="Filtrar por estado">
-                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
-                     ahi porque hay historial colgando de el, pero no es algo con lo que se
-                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
-                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+            <div class="filtro__buscador">
+                <svg th:replace="~{layout/iconos :: lupa}"></svg>
+                <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
+                       placeholder="Buscar por DNI, legajo, nombre o correo..." autocomplete="off">
+            </div>
+
+            <!-- data-menu: el desplegable nativo lo dibuja el sistema operativo y no se puede
+                 estilar. select-menu.js lo reemplaza por el mismo desplegable que usa el
+                 resto de la app, dejando este select oculto como el que de verdad vale. -->
+            <select class="filtro__estado" data-menu aria-label="Filtrar por estado">
+                <!-- Arranca en "activos". Un registro inactivo es un borrado lógico: sigue
+                     ahí porque hay historial colgando de él, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacía que el listado creciera con cosas
+                     que ya nadie usa y que el día a día tiene que saltear. -->
                 <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+
+            <div class="segmentado" role="group" aria-label="Densidad de la tabla">
+                <button type="button" class="segmentado__opcion" data-densidad="compacta"
+                        title="Densidad compacta" aria-label="Densidad compacta">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </button>
+                <button type="button" class="segmentado__opcion" data-densidad="equilibrada"
+                        title="Densidad equilibrada" aria-label="Densidad equilibrada">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                </button>
+                <button type="button" class="segmentado__opcion" data-densidad="amplia"
+                        title="Densidad amplia" aria-label="Densidad amplia">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 8h16M4 16h16"/>
+                    </svg>
+                </button>
+            </div>
+
             <span class="filtro__resultado"></span>
         </div>
 
         <div class="card card--no-padding">
             <div class="table-wrap">
-                <table class="table table--tarjetas" id="tabla-docentes" role="table">
+                <table class="table table--tarjetas table--acciones-fijas" id="tabla-docentes"
+                       data-ordenable role="table">
                     <thead role="rowgroup">
                         <tr role="row">
-                            <th role="columnheader">DNI</th>
-                            <th role="columnheader">Legajo</th>
-                            <th role="columnheader">Apellido, Nombre</th>
-                            <th role="columnheader">Estado</th>
+                            <th role="columnheader" data-orden="texto">DNI</th>
+                            <th role="columnheader" data-orden="texto">Legajo</th>
+                            <th role="columnheader" data-orden="texto">Apellido, Nombre</th>
+                            <th role="columnheader">Correo</th>
+                            <th role="columnheader" data-orden="texto">Estado</th>
                             <th role="columnheader" class="table__actions">Acciones</th>
                         </tr>
                     </thead>
                     <tbody role="rowgroup">
-                        <tr th:each="d : ${docentes}" data-fila th:attr="data-estado=${d.activo} ? 'activo' : 'inactivo'"
+                        <tr th:each="d : ${docentes}" data-fila
+                            th:attr="data-estado=${d.activo} ? 'activo' : 'inactivo'"
                             th:classappend="${!d.activo} ? 'row--inactive'" role="row">
+
                             <td role="cell" data-label="DNI"><code th:text="${d.dni}">DNI</code></td>
+
                             <td role="cell" data-label="Legajo">
                                 <code th:if="${d.legajo}" th:text="${d.legajo}">L</code>
-                                <span th:unless="${d.legajo}" class="text-muted">—</span>
+                                <span th:unless="${d.legajo}" class="text-dim">—</span>
                             </td>
-                            <td role="cell" data-label="Docente" th:text="${d.nombreCompleto}">Apellido, Nombre</td>
-                            <td role="cell" data-label="Estado">
-                                <span th:if="${d.activo}"   class="badge badge--success">Activo</span>
+
+                            <!-- data-valor: la celda muestra el avatar y el nombre, pero se
+                                 ordena por el nombre solo. Sin esto, el orden tomaría también
+                                 las iniciales del avatar. -->
+                            <td role="cell" data-label="Docente" th:attr="data-valor=${d.nombreCompleto}">
+                                <span class="celda-nombre">
+                                    <!-- Las iniciales las arma Persona.getIniciales(). El
+                                         DTO del listado no expone nombre y apellido por
+                                         separado --solo el compuesto-- y recortarlo daria las
+                                         dos primeras letras del apellido, no las iniciales. -->
+                                    <span class="avatar avatar--tabla" aria-hidden="true"
+                                          th:text="${d.iniciales}">MG</span>
+                                    <span th:text="${d.nombreCompleto}">Apellido, Nombre</span>
+                                </span>
+                            </td>
+
+                            <td role="cell" data-label="Correo">
+                                <span th:if="${d.email}" class="text-muted celda-recortada"
+                                      th:text="${d.email}" th:title="${d.email}">a@b.c</span>
+                                <span th:unless="${d.email}" class="text-dim">—</span>
+                            </td>
+
+                            <td role="cell" data-label="Estado"
+                                th:attr="data-valor=${d.activo} ? '0' : '1'">
+                                <span th:if="${d.activo}"     class="badge badge--success">Activo</span>
                                 <span th:unless="${d.activo}" class="badge badge--danger">Inactivo</span>
                             </td>
+
                             <td role="cell" class="table__actions">
-                                <!-- Un solo boton hacia la ficha de edicion. La ficha completa
+                                <!-- Un solo botón hacia la ficha de edición. La ficha completa
                                      (datos personales y derechos ARCO) y el modelo facial viven
                                      adentro: son operaciones sobre UNA persona, y conviene tener
-                                     a la vista de quien se trata antes de tocarlas. -->
+                                     a la vista de quién se trata antes de tocarlas. -->
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
 
-                                <!--
-                                  Dos botones distintos segun se pueda o no dar de baja.
+                                <a th:href="@{/docentes/{id}/ficha(id=${d.id})}"
+                                   class="btn btn--ghost btn--sm">Ficha</a>
 
-                                  Cuando NO se puede --es titular de materias o esta asignado a
-                                  comisiones-- el boton avisa de una vez, sin abrir el cuadro de
-                                  confirmacion. Confirmar algo que va a fallar es pedirle a
-                                  alguien que decida sobre una operacion imposible: antes eran
+                                <!--
+                                  Dos botones distintos según se pueda o no dar de baja.
+
+                                  Cuando NO se puede —es titular de materias o está asignado a
+                                  comisiones— el botón avisa de una vez, sin abrir el cuadro de
+                                  confirmación. Confirmar algo que va a fallar es pedirle a
+                                  alguien que decida sobre una operación imposible: antes eran
                                   tres pasos (abrir, elegir fecha, enviar) para llegar a un "no".
                                 -->
                                 <button th:if="${d.activo and d.motivoQueImpideLaBaja != null}"
@@ -81,9 +180,9 @@
                                         data-aviso-toast
                                         th:data-aviso-toast="${d.motivoQueImpideLaBaja}">Dar de baja</button>
 
-                                <!-- Y cuando SI se puede, el cuadro con la fecha. Se pide porque
-                                     la baja suele cargarse dias despues del hecho: forzar "hoy"
-                                     falsearia el registro. El rango la acota entre el alta y hoy. -->
+                                <!-- Y cuando SÍ se puede, el cuadro con la fecha. Se pide porque
+                                     la baja suele cargarse días después del hecho: forzar "hoy"
+                                     falsearía el registro. El rango la acota entre el alta y hoy. -->
                                 <form th:if="${d.activo and d.motivoQueImpideLaBaja == null}"
                                       th:action="@{/docentes/{id}/baja(id=${d.id})}" method="post"
                                       class="inline-form"
@@ -96,25 +195,46 @@
                                       th:data-confirm-date-value="${hoy}"
                                       th:data-confirm-date-min="${d.fechaAlta}"
                                       th:data-confirm-date-max="${hoy}">
-                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger" data-texto-enviando="Dando de baja...">Dar de baja</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger"
+                                            data-texto-enviando="Dando de baja...">Dar de baja</button>
                                 </form>
 
                                 <form th:unless="${d.activo}"
                                       th:action="@{/docentes/{id}/alta(id=${d.id})}" method="post"
                                       class="inline-form">
-                                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Reactivando...">Reactivar</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm"
+                                            data-texto-enviando="Reactivando...">Reactivar</button>
                                 </form>
                             </td>
                         </tr>
+
+                        <!-- Estado vacío del filtro. Con un icono y una salida concreta: un
+                             "no hay resultados" a secas deja a la persona sin saber si escribió
+                             mal, si el filtro de estado está escondiendo la fila, o si el
+                             registro no existe. -->
                         <tr class="table__empty-fila" hidden role="row">
-                            <td role="cell" colspan="5" class="table__empty">
-                                Ningún docente coincide con la búsqueda.
+                            <td role="cell" colspan="6" class="table__empty">
+                                <svg th:replace="~{layout/iconos :: lupa}"
+                                     width="34" height="34" stroke-width="1.4"></svg>
+                                <strong>Ningún docente coincide con la búsqueda</strong>
+                                Probá con otro DNI, legajo o apellido, o cambiá el filtro de estado.
                             </td>
                         </tr>
+
+                        <!-- Estado vacío de verdad: no hay ni un registro cargado. -->
                         <tr th:if="${#lists.isEmpty(docentes)}" role="row">
-                            <td role="cell" colspan="5" class="table__empty">
-                                Todavía no cargaste ningún docente.
-                                <a th:href="@{/docentes/nuevo}">Creá el primero</a>.
+                            <td role="cell" colspan="6" class="table__empty">
+                                <svg th:replace="~{layout/iconos :: docente}"
+                                     width="34" height="34" stroke-width="1.4"></svg>
+                                <strong>Todavía no cargaste ningún docente</strong>
+                                Los docentes son la base del resto del sistema: sin ellos no se
+                                pueden asignar comisiones ni tomar asistencia.
+                                <p style="margin:var(--space) 0 0">
+                                    <a th:href="@{/docentes/nuevo}" class="btn btn--primary">
+                                        <svg th:replace="~{layout/iconos :: mas}"></svg>
+                                        <span>Cargar el primero</span>
+                                    </a>
+                                </p>
                             </td>
                         </tr>
                     </tbody>

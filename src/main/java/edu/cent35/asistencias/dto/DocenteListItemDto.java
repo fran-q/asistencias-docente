@@ -19,6 +19,10 @@ public class DocenteListItemDto {
     String dni;
     String legajo;
     String nombreCompleto;
+    // Las dos letras del avatar del listado. Se resuelven en Persona y no en la plantilla:
+    // desde el template solo se ve "Apellido, Nombre", y recortarlo daria las dos primeras
+    // del apellido en lugar de las iniciales.
+    String iniciales;
     String email;
     String telefono;
     LocalDate fechaAlta;
@@ -49,6 +53,7 @@ public class DocenteListItemDto {
             .dni(p.getDni())
             .legajo(d.getLegajo())
             .nombreCompleto(p.getNombreCompleto())
+            .iniciales(p.getIniciales())
             .email(p.getEmail())
             .telefono(p.getTelefono())
             .fechaAlta(d.getFechaAlta())

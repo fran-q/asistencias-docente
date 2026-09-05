@@ -257,6 +257,38 @@ class AltaInstitucionIT {
         assertThat(institucionRepository.count()).isZero();
     }
 
+    /**
+     * La pantalla del código manda el valor por un campo oculto.
+     *
+     * <p>Se tipea en seis casillas y ninguna de las seis tiene {@code name}: son de la
+     * interfaz, no del formulario. Lo que viaja es un {@code <input type="hidden"
+     * name="codigo">} que un script mantiene sincronizado con lo que se escribe.
+     *
+     * <p>Es un contrato frágil y silencioso: si al campo oculto le falta el name, o si
+     * cambia el nombre del parámetro, el formulario se envía igual y el servidor recibe un
+     * código vacío. No hay error en ningún lado, sólo un alta que nunca se confirma.
+     */
+    @Test
+    @DisplayName("La pantalla del código manda el valor por el campo oculto")
+    void laPantallaDelCodigoMandaElCampoOculto() throws Exception {
+        MockHttpSession sesion = new MockHttpSession();
+        mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(sesion))
+            .andExpect(status().is3xxRedirection());
+
+        String html = mockMvc.perform(get("/alta-institucion/codigo").session(sesion))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("el campo oculto es el unico que el controlador lee")
+            .contains("type=\"hidden\"")
+            .contains("name=\"codigo\"")
+            .contains("data-codigo-valor");
+        assertThat(html)
+            .as("y el script que lo sincroniza tiene que estar cargado")
+            .contains("codigo-input.js");
+    }
+
     @Test
     @DisplayName("El código de una sesión no sirve en otra")
     void elCodigoNoCruzaDeSesion() throws Exception {

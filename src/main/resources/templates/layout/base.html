@@ -10,206 +10,230 @@
     <meta name="_csrf" th:content="${_csrf?.token}">
     <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <title th:replace="${title}">Visum</title>
-    <link rel="stylesheet" th:href="@{/css/main.css}">
+
     <!--
-      Tema (RNF-22). Va inline y ANTES de la hoja de estilos a proposito: cargado con
-      defer, la pagina alcanzaba a pintarse oscura y despues saltaba a claro. Si nunca
-      se eligio, se respeta la preferencia del sistema operativo.
+      Preferencias de interfaz, aplicadas ANTES de la hoja de estilos.
+
+      Va inline y acá arriba a propósito. Cargado con defer, la página alcanzaba
+      a pintarse oscura y después saltaba a claro; con la barra lateral pasa lo
+      mismo pero peor, porque el salto mueve todo el contenido de lugar.
+
+      Los tres valores viven en <html> como data-*, así que el CSS los lee sin
+      que ninguna clase tenga que estar puesta en el <body>. Si nunca se eligió
+      tema, se respeta la preferencia del sistema operativo.
+
+      Nada de esto mide el ancho de la pantalla: el cajón y el modo colapsado se
+      resuelven por media query, así que no hay ninguna carrera contra el paint
+      como la que había con navbar.js.
     -->
     <script>
         (function () {
-            var t = null;
-            try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
-            if (!t) {
-                t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+            var raiz = document.documentElement;
+            function leer(clave) {
+                try { return localStorage.getItem(clave); } catch (e) { return null; }  /* modo privado */
+            }
+
+            var tema = leer('tema');
+            if (!tema) {
+                tema = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
                     ? 'claro' : 'oscuro';
             }
-            document.documentElement.setAttribute('data-tema', t);
+            raiz.setAttribute('data-tema', tema);
+            raiz.setAttribute('data-densidad', leer('densidad') || 'equilibrada');
+            raiz.setAttribute('data-lateral', leer('lateral') || 'abierto');
+            raiz.setAttribute('data-cajon', 'cerrado');
         })();
     </script>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
 </head>
 <body>
-    <!-- Primer elemento tabulable de la pagina: salta el menu completo. -->
+    <!-- Primer elemento tabulable de la página: salta el menú completo. -->
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
 
-    <!--
-      Suprime las transiciones del navbar durante la carga, para que el modo que
-      se aplique enseguida no se vea "deslizando". navbar.js lo quita tras el
-      primer frame y a partir de ahí las interacciones sí animan.
+    <div class="app">
 
-      El modo (hamburguesa vs. links completos) NO se decide acá: hace falta que
-      el navbar exista para poder medirlo, así que eso ocurre en el script que va
-      inmediatamente después del <header>.
-    -->
-    <script>
-        document.body.classList.add('nav-preload');
-    </script>
+        <!-- Velo del cajón en pantallas chicas. Sólo se ve en modo cajón. -->
+        <div class="lateral__velo" data-cerrar-cajon aria-hidden="true"></div>
 
-    <!-- ============ NAVBAR ============ -->
-    <header class="navbar">
-        <!-- Hamburguesa: visible en pantallas chicas (<=900px), oculta en desktop -->
-        <button type="button" class="navbar__toggle"
-                aria-label="Abrir menú"
-                aria-controls="navbar-menu"
-                aria-expanded="false"
-                sec:authorize="isAuthenticated()">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                 stroke-linejoin="round" aria-hidden="true">
-                <line x1="3" y1="6"  x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-            </svg>
-        </button>
+        <!-- ============ BARRA LATERAL ============
+             Los doce destinos a la vista, agrupados por lo que la persona viene
+             a hacer: preparar el cursado (Académico), tomar y consultar
+             asistencia (Asistencias), administrar quiénes participan (Personal).
 
-        <div class="navbar__brand">
-            <a th:href="@{/}" aria-label="Visum, ir al inicio">
-                <span class="navbar__logo" aria-hidden="true">V</span>
-                <span class="navbar__title">Visum</span>
-            </a>
-        </div>
-
-        <!-- Navegacion agrupada por lo que la persona viene a hacer, no por el orden en
-             que se construyeron los modulos: preparar el cursado (Academico), tomar y
-             consultar asistencia (Asistencias), administrar quienes participan (Personal).
-             Con doce enlaces sueltos la barra ya no entraba y todos pesaban igual. -->
-        <nav class="navbar__menu" id="navbar-menu" sec:authorize="isAuthenticated()">
-
-            <a th:href="@{/}" class="navbar__link">
-                <svg th:replace="~{layout/iconos :: casa}"></svg>
-                <span>Inicio</span>
+             A diferencia del navbar anterior, los grupos NO se despliegan: son
+             títulos de sección con sus enlaces debajo. Hay alto de sobra y
+             esconder los enlaces detrás de un segundo clic sólo agregaba un
+             paso a algo que se hace todo el día.
+        -->
+        <aside class="lateral" id="lateral">
+            <a class="lateral__marca" th:href="@{/}" aria-label="Visum, ir al inicio">
+                <span class="lateral__logo" aria-hidden="true">V</span>
+                <span class="lateral__texto">Visum</span>
             </a>
 
-            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <a class="navbar__grupo-boton" aria-expanded="false"
-                   th:href="@{__${destinoAcademico}__}">
-                    <svg th:replace="~{layout/iconos :: libro}"></svg>
-                    <span>Académico</span>
-                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
-                </a>
-                <div class="navbar__submenu">
-                    <a th:href="@{/carreras}"   class="navbar__sublink">Carreras</a>
-                    <a th:href="@{/materias}"   class="navbar__sublink">Materias</a>
-                    <a th:href="@{/comisiones}" class="navbar__sublink">Comisiones</a>
-                    <a th:href="@{/horarios}"   class="navbar__sublink">Horarios</a>
-                    <a th:href="@{/grilla}"     class="navbar__sublink">Grilla semanal</a>
-                </div>
-            </div>
+            <nav class="lateral__nav scroll-fino" id="lateral-nav" aria-label="Navegación principal"
+                 sec:authorize="isAuthenticated()">
 
-            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <a class="navbar__grupo-boton" aria-expanded="false"
-                   th:href="@{__${destinoAsistencia}__}">
-                    <svg th:replace="~{layout/iconos :: tilde}"></svg>
-                    <span>Asistencias</span>
-                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
+                <a th:href="@{/}" class="lateral__link">
+                    <svg th:replace="~{layout/iconos :: casa}"></svg>
+                    <span class="lateral__texto">Inicio</span>
                 </a>
-                <div class="navbar__submenu">
-                    <a th:href="@{/asistencia/pase}" class="navbar__sublink">Pase de asistencia</a>
-                    <a th:href="@{/asistencias}"     class="navbar__sublink">Listado del día</a>
-                    <a th:href="@{/reportes}"        class="navbar__sublink">Reportes</a>
-                </div>
-            </div>
 
-            <div class="navbar__grupo" sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
-                <a class="navbar__grupo-boton" aria-expanded="false"
-                   th:href="@{__${destinoPersonal}__}">
-                    <svg th:replace="~{layout/iconos :: personas}"></svg>
-                    <span>Personal</span>
-                    <svg th:replace="~{layout/iconos :: flecha}"></svg>
-                </a>
-                <div class="navbar__submenu">
-                    <a th:href="@{/docentes}" class="navbar__sublink">Docentes</a>
-                    <a th:href="@{/usuarios}" class="navbar__sublink"
-                       sec:authorize="hasRole('INSTITUCION')">Usuarios del sistema</a>
-                    <a th:href="@{/mi-institucion}" class="navbar__sublink"
-                       sec:authorize="hasRole('INSTITUCION')">Mi institución</a>
+                <th:block sec:authorize="hasAnyRole('INSTITUCION', 'ADMIN')">
+                    <p class="lateral__grupo">Académico</p>
+
+                    <a th:href="@{/carreras}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: libro}"></svg>
+                        <span class="lateral__texto">Carreras</span>
+                    </a>
+                    <a th:href="@{/materias}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: materia}"></svg>
+                        <span class="lateral__texto">Materias</span>
+                    </a>
+                    <a th:href="@{/comisiones}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: personas}"></svg>
+                        <span class="lateral__texto">Comisiones</span>
+                    </a>
+                    <a th:href="@{/horarios}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: reloj}"></svg>
+                        <span class="lateral__texto">Horarios</span>
+                    </a>
+                    <a th:href="@{/grilla}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                        <span class="lateral__texto">Grilla semanal</span>
+                    </a>
+
+                    <p class="lateral__grupo">Asistencias</p>
+
+                    <a th:href="@{/asistencia/pase}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: rostro}"></svg>
+                        <span class="lateral__texto">Pase de asistencia</span>
+                    </a>
+                    <a th:href="@{/asistencias}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: lista}"></svg>
+                        <span class="lateral__texto">Listado del día</span>
+                    </a>
+                    <a th:href="@{/reportes}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: grafico}"></svg>
+                        <span class="lateral__texto">Reportes</span>
+                    </a>
+
+                    <p class="lateral__grupo">Personal</p>
+
+                    <a th:href="@{/docentes}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: docente}"></svg>
+                        <span class="lateral__texto">Docentes</span>
+                    </a>
+                    <a th:href="@{/usuarios}" class="lateral__link" sec:authorize="hasRole('INSTITUCION')">
+                        <svg th:replace="~{layout/iconos :: monitor}"></svg>
+                        <span class="lateral__texto">Usuarios del sistema</span>
+                    </a>
+                    <a th:href="@{/mi-institucion}" class="lateral__link" sec:authorize="hasRole('INSTITUCION')">
+                        <svg th:replace="~{layout/iconos :: edificio}"></svg>
+                        <span class="lateral__texto">Mi institución</span>
+                    </a>
                     <!-- Va en Personal y no en Asistencias aunque habilite el pase: lo que se
                          administra acá es la configuración del establecimiento, igual que Mi
                          institución, y no algo que se haga durante una clase. -->
-                    <a th:href="@{/puestos}" class="navbar__sublink"
-                       sec:authorize="hasRole('INSTITUCION')">Puestos de captura</a>
-                </div>
+                    <a th:href="@{/puestos}" class="lateral__link" sec:authorize="hasRole('INSTITUCION')">
+                        <svg th:replace="~{layout/iconos :: puesto}"></svg>
+                        <span class="lateral__texto">Puestos de captura</span>
+                    </a>
+                </th:block>
+            </nav>
+
+            <div class="lateral__pie" sec:authorize="isAuthenticated()">
+                <button type="button" class="lateral__colapsar" id="lateral-colapsar"
+                        aria-controls="lateral" aria-expanded="true">
+                    <svg th:replace="~{layout/iconos :: panel}"></svg>
+                    <span class="lateral__texto">Colapsar menú</span>
+                </button>
             </div>
-        </nav>
+        </aside>
 
-        <div class="navbar__user" sec:authorize="isAuthenticated()">
-            <button type="button" id="tema-toggle" class="tema-toggle"
-                    aria-label="Cambiar entre modo claro y oscuro" title="Cambiar de tema">
-                <svg class="tema-toggle__sol" viewBox="0 0 24 24" width="18" height="18"
-                     fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="12" cy="12" r="4"/>
-                    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
-                </svg>
-                <svg class="tema-toggle__luna" viewBox="0 0 24 24" width="18" height="18"
-                     fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
-                </svg>
-            </button>
-            <a th:href="@{/mi-cuenta}" class="navbar__username" sec:authentication="name"></a>
-            <form th:action="@{/logout}" method="post" class="navbar__logout-form">
-                <button type="submit" class="btn btn--ghost">Salir</button>
-            </form>
+        <div class="app__col">
+
+            <!-- ============ BARRA SUPERIOR ============ -->
+            <header class="barra-sup">
+                <button type="button" class="btn-icono btn-icono--plano solo-movil"
+                        id="lateral-abrir" aria-label="Abrir menú"
+                        aria-controls="lateral" aria-expanded="false"
+                        sec:authorize="isAuthenticated()">
+                    <svg th:replace="~{layout/iconos :: menu}"></svg>
+                </button>
+
+                <!-- Acá va el buscador global del diseño, un <form> GET a /buscar. Queda
+                     afuera hasta que exista el endpoint: un campo que al apretar Enter
+                     lleva a una pantalla de error es peor que no tener buscador. El
+                     hueco lo absorbe .barra-sup__espacio, así que la barra no cambia.
+                     El fragmento "lupa" y la clase .barra-sup__buscar ya están. -->
+
+                <!-- Con la barra lateral afuera de la pantalla, en el celular no quedaba
+                     ninguna marca a la vista: la aplicación no decía en ningún lado cómo se
+                     llama. Va centrada en la barra por posición absoluta y no entre dos
+                     espaciadores, porque lo que tiene a cada lado mide distinto y el centro
+                     óptico terminaba corrido. -->
+                <a class="barra-sup__marca solo-movil" th:href="@{/}"
+                   aria-label="Visum, ir al inicio">
+                    <span class="barra-sup__logo" aria-hidden="true">V</span>
+                    <span>Visum</span>
+                </a>
+
+                <span class="barra-sup__espacio"></span>
+
+                <!-- Reloj. Es el dato que más se mira en una app de asistencia: si la
+                     clase empieza 8:00 y el reloj del sistema no está a la vista, no hay
+                     forma de saber si una marca entró tarde. -->
+                <span class="barra-sup__reloj ocultar-sm" id="reloj"
+                      aria-label="Hora actual" sec:authorize="isAuthenticated()">--:--</span>
+
+                <button type="button" id="tema-toggle" class="btn-icono"
+                        aria-label="Cambiar entre modo claro y oscuro" title="Cambiar de tema">
+                    <!-- Las clases tema-toggle__sol / __luna van dentro de los fragmentos:
+                         th:replace descarta los atributos del placeholder. -->
+                    <svg th:replace="~{layout/iconos :: sol}"></svg>
+                    <svg th:replace="~{layout/iconos :: luna}"></svg>
+                </button>
+
+                <!-- El diseño traía acá un botón de logout al lado del usuario. Se saca a
+                     propósito: cerrar sesión vive dentro de "Mi cuenta", a un clic de este
+                     mismo enlace. Es la única acción que estaría permanente en todas las
+                     pantallas, pegada al borde, que en el celular es donde cae el pulgar;
+                     salir sin querer en medio de una jornada de asistencia obliga a volver
+                     a entrar con la clase esperando. El fragmento "salir" queda disponible
+                     por si se revierte. -->
+                <a th:href="@{/mi-cuenta}" class="barra-sup__usuario" title="Mi cuenta"
+                   sec:authorize="isAuthenticated()">
+                    <span class="avatar" aria-hidden="true"
+                          th:text="${#strings.toUpperCase(#strings.substring(#authentication.name, 0, 2))}">MG</span>
+                    <span class="ocultar-sm" sec:authentication="name">usuario</span>
+                </a>
+            </header>
+
+            <!-- ============ CONTENIDO ============ -->
+            <main class="container" id="contenido" tabindex="-1">
+
+                <!-- Migas de pan. Se arman en el navegador a partir de la URL y del mapa
+                     de rutas, igual que el resaltado del menú: pedirle a cada controlador
+                     que las publique sería repetir en veinte lugares algo que ya se puede
+                     deducir de la dirección.
+
+                     Los destinos de cada grupo viajan en data-* porque dependen del ROL, y
+                     el script corre en el navegador sin saber quién está logueado. -->
+                <nav class="migas" aria-label="Ruta de navegación" sec:authorize="isAuthenticated()"
+                     th:attr="data-academico=${destinoAcademico},
+                              data-asistencia=${destinoAsistencia},
+                              data-personal=${destinoPersonal}">
+                    <ol class="migas__lista" id="migas"></ol>
+                </nav>
+
+                <div th:replace="${content}">
+                    <p>Contenido por defecto</p>
+                </div>
+            </main>
         </div>
-    </header>
-
-    <!--
-      Modo del navbar, decidido ANTES del primer paint.
-
-      Por que va acá y no arriba. El modo se decide midiendo si los enlaces entran
-      en el ancho disponible, y para medir el navbar tiene que existir: acaba de
-      cerrarse el <header>, así que ya está en el DOM y todavía no se pintó nada.
-
-      Por que no lo hace navbar.js. Ese script va con defer, o sea que corre recién
-      en DOMContentLoaded, y el navegador puede pintar antes. Cuando gana el paint
-      --se midió: primer paint a 336 ms contra DOMContentLoaded a 366 ms-- la página
-      aparece un instante con el menú entero desplegado y después salta al drawer
-      cerrado. Es una carrera: a veces se ve y a veces no, y se ve más seguido en
-      máquinas lentas, que es donde peor queda.
-
-      Por que no alcanzaba con sessionStorage. La versión anterior guardaba el modo
-      de la navegación anterior y lo reponía acá arriba. Servía a partir de la
-      segunda página, pero no en la primera de la sesión --el valor todavía no
-      existe--, ni cuando quedó guardado el modo de una ventana ancha, ni en modo
-      privado. Medir no tiene ninguno de esos huecos.
-
-      El script es síncrono a propósito: bloquea el parseo unos milisegundos y a
-      cambio garantiza que lo primero que se pinta ya es el modo correcto.
-    -->
-    <script>
-        (function () {
-            var navbar = document.querySelector('.navbar');
-            // +1 de margen: scrollWidth y clientWidth pueden diferir por redondeo de
-            // subpixel aunque no haya nada que desbordar.
-            if (navbar && navbar.scrollWidth > navbar.clientWidth + 1) {
-                document.body.classList.add('nav-compact');
-            }
-        })();
-    </script>
-
-    <!-- Backdrop oscuro detras del drawer en pantallas chicas -->
-    <div class="navbar__backdrop" aria-hidden="true"></div>
-
-    <!-- ============ CONTENIDO ============ -->
-    <!-- Migas de pan. Se arman en el navegador a partir de la URL y del mapa de rutas,
-         igual que el resaltado del menu: pedirle a cada controlador que las publique
-         seria repetir en veinte lugares algo que ya se puede deducir de la direccion. -->
-    <!--
-      Los destinos de cada grupo viajan en data-* porque dependen del ROL, y el script
-      corre en el navegador sin saber quien esta logueado: para el ADMIN, Personal lleva
-      derecho a Docentes; para INSTITUCION, a la pantalla del grupo.
-    -->
-    <nav class="migas" aria-label="Ruta de navegación" sec:authorize="isAuthenticated()"
-         th:attr="data-academico=${destinoAcademico},
-                  data-asistencia=${destinoAsistencia},
-                  data-personal=${destinoPersonal}">
-        <ol class="migas__lista" id="migas"></ol>
-    </nav>
-
-    <main class="container" id="contenido" tabindex="-1">
-        <div th:replace="${content}">
-            <p>Contenido por defecto</p>
-        </div>
-    </main>
+    </div>
 
     <!-- ============ FLASH DATA + SCRIPTS ============ -->
     <div id="flash-data"
@@ -220,13 +244,17 @@
 
     <script th:src="@{/js/comun/migas.js}" defer></script>
     <script th:src="@{/js/comun/tema.js}" defer></script>
+    <script th:src="@{/js/comun/lateral.js}" defer></script>
+    <script th:src="@{/js/comun/reloj.js}" defer></script>
+    <script th:src="@{/js/comun/densidad.js}" defer></script>
+    <script th:src="@{/js/comun/tabla-orden.js}" defer></script>
     <script th:src="@{/js/comun/form-validacion.js}" defer></script>
     <script th:src="@{/js/comun/envio-form.js}" defer></script>
     <script th:src="@{/js/comun/toast.js}" defer></script>
     <script th:src="@{/js/comun/password-ui.js}" defer></script>
     <script th:src="@{/js/comun/table-scroll.js}" defer></script>
     <script th:src="@{/js/comun/confirm-modal.js}" defer></script>
-    <script th:src="@{/js/comun/navbar.js}" defer></script>
     <script th:src="@{/js/comun/filtro-tabla.js}" defer></script>
+<script th:src="@{/js/comun/select-menu.js}" defer></script>
 </body>
 </html>

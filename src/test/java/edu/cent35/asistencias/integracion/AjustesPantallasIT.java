@@ -171,7 +171,11 @@ class AjustesPantallasIT {
     void listadoMateriasMuestraAnio() throws Exception {
         mockMvc.perform(get("/materias").with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("<th>Año</th>")))
+            // ">Año</th>" y no "<th>Año</th>": los encabezados de los listados llevan
+            // data-orden para el orden por columna, así que fijar la etiqueta de apertura
+            // ata el test al marcado en vez de a lo que quiere comprobar, que es que la
+            // columna esté y traiga el dato.
+            .andExpect(content().string(containsString(">Año</th>")))
             .andExpect(content().string(containsString("2°")));
     }
 
@@ -195,7 +199,11 @@ class AjustesPantallasIT {
     void listadoComisionesSinCupo() throws Exception {
         mockMvc.perform(get("/comisiones").with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
-            .andExpect(content().string(not(containsString("<th>Cupo</th>"))));
+            // Esta era la comprobación que MENOS se notaba que se había roto: al agregarle
+            // data-orden a los encabezados, un "<th>Cupo</th>" reaparecido se escribiría
+            // "<th data-orden=...>Cupo</th>" y esta línea seguiría pasando sin proteger nada.
+            // Una aserción negativa que deja de coincidir no falla: se vuelve muda.
+            .andExpect(content().string(not(containsString(">Cupo</th>"))));
     }
 
     // ========================================================================
@@ -517,20 +525,110 @@ class AjustesPantallasIT {
             .andExpect(status().isOk());
     }
 
+    /**
+     * La fecha del panel de inicio sale en castellano.
+     *
+     * <p>Es el único lugar de la aplicación donde Java formatea un nombre de día o de mes: el
+     * resto de las fechas van en dd/MM/yyyy, que no depende del idioma, y los días de la
+     * semana salen de la etiqueta del enum. Sin {@code spring.web.locale} el formato sigue al
+     * Accept-Language del navegador, así que en una máquina configurada en inglés el panel
+     * abre con "Friday 4 of September" en medio de una pantalla en castellano.
+     *
+     * <p>La petición manda Accept-Language en inglés a propósito: con el resolvedor por
+     * defecto ese encabezado gana, y el test tiene que fallar si alguien saca la propiedad.
+     */
+    @Test
+    @DisplayName("La fecha del inicio no sigue al idioma del navegador")
+    void laFechaDelInicioVaEnCastellano() throws Exception {
+        String html = mockMvc.perform(get("/")
+                        .header("Accept-Language", "en-US,en;q=0.9")
+                        .with(user(principal("INSTITUCION"))))
+            .andReturn().getResponse().getContentAsString();
+
+        String enCastellano = java.time.LocalDate.now()
+            .format(java.time.format.DateTimeFormatter
+                .ofPattern("EEEE d 'de' MMMM", new java.util.Locale("es", "AR")));
+
+        assertThat(html)
+            .as("el encabezado tiene que decir la fecha en castellano y no en el idioma pedido")
+            .contains(enCastellano);
+    }
+
+    /**
+     * El botón de tema sale con sus dos iconos marcados.
+     *
+     * <p>Parece un detalle y es una trampa de Thymeleaf: {@code th:replace} reemplaza el
+     * elemento COMPLETO, atributos incluidos, así que una clase escrita en el {@code <svg>}
+     * que invoca al fragmento se descarta al renderizar. Las clases tienen que estar dentro
+     * de los fragmentos {@code sol} y {@code luna} de {@code layout/iconos.html}.
+     *
+     * <p>Cuando faltan no falla nada: el HTML es válido, el botón existe y responde. Lo único
+     * que pasa es que las reglas que muestran uno y esconden el otro no enganchan con nada y
+     * el botón aparece con el sol y la luna a la vez, en los dos temas.
+     */
+    @Test
+    @DisplayName("El botón de tema renderiza sol y luna con su clase")
+    void elBotonDeTemaTraeSusDosIconosMarcados() throws Exception {
+        String html = mockMvc.perform(get("/").with(user(principal("INSTITUCION"))))
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("sin la clase en el SVG renderizado, el CSS no puede esconder ninguno de los dos")
+            .contains("class=\"tema-toggle__sol\"")
+            .contains("class=\"tema-toggle__luna\"");
+    }
+
+    /**
+     * El menú respeta el rol, comprobado en sus dos mitades.
+     *
+     * <p>Este test cambió de forma con la barra lateral. Antes el menú era un navbar de grupos
+     * desplegables y cada grupo era un enlace cuyo destino dependía del rol: para el ADMIN,
+     * Personal llevaba derecho a Docentes porque era su única pantalla del grupo; para
+     * INSTITUCIÓN, a {@code /personal}, donde puede elegir. Eso se comprobaba buscando esos
+     * dos href en el menú.
+     *
+     * <p>En la barra lateral los grupos ya no son enlaces: son títulos de sección con sus
+     * destinos listados debajo, todos a la vista. Así que buscar {@code /personal} en el menú
+     * ya no tiene sentido; el atajo al grupo no desapareció, se mudó a la miga de pan, que
+     * sigue leyendo los mismos {@code data-*} del servidor.
+     *
+     * <p>Se comprueban entonces las dos cosas que sí siguen siendo ciertas y que son lo que el
+     * test protegía: que el servidor calcula el destino según el rol, y que el menú no ofrece
+     * pantallas que el rol no puede abrir.
+     */
     @Test
     @DisplayName("El menú apunta a donde corresponde según el rol")
     void elMenuApuntaSegunElRol() throws Exception {
         String admin = mockMvc.perform(get("/").with(user(principal("ADMIN"))))
             .andReturn().getResponse().getContentAsString();
-        assertThat(admin)
-            .as("para el ADMIN, el grupo Personal tiene que llevar directo a Docentes")
-            .contains("href=\"/docentes\"");
-
         String inst = mockMvc.perform(get("/").with(user(principal("INSTITUCION"))))
             .andReturn().getResponse().getContentAsString();
+
+        // --- Destino del grupo, que la miga de pan usa para armar el atajo ---
+        assertThat(admin)
+            .as("para el ADMIN, el grupo Personal tiene que llevar directo a Docentes")
+            .contains("data-personal=\"/docentes\"");
         assertThat(inst)
             .as("para INSTITUCION, al grupo, que es donde puede elegir")
-            .contains("href=\"/personal\"");
+            .contains("data-personal=\"/personal\"");
+
+        // --- Lo que cada rol ve listado ---
+        assertThat(admin)
+            .as("Docentes es del ADMIN")
+            .contains("href=\"/docentes\"");
+        assertThat(admin)
+            .as("las tres pantallas de INSTITUCION no se le ofrecen al ADMIN: el menú no puede "
+                + "mostrar un destino que al abrirlo devuelve 403")
+            .doesNotContain("href=\"/usuarios\"")
+            .doesNotContain("href=\"/mi-institucion\"")
+            .doesNotContain("href=\"/puestos\"");
+
+        assertThat(inst)
+            .as("INSTITUCION las ve todas, sin pasar por una pantalla intermedia")
+            .contains("href=\"/docentes\"")
+            .contains("href=\"/usuarios\"")
+            .contains("href=\"/mi-institucion\"")
+            .contains("href=\"/puestos\"");
     }
 
     /**

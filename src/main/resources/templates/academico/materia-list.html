@@ -18,9 +18,15 @@
         </header>
 
         <div class="filtro" data-filtro-tabla="#tabla-materias">
-            <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
-                   placeholder="Buscar por código, nombre, carrera o titular..." autocomplete="off">
-            <select class="filtro__estado" aria-label="Filtrar por estado">
+            <div class="filtro__buscador">
+                <svg th:replace="~{layout/iconos :: lupa}"></svg>
+                <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
+                       placeholder="Buscar por código, nombre, carrera o titular..." autocomplete="off">
+            </div>
+            <!-- data-menu: el desplegable nativo lo dibuja el sistema operativo y no se
+                 puede estilar. select-menu.js lo reemplaza por el mismo desplegable que
+                 usa el resto de la app, dejando este select oculto como el que vale. -->
+            <select class="filtro__estado" data-menu aria-label="Filtrar por estado">
                 <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
                      ahi porque hay historial colgando de el, pero no es algo con lo que se
                      trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
@@ -29,20 +35,52 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+            <!-- Mismo selector de densidad que el listado de docentes. La preferencia es
+                 global --la guarda densidad.js-- pero el control conviene tenerlo en los
+                 cuatro catalogos, que es donde el alto de fila cambia algo. -->
+            <div class="segmentado" role="group" aria-label="Densidad de la tabla">
+                <button type="button" class="segmentado__opcion" data-densidad="compacta"
+                        title="Densidad compacta" aria-label="Densidad compacta">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </button>
+                <button type="button" class="segmentado__opcion" data-densidad="equilibrada"
+                        title="Densidad equilibrada" aria-label="Densidad equilibrada">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                </button>
+                <button type="button" class="segmentado__opcion" data-densidad="amplia"
+                        title="Densidad amplia" aria-label="Densidad amplia">
+                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
+                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
+                        <path d="M4 8h16M4 16h16"/>
+                    </svg>
+                </button>
+            </div>
+
             <span class="filtro__resultado"></span>
         </div>
 
         <div class="card card--no-padding">
             <div class="table-wrap">
-                <table class="table" id="tabla-materias">
+                <!-- data-ordenable: ordena en el navegador. En un catalogo el listado completo
+                     ya vino en la pagina, asi que ir al servidor por otro orden seria un viaje
+                     para reacomodar filas que ya estan aca. Asistencias y Reportes NO lo usan:
+                     filtran por servidor, y ordenar solo la pagina visible da un orden que
+                     parece global y no lo es. -->
+                <table class="table table--acciones-fijas" id="tabla-materias" data-ordenable>
                     <thead>
                         <tr>
-                            <th>Código</th>
-                            <th>Nombre</th>
-                            <th>Carrera</th>
-                            <th>Año</th>
-                            <th>Titular</th>
-                            <th>Estado</th>
+                            <th data-orden="texto">Código</th>
+                            <th data-orden="texto">Nombre</th>
+                            <th data-orden="texto">Carrera</th>
+                            <th data-orden="numero">Año</th>
+                            <th data-orden="texto">Titular</th>
+                            <th data-orden="texto">Estado</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
@@ -62,7 +100,9 @@
                                 <span th:unless="${m.titularNombre}" class="text-muted">— Sin asignar —</span>
                                 <span th:if="${m.titularNombre != null and !m.titularActivo}" class="badge badge--danger" style="margin-left:6px;">Titular inactivo</span>
                             </td>
-                            <td>
+                            <!-- data-valor: la celda muestra una insignia, y ordenarla por su texto
+                                 pondria "Activa" antes que "Inactiva" por alfabeto y no por estado. -->
+                            <td th:attr="data-valor=${m.activo} ? '0' : '1'">
                                 <span th:if="${m.activo}"   class="badge badge--success">Activa</span>
                                 <span th:unless="${m.activo}" class="badge badge--danger">Inactiva</span>
                             </td>

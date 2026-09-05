@@ -1,219 +1,283 @@
 /* =============================================================================
- *  main.css - Estilo base del Sistema de Asistencias
+ *  main.css — Sistema de Asistencias "Visum"
+ *  Rediseño visual v2. Reemplaza por completo la hoja anterior.
+ *
+ *  Qué se mantuvo y qué cambió
+ *  ---------------------------
+ *  Se conservan TODOS los nombres de clase de la hoja anterior, incluidos los
+ *  del navbar horizontal. Eso hace que la hoja sea un reemplazo directo: una
+ *  pantalla que no se migre sigue renderizando, sólo con el aspecto nuevo.
+ *
+ *  Lo que cambió de fondo:
+ *
+ *  1. Una escala de medidas única. Antes cada pantalla resolvía su propio alto
+ *     de control y su propio padding, así que dos cajas que debían medir igual
+ *     medían distinto. Ahora hay --h-ctl (alto de TODO control: input, select,
+ *     boton, botón de icono), --card-pad, --gap y --r*. Nada declara un alto o
+ *     un radio suelto.
+ *
+ *  2. Navegación lateral. El navbar horizontal se quedaba sin ancho con doce
+ *     enlaces y escondía la mitad detrás de desplegables. La barra lateral los
+ *     muestra todos, agrupados, y colapsa a iconos o a cajón según el ancho.
+ *     Las clases .navbar* siguen definidas para las pantallas sin migrar.
+ *
+ *  3. Densidad conmutable. --row-h y --cell-y salen de data-densidad en <html>,
+ *     así que la misma tabla sirve para revisar treinta filas o para leer una.
+ *
+ *  4. Tema claro y oscuro recalibrados. Los pares texto/fondo se volvieron a
+ *     medir; ninguno baja de 4.5:1, y los tintes de estado tienen su propio
+ *     color de texto por tema, que es donde la hoja anterior perdía contraste.
+ *
+ *  El tema lo decide data-tema en <html>, puesto por el script inline del
+ *  layout antes del primer paint. La densidad, data-densidad, igual.
  * ========================================================================== */
 
-:root {
-    /* Paleta - Dark mode */
-    --bg:           #1a1d23;
-    --bg-elev:      #242830;
-    --bg-elev-2:    #2c3038;
-    --text:         #e8eaed;
-    --text-muted:   #a0a4ab;
-    --primary:      #4a9eff;
-    --primary-hover:#2e75b6;
-    --accent:       #e87722;
-    --success:      #2e8b57;
-    --danger:       #e74c3c;
-    --danger-hover: #c0392b;
-    --warning:      #f39c12;
-    --border:       #353a45;
-    /* Fondo de la marca. No es --primary: ese azul esta elegido para texto sobre fondo
-       oscuro, y usado como fondo de la V blanca daba 2.75:1 --por debajo del minimo--.
-       Este llega a 4.8:1 y sirve como fondo. */
-    --marca-fondo:  #1f5fa8;
-
-    /* Sizing */
-    --radius-sm:    4px;
-    --radius:       6px;
-    --radius-lg:    10px;
-    --space-xs:     4px;
-    --space-sm:     8px;
-    --space:        16px;
-    --space-lg:     24px;
-    --space-xl:     32px;
-
-    /* Tipografia */
-    --font-sans:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-                    'Helvetica Neue', Arial, sans-serif;
-    --font-mono:    'Consolas', 'Cascadia Code', 'Fira Code', monospace;
-
-    /* ---- Escala de movimiento ----
-       Antes habia seis duraciones sueltas (0.15s, .15s, 0.2s, 0.22s, 0.25s, .3s) y
-       tres criterios de easing conviviendo. No se notaba una por una, pero hacia que
-       dos elementos vecinos respondieran a distinto ritmo. Tres escalones alcanzan:
-
-         rapido  respuesta directa al puntero (color, borde, elevacion)
-         base    algo aparece o desaparece en su lugar (toast, modal, submenu)
-         lento   algo recorre distancia o cambia de tamano (drawer, barra)
-
-       El easing es el mismo en todo: salida rapida y frenada larga, que es como se
-       lee "el sistema ya respondio" sin que el movimiento pida atencion. */
-    --t-rapido:     120ms;
-    --t-base:       180ms;
-    --t-lento:      260ms;
-    --ease:         cubic-bezier(0.22, 0.68, 0.28, 1);
-
-    /* ---- Paleta de la grilla horaria ----
-       Un color por dia. Estaban hardcodeados abajo, en las reglas de .grilla__item,
-       y tres de ellos repetian por casualidad el valor de --primary, --success y
-       --accent: al tocar un token la grilla se desincronizaba sin que nada avisara.
-       Aca quedan nombrados y el tema claro los puede corregir. */
-    --dia-lun:      #4a9eff;
-    --dia-mar:      #2e8b57;
-    --dia-mie:      #e87722;
-    --dia-jue:      #b86fdc;
-    --dia-vie:      #d63864;
-    --dia-sab:      #6c757d;
-    --dia-dom:      #4d4d6b;
-
-    /* ---- Estado sobre fondo tenido ----
-       Badges, alerts, toasts y feedback pintan texto de color sobre un tinte del
-       MISMO color. Ahi no sirve --success ni --danger: esos estan calibrados como
-       texto sobre el fondo de la pagina, y sobre su propio tinte se empastan.
-
-       Estaban resueltos con hex sueltos repartidos por la hoja (#6cdfa6, #ff8a7a,
-       #f7c26b...). Como eran valores fijos, el tema claro nunca los toco: el badge
-       ACTIVO quedaba en 2.58:1 y el de INSTITUCION en 1.69:1, ambos ilegibles.
-       Nombrados aca, cada tema define los suyos. */
-    --tinte-success:       rgba(46, 139, 87, 0.2);
-    --tinte-danger:        rgba(231, 76, 60, 0.2);
-    --tinte-warning:       rgba(243, 156, 18, 0.2);
-    --tinte-accent:        rgba(232, 119, 34, 0.2);
-    --tinte-info:          rgba(74, 144, 226, 0.2);
-    --tinte-neutral:       rgba(160, 164, 171, 0.18);
-
-    --sobre-tinte-success: #6cdfa6;
-    --sobre-tinte-danger:  #ff8a7a;
-    --sobre-tinte-warning: #f7c26b;
-    --sobre-tinte-accent:  #ffb37a;
-    --sobre-tinte-info:    #8bbcf0;
-    /* No reusa --text-muted: ese gris sobre el tinte neutro da 4.29:1 y se queda
-       corto. Subido lo justo para llegar a 4.99:1 sin dejar de leerse apagado. */
-    --sobre-tinte-neutral: #adb1b8;
-
-    /* Borde del mismo color que el tinte, un poco mas marcado, para alerts y
-       botones destructivos. El suave es para el fondo de hover, donde el tinte
-       normal ya seria demasiado. */
-    --borde-success:       rgba(46, 139, 87, 0.4);
-    --borde-danger:        rgba(231, 76, 60, 0.4);
-    --tinte-danger-suave:  rgba(231, 76, 60, 0.08);
+/* ============================================================================
+ *  TIPOGRAFÍA
+ *
+ *  IBM Plex Sans para texto y IBM Plex Mono para todo lo que es dato de
+ *  identidad o de reloj: DNI, legajo, horarios, CUIT, códigos de materia. Un
+ *  DNI en fuente proporcional se lee peor y se compara peor entre filas.
+ *
+ *  Self-hosted: los .woff2 van en src/main/resources/static/fonts/. Si todavía
+ *  no están, la pila de respaldo entra sola y la app se ve correcta con las
+ *  fuentes del sistema — no hay que apurar la descarga para poder desplegar.
+ * ========================================================================== */
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/IBMPlexSans-Regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/IBMPlexSans-Medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+    font-family: 'IBM Plex Sans';
+    src: url('/fonts/IBMPlexSans-SemiBold.woff2') format('woff2');
+    font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-Regular.woff2') format('woff2');
+    font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('/fonts/IBMPlexMono-Medium.woff2') format('woff2');
+    font-weight: 500; font-style: normal; font-display: swap;
 }
 
 /* ============================================================================
- *  MODO CLARO (RNF-22)
- *
- *  Solo redefine las variables de color: todo el resto de la hoja ya las usa, asi
- *  que no hace falta duplicar ninguna regla. El tema lo decide el atributo
- *  data-tema en <html>, que pone el propio navegador antes de pintar --por eso el
- *  script va inline en el <head> y no en un archivo aparte: cargado con defer, la
- *  pagina alcanzaba a dibujarse oscura y despues saltaba a claro.
- *
- *  Los colores no son los oscuros invertidos. En fondo claro el mismo azul y el
- *  mismo verde pierden contraste contra el blanco, asi que se bajaron hasta que
- *  cada par texto/fondo pasara 4.5:1.
+ *  TOKENS — TEMA OSCURO (por defecto)
+ * ========================================================================== */
+:root {
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 'Helvetica Neue', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Cascadia Code', 'Fira Code', monospace;
+
+    /* Superficies, de la página hacia arriba. Cuatro escalones y no dos: con
+       sólo bg y bg-elev, una tarjeta dentro de una tarjeta quedaba indistinta. */
+    --bg:            #0f1216;
+    --surface:       #161a20;
+    --surface-2:     #1d232b;
+    --surface-3:     #252d37;
+    --field:         #11151a;   /* fondo de input: más hundido que la tarjeta */
+
+    --border:        #282f39;
+    --border-strong: #3a444f;
+
+    --text:          #e6ecf3;
+    --text-muted:    #98a2b0;
+    --text-dim:      #6c7683;   /* etiquetas, migas, metadatos */
+
+    /* Dos azules y no uno: --primary es para TEXTO e iconos sobre fondo oscuro;
+       --primary-solid es fondo de botón, con blanco encima. El azul de texto
+       usado como fondo daba 2.7:1 contra el blanco. */
+    --primary:        #5fa8ff;
+    --primary-solid:  #2563eb;
+    --primary-solid-h:#1d4ed8;
+    --primary-tint:   rgba(95, 168, 255, .13);
+    --primary-ring:   rgba(95, 168, 255, .24);
+
+    /* Marca. Fondo del logo y del panel de la pantalla de acceso. */
+    --marca:    #1f5fa8;
+    --marca-2:  #12406f;
+
+    --success: #3fb27f;
+    --warning: #e0a83a;
+    --danger:  #f0685c;
+    --accent:  #e87722;
+
+    /* Estado sobre fondo teñido. El texto NUNCA es el color pleno: sobre su
+       propio tinte se empasta. Cada tema define su par tinte/texto. */
+    --t-success: rgba(63, 178, 127, .16);
+    --t-warning: rgba(224, 168, 58, .16);
+    --t-danger:  rgba(240, 104, 92, .15);
+    --t-info:    rgba(95, 168, 255, .14);
+    --t-neutral: rgba(152, 162, 176, .14);
+    --t-accent:  rgba(232, 119, 34, .16);
+
+    --on-success: #6ddfaa;
+    --on-warning: #f2c775;
+    --on-danger:  #ff9c92;
+    --on-info:    #8fc3ff;
+    --on-neutral: #adb6c2;
+    --on-accent:  #ffb37a;
+
+    --borde-success: rgba(63, 178, 127, .38);
+    --borde-danger:  rgba(240, 104, 92, .38);
+
+    /* Un color por día para la grilla. Llevan texto blanco encima, así que se
+       calibran como FONDO, no como texto. */
+    --dia-lun: #3b82f6;
+    --dia-mar: #0f9d76;
+    --dia-mie: #d97706;
+    --dia-jue: #8b5cf6;
+    --dia-vie: #db2777;
+    --dia-sab: #64748b;
+    --dia-dom: #4d4d6b;
+
+    /* Sombras por tema: en oscuro son un velo negro suave, en claro tienen que
+       ser más visibles para que una tarjeta se separe del fondo. */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .32);
+    --shadow-md: 0 6px 18px -4px rgba(0, 0, 0, .45);
+    --shadow-lg: 0 24px 56px -12px rgba(0, 0, 0, .62);
+    --scrim:     rgba(6, 9, 13, .66);
+
+    /* ---- Medidas ----
+       Un solo alto para todo control interactivo. Es lo que hace que un input,
+       un select, un botón y un botón de icono puestos en la misma fila queden
+       alineados sin corregir nada a mano. */
+    --h-ctl:   38px;
+    --h-ctl-sm:28px;
+
+    --r-sm: 6px;
+    --r:    9px;
+    --r-lg: 13px;
+    --r-xl: 18px;
+
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space:    16px;
+    --space-lg: 24px;
+    --space-xl: 32px;
+
+    --lateral-w:  266px;   /* barra lateral abierta */
+    --lateral-wc: 70px;    /* colapsada a iconos */
+    --barra-h:    58px;    /* barra superior */
+    --content-max:1320px;
+    --form-max:   780px;
+
+    /* ---- Densidad ----
+       La sobreescribe data-densidad. Afecta al alto de fila, al padding de las
+       tarjetas y al gap: si sólo cambiara el alto de fila, una tabla compacta
+       dentro de una tarjeta amplia se veía desbalanceada. */
+    --row-h:    46px;
+    --cell-y:   11px;
+    --card-pad: 20px;
+    --gap:      16px;
+
+    /* ---- Movimiento ----
+       Tres escalones. El easing es siempre el mismo: salida rápida y frenada
+       larga, que se lee como "el sistema ya respondió" sin pedir atención. */
+    --t-fast: 120ms;
+    --t-base: 200ms;
+    --t-slow: 300ms;
+    --ease:   cubic-bezier(.22, .68, .28, 1);
+
+    /* Columnas que cambian con el ancho. Se resuelven con media queries sobre
+       la variable y no repitiendo el layout: así una sola regla define la
+       estructura y la media query sólo dice cuántas columnas entran. */
+    --shell-cols: var(--lateral-w) minmax(0, 1fr);
+    --auth-cols:  1.02fr 1fr;
+    --panel-cols: repeat(auto-fit, minmax(320px, 1fr));
+    --form-cols:  1fr 1fr;
+}
+
+/* ============================================================================
+ *  TOKENS — TEMA CLARO
+ *  No son los oscuros invertidos: en fondo claro el mismo azul y el mismo verde
+ *  pierden contraste contra el blanco, así que cada uno se bajó hasta que su
+ *  par texto/fondo pasara 4.5:1.
  * ========================================================================== */
 :root[data-tema="claro"] {
-    --bg:           #f4f5f7;
-    --bg-elev:      #ffffff;
-    --bg-elev-2:    #eceef1;
-    --text:         #1c1f24;
-    --text-muted:   #5a6069;
-    --primary:      #1565c0;
-    --primary-hover:#0d47a1;
-    --accent:       #b85c10;
-    --success:      #1b6b3a;
-    --danger:       #b3261e;
-    --danger-hover: #8c1d16;
-    --warning:      #8a5a00;
-    --border:       #d4d8de;
-    --marca-fondo:  #10457f;
+    --bg:            #f5f6f8;
+    --surface:       #ffffff;
+    --surface-2:     #f2f4f7;
+    --surface-3:     #e8ecf1;
+    --field:         #fbfcfd;
 
-    /* Los bloques de la grilla llevan texto blanco encima, asi que el color es
-       fondo y no texto: los siete se bajaron hasta pasar 4.5:1 contra el blanco.
-       Con los valores del tema oscuro el lunes quedaba en 2.6:1 --el bloque se
-       leia como una mancha celeste-- y el sabado en 3.9:1. */
-    --dia-lun:      #1565c0;
-    --dia-mar:      #1b6b3a;
-    --dia-mie:      #b85c10;
-    --dia-jue:      #7b3fa0;
-    --dia-vie:      #a81f4a;
-    --dia-sab:      #4f565d;
-    --dia-dom:      #3d3d55;
+    --border:        #dde2e9;
+    --border-strong: #c3cad4;
 
-    /* Sobre fondo claro el tinte es casi blanco, asi que el texto va oscuro. Los
-       seis pares se midieron contra el tinte ya mezclado con el blanco de la
-       tarjeta, no contra el blanco puro, que es lo que ve el ojo:
-         success 5.36:1 · danger 5.20:1 · warning 4.73:1
-         accent  5.69:1 · info   4.68:1 · neutral 5.22:1
-       El acento no puede reusar --accent: #b85c10 sobre su propio tinte da 3.73:1
-       y no llega. Por eso este es el unico que define un valor propio. */
-    --tinte-success:       rgba(27, 107, 58, 0.16);
-    --tinte-danger:        rgba(179, 38, 30, 0.14);
-    --tinte-warning:       rgba(138, 90, 0, 0.16);
-    --tinte-accent:        rgba(184, 92, 16, 0.16);
-    --tinte-info:          rgba(21, 101, 192, 0.14);
-    --tinte-neutral:       rgba(90, 96, 105, 0.14);
+    --text:          #151a20;
+    --text-muted:    #5b6675;
+    --text-dim:      #7d8794;
 
-    --sobre-tinte-success: var(--success);
-    --sobre-tinte-danger:  var(--danger);
-    --sobre-tinte-warning: var(--warning);
-    --sobre-tinte-accent:  #8f4409;
-    --sobre-tinte-info:    var(--primary);
-    --sobre-tinte-neutral: var(--text-muted);
+    --primary:        #1257b8;
+    --primary-solid:  #1a5fd0;
+    --primary-solid-h:#12489f;
+    --primary-tint:   rgba(18, 87, 184, .09);
+    --primary-ring:   rgba(18, 87, 184, .20);
 
-    --borde-success:       rgba(27, 107, 58, 0.35);
-    --borde-danger:        rgba(179, 38, 30, 0.35);
-    --tinte-danger-suave:  rgba(179, 38, 30, 0.07);
+    --marca:   #14497f;
+    --marca-2: #0d3159;
+
+    --success: #12744a;
+    --warning: #8a5a08;
+    --danger:  #b3261e;
+    --accent:  #b85c10;
+
+    --t-success: rgba(18, 116, 74, .12);
+    --t-warning: rgba(138, 90, 8, .13);
+    --t-danger:  rgba(179, 38, 30, .11);
+    --t-info:    rgba(18, 87, 184, .10);
+    --t-neutral: rgba(91, 102, 117, .12);
+    --t-accent:  rgba(184, 92, 16, .13);
+
+    /* Sobre fondo claro el tinte es casi blanco, así que el texto va oscuro.
+       El acento no puede reusar --accent: sobre su propio tinte da 3.7:1. */
+    --on-success: #0f6440;
+    --on-warning: #79500a;
+    --on-danger:  #a3221b;
+    --on-info:    #12519f;
+    --on-neutral: #525d6b;
+    --on-accent:  #8f4409;
+
+    --borde-success: rgba(18, 116, 74, .32);
+    --borde-danger:  rgba(179, 38, 30, .30);
+
+    --dia-lun: #1a5fd0;
+    --dia-mar: #0b7355;
+    --dia-mie: #a85c07;
+    --dia-jue: #6d34c4;
+    --dia-vie: #b31d5f;
+    --dia-sab: #4d5866;
+    --dia-dom: #3d3d55;
+
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, .06);
+    --shadow-md: 0 8px 20px -6px rgba(16, 24, 40, .14);
+    --shadow-lg: 0 24px 56px -14px rgba(16, 24, 40, .22);
+    --scrim:     rgba(20, 28, 38, .42);
 }
 
-/* ============================================================================
- *  FOCO VISIBLE (WCAG 2.4.7)
- *
- *  Sin esto, quien navega con teclado no ve donde esta parado: los navegadores
- *  traen su propio anillo, pero se pierde en cuanto se declaran colores de
- *  fondo propios como los de esta app.
- *
- *  Se usa :focus-visible y no :focus para que el anillo aparezca al tabular
- *  pero no al hacer click con el mouse, que es ruido.
- * ========================================================================== */
-:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    border-radius: var(--radius-sm);
-}
+/* ---- Densidad, elegida por la persona y guardada en localStorage ---- */
+:root[data-densidad="compacta"] { --row-h: 37px; --cell-y: 7px;  --card-pad: 16px; --gap: 12px; }
+:root[data-densidad="amplia"]   { --row-h: 58px; --cell-y: 16px; --card-pad: 24px; --gap: 20px; }
 
-/* Enlace para saltar al contenido. Invisible hasta que se lo tabula: sin el,
-   llegar al contenido desde el teclado obliga a recorrer todo el menu en cada
-   pantalla. */
-.skip-link {
-    position: absolute;
-    left: -9999px;
-    top: 0;
-    z-index: 100;
-    padding: var(--space-sm) var(--space);
-    background: var(--primary);
-    color: #fff;
-    border-radius: 0 0 var(--radius) 0;
-}
-.skip-link:focus {
-    left: 0;
-    text-decoration: none;
-}
+/* ---- Barra lateral colapsada ---- */
+:root[data-lateral="cerrado"] { --lateral-w: var(--lateral-wc); }
+
+@media (max-width: 1000px) { :root { --shell-cols: minmax(0, 1fr); --form-cols: 1fr; } }
+@media (max-width: 860px)  { :root { --auth-cols: minmax(0, 1fr); } }
 
 /* ============================================================================
  *  MOVIMIENTO REDUCIDO (WCAG 2.3.3)
- *
- *  Quien pidio menos movimiento en su sistema operativo lo pidio por algo: para
- *  parte de las personas con trastorno vestibular una animacion de desplazamiento
- *  produce mareo real. La hoja ya respetaba el contraste y el foco, pero animaba
- *  igual para todos.
- *
- *  No se apaga el movimiento con display ni se quitan las reglas: se lo reduce a
- *  1ms. Asi las transiciones siguen EXISTIENDO --el codigo que espera un evento
- *  transitionend o animationend sigue recibiendolo, que es lo que se rompe cuando
- *  uno pone transition: none-- pero terminan antes de que el ojo las registre.
- *
- *  scroll-behavior va aparte porque no es ni transicion ni animacion.
+ *  No se apaga con display ni quitando reglas: se reduce a 1ms. Así las
+ *  transiciones siguen EXISTIENDO —el código que espera transitionend sigue
+ *  recibiéndolo— pero terminan antes de que el ojo las registre.
  * ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -224,503 +288,657 @@
     }
 }
 
-/* ========== Reset minimo ========== */
+/* ============================================================================
+ *  RESET Y BASE
+ * ========================================================================== */
 *, *::before, *::after { box-sizing: border-box; }
 
-/* El atributo hidden lo pone el navegador con display:none, pero esa regla viene de
-   la hoja del navegador y pierde contra cualquier display que declaremos nosotros.
-   Bastaba un `.btn { display: inline-block }` para que un boton marcado como hidden
-   se siguiera viendo. Se reafirma aca para que hidden signifique lo que dice. */
+/* hidden lo pone el navegador con display:none, pero esa regla viene de la hoja
+   del navegador y pierde contra cualquier display que declaremos nosotros. */
 [hidden] { display: none !important; }
 
-html, body {
+html {
+    background: var(--bg);
+    /* La barra de scroll y los controles nativos (date, select, checkbox) toman
+       de acá si son claros u oscuros. Sin esto, en tema claro el calendario del
+       input date seguía abriéndose negro. */
+    color-scheme: dark;
+}
+:root[data-tema="claro"] { color-scheme: light; }
+
+body {
     margin: 0;
     padding: 0;
-    background-color: var(--bg);
+    background: var(--bg);
     color: var(--text);
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-solid); text-decoration: underline; }
+
+h1, h2, h3 { margin-top: 0; line-height: 1.25; font-weight: 600; letter-spacing: -.015em; }
+h1 { font-size: 1.5rem;  margin-bottom: var(--space-sm); }
+h2 { font-size: .98rem;  margin-bottom: var(--space-sm); }
+h3 { font-size: .92rem;  margin-bottom: var(--space-xs); }
+
+code, kbd, samp {
+    font-family: var(--font-mono);
+    font-size: .86em;
+    padding: 2px 6px;
+    background: var(--surface-2);
+    border-radius: var(--r-sm);
+}
+
+/* Todo lo numérico con cifras de ancho fijo: una columna de horas o de minutos
+   no se puede comparar de un vistazo si los dígitos bailan. */
+.mono, code, .table td time { font-variant-numeric: tabular-nums; }
+
+input, select, button, textarea { font-family: inherit; }
+
+/* Foco visible sólo al tabular, no al hacer click (WCAG 2.4.7). */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: var(--r-sm); }
+
+::selection { background: var(--primary-ring); }
+
+/* Barra de scroll fina y del color del borde, para las cajas que scrollean
+   dentro de la página (tablas, cajón lateral, listas largas). */
+.scroll-fino { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.scroll-fino::-webkit-scrollbar       { width: 9px; height: 9px; }
+.scroll-fino::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9px;
+                                        border: 2px solid transparent; background-clip: content-box; }
+.scroll-fino::-webkit-scrollbar-track { background: transparent; }
+
+/* Enlace para saltar al contenido. Invisible hasta que se lo tabula. */
+.skip-link {
+    position: absolute; left: -9999px; top: 0; z-index: 200;
+    padding: var(--space-sm) var(--space);
+    background: var(--primary-solid); color: #fff;
+    border-radius: 0 0 var(--r) 0;
+}
+.skip-link:focus { left: 0; text-decoration: none; }
+
+.text-muted { color: var(--text-muted); }
+.text-dim   { color: var(--text-dim); }
+
+/* ============================================================================
+ *  ANIMACIONES
+ *  Todas cortas y todas de entrada. No hay ninguna en bucle salvo el disco de
+ *  "enviando" y el escáner del pase, que informan que algo está ocurriendo.
+ * ========================================================================== */
+@keyframes v-in       { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: none; } }
+@keyframes v-fade     { from { opacity: 0; } to { opacity: 1; } }
+@keyframes v-pop      { from { opacity: 0; transform: scale(.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes v-slide-in { from { opacity: 0; transform: translateX(22px); } to { opacity: 1; transform: none; } }
+@keyframes v-shimmer  { from { background-position: -460px 0; } to { background-position: 460px 0; } }
+@keyframes v-spin     { to { transform: rotate(360deg); } }
+@keyframes v-grow     { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes v-scan     { 0% { transform: translateY(-46%); opacity: 0; } 12% { opacity: 1; }
+                        88% { opacity: 1; } 100% { transform: translateY(46%); opacity: 0; } }
+@keyframes v-pulse    { 0% { box-shadow: 0 0 0 0 var(--primary-ring); }
+                        70% { box-shadow: 0 0 0 12px rgba(0,0,0,0); }
+                        100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
+
+/* Entrada escalonada de los bloques de una pantalla. El retardo lo pone la
+   posición, no el contenido: cualquier grupo de tarjetas entra en cascada sin
+   que la plantilla tenga que numerarlas.
+
+   Va sobre :nth-child y no con una clase por tarjeta porque las pantallas
+   listan cantidades variables y no se puede saber de antemano cuántas hay. */
+.entra > *          { animation: v-in 420ms var(--ease) both; }
+.entra > *:nth-child(1) { animation-delay: 40ms; }
+.entra > *:nth-child(2) { animation-delay: 110ms; }
+.entra > *:nth-child(3) { animation-delay: 180ms; }
+.entra > *:nth-child(4) { animation-delay: 240ms; }
+.entra > *:nth-child(n+5) { animation-delay: 290ms; }
+
+/* ============================================================================
+ *  ESQUELETO DE LA APLICACIÓN
+ *  Barra lateral fija + columna de contenido con barra superior pegada arriba.
+ * ========================================================================== */
+.app {
+    display: grid;
+    grid-template-columns: var(--shell-cols);
     min-height: 100vh;
 }
 
-body {
+.app__col {
     display: flex;
     flex-direction: column;
+    min-width: 0;   /* sin esto una tabla ancha estira toda la grilla */
 }
 
-a {
+/* ---- Barra lateral ----
+   Queda pegada al alto de la ventana y no se desplaza con la página: la marca
+   arriba y el botón de colapsar abajo son puntos de referencia, y si se van con
+   el scroll hay que volver al principio del listado para llegar a ellos.
+
+   El que se desplaza es .lateral__nav, adentro. Antes desbordaba la barra
+   entera, así que en una pantalla baja --o con los doce destinos a la vista--
+   el pie se iba fuera de cuadro y el botón de colapsar no aparecía nunca.
+
+   sticky y no fixed: como ítem de la grilla sigue ocupando su columna, así que
+   el contenido no necesita ningún margen izquierdo que compensar. */
+.lateral {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.lateral__marca {
+    display: flex; align-items: center; gap: 11px;
+    height: var(--barra-h); padding: 0 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text); text-decoration: none;
+    font-weight: 600; letter-spacing: -.01em;
+}
+.lateral__marca:hover { text-decoration: none; color: var(--text); }
+
+.lateral__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--marca); color: #fff;
+    font-weight: 700; font-size: .95rem;
+}
+
+/* min-height 0 además de flex 1: sin eso un ítem flex no se encoge por debajo de
+   su contenido, el nav crece hasta el alto de sus enlaces y empuja el pie afuera
+   en vez de aparecer una barra de desplazamiento. */
+.lateral__nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 10px;
+    display: flex; flex-direction: column; gap: 2px;
+}
+
+/* Los enlaces no se encogen. Un ítem flex achica antes que desbordar, así que en
+   una ventana baja los quince destinos se aplastaban para entrar en el alto
+   disponible en vez de aparecer la barra de desplazamiento: quedaban de 24px en
+   lugar de 36, apretados y con el texto rozando el borde. El height de cada uno
+   es una medida, no una sugerencia. */
+.lateral__nav > * { flex-shrink: 0; }
+
+/* Título de grupo. En el cajón y en la barra abierta se muestran todos los
+   enlaces del grupo, sin desplegable: hay alto de sobra y esconder los enlaces
+   detrás de un segundo clic sólo agrega un paso. */
+.lateral__grupo {
+    margin: 14px 0 4px; padding: 0 12px;
+    font-size: .7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-dim);
+}
+
+.lateral__link {
+    display: flex; align-items: center; gap: 11px;
+    height: 36px; padding: 0 12px;
+    border-radius: var(--r);
+    color: var(--text-muted); font-size: .88rem;
+    text-decoration: none; white-space: nowrap; overflow: hidden;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.lateral__link:hover { background: var(--surface-2); color: var(--text); text-decoration: none; }
+.lateral__link svg   { flex-shrink: 0; }
+
+/* La pantalla en la que uno está parado. Píldora teñida y texto en el azul de
+   la marca: no lleva barra lateral de color porque, con la barra ya al borde
+   izquierdo de la pantalla, un acento en el mismo borde se lee como ruido. */
+.lateral__link--activo {
+    background: var(--primary-tint);
     color: var(--primary);
-    text-decoration: none;
-}
-a:hover { color: var(--primary-hover); text-decoration: underline; }
-
-h1, h2, h3 { margin-top: 0; line-height: 1.2; font-weight: 600; }
-h1 { font-size: 1.75rem; margin-bottom: var(--space); }
-h2 { font-size: 1.25rem; margin-bottom: var(--space-sm); }
-h3 { font-size: 1.05rem; margin-bottom: var(--space-sm); }
-
-code {
-    font-family: var(--font-mono);
-    background: var(--bg-elev-2);
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    font-size: 0.9em;
+    font-weight: 600;
 }
 
-/* ========== Layout principal ========== */
+.lateral__pie {
+    padding: 12px 10px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.lateral__colapsar {
+    display: flex; align-items: center; gap: 11px;
+    width: 100%; height: 36px; padding: 0 12px;
+    border: none; border-radius: var(--r);
+    background: none; color: var(--text-dim);
+    font-size: .85rem; cursor: pointer;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.lateral__colapsar:hover { background: var(--surface-2); color: var(--text); }
+.lateral__colapsar svg   { flex-shrink: 0; }
+
+/* ---- Estado colapsado: sólo iconos ----
+   Los títulos de grupo se convierten en un separador: sin texto no dicen nada,
+   pero sin nada en su lugar los tres grupos quedan pegados en una sola lista. */
+:root[data-lateral="cerrado"] .lateral__texto   { display: none; }
+:root[data-lateral="cerrado"] .lateral__link,
+:root[data-lateral="cerrado"] .lateral__colapsar { justify-content: center; padding: 0; }
+:root[data-lateral="cerrado"] .lateral__grupo {
+    height: 1px; margin: 10px 12px; padding: 0;
+    background: var(--border); overflow: hidden; color: transparent;
+}
+:root[data-lateral="cerrado"] .lateral__marca { justify-content: center; padding: 0; }
+
+/* ---- Barra superior ---- */
+/* sticky ya alcanza como referencia de la marca centrada: cualquier position
+   distinta de static crea el bloque contenedor de un hijo absoluto. */
+.barra-sup {
+    position: sticky; top: 0; z-index: 60;
+    display: flex; align-items: center; gap: 12px;
+    height: var(--barra-h);
+    padding: 0 clamp(16px, 2.2vw, 28px);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+.barra-sup__espacio { flex: 1; }
+
+/* ---- Marca de la barra superior (sólo en modo cajón) ----
+   Con la barra lateral fuera de pantalla, la marca de la aplicación no se ve por
+   ningún lado. Va centrada respecto de la barra completa y no repartida entre dos
+   espaciadores: a la izquierda hay una hamburguesa y a la derecha el tema más el
+   usuario, así que con espaciadores el centro queda visiblemente corrido.
+
+   Sale del flujo, de modo que no le pelea el ancho a nada, y no recibe el puntero
+   salvo en el enlace mismo: si tomara todo el ancho taparía los botones de al lado. */
+.barra-sup__marca {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    display: none;                  /* la enciende .solo-movil en el cajón */
+    align-items: center; gap: 9px;
+    color: var(--text); text-decoration: none;
+    font-weight: 600; font-size: .95rem; letter-spacing: -.01em;
+    white-space: nowrap;
+}
+.barra-sup__marca:hover { color: var(--text); text-decoration: none; }
+.barra-sup__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; flex-shrink: 0;
+    border-radius: 8px;
+    background: var(--marca); color: #fff;
+    font-weight: 700; font-size: .85rem;
+}
+
+.barra-sup__buscar { position: relative; flex: 1; max-width: 340px; }
+.barra-sup__buscar svg {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--text-dim); pointer-events: none;
+}
+.barra-sup__buscar input {
+    width: 100%; height: 34px; padding: 0 12px 0 34px;
+    background: var(--field); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .86rem;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.barra-sup__buscar input:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); outline: none;
+}
+
+/* Reloj de la barra. Es el dato que más se mira en una app de asistencia: si la
+   clase empieza 8:00 y el reloj del sistema no está a la vista, no hay forma de
+   saber si una marca entró tarde. */
+.barra-sup__reloj {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 28px; padding: 0 10px;
+    border-radius: 999px; background: var(--t-neutral);
+    font-family: var(--font-mono); font-size: .78rem; color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+.barra-sup__reloj::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+}
+
+.barra-sup__usuario {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 3px 10px 3px 3px;
+    border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text); text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.barra-sup__usuario:hover { border-color: var(--border-strong); background: var(--surface-2);
+                            color: var(--text); text-decoration: none; }
+
+.avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--primary-tint); color: var(--primary);
+    font-size: .72rem; font-weight: 600;
+}
+.avatar--lg { width: 54px; height: 54px; border-radius: 16px; font-size: 1.15rem; }
+.avatar--tabla { width: 28px; height: 28px; background: var(--surface-3); color: var(--text-muted);
+                 font-size: .68rem; }
+
+/* Botón cuadrado de icono: tema, cerrar sesión, hamburguesa. Comparte el alto
+   con los demás controles para que la fila de la barra quede alineada. */
+.btn-icono {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex-shrink: 0; padding: 0;
+    border: 1px solid var(--border); border-radius: var(--r);
+    background: none; color: var(--text-muted); cursor: pointer;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+                background var(--t-fast) var(--ease);
+}
+.btn-icono:hover { color: var(--text); border-color: var(--border-strong); }
+.btn-icono--peligro:hover { color: var(--on-danger); border-color: var(--danger); }
+.btn-icono--plano { border-color: transparent; }
+.btn-icono--plano:hover { background: var(--surface-2); border-color: var(--border); }
+
+/* Conmutador de tema: se muestra el icono del tema al que se va a cambiar, no
+   el actual. El botón dice qué hace, no dónde estás. */
+.tema-toggle__luna { display: none; }
+:root[data-tema="claro"] .tema-toggle__luna { display: block; }
+:root[data-tema="claro"] .tema-toggle__sol  { display: none; }
+
+/* ---- Cajón en pantallas chicas ----
+   Debajo de 1000px la barra lateral sale del flujo y entra como cajón. La
+   hamburguesa y el velo aparecen sólo en ese modo. */
+.lateral__velo { display: none; }
+.solo-movil    { display: none !important; }
+
+@media (max-width: 1000px) {
+    .lateral {
+        position: fixed; z-index: 120; top: 0; bottom: 0; left: 0;
+        width: 274px; --lateral-w: 274px;
+        transform: translateX(-102%);
+        transition: transform var(--t-slow) var(--ease);
+        box-shadow: var(--shadow-lg);
+    }
+    :root[data-cajon="abierto"] .lateral { transform: translateX(0); }
+    /* Colapsar a iconos no tiene sentido dentro del cajón. */
+    :root[data-lateral="cerrado"] .lateral__texto { display: inline; }
+    :root[data-lateral="cerrado"] .lateral__link  { justify-content: flex-start; padding: 0 12px; }
+    :root[data-lateral="cerrado"] .lateral__grupo {
+        height: auto; margin: 14px 0 4px; padding: 0 12px;
+        background: none; color: var(--text-dim);
+    }
+    :root[data-lateral="cerrado"] .lateral__marca { justify-content: flex-start; padding: 0 16px; }
+
+    .lateral__velo {
+        display: block; position: fixed; inset: 0; z-index: 110;
+        background: var(--scrim);
+        opacity: 0; pointer-events: none;
+        transition: opacity var(--t-base) var(--ease);
+    }
+    :root[data-cajon="abierto"] .lateral__velo { opacity: 1; pointer-events: auto; }
+    :root[data-cajon="abierto"] body { overflow: hidden; }
+
+    .solo-movil       { display: inline-flex !important; }
+    .solo-escritorio  { display: none !important; }
+    .lateral__pie     { display: none; }
+}
+
+@media (max-width: 700px) {
+    .ocultar-sm { display: none !important; }
+    :root { --card-pad: 16px; }
+
+    /* Acá .ocultar-sm se lleva el nombre de usuario y en la píldora queda sólo el
+       avatar. El relleno asimétrico --3px a la izquierda, 10 a la derecha-- está
+       calculado para el par avatar+texto: con el texto afuera sobra aire de un
+       solo lado y el círculo se ve como un óvalo con la inicial descentrada.
+       Relleno parejo lo devuelve a un círculo de 34px, el mismo alto y ancho que
+       los botones de icono que tiene al lado. */
+    .barra-sup__usuario { padding: 3px; }
+}
+
+/* ---- Contenido ---- */
 .container {
     flex: 1;
     width: 100%;
-    max-width: 1200px;
+    max-width: var(--content-max);
     margin: 0 auto;
-    padding: var(--space-lg);
-}
-
-/* ========== Navbar ========== */
-.navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space) var(--space-lg);
-    background-color: var(--bg-elev);
-    border-bottom: 1px solid var(--border);
-}
-
-.navbar__brand a {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    color: var(--text);
-    text-decoration: none;
-    font-weight: 600;
-}
-.navbar__brand a:hover { text-decoration: none; color: var(--primary); }
-
-.navbar__logo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    background: var(--marca-fondo);
-    color: #fff;
-    border-radius: var(--radius);
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-.navbar__title { font-size: 1.05rem; }
-
-.navbar__menu {
-    display: flex;
-    gap: var(--space-lg);
-    flex: 1;
-    margin-left: var(--space-xl);
-}
-
-.navbar__link {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    padding: var(--space-xs) 0;
-    border-bottom: 2px solid transparent;
-    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
-    white-space: nowrap;            /* nunca wrappear el texto del link en 2 lineas */
-}
-.navbar__link:hover {
-    color: var(--text);
-    border-bottom-color: var(--primary);
-    text-decoration: none;
-}
-
-/* La pantalla en la que uno esta parado. Hace falta ahora que los enlaces viven
-   dentro de un desplegable: sin esto se pierde la referencia de donde uno esta. */
-.navbar__link--activo {
-    color: var(--text);
-    border-bottom-color: var(--primary);
-}
-
-/* ---------- Grupos desplegables de la navegacion ---------- */
-.navbar__grupo { position: relative; }
-
-.navbar__grupo-boton {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: var(--space-xs) 0;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    font-family: inherit;
-    font-size: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
-}
-.navbar__grupo-boton:hover { color: var(--text); }
-
-/* El grupo que contiene la pantalla actual queda marcado aunque este cerrado. */
-.navbar__grupo--activo > .navbar__grupo-boton {
-    color: var(--text);
-    border-bottom-color: var(--primary);
-}
-
-.nav-icono { flex-shrink: 0; }
-
-.nav-flecha {
-    flex-shrink: 0;
-    opacity: 0.6;
-    transition: transform var(--t-rapido) var(--ease);
-}
-.navbar__grupo--abierto .nav-flecha { transform: rotate(180deg); }
-
-.navbar__submenu {
-    display: none;
-    position: absolute;
-    top: calc(100% + var(--space-sm));
-    left: 0;
-    min-width: 190px;
-    padding: var(--space-xs);
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    z-index: 60;
-}
-.navbar__grupo--abierto .navbar__submenu { display: block; }
-
-.navbar__sublink {
-    display: block;
-    padding: var(--space-sm) var(--space);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-.navbar__sublink:hover {
-    background: var(--bg-elev);
-    color: var(--text);
-    text-decoration: none;
-}
-.navbar__sublink.navbar__link--activo {
-    color: var(--primary);
-    border-bottom: none;
-}
-
-.navbar__user {
-    display: flex;
-    align-items: center;
-    gap: var(--space);
-}
-
-/* El nombre de usuario es el acceso a "mi cuenta"; se subraya solo al pasar por encima
-   para que no compita visualmente con los links de navegacion. */
-.navbar__username {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-.navbar__username:hover {
-    color: var(--primary);
-    text-decoration: underline;
-}
-
-.navbar__logout-form { margin: 0; }
-
-/* ========== Cards ========== */
-/* Ancho unico para los formularios de edicion y su bloque de datos del sistema.
-   Antes cada pantalla traia el suyo en un style inline --640, 720 y 760-- y el
-   ancho terminaba dependiendo de en cual estabas parado. */
-.card--form,
-.datos-sistema { max-width: 760px; }
-
-.card {
-    background-color: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    margin-bottom: var(--space-lg);
+    padding: clamp(18px, 2.4vw, 30px) clamp(16px, 2.2vw, 28px) 56px;
 }
 
 /* ============================================================================
- *  PANEL DE INICIO
- *  Tres bloques: que corre ahora, como viene el dia y que falta cargar. No hay
- *  accesos repetidos del menu; el unico boton es el del pase, que es la accion.
+ *  NAVBAR HORIZONTAL (compatibilidad)
+ *  Se conserva para las pantallas que todavía no usen layout/base.html nuevo.
+ *  Toma los tokens nuevos, así que se ve igual de actualizado.
  * ========================================================================== */
-.home__header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space);
-    flex-wrap: wrap;
+.navbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 clamp(16px, 2.2vw, 28px); height: var(--barra-h);
+    background: var(--surface); border-bottom: 1px solid var(--border);
 }
-.home__pase { flex-shrink: 0; }
+.navbar__brand a { display: flex; align-items: center; gap: var(--space-sm);
+                   color: var(--text); text-decoration: none; font-weight: 600; }
+.navbar__brand a:hover { text-decoration: none; color: var(--text); }
+.navbar__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--marca); color: #fff; font-weight: 700; font-size: .95rem;
+}
+.navbar__title { font-size: 1rem; }
+.navbar__menu  { display: flex; gap: var(--space-lg); flex: 1; margin-left: var(--space-xl); }
+.navbar__link {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text-muted); padding: var(--space-xs) 0;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.navbar__link:hover { color: var(--text); border-bottom-color: var(--primary); text-decoration: none; }
+.navbar__link--activo { color: var(--text); border-bottom-color: var(--primary); }
+.navbar__grupo { position: relative; }
+.navbar__grupo-boton {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: var(--space-xs) 0; background: none; border: none;
+    border-bottom: 2px solid transparent; color: var(--text-muted);
+    font: inherit; cursor: pointer; white-space: nowrap;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.navbar__grupo-boton:hover { color: var(--text); }
+.navbar__grupo--activo > .navbar__grupo-boton { color: var(--text); border-bottom-color: var(--primary); }
+.nav-icono { flex-shrink: 0; }
+.nav-flecha { flex-shrink: 0; opacity: .6; transition: transform var(--t-fast) var(--ease); }
+.navbar__grupo--abierto .nav-flecha { transform: rotate(180deg); }
+.navbar__submenu {
+    display: none; position: absolute; top: calc(100% + var(--space-sm)); left: 0;
+    min-width: 200px; padding: var(--space-xs);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r); box-shadow: var(--shadow-md); z-index: 60;
+}
+.navbar__grupo--abierto .navbar__submenu { display: block; animation: v-pop 160ms var(--ease) both; }
+.navbar__sublink { display: block; padding: var(--space-sm) var(--space);
+                   border-radius: var(--r-sm); color: var(--text-muted); white-space: nowrap; }
+.navbar__sublink:hover { background: var(--surface); color: var(--text); text-decoration: none; }
+.navbar__sublink.navbar__link--activo { color: var(--primary); border-bottom: none; }
+.navbar__user { display: flex; align-items: center; gap: var(--space-sm); }
+.navbar__username { color: var(--text-muted); font-size: .86rem; text-decoration: none; }
+.navbar__username:hover { color: var(--primary); text-decoration: underline; }
+.navbar__logout-form { margin: 0; }
+.navbar__toggle, .navbar__backdrop { display: none; }
 
-/* Los tres bloques en columnas cuando hay ancho, y uno debajo del otro cuando no.
-   El corte es 1024px: mas abajo, tres columnas dejan el nombre del docente en dos
-   lineas y la tarjeta pasa a ser mas dificil de leer que util. */
-.home__paneles {
-    display: grid;
-    /* auto-fit en vez de una media query con numero fijo: la grilla mete tantas
-       columnas de al menos 320px como entren, y baja sola.
+/* ============================================================================
+ *  MIGAS DE PAN
+ *  Franja fina arriba del título. Los grupos van apagados porque no tienen
+ *  pantalla propia: mostrarlos como enlace prometería un destino que no existe.
+ * ========================================================================== */
+.migas { margin-bottom: 14px; }
+.migas__lista {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs);
+    margin: 0; padding: 0; list-style: none; font-size: .8rem;
+}
+.migas__item { color: var(--text-dim); }
+.migas__item + .migas__item::before { content: "/"; margin-right: var(--space-xs); opacity: .45; }
+.migas__item[aria-current="page"] { color: var(--text-muted); }
+.migas__item--grupo { opacity: .75; }
+.migas__item a { color: var(--text-muted); }
 
-       Con el corte en 1024px habia un salto feo: a 1024 exactos daba tres
-       columnas de 315px --apretadas-- y 24px mas abajo saltaba a UNA sola de
-       952px, o sea cuatro numeros chiquitos flotando en una tarjeta enorme.
-       Faltaba el escalon de dos columnas, y con auto-fit aparece solo. */
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--space);
-    /* stretch y no start: las tarjetas de una misma fila terminan a la misma
-       altura aunque tengan distinto contenido. */
-    align-items: stretch;
+/* ============================================================================
+ *  ENCABEZADO DE PÁGINA
+ * ========================================================================== */
+.page-header { margin-bottom: var(--space-lg); animation: v-in 380ms var(--ease) both; }
+.page-header h1 { margin-bottom: 6px; }
+.page-header__subtitle {
+    margin: 0; color: var(--text-muted); font-size: .9rem;
+    max-width: 68ch; text-wrap: pretty;
+}
+.page-header--with-action {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: var(--gap); flex-wrap: wrap;
+}
+.page-header__fecha {
+    margin: 0 0 6px; font-size: .78rem; font-weight: 500;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim);
 }
 
-/* height 100% para que la tarjeta ocupe todo el alto que le da la grilla, no
-   solo el de su contenido. */
-.home__bloque {
-    margin-bottom: 0;
-    height: 100%;
-}
-.home__titulo {
-    margin: 0 0 var(--space);
-    font-size: 1.05rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-/* Los estados vacios son buenas noticias, no errores: van en tono normal. */
-.home__vacio { margin: 0; color: var(--text-muted); }
+/* Encabezado con avatar: ficha del docente, mi cuenta. */
+.page-header--perfil { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.page-header--perfil > div { flex: 1; min-width: 12rem; }
+.page-header__meta { display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap; }
 
-/* ---- Ahora mismo ---- */
-.home__clases { list-style: none; margin: 0; padding: 0; }
-/* Flex y no grid: dentro de una columna angosta el estado tiene que poder bajar solo
-   a la linea siguiente. Con tres columnas fijas terminaba partiendo el nombre del
-   docente en varias lineas para hacerle lugar. */
-.home__clase {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-sm) var(--space);
-    padding: var(--space-sm) 0 var(--space-sm) var(--space);
-    border-left: 3px solid transparent;
-}
-.home__clase-datos { flex: 1 1 10rem; }
-.home__clase + .home__clase { border-top: 1px solid var(--border); }
-/* La barra lateral dice de un vistazo cual de las clases en curso falta marcar. */
-.home__clase--ok    { border-left-color: var(--success); }
-/* Las que todavia no empezaron van en gris: no piden nada todavia. */
-.home__clase--proxima { border-left-color: var(--border); }
-.home__proximas-titulo { margin: 0 0 var(--space-sm); }
-.home__clase--falta { border-left-color: var(--warning); }
-
-.home__clase-hora {
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-.home__clase-datos { display: flex; flex-direction: column; min-width: 0; }
-.home__clase-datos span { font-size: 0.85rem; }
-.home__clase-datos strong { overflow-wrap: anywhere; }
-.home__clase-estado { white-space: nowrap; }
-
-/* ---- El dia en numeros ---- */
-.home__numeros {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: var(--space-sm);
-}
-.home__numero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    padding: var(--space) var(--space-sm);
+/* ============================================================================
+ *  TARJETAS
+ * ========================================================================== */
+.card {
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    text-align: center;
-    transition: border-color     var(--t-rapido) var(--ease),
-                background-color var(--t-rapido) var(--ease),
-                transform        var(--t-rapido) var(--ease);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--card-pad);
+    margin-bottom: var(--gap);
 }
-/* El mismo pixel que se levanta en los botones: los contadores tambien son
-   enlaces, y conviene que todo lo que se puede tocar responda igual. */
-.home__numero:hover {
-    border-color: var(--primary);
-    background-color: var(--bg-elev-2);
-    transform: translateY(-1px);
-    text-decoration: none;
-}
-.home__numero:active { transform: translateY(0); transition-duration: 60ms; }
-.home__numero-valor { font-size: 1.9rem; font-weight: 600; line-height: 1; }
-.home__numero-label { font-size: 0.8rem; color: var(--text-muted); }
-.home__numero--ok      .home__numero-valor { color: var(--success); }
-.home__numero--tarde   .home__numero-valor { color: var(--warning); }
-.home__numero--ausente .home__numero-valor { color: var(--danger); }
+.card:last-child { margin-bottom: 0; }
+.card--no-padding { padding: 0; overflow: hidden; }
 
-.home__cobertura { margin-top: var(--space-lg); }
-.home__cobertura-texto { margin: 0 0 var(--space-sm); font-size: 0.9rem; }
-.home__barra {
-    height: 8px;
-    background-color: var(--bg-elev-2);
-    border-radius: 999px;
-    overflow: hidden;
-}
-.home__barra-relleno {
-    height: 100%;
-    background-color: var(--success);
-    border-radius: 999px;
-    transition: width var(--t-lento) var(--ease);
+/* Ancho único de los formularios de edición y de su bloque de datos del
+   sistema. Antes cada pantalla traía el suyo en un style inline —640, 720 y
+   760— y el ancho terminaba dependiendo de en cuál estabas parado. */
+.card--form, .datos-sistema, .form-max { max-width: var(--form-max); }
+
+/* Mi cuenta apila tres tarjetas: los datos, la verificación del correo y el cambio
+   de contraseña. Sólo la última era .card--form, así que quedaba más angosta que
+   las otras dos y la columna se veía escalonada. Se limita la sección entera en vez
+   de sacarle el tope a esa tarjeta: los campos de contraseña a 1300px de ancho no
+   ayudan a nadie, y el ancho de lectura del formulario sirve igual para el resto.
+   El .card--form de adentro queda sin efecto, pero se deja porque describe lo que
+   la tarjeta es. */
+.mi-cuenta { max-width: var(--form-max); }
+
+/* Bloque de sólo lectura: se distingue por la superficie, no por opacidad. Con
+   opacity el texto perdía contraste y dejaba de cumplir 4.5:1. */
+.card--readonly { background: var(--surface-2); box-shadow: none; }
+
+/* Título de sección dentro de una tarjeta, en versalitas. Se usa cuando la
+   tarjeta ES un bloque del panel y no un formulario. */
+.card__titulo {
+    margin: 0 0 var(--space); font-size: .76rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim);
 }
 
-/* ---- Requiere atencion ---- */
-.home__pendientes { list-style: none; margin: 0; padding: 0; }
-.home__pendiente {
-    display: flex;
-    align-items: center;
-    gap: var(--space);
-    padding: var(--space-sm) 0;
-    color: var(--text);
-}
-.home__pendiente:hover { text-decoration: none; }
-.home__pendiente:hover .home__pendiente-texto strong { color: var(--primary); }
-.home__pendientes li + li { border-top: 1px solid var(--border); }
-.home__pendiente-cantidad {
-    flex-shrink: 0;
-    min-width: 2.4rem;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--warning);
-    text-align: right;
-}
-.home__pendiente-texto { display: flex; flex-direction: column; min-width: 0; }
-.home__pendiente-texto span { font-size: 0.85rem; }
+/* Pila de tarjetas con el gap de la densidad. Reemplaza los margin-bottom
+   sueltos que cada pantalla resolvía por su cuenta. */
+.pila { display: flex; flex-direction: column; gap: var(--gap); }
 
-@media (max-width: 620px) {
-    .home__pase { width: 100%; }
-}
-
-/* ========== Botones ========== */
+/* ============================================================================
+ *  BOTONES
+ *  Todos comparten --h-ctl, así que un botón al lado de un input o de un select
+ *  queda alineado sin corregir nada.
+ * ========================================================================== */
 .btn {
-    display: inline-block;
-    padding: var(--space-sm) var(--space);
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color var(--t-rapido) var(--ease),
-                border-color     var(--t-rapido) var(--ease),
-                color            var(--t-rapido) var(--ease),
-                transform        var(--t-rapido) var(--ease),
-                box-shadow       var(--t-rapido) var(--ease);
-    text-align: center;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: var(--h-ctl); padding: 0 16px;
+    border: 1px solid transparent; border-radius: var(--r);
+    font-size: .88rem; font-weight: 500;
+    cursor: pointer; text-decoration: none; white-space: nowrap;
+    transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+                color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease),
+                box-shadow var(--t-fast) var(--ease);
+}
+.btn:hover  { text-decoration: none; transform: translateY(-1px); }
+.btn:active { transform: translateY(0); transition-duration: 60ms; }
+.btn svg    { flex-shrink: 0; }
+
+/* Un botón deshabilitado no responde: si se levantara estaría mintiendo. */
+.btn:disabled, .btn[aria-disabled="true"] {
+    transform: none; cursor: not-allowed; opacity: .55;
 }
 
-/* El boton se levanta un pixel al pasar el mouse y se hunde al apretarlo. Es poco
-   a proposito: un pixel no llama la atencion, pero confirma que el click entro
-   --sobre todo en las acciones de tabla, donde el resultado aparece recien despues
-   de recargar y hasta entonces la pantalla no daba ninguna senal. */
-.btn:hover  { transform: translateY(-1px); }
-.btn:active { transform: translateY(0);    transition-duration: 60ms; }
+.btn--primary { background: var(--primary-solid); color: #fff; }
+.btn--primary:hover { background: var(--primary-solid-h); color: #fff;
+                      box-shadow: 0 4px 14px -2px var(--primary-ring); }
 
-/* Un boton deshabilitado no responde: si se levantara estaria mintiendo. */
-.btn:disabled,
-.btn[aria-disabled="true"] {
-    transform: none;
-    cursor: not-allowed;
-    opacity: 0.55;
-}
+.btn--ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.btn--ghost:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface-2); }
 
-/* ---- Envio en curso ----
-   El boton que se apreto queda bloqueado y con un disco girando al lado mientras
-   el formulario viaja. Se distingue de un boton deshabilitado comun: aquel esta
-   apagado porque no se puede usar, este porque ya se esta usando. Por eso conserva
-   el color pleno en vez de bajar a 0.55 --si se apagara, se leeria como que el
-   click no entro, que es justo lo contrario de lo que paso. */
-.btn--enviando:disabled,
-.btn--enviando {
-    opacity: 1;
-    cursor: progress;
-}
-.btn--enviando::before {
-    content: '';
-    display: inline-block;
-    width: 0.85em;
-    height: 0.85em;
-    margin-right: 0.5em;
-    vertical-align: -0.1em;
-    border: 2px solid currentColor;
-    /* Un solo lado transparente: el hueco es lo que deja ver que gira. Con el
-       disco entero lleno no se notaria el giro. */
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: btn-girando 620ms linear infinite;
-}
-@keyframes btn-girando {
-    to { transform: rotate(360deg); }
-}
+.btn--ghost.btn--danger { color: var(--on-danger); border-color: var(--borde-danger); }
+.btn--ghost.btn--danger:hover { color: var(--on-danger); border-color: var(--danger);
+                                background: var(--t-danger); }
 
-/* Con movimiento reducido el disco no gira --seria un giro infinito, lo mas
-   molesto de todo para quien pidio menos movimiento-- pero el boton igual tiene
-   que verse ocupado. Queda quieto y a media tinta, que alcanza para distinguirlo.
+.btn--danger-solid { background: var(--danger); color: #fff; }
+.btn--danger-solid:hover { background: var(--danger); color: #fff; filter: brightness(.9); }
 
-   Va con selector propio y no dentro del bloque global de 1ms: ahi la animacion
-   seguiria corriendo, solo que tan rapido que el disco titilaria. */
-@media (prefers-reduced-motion: reduce) {
-    .btn--enviando::before {
-        animation: none;
-        opacity: 0.6;
-    }
-}
-
-.btn--primary {
-    background-color: var(--primary);
-    color: #fff;
-}
-.btn--primary:hover {
-    background-color: var(--primary-hover);
-    /* La sombra usa el azul de la marca y no negro: sobre fondo oscuro una sombra
-       negra no se ve, y el halo del propio color si. */
-    box-shadow: 0 2px 8px rgba(31, 95, 168, 0.35);
-}
-
-.btn--ghost {
-    background-color: transparent;
-    color: var(--text-muted);
-    border-color: var(--border);
-}
-.btn--ghost:hover { color: var(--text); border-color: var(--text-muted); }
-
-.btn--ghost.btn--danger {
-    color: var(--danger);
-    border-color: var(--borde-danger);
-}
-.btn--ghost.btn--danger:hover {
-    color: var(--sobre-tinte-danger);
-    border-color: var(--danger);
-    background-color: var(--tinte-danger-suave);
-}
-
+.btn--sm   { height: var(--h-ctl-sm); padding: 0 11px; font-size: .79rem; border-radius: var(--r-sm); }
+.btn--lg   { height: 42px; padding: 0 18px; font-size: .93rem; }
 .btn--full { width: 100%; }
 
-/* Forms inline (acciones en tabla) */
-.inline-form { display: inline; margin: 0; }
-
-/* ========== Forms ========== */
-.form-group {
-    margin-bottom: var(--space);
+/* ---- Envío en curso ----
+   El botón queda bloqueado con un disco girando mientras el formulario viaja.
+   Conserva el color pleno en vez de bajar a .55: si se apagara se leería como
+   que el click no entró, que es justo lo contrario de lo que pasó. */
+.btn--enviando, .btn--enviando:disabled { opacity: 1; cursor: progress; }
+.btn--enviando::before {
+    content: ''; display: inline-block;
+    width: .85em; height: .85em;
+    border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+    animation: v-spin 620ms linear infinite;
+}
+/* Con movimiento reducido el disco no gira —un giro infinito es lo más molesto
+   para quien pidió menos movimiento— pero el botón igual se ve ocupado. */
+@media (prefers-reduced-motion: reduce) {
+    .btn--enviando::before { animation: none; opacity: .6; }
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: var(--space-xs);
-    color: var(--text-muted);
-    font-size: 0.9rem;
+.form-inline, .inline-form { display: inline-flex; margin: 0; }
+
+/* Grupo de botones al pie de un formulario. */
+.form-actions {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: var(--space-lg); padding-top: var(--space-lg);
+    border-top: 1px solid var(--border);
+}
+
+/* ============================================================================
+ *  CONMUTADOR SEGMENTADO
+ *  Dos o tres opciones excluyentes en una sola caja del alto de un control.
+ *  Lo usa el selector de densidad de las tablas.
+ * ========================================================================== */
+.segmentado {
+    display: inline-flex; height: var(--h-ctl); padding: 3px; gap: 2px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+}
+.segmentado__opcion {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 100%; padding: 0 8px;
+    border: none; border-radius: var(--r-sm);
+    background: transparent; color: var(--text-dim);
+    font-size: .82rem; cursor: pointer;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.segmentado__opcion:hover { color: var(--text); }
+.segmentado__opcion[aria-pressed="true"] { background: var(--primary-tint); color: var(--primary); }
+
+/* ============================================================================
+ *  FORMULARIOS
+ * ========================================================================== */
+.form-group { margin-bottom: var(--space); }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-group label, .label {
+    display: block; margin-bottom: 6px;
+    color: var(--text-muted); font-size: .82rem; font-weight: 500;
 }
 
 .form-group input[type="text"],
@@ -732,1900 +950,1226 @@ code {
 .form-group input[type="datetime-local"],
 .form-group input[type="tel"],
 .form-group input[type="url"],
+.form-group input[type="search"],
 .form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: var(--space-sm) var(--space);
-    background-color: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.95rem;
-    transition: border-color var(--t-rapido) var(--ease);
+.form-group textarea,
+.input {
+    width: 100%; height: var(--h-ctl); padding: 0 12px;
+    background: var(--field); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .9rem;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
+.form-group textarea, textarea.input { height: auto; min-height: 86px; padding: 10px 12px;
+                                       line-height: 1.5; resize: vertical; }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus,
-.filtro__texto:focus,
-.filtro__estado:focus,
-.modal__campo-input:focus { border-color: var(--primary); }
-
-/* :focus-visible se reserva el anillo; aca solo se limpia el del mouse. El borde
-   azul es refuerzo, no el indicador: de gris a azul hay muy poco contraste entre
-   estados y con daltonismo no se distingue. */
-.form-group input:focus:not(:focus-visible),
-.form-group select:focus:not(:focus-visible),
-.form-group textarea:focus:not(:focus-visible) {
-    outline: none;
+/* Anillo de foco: el borde azul solo no alcanza —de gris a azul hay muy poco
+   contraste entre estados y con daltonismo no se distingue— así que se suma un
+   halo del color de la marca. */
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus,
+.input:focus, .filtro__texto:focus, .filtro__estado:focus, .modal__campo-input:focus {
     border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ring);
+    outline: none;
+}
+.form-group input:focus-visible, .form-group select:focus-visible,
+.form-group textarea:focus-visible, .input:focus-visible { outline: none; }
+
+.form-group input:disabled, .form-group select:disabled, .form-group textarea:disabled {
+    background: var(--surface-2); color: var(--text-dim); cursor: not-allowed;
 }
 
-/* Inputs disabled — atenuados, no editables */
-.form-group input:disabled,
-.form-group select:disabled,
-.form-group textarea:disabled {
-    background-color: var(--bg-elev);
-    color: var(--text-muted);
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-/* Esconder los spinners de los inputs number — el dato es opcional, no necesitan flechas */
+/* Los spinners del input number sobran: el dato es opcional y no se ajusta de a uno. */
 .form-group input[type="number"]::-webkit-outer-spin-button,
-.form-group input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
+.form-group input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .form-group input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
-/* ========== Alerts ========== */
-.alert {
-    padding: var(--space-sm) var(--space);
-    border-radius: var(--radius);
-    margin-bottom: var(--space);
-    border: 1px solid transparent;
-}
-.alert--error {
-    background-color: var(--tinte-danger);
-    border-color: var(--borde-danger);
-    color: var(--sobre-tinte-danger);
-}
-.alert--success {
-    background-color: var(--tinte-success);
-    border-color: var(--borde-success);
-    color: var(--sobre-tinte-success);
-}
-
-/* ========== Login (pagina dedicada, sin navbar) ========== */
-.login-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: var(--space-lg);
-}
-
-.login-card {
-    width: 100%;
-    max-width: 380px;
-    background-color: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-}
-
-.login-card__header {
-    text-align: center;
-    margin-bottom: var(--space-lg);
-}
-
-.login-card__logo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    background: var(--marca-fondo);
-    color: #fff;
-    border-radius: var(--radius-lg);
-    font-weight: 700;
-    font-size: 1.6rem;
-    margin-bottom: var(--space);
-}
-
-.login-card__header h1 {
-    font-size: 1.35rem;
-    margin: 0 0 var(--space-xs) 0;
-}
-
-.login-card__subtitle {
-    color: var(--text-muted);
-    margin: 0;
-    font-size: 0.95rem;
-}
-
-/* Pie de las tarjetas de login y recuperacion: enlaces secundarios de ayuda. */
-.login-card__ayuda {
-    margin: var(--space) 0 0;
-    text-align: center;
-    font-size: 0.9rem;
-}
-
-/* Formulario de una sola accion (un boton suelto), sin margen de bloque. */
-.form-inline {
-    display: inline-block;
-    margin: 0;
-}
-
-.login-card__hint {
-    text-align: center;
-    color: var(--text-muted);
-    margin-top: var(--space-lg);
-    margin-bottom: 0;
-}
-
-/* ========== Home ========== */
-.home__subtitle {
-    color: var(--text-muted);
-    margin-bottom: var(--space-lg);
-}
-
-/* ========== Checklist ========== */
-.checklist {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-.checklist__item {
-    padding: var(--space-xs) 0 var(--space-xs) 28px;
-    position: relative;
-    color: var(--text);
-}
-.checklist__item::before {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    text-align: center;
-    line-height: 18px;
-    font-size: 11px;
-    font-weight: 700;
-}
-.checklist__item--done::before {
-    content: '\2713';
-    background: var(--success);
-    color: #fff;
-}
-.checklist__item--pending::before {
-    content: '';
-    border: 2px solid var(--border);
-    width: 14px;
-    height: 14px;
-}
-.checklist__item--pending { color: var(--text-muted); }
-
-/* ========== Key-Value lists ========== */
-.kv {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: var(--space-sm) var(--space);
-    margin: 0;
-}
-.kv dt {
-    color: var(--text-muted);
-    font-weight: 500;
-}
-.kv dd {
-    margin: 0;
-    color: var(--text);
-}
-
-/* ========== Page header ========== */
-.page-header {
-    margin-bottom: var(--space-lg);
-}
-.page-header h1 {
-    margin-bottom: var(--space-xs);
-}
-.page-header__subtitle {
-    color: var(--text-muted);
-    margin: 0;
-    max-width: 70ch;
-}
-
-/* ========== Form extras ========== */
 .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space);
-}
-@media (max-width: 600px) {
-    .form-row { grid-template-columns: 1fr; }
+    display: grid; grid-template-columns: var(--form-cols); gap: var(--gap);
 }
 
-.form-hint {
-    display: block;
-    margin-top: var(--space-xs);
-    color: var(--text-muted);
-    font-size: 0.85rem;
+.form-hint, .hint {
+    display: block; margin-top: 6px;
+    color: var(--text-dim); font-size: .78rem; line-height: 1.45;
 }
 
-/* Dato que ocupa el lugar de un campo pero no se edita: el rol de una cuenta, el
-   estado de una institucion. Toma la misma altura que un input para que la fila no
-   se desalinee cuando al lado hay uno de verdad. */
-.form-static {
-    display: flex;
-    align-items: center;
-    min-height: 42px;
-    margin: 0;
+/* Dato que ocupa el lugar de un campo pero no se edita: el rol de una cuenta,
+   el estado de una institución. Toma la misma altura que un input para que la
+   fila no se desalinee cuando al lado hay uno de verdad, y va con borde
+   punteado para que nadie intente escribir adentro. */
+.form-static, .campo-fijo {
+    display: flex; align-items: center;
+    height: var(--h-ctl); margin: 0; padding: 0 12px;
+    background: var(--surface-2);
+    border: 1px dashed var(--border); border-radius: var(--r);
+    color: var(--text-muted); font-size: .9rem;
 }
 
 .form-error {
-    display: block;
-    margin-top: var(--space-xs);
-    color: var(--danger);
-    font-size: 0.85rem;
-    font-weight: 500;
+    display: block; margin-top: 6px;
+    color: var(--on-danger); font-size: .8rem; font-weight: 500;
 }
-
-.form-group input.is-invalid,
-.form-group select.is-invalid,
-.form-group textarea.is-invalid {
+.form-group input.is-invalid, .form-group select.is-invalid, .form-group textarea.is-invalid {
     border-color: var(--danger);
 }
+.form-group input.is-invalid:focus { box-shadow: 0 0 0 3px var(--t-danger); }
 
-.form-actions {
-    display: flex;
-    gap: var(--space);
-    margin-top: var(--space-lg);
-    padding-top: var(--space-lg);
-    border-top: 1px solid var(--border);
+.required { color: var(--danger); margin-left: 2px; }
+
+.form-seccion {
+    margin: 0 0 var(--space); font-size: .76rem; font-weight: 600;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: .08em;
+}
+.separador { border: 0; border-top: 1px solid var(--border); margin: var(--space-lg) 0 var(--space); }
+
+.checkbox-label {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    cursor: pointer; color: var(--text);
+}
+.checkbox-label input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: var(--primary-solid); cursor: pointer;
 }
 
-.required {
-    color: var(--danger);
-    margin-left: 2px;
-}
+/* ---- Campo de contraseña con botón ojo ---- */
+.password-input { position: relative; display: flex; align-items: stretch; }
+.password-input input { flex: 1; padding-right: 42px !important; }
 
-/* ========== Card variants ========== */
-.card--readonly {
-    background-color: var(--bg-elev-2);
-    opacity: 0.85;
+/* Los botones nativos que el navegador agrega encima de type=password duplican
+   el nuestro y confunden. */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear { display: none; width: 0; height: 0; }
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button {
+    display: none !important; visibility: hidden; pointer-events: none; position: absolute; right: 0;
 }
-.card--readonly h2 {
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-bottom: var(--space);
+.password-toggle {
+    position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+    width: 32px; height: 32px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: var(--text-dim);
+    border-radius: var(--r-sm); cursor: pointer;
+    transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
 }
+.password-toggle svg { width: 18px; height: 18px; display: block; }
+.password-toggle:hover { color: var(--text); background: var(--surface-2); }
 
-/* ========== Badges ========== */
+/* Medidor de fuerza: cuatro tramos que se van pintando. Es la única señal de
+   que una contraseña "válida" puede seguir siendo mala. */
+.password-fuerza { display: flex; gap: 4px; margin-top: 8px; }
+.password-fuerza span { flex: 1; height: 3px; border-radius: 999px; background: var(--surface-3); }
+.password-fuerza--1 span:nth-child(1) { background: var(--danger); }
+.password-fuerza--2 span:nth-child(-n+2) { background: var(--warning); }
+.password-fuerza--3 span:nth-child(-n+3) { background: var(--success); }
+.password-fuerza--4 span { background: var(--success); }
+
+/* ---- Selector de hora (dos listas) ---- */
+.hora-picker { display: flex; align-items: center; gap: var(--space-xs); }
+.hora-picker__campo {
+    width: auto; min-width: 4.5rem;
+    font-family: var(--font-mono); text-align: center;
+}
+.hora-picker__sep { color: var(--text-muted); font-weight: 600; }
+
+/* ---- Select con búsqueda ----
+   El <select> real queda oculto detrás; esto es sólo la capa visible. */
+.buscable { position: relative; }
+.buscable__input { width: 100%; }
+.buscable__lista {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 40;
+    max-height: 15rem; overflow-y: auto;
+    margin: 0; padding: var(--space-xs); list-style: none;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r); box-shadow: var(--shadow-md);
+    animation: v-pop 160ms var(--ease) both;
+}
+.buscable__opcion {
+    padding: var(--space-sm) var(--space); border-radius: var(--r-sm);
+    cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Activa = la que se elige con Enter. Se mueve con las flechas y también al
+   pasar el mouse, para que teclado y mouse no discutan sobre cuál está elegida. */
+.buscable__opcion--activa, .buscable__opcion:hover { background: var(--surface); }
+.buscable__opcion--actual { color: var(--primary); font-weight: 600; }
+.buscable__vacio { padding: var(--space-sm) var(--space); color: var(--text-muted); font-size: .88rem; }
+
+/* ---- Menú: el mismo desplegable, disparado por un botón ----
+   Para los <select> de pocas opciones, donde no hay nada que buscar. Comparte
+   .buscable__lista y .buscable__opcion con el buscable a propósito: los dos
+   desplegables de la aplicación tienen que verse iguales, y si se les cambia el
+   radio o la sombra a uno, se le cambia al otro.
+
+   Lo único propio es el botón, que imita a un campo --mismo alto, mismo borde,
+   mismo radio-- porque ocupa el lugar de uno y va en la misma fila. */
+.menu { display: inline-block; }
+.menu__boton {
+    display: inline-flex; align-items: center; justify-content: space-between; gap: var(--space-sm);
+    width: 100%; height: var(--h-ctl); padding: 0 10px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font: inherit; font-size: .88rem; text-align: left; cursor: pointer;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.menu__boton:hover { border-color: var(--border-strong); }
+.menu__boton:focus-visible {
+    border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); outline: none;
+}
+.menu__texto  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu__flecha { flex-shrink: 0; opacity: .6; transition: transform var(--t-fast) var(--ease); }
+.menu__boton[aria-expanded="true"] .menu__flecha { transform: rotate(180deg); }
+
+/* ============================================================================
+ *  INSIGNIAS
+ * ========================================================================== */
 .badge {
-    display: inline-block;
-    padding: 2px var(--space-sm);
+    display: inline-flex; align-items: center;
+    height: 21px; padding: 0 9px;
     border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-size: .69rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
 }
-.badge--success {
-    background-color: var(--tinte-success);
-    color: var(--sobre-tinte-success);
-}
-.badge--danger {
-    background-color: var(--tinte-danger);
-    color: var(--sobre-tinte-danger);
-}
-.badge--accent {
-    background-color: var(--tinte-accent);
-    color: var(--sobre-tinte-accent);
-}
-.badge--neutral {
-    background-color: var(--tinte-neutral);
-    color: var(--text-muted);
-}
-/* Rol de institucion: la cuenta que representa al establecimiento. Se distingue de
-   los administradores porque no es una persona y no se puede dar de baja. */
-.badge--info {
-    background-color: var(--tinte-info);
-    color: var(--sobre-tinte-info);
-}
-/* Estado que pide atencion pero no es un error: consentimiento sin firmar,
-   correo sin verificar. Faltaba, asi que esos badges se veian sin color. */
-.badge--warning {
-    background-color: var(--tinte-warning);
-    color: var(--sobre-tinte-warning);
-}
+.badge--success { background: var(--t-success); color: var(--on-success); }
+.badge--danger  { background: var(--t-danger);  color: var(--on-danger); }
+.badge--warning { background: var(--t-warning); color: var(--on-warning); }
+.badge--info    { background: var(--t-info);    color: var(--on-info); }
+.badge--accent  { background: var(--t-accent);  color: var(--on-accent); }
+.badge--neutral { background: var(--t-neutral); color: var(--on-neutral); }
 
-/* ========== Tablas ========== */
-.card--no-padding { padding: 0; overflow: hidden; }
+/* ============================================================================
+ *  ALERTAS
+ * ========================================================================== */
+.alert {
+    display: flex; gap: 10px; align-items: flex-start;
+    padding: 11px 14px; margin-bottom: var(--space);
+    border: 1px solid transparent; border-radius: var(--r);
+    font-size: .89rem;
+}
+.alert p { margin: 0; }
+.alert--error   { background: var(--t-danger);  border-color: var(--borde-danger);  color: var(--on-danger); }
+.alert--success { background: var(--t-success); border-color: var(--borde-success); color: var(--on-success); }
+.alert--warning { background: var(--t-warning); border-color: rgba(224,168,58,.35); color: var(--on-warning); }
+.alert--info    { background: var(--t-info);    border-color: var(--primary-ring);  color: var(--on-info); }
 
+/* ============================================================================
+ *  TOASTS
+ *  Arriba a la derecha, no abajo: es donde queda la vista después de apretar un
+ *  botón o guardar un formulario, así que el aviso aparece donde ya se está
+ *  mirando.
+ * ========================================================================== */
+#toast-container {
+    position: fixed; top: 20px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 10px;
+    max-width: calc(100vw - 40px); pointer-events: none;
+}
+.toast {
+    pointer-events: auto;
+    display: flex; align-items: flex-start; gap: 10px;
+    min-width: 280px; max-width: 400px; padding: 12px 13px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-left: 3px solid var(--text-dim);
+    border-radius: var(--r); box-shadow: var(--shadow-md);
+    font-size: .88rem; line-height: 1.45;
+    opacity: 0; transform: translateX(22px);
+    transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease);
+}
+.toast--in  { opacity: 1; transform: translateX(0); }
+.toast--out { opacity: 0; transform: translateX(22px); }
+.toast__icon {
+    flex-shrink: 0; width: 20px; height: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: .72rem; font-weight: 700;
+}
+.toast__msg   { flex: 1; word-break: break-word; }
+.toast__close {
+    flex-shrink: 0; width: 22px; height: 22px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; background: transparent; color: var(--text-dim);
+    border-radius: 50%; cursor: pointer;
+}
+.toast__close:hover { color: var(--text); background: var(--surface-2); }
+
+.toast--success { border-left-color: var(--success); }
+.toast--success .toast__icon { background: var(--t-success); color: var(--on-success); }
+.toast--warning { border-left-color: var(--warning); }
+.toast--warning .toast__icon { background: var(--t-warning); color: var(--on-warning); }
+.toast--error   { border-left-color: var(--danger); }
+.toast--error   .toast__icon { background: var(--t-danger); color: var(--on-danger); }
+.toast--info    { border-left-color: var(--primary); }
+.toast--info    .toast__icon { background: var(--t-info); color: var(--on-info); }
+
+/* ============================================================================
+ *  MODAL DE CONFIRMACIÓN
+ * ========================================================================== */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    display: flex; align-items: center; justify-content: center;
+    padding: var(--space-lg);
+    background: var(--scrim);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--t-base) var(--ease);
+}
+.modal-overlay--in { opacity: 1; pointer-events: auto; }
+.modal {
+    width: 100%; max-width: 440px;
+    padding: 28px 24px 22px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-xl); box-shadow: var(--shadow-lg);
+    transform: scale(.96) translateY(6px);
+    transition: transform var(--t-base) var(--ease);
+}
+.modal-overlay--in .modal { transform: none; }
+.modal__icon {
+    width: 52px; height: 52px; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; background: var(--t-info); color: var(--primary);
+}
+.modal__icon svg { display: block; }
+.modal--danger .modal__icon { background: var(--t-danger); color: var(--danger); }
+.modal__title  { margin: 0 0 8px; text-align: center; font-size: 1.1rem; }
+.modal__detail {
+    margin: 0 0 20px; text-align: center;
+    color: var(--text-muted); font-size: .9rem; line-height: 1.5; text-wrap: pretty;
+}
+.modal__campo { margin: 0 0 20px; }
+.modal__campo[hidden] { display: none; }
+.modal__campo-label { display: block; margin-bottom: 6px; font-size: .82rem;
+                      font-weight: 500; color: var(--text-muted); }
+.modal__campo-input {
+    width: 100%; height: var(--h-ctl); padding: 0 12px;
+    background: var(--field); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r); font-size: .9rem;
+}
+.modal__actions { display: flex; gap: 9px; justify-content: flex-end; }
+.modal__actions .btn { min-width: 112px; }
+
+/* ============================================================================
+ *  TABLAS
+ * ========================================================================== */
 .table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    font-size: .88rem;
 }
 .table thead th {
-    text-align: left;
-    padding: var(--space-sm) var(--space);
-    background-color: var(--bg-elev-2);
-    color: var(--text-muted);
-    font-weight: 600;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    /* Queda fijo arriba mientras el cuerpo se desplaza: una tabla larga sin
-       encabezado obliga a subir para recordar que columna se esta mirando.
-       El borde va como box-shadow y no como border-bottom porque, con
-       border-collapse, el borde de una celda sticky no viaja con ella. */
-    position: sticky;
-    top: 0;
-    z-index: 2;
+    position: sticky; top: 0; z-index: 2;
+    padding: 9px 14px; text-align: left;
+    background: var(--surface-2); color: var(--text-dim);
+    font-size: .7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .07em; white-space: nowrap;
+    /* El borde va como box-shadow: el de una celda sticky no viaja con ella. */
     box-shadow: inset 0 -1px 0 var(--border);
 }
 .table tbody td {
-    padding: var(--space-sm) var(--space);
+    height: var(--row-h);
+    padding: var(--cell-y) 14px;
     border-bottom: 1px solid var(--border);
+    vertical-align: middle;
 }
 .table tbody tr:last-child td { border-bottom: none; }
-/* El resaltado de fila entraba de golpe. Con la transicion el ojo sigue de una fila
-   a la otra en vez de ver parpadear dos. Solo el color: mover la fila desalinearia
-   las columnas. */
-.table tbody tr { transition: background-color var(--t-rapido) var(--ease); }
-.table tbody tr:hover { background-color: var(--bg-elev-2); }
-.table .row--inactive { opacity: 0.6; }
+.table tbody tr { transition: background var(--t-fast) var(--ease); }
+.table tbody tr:hover { background: var(--surface-2); }
+
+/* Fila de un registro dado de baja. Se marca con el color del texto y no con
+   opacity: bajar la opacidad de toda la fila arrastraba también a las insignias
+   y las dejaba por debajo del contraste mínimo. */
+.table .row--inactive td { color: var(--text-dim); }
 .table .row--inactive code { text-decoration: line-through; }
-/* Columna de acciones: encabezado y botones alineados entre si.
-   El encabezado estaba a la izquierda y los botones a la derecha, cada uno en una
-   punta de la misma columna. No era el HTML: ".table thead th" (0,2,1) le gana por
-   especificidad a ".table__actions" (0,1,0), asi que el text-align: right nunca
-   llegaba al <th>. Por eso el selector de abajo nombra las dos cosas. */
+
+/* Columna de acciones. El selector nombra las dos cosas porque
+   ".table thead th" (0,2,1) le gana por especificidad a ".table__actions"
+   (0,1,0) y el text-align nunca llegaba al <th>. */
 .table thead th.table__actions,
-.table__actions { text-align: center; white-space: nowrap; }
-.table__actions .btn--sm { margin: 0 calc(var(--space-xs) / 2); }
-.table__empty {
-    text-align: center;
-    color: var(--text-muted);
-    padding: var(--space-xl);
+.table__actions { text-align: right; white-space: nowrap; }
+.table__actions .btn--sm { margin: 0; }
+.table__actions > * + * { margin-left: 6px; }
+
+.table__empty { text-align: center; color: var(--text-muted); padding: 44px 20px !important; }
+.table__empty svg { color: var(--text-dim); margin-bottom: 12px; }
+.table__empty strong { display: block; color: var(--text); font-weight: 500; margin-bottom: 4px; }
+
+/* ---- Orden por columna ----
+   El encabezado ordenable es un botón: se llega con teclado y anuncia su
+   estado. La flecha está siempre, apagada, para que se vea que la columna se
+   puede ordenar antes de tocarla. */
+.table th[data-orden] { cursor: pointer; user-select: none; }
+.table th[data-orden]:hover { color: var(--text-muted); }
+.table th[data-orden]::after {
+    content: '↕'; display: inline-block; margin-left: 5px;
+    font-size: .7rem; opacity: .28;
+    transition: opacity var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
 }
+.table th[aria-sort="ascending"]::after  { content: '↑'; opacity: 1; color: var(--primary); }
+.table th[aria-sort="descending"]::after { content: '↓'; opacity: 1; color: var(--primary); }
 
-.btn--sm {
-    padding: 4px 10px;
-    font-size: 0.85rem;
-}
-
-/* ========== Header con accion ========== */
-.page-header--with-action {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: var(--space);
-    flex-wrap: wrap;
-}
-
-/* ========== Checkbox ========== */
-.checkbox-label {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-sm);
-    cursor: pointer;
-    color: var(--text);
-}
-.checkbox-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary);
-    cursor: pointer;
-}
-
-.text-muted { color: var(--text-muted); }
-
-/* ========== CAPTURA GUIADA DEL ROSTRO ==========
-   Comparte el esqueleto de dos columnas con el pase (ver "PANTALLAS CON CAMARA").
-   La instruccion va pegada al video y no en la columna lateral: es lo que se mira
-   mientras uno se acomoda. La lista de poses si va al costado, porque se consulta
-   de reojo para saber cuanto falta. */
-
-.captura__card { text-align: center; }
-
-.captura__guia { margin-bottom: var(--space); }
-
-.captura__paso {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-}
-
-.captura__instruccion {
-    margin: var(--space-xs) 0 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.captura__detalle {
-    margin: var(--space-xs) 0 0;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-/* El motivo por el que todavía no captura. Alto fijo para que la tarjeta no
-   salte cada vez que cambia el texto. */
-.captura__feedback {
-    min-height: 2.6rem;
-    margin: var(--space) 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-.captura__feedback--ok       { color: var(--sobre-tinte-success); font-weight: 600; }
-.captura__feedback--corregir { color: var(--sobre-tinte-warning); font-weight: 600; }
-
-.captura__titulo-lateral {
-    margin: 0 0 var(--space-sm);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-}
-
-.captura__etapas {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    text-align: left;
-}
-
-.captura__etapa {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm);
-    border-radius: var(--radius-sm);
-    color: var(--text-muted);
-    font-size: 0.88rem;
-}
-
-.captura__etapa-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    font-size: 0.75rem;
-}
-
-.captura__etapa-nombre { flex: 1; }
-
-.captura__etapa-marca {
-    font-variant-numeric: tabular-nums;
-    font-size: 0.8rem;
-}
-
-.captura__etapa--activa {
-    background: var(--bg-elev-2);
-    color: var(--text);
-}
-.captura__etapa--activa .captura__etapa-num {
-    border-color: var(--primary);
-    color: var(--primary);
-}
-
-.captura__etapa--lista { color: var(--success); }
-.captura__etapa--lista .captura__etapa-num {
-    background: var(--success);
-    border-color: var(--success);
-    color: #fff;
-}
-
-/* Botones a lo ancho de la columna, igual que en el pase. */
-.captura__acciones {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
-.captura__acciones .btn { width: 100%; }
-
-.captura__ayuda {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    line-height: 1.45;
-}
-
-/* En pantallas bajas cede primero el texto explicativo, no la lista de poses:
-   sin ver en que paso va, la guia no sirve de nada. */
-@media (max-height: 760px) {
-    .captura__detalle { display: none; }
-    .captura__ayuda   { display: none; }
-}
-
-/* ========== FILTRO DE LISTADOS ==========
-   Barra de búsqueda instantánea que va arriba de las tablas de catálogo.
-   Ver filtro-tabla.js para por qué estos filtran en el navegador y los de
-   Asistencias y Reportes van por servidor. */
-.filtro {
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-    flex-wrap: wrap;
-    margin-bottom: var(--space);
-}
-
-.filtro__texto {
-    flex: 1 1 260px;
-    min-width: 0;
-    padding: 0.5rem 0.7rem;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: inherit;
-}
-.filtro__texto:focus:not(:focus-visible),
-.filtro__estado:focus:not(:focus-visible) {
-    outline: none;
-    border-color: var(--primary);
-}
-
-.filtro__estado {
-    padding: 0.5rem 0.7rem;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 0.9rem;
-    font-family: inherit;
-}
-
-/* Contador de resultados: informativo, no compite con el contenido. */
-.filtro__resultado {
-    margin-left: auto;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    white-space: nowrap;
-}
-
-/* ============================================================================
- *  Wrap de tablas: scroll horizontal si son anchas y vertical si son largas,
- *  dejando el encabezado a la vista.
- *
- *  El alto maximo se calcula contra la ventana en vez de fijarlo en pixeles:
- *  lo que sobra arriba (navbar, titulo, filtros) es mas o menos igual en todas
- *  las pantallas de listado, y asi la tabla usa todo el alto que haya sin
- *  empujar el resto fuera de la vista. Con pocas filas la caja se encoge sola,
- *  asi que no aparece un marco vacio cuando hay tres registros.
- * ========================================================================== */
+/* ---- Marco de la tabla ----
+   Scroll horizontal si es ancha y vertical si es larga, con el encabezado a la
+   vista. El alto máximo se calcula contra la ventana: lo que sobra arriba
+   (barra, título, filtros) es parecido en todas las pantallas de listado, así
+   la tabla usa todo el alto que haya sin empujar el resto fuera de vista. */
 .table-wrap {
-    overflow-x: auto;
-    overflow-y: auto;
-    max-height: calc(100vh - 21rem);
-    min-height: 8rem;
+    position: relative;
+    overflow: auto;
+    max-height: calc(100vh - 22rem);
+    min-height: 9rem;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
 }
-.table-wrap::-webkit-scrollbar          { height: 8px; width: 8px; }
-.table-wrap::-webkit-scrollbar-thumb    { background: var(--border); border-radius: 4px; }
-.table-wrap::-webkit-scrollbar-track    { background: transparent; }
-.table-wrap .table { min-width: 720px; }
+.table-wrap::-webkit-scrollbar       { width: 9px; height: 9px; }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9px;
+                                       border: 2px solid transparent; background-clip: content-box; }
+.table-wrap::-webkit-scrollbar-track { background: transparent; }
+.table-wrap .table { min-width: 760px; }
 
-/* ---- Aviso de que la tabla sigue ----
-   La tabla ya se desplazaba de costado, pero nada lo decia: en una ventana angosta
-   la columna de acciones queda cortada al medio y parece un error de maquetado, no
-   contenido que continua. La barra de scroll es fina y en Windows recien aparece al
-   usarla, asi que no alcanza como aviso.
+/* ---- Columna de acciones fija ----
+   En una tabla ancha, la columna de acciones se iba de la vista justo cuando
+   uno terminaba de leer la fila. Queda pegada a la derecha, con un borde propio
+   que la separa de lo que pasa por debajo.
 
-   El degradado se pinta sobre el borde que tiene contenido detras. Va como
-   background-attachment: local/scroll --no como pseudo-elemento-- porque el wrap
-   scrollea y un ::after quedaria pegado al contenido en vez de al marco. La clase
-   la pone table-scroll.js segun donde este el scroll. */
-.table-wrap { position: relative; }
-
-.table-wrap::before,
-.table-wrap::after {
-    content: '';
-    position: sticky;
-    top: 0;
-    display: block;
-    width: 28px;
-    height: 100%;
-    margin-bottom: -100%;   /* no ocupa lugar en el flujo */
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity var(--t-base) var(--ease);
-    z-index: 3;             /* por encima del thead sticky, que va en 2 */
-}
-.table-wrap::before {
-    float: left;
-    left: 0;
-    background: linear-gradient(to right, var(--bg-elev), transparent);
-}
-.table-wrap::after {
-    float: right;
-    right: 0;
-    background: linear-gradient(to left, var(--bg-elev), transparent);
-}
-.table-wrap--mas-izq::before { opacity: 1; }
-.table-wrap--mas-der::after  { opacity: 1; }
-
-/* ============================================================================
- *  Select con busqueda
- *  El <select> real queda oculto detras; esto es solo la capa visible.
- * ========================================================================== */
-.buscable { position: relative; }
-
-.buscable__input {
-    width: 100%;
-    /* Hereda el aspecto de los inputs del formulario para que no se note que
-       este campo esta hecho aparte. */
-}
-
-.buscable__lista {
-    position: absolute;
-    top: calc(100% + 2px);
-    left: 0;
-    right: 0;
-    z-index: 40;
-    max-height: 15rem;
-    overflow-y: auto;
-    margin: 0;
-    padding: var(--space-xs);
-    list-style: none;
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-.buscable__opcion {
-    padding: var(--space-sm) var(--space);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-/* Activa = la que se elige con Enter. Se mueve con las flechas y tambien al
-   pasar el mouse, para que teclado y mouse no discutan sobre cual esta elegida. */
-.buscable__opcion--activa { background: var(--bg-elev); }
-.buscable__opcion--actual { color: var(--primary); font-weight: 600; }
-.buscable__opcion:hover   { background: var(--bg-elev); }
-
-.buscable__vacio {
-    padding: var(--space-sm) var(--space);
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-/* ========== Acciones de descarga del reporte ========== */
-.reporte__acciones {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space);
-    margin-top: var(--space);
-    flex-wrap: wrap;
-}
-/* Los dos botones son la misma decision --en que formato me lo llevo-- asi que
-   van pegados y no repartidos a lo ancho de la fila. */
-.reporte__descargas {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-}
-
-/* ========== Derechos ARCO ========== */
-.arco__nota { margin: var(--space-xs) 0 0; font-size: 0.85rem; }
-.arco__historial {
-    margin: var(--space-xs) 0 0;
-    padding-left: var(--space);
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-.arco__derechos { list-style: none; margin: 0; padding: 0; }
-.arco__derechos li {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space);
-    padding: var(--space) 0;
-    flex-wrap: wrap;
-}
-.arco__derechos li + li { border-top: 1px solid var(--border); }
-.arco__derechos li > div { display: flex; flex-direction: column; min-width: 14rem; flex: 1; }
-.arco__derechos li span { font-size: 0.85rem; }
-
-/* ============================================================================
- *  PANTALLA INTERMEDIA DE GRUPO
- *  Las tarjetas de un grupo del menu. A diferencia de los accesos que se
- *  sacaron del inicio, aca SI corresponde repetir lo que hay en el menu: esta
- *  pantalla es ese grupo, no un atajo a otra cosa.
- * ========================================================================== */
-.seccion__tarjetas {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: var(--space);
-}
-.seccion__tarjeta {
-    margin-bottom: 0;
-    color: inherit;
-    transition: border-color var(--t-rapido) var(--ease),
-                transform    var(--t-rapido) var(--ease),
-                box-shadow   var(--t-rapido) var(--ease);
-}
-/* Se levanta 2px y no 1 como los botones: es una superficie mucho mas grande y con
-   un solo pixel el movimiento no se lee. La escala del gesto acompana al tamano. */
-.seccion__tarjeta:hover {
-    border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
-    text-decoration: none;
-}
-.seccion__tarjeta:active { transform: translateY(0); transition-duration: 60ms; }
-.seccion__tarjeta h2 {
-    color: var(--primary);
-    font-size: 1.05rem;
-    margin-bottom: var(--space-xs);
-}
-.seccion__tarjeta p { margin: 0; font-size: 0.9rem; }
-
-/* Valor que se muestra pero no se edita, dentro de un formulario. Se distingue de
-   un input a proposito: si pareciera editable, quien lo intente va a creer que el
-   sistema no le respondio. */
-.campo-fijo {
-    margin: 0;
-    padding: var(--space-sm) var(--space);
-    background: var(--bg-elev-2);
-    border: 1px dashed var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
+   Sólo en escritorio: abajo de 760px la tabla se convierte en tarjetas y no hay
+   nada de qué fijarse. */
+@media (min-width: 761px) {
+    .table--acciones-fijas th.table__actions,
+    .table--acciones-fijas td.table__actions {
+        position: sticky; right: 0; z-index: 1;
+        background: var(--surface);
+        box-shadow: inset 1px 0 0 var(--border);
+    }
+    .table--acciones-fijas th.table__actions {
+        z-index: 3; background: var(--surface-2);
+        box-shadow: inset 1px 0 0 var(--border), inset 0 -1px 0 var(--border);
+    }
+    .table--acciones-fijas tbody tr:hover td.table__actions { background: var(--surface-2); }
 }
 
 /* Nombre largo dentro de una celda: se recorta con puntos suspensivos en vez de
-   ensanchar la columna o partirse en tres lineas. El texto completo queda en el
-   title, asi que sigue siendo legible al pasar el mouse. */
+   ensanchar la columna. El texto completo queda en el title. */
 .celda-recortada {
-    display: block;
-    max-width: 18rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: block; max-width: 18rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.celda-nombre { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+
+/* Barra de progreso dentro de una celda: minutos dictados sobre programados. Un
+   "94 / 120 min" obliga a hacer la división mentalmente en cada fila. */
+.celda-progreso { display: flex; flex-direction: column; gap: 5px; min-width: 84px; }
+.celda-progreso__valor { font-family: var(--font-mono); font-size: .79rem; color: var(--text-muted); }
+.celda-progreso__barra { height: 4px; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
+.celda-progreso__barra span { display: block; height: 100%; border-radius: 999px; background: var(--success); }
+.celda-progreso--parcial .celda-progreso__barra span { background: var(--warning); }
+.celda-progreso--nulo    .celda-progreso__barra span { background: var(--danger); }
+
+/* ============================================================================
+ *  FILTRO DE LISTADOS
+ * ========================================================================== */
+.filtro {
+    display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.filtro__buscador { position: relative; flex: 1 1 260px; min-width: 0; }
+.filtro__buscador svg {
+    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+    color: var(--text-dim); pointer-events: none;
+}
+.filtro__buscador .filtro__texto { padding-left: 34px; }
+
+.filtro__texto {
+    flex: 1 1 260px; min-width: 0; width: 100%;
+    height: var(--h-ctl); padding: 0 12px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .88rem;
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.filtro__estado {
+    height: var(--h-ctl); padding: 0 10px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .88rem; cursor: pointer;
+}
+.filtro__resultado {
+    margin-left: auto; color: var(--text-muted); font-size: .83rem;
+    white-space: nowrap; font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================================
- *  DETALLE FLOTANTE DE LA GRILLA
- *  Se posiciona con JS contra el bloque; aca solo va el aspecto.
+ *  ESQUELETOS DE CARGA
+ *  Se pintan mientras el servidor responde. Reservan el mismo alto que el
+ *  contenido real, así la página no salta cuando llega.
  * ========================================================================== */
-.grilla-detalle {
-    position: absolute;
-    z-index: 70;
-    min-width: 15rem;
-    max-width: 20rem;
-    padding: var(--space);
-    background: var(--bg-elev-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    font-size: 0.85rem;
+.skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 8%, var(--surface-3) 22%, var(--surface-2) 36%);
+    background-size: 920px 100%;
+    animation: v-shimmer 1250ms linear infinite;
+    border-radius: var(--r-sm);
 }
-.grilla-detalle__titulo {
-    margin: 0 0 var(--space-sm);
-    font-weight: 600;
-    color: var(--text);
+.skeleton--linea  { height: 11px; margin-bottom: 14px; }
+.skeleton--titulo { height: 13px; width: 44%; margin-bottom: 18px; }
+.skeleton--fila   { height: var(--row-h); margin-bottom: 6px; border-radius: var(--r-sm); }
+.skeleton--tarjeta { height: 148px; }
+
+/* ============================================================================
+ *  PANEL DE INICIO
+ *  Tres bloques: qué corre ahora, cómo viene el día y qué falta cargar. No hay
+ *  accesos repetidos del menú; el único botón es el del pase, que es la acción.
+ * ========================================================================== */
+.home__header { display: flex; align-items: flex-start; justify-content: space-between;
+                gap: var(--gap); flex-wrap: wrap; }
+.home__pase { flex-shrink: 0; }
+
+/* auto-fit en vez de una media query con número fijo: la grilla mete tantas
+   columnas de al menos 320px como entren y baja sola. Con un corte fijo en
+   1024px había un salto feo —tres columnas apretadas y 24px más abajo UNA sola
+   con cuatro números flotando— porque faltaba el escalón de dos columnas. */
+.home__paneles {
+    display: grid; grid-template-columns: var(--panel-cols);
+    gap: var(--gap); align-items: stretch;
 }
-.grilla-detalle__datos {
+.home__bloque { margin-bottom: 0; height: 100%; display: flex; flex-direction: column; }
+.home__titulo {
+    margin: 0 0 var(--space); font-size: .76rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim);
+}
+/* Los estados vacíos son buenas noticias, no errores: van en tono normal. */
+.home__vacio { margin: 0; color: var(--text-muted); }
+
+.home__clases { list-style: none; margin: 0; padding: 0; }
+/* Flex y no grid: dentro de una columna angosta el estado tiene que poder bajar
+   solo a la línea siguiente. */
+.home__clase {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+    padding: 12px 0 12px 14px;
+    border-left: 3px solid transparent;
+    border-top: 1px solid var(--border);
+}
+.home__clase:first-child { border-top: none; }
+/* La barra lateral dice de un vistazo cuál de las clases en curso falta marcar. */
+.home__clase--ok      { border-left-color: var(--success); }
+.home__clase--falta   { border-left-color: var(--warning); }
+.home__clase--proxima { border-left-color: var(--border-strong); }
+.home__clase-hora {
+    font-family: var(--font-mono); font-size: .83rem; color: var(--text-muted);
+    white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.home__clase-datos { display: flex; flex-direction: column; flex: 1 1 10rem; min-width: 0; }
+.home__clase-datos span   { font-size: .83rem; }
+.home__clase-datos strong { overflow-wrap: anywhere; font-weight: 600; }
+.home__clase-estado { white-space: nowrap; }
+.home__proximas-titulo { margin: 0 0 var(--space-sm); }
+.home__sigue {
+    margin: var(--space) 0 0; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    font-size: .83rem; color: var(--text-dim);
+}
+
+/* ---- El día en números ----
+   Dos columnas fijas y no auto-fit: son cuatro contadores y con auto-fit
+   quedaban tres arriba y uno solo abajo, que se lee como si faltara algo. */
+.home__numeros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.home__numero {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 15px 10px;
+    border: 1px solid var(--border); border-radius: var(--r);
+    color: var(--text); text-align: center; text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+                transform var(--t-fast) var(--ease);
+}
+.home__numero:hover {
+    border-color: var(--border-strong); background: var(--surface-2);
+    transform: translateY(-1px); text-decoration: none; color: var(--text);
+}
+.home__numero:active { transform: translateY(0); transition-duration: 60ms; }
+.home__numero-valor {
+    font-size: 1.85rem; font-weight: 600; line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.home__numero-label { font-size: .79rem; color: var(--text-muted); }
+.home__numero--ok      .home__numero-valor { color: var(--success); }
+.home__numero--tarde   .home__numero-valor { color: var(--warning); }
+.home__numero--ausente .home__numero-valor { color: var(--danger); }
+
+.home__cobertura { margin-top: auto; padding-top: 20px; }
+.home__cobertura-texto { margin: 0 0 9px; font-size: .86rem; color: var(--text-muted); }
+.home__cobertura-texto strong { color: var(--text); }
+.home__barra { height: 8px; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
+.home__barra-relleno {
+    height: 100%; border-radius: 999px; background: var(--success);
+    transform-origin: left;
+    animation: v-grow 720ms var(--ease) both; animation-delay: 260ms;
+}
+
+/* ---- Requiere atención ---- */
+.home__pendientes { list-style: none; margin: 0; padding: 0; }
+.home__pendientes li { border-top: 1px solid var(--border); }
+.home__pendiente {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 0; color: var(--text); text-decoration: none;
+    border-radius: var(--r-sm);
+    transition: background var(--t-fast) var(--ease);
+}
+.home__pendiente:hover { text-decoration: none; background: var(--surface-2); color: var(--text); }
+.home__pendiente-cantidad {
+    flex-shrink: 0; min-width: 2.4rem; text-align: right;
+    font-size: 1.4rem; font-weight: 600; color: var(--warning);
+    font-variant-numeric: tabular-nums;
+}
+.home__pendiente-texto { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.home__pendiente-texto strong { font-weight: 500; }
+.home__pendiente-texto span   { font-size: .82rem; color: var(--text-muted); }
+.home__pendiente svg { flex-shrink: 0; color: var(--text-dim); }
+
+@media (max-width: 620px) { .home__pase { width: 100%; } }
+
+/* ============================================================================
+ *  ACCESO — LOGIN, RECUPERACIÓN Y ALTA
+ *
+ *  Dos columnas: a la izquierda la marca y qué hace el sistema, a la derecha el
+ *  formulario. La tarjeta centrada anterior dejaba la pantalla más usada del
+ *  sistema como un recuadro de 380px en medio de un fondo vacío, sin decir en
+ *  ningún momento a qué se está entrando.
+ *
+ *  Debajo de 860px el panel de marca desaparece —en un teléfono la mitad de la
+ *  pantalla no puede ser decorativa— y el logo pasa arriba del formulario.
+ * ========================================================================== */
+.auth { display: grid; grid-template-columns: var(--auth-cols); min-height: 100vh; }
+
+.auth__marca {
+    position: relative; overflow: hidden;
+    padding: 44px 48px;
+    background: var(--marca); color: #fff;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+/* Trama de puntos y un círculo desenfocado. Es lo único decorativo de la app y
+   está acá porque es la única pantalla sin datos que mostrar. */
+.auth__marca::before {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.16) 1px, transparent 0);
+    background-size: 22px 22px; opacity: .5;
+}
+.auth__marca::after {
+    content: ''; position: absolute; right: -140px; top: -120px;
+    width: 420px; height: 420px; border-radius: 50%;
+    background: var(--marca-2); opacity: .55;
+}
+.auth__marca > * { position: relative; }
+
+.auth__logo { display: flex; align-items: center; gap: 12px; }
+.auth__logo-marca {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 11px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.24);
+    font-weight: 700; font-size: 1.1rem;
+}
+.auth__logo-texto { font-weight: 600; font-size: 1.05rem; letter-spacing: -.01em; }
+
+.auth__pitch { max-width: 26rem; animation: v-in 500ms var(--ease) both; }
+.auth__pitch h2 {
+    margin: 0 0 14px; font-size: 2rem; line-height: 1.18;
+    font-weight: 600; letter-spacing: -.02em; text-wrap: pretty;
+}
+.auth__pitch p { margin: 0 0 28px; font-size: .98rem; line-height: 1.6;
+                 color: rgba(255,255,255,.78); text-wrap: pretty; }
+.auth__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+.auth__lista li { display: flex; align-items: flex-start; gap: 11px;
+                  font-size: .92rem; color: rgba(255,255,255,.9); }
+.auth__lista svg { flex-shrink: 0; margin-top: 2px; opacity: .8; }
+
+.auth__legal { margin: 0; font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; }
+
+.auth__panel { display: flex; flex-direction: column; padding: 24px; background: var(--bg); }
+.auth__tema  { display: flex; justify-content: flex-end; }
+.auth__centro {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 16px 0 40px;
+}
+.auth__form { width: 100%; max-width: 376px; animation: v-in 420ms var(--ease) both; }
+.auth__form--ancha { max-width: 460px; }
+.auth__form h1 { margin: 0 0 7px; font-size: 1.6rem; }
+.auth__form > p:first-of-type { margin: 0 0 28px; color: var(--text-muted); font-size: .93rem; }
+
+.auth__campos { display: flex; flex-direction: column; gap: 15px; }
+.auth__campo-fila { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.auth__campo-fila label { margin: 0; }
+.auth__campo-fila a { font-size: .8rem; }
+
+.auth__volver {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-bottom: 22px; padding: 0;
+    border: none; background: none;
+    color: var(--text-muted); font-size: .85rem; cursor: pointer;
+}
+.auth__volver:hover { color: var(--text); text-decoration: none; }
+
+.auth__pie {
+    margin-top: 26px; padding-top: 20px;
+    border-top: 1px solid var(--border); text-align: center;
+}
+.auth__pie p { margin: 0; font-size: .86rem; color: var(--text-muted); }
+
+.auth__nota {
+    margin: 22px 0 0; padding: 12px 14px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .82rem; color: var(--text-muted); line-height: 1.55;
+}
+
+/* Logo sobre el formulario: sólo cuando el panel de marca no está. */
+.auth__logo--movil { display: none; margin-bottom: 26px; }
+.auth__logo--movil .auth__logo-marca {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: var(--marca); border: none; font-size: 1rem;
+}
+.auth__logo--movil .auth__logo-texto { color: var(--text); font-size: 1rem; }
+
+@media (max-width: 860px) {
+    .auth__marca { display: none; }
+    .auth__logo--movil { display: flex; }
+}
+
+/* ---- Código de un solo uso ----
+   Seis casillas y no un input de seis dígitos: el código llega por mail y se
+   copia a mano, y con casillas se ve cuántos faltan sin contar caracteres. */
+.codigo-input { display: flex; gap: 9px; margin-bottom: 20px; }
+.codigo-input input {
+    width: 100%; height: 56px; padding: 0;
+    text-align: center;
+    font-family: var(--font-mono); font-size: 1.5rem;
+    background: var(--field); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.codigo-input input:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); outline: none;
+}
+.codigo-input input:not(:placeholder-shown) { border-color: var(--border-strong); }
+
+/* ---- Progreso de un alta en pasos ---- */
+.pasos { display: flex; align-items: center; gap: 9px; margin-bottom: 24px; }
+.pasos__tramo { flex: 1; height: 4px; border-radius: 999px; background: var(--surface-3); }
+.pasos__tramo--hecho { background: var(--primary-solid); }
+.pasos__texto { font-size: .75rem; color: var(--text-muted);
+                font-family: var(--font-mono); white-space: nowrap; }
+
+/* ---- Compatibilidad: tarjeta de login anterior ---- */
+.login-body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: var(--space-lg);
+}
+.login-card {
+    width: 100%; max-width: 400px; padding: var(--space-xl);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+}
+.login-card--ancha { max-width: 560px; }
+.login-card__header { text-align: center; margin-bottom: var(--space-lg); }
+.login-card__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 52px; height: 52px; margin-bottom: var(--space);
+    border-radius: 15px; background: var(--marca); color: #fff;
+    font-weight: 700; font-size: 1.5rem;
+}
+.login-card__header h1 { font-size: 1.3rem; margin: 0 0 var(--space-xs); }
+.login-card__subtitle  { margin: 0; color: var(--text-muted); font-size: .92rem; }
+.login-card__ayuda     { margin: var(--space) 0 0; text-align: center; font-size: .88rem; }
+.login-card__hint      { margin: var(--space-lg) 0 0; text-align: center; color: var(--text-muted); }
+
+/* ============================================================================
+ *  LISTAS CLAVE-VALOR
+ * ========================================================================== */
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 11px 22px; margin: 0; font-size: .9rem; }
+.kv dt { color: var(--text-muted); font-weight: 400; }
+.kv dd { margin: 0; color: var(--text); }
+.kv dd code { background: none; padding: 0; }
+
+@media (max-width: 520px) {
+    /* A un ancho de teléfono, "Última actualización" y su valor no entran en la
+       misma línea: la etiqueta se parte en tres y el valor queda colgando. */
+    .kv { grid-template-columns: 1fr; gap: 2px; }
+    .kv dt { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
+    .kv dd { margin-bottom: 10px; }
+}
+
+/* ============================================================================
+ *  CHECKLIST
+ * ========================================================================== */
+.checklist { list-style: none; padding: 0; margin: 0; }
+.checklist__item { position: relative; padding: var(--space-xs) 0 var(--space-xs) 28px; color: var(--text); }
+.checklist__item::before {
+    position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 18px; height: 18px; border-radius: 50%;
+    text-align: center; line-height: 18px; font-size: 11px; font-weight: 700;
+}
+.checklist__item--done::before { content: '\2713'; background: var(--success); color: #fff; }
+.checklist__item--pending::before { content: ''; border: 2px solid var(--border-strong);
+                                    width: 14px; height: 14px; }
+.checklist__item--pending { color: var(--text-muted); }
+
+/* ============================================================================
+ *  PANTALLA INTERMEDIA DE GRUPO
+ * ========================================================================== */
+.seccion__tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--gap); }
+.seccion__tarjeta {
+    margin-bottom: 0; color: inherit; text-decoration: none;
+    transition: border-color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease),
+                box-shadow var(--t-fast) var(--ease);
+}
+/* Se levanta 2px y no 1 como los botones: es una superficie mucho más grande y
+   con un solo píxel el movimiento no se lee. */
+.seccion__tarjeta:hover {
+    border-color: var(--primary); transform: translateY(-2px);
+    box-shadow: var(--shadow-md); text-decoration: none;
+}
+.seccion__tarjeta:active { transform: translateY(0); transition-duration: 60ms; }
+.seccion__tarjeta h2 { color: var(--primary); font-size: 1rem; margin-bottom: var(--space-xs); }
+.seccion__tarjeta p  { margin: 0; font-size: .88rem; color: var(--text-muted); }
+
+/* ============================================================================
+ *  GRILLA HORARIA SEMANAL
+ *  Grid de 30 minutos por fila. Los bloques se posicionan con grid-row desde la
+ *  plantilla, así que acá sólo va el aspecto.
+ * ========================================================================== */
+.grilla-selector {
+    display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;
+}
+.grilla-selector label { color: var(--text-muted); font-size: .82rem; font-weight: 500;
+                         display: block; margin-bottom: 6px; }
+.grilla-selector select {
+    height: var(--h-ctl); padding: 0 10px;
+    background: var(--field); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r); font-size: .9rem;
+}
+.grilla-selector__carrera { flex: 1 1 240px; min-width: 0; }
+.grilla-selector__carrera select { width: 100%; }
+.grilla-selector__anio { width: 132px; }
+.grilla-selector__anio select { width: 100%; }
+.grilla-selector__conteo { margin-left: auto; font-size: .82rem; color: var(--text-muted);
+                           padding-bottom: 10px; }
+
+.grilla {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 2px var(--space-sm);
-    margin: 0 0 var(--space);
+    grid-template-columns: 58px repeat(7, minmax(96px, 1fr));
+    grid-template-rows: 34px repeat(32, 18px);
+    gap: 3px;
+    background: var(--surface);
+    border: 1px solid var(--border); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--card-pad);
+    overflow: auto;
+    scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+}
+.grilla__corner { grid-row: 1; grid-column: 1; }
+.grilla__day-header {
+    grid-row: 1;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-2); border-radius: var(--r-sm);
+    color: var(--text-dim); font-size: .74rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em;
+}
+.grilla__hour-label {
+    grid-column: 1; grid-row-end: span 2;
+    padding-right: 8px;
+    color: var(--text-dim); font-family: var(--font-mono); font-size: .74rem;
+    text-align: right;
+}
+
+/* El bloque es un <button>: hay que anular lo que el navegador le pone y que no
+   le ponía al <a> anterior. Fondo teñido con el color del día y una barra del
+   color pleno a la izquierda: el bloque relleno de color saturado, con siete
+   colores conviviendo, convertía la grilla en un tablero de manchas. */
+.grilla__item {
+    display: flex; flex-direction: column; justify-content: center; gap: 2px;
+    padding: 6px 9px;
+    border: none; border-left: 3px solid var(--dia-lun);
+    border-radius: var(--r-sm);
+    background: color-mix(in oklab, var(--dia-lun) 16%, var(--surface));
+    color: var(--text);
+    font-family: inherit; text-align: left; line-height: 1.25;
+    overflow: hidden; cursor: pointer;
+    transition: filter var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+}
+.grilla__item:hover { filter: brightness(1.12); transform: translateY(-1px); color: var(--text); }
+.grilla__item strong {
+    display: block; font-size: .8rem; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.grilla__item small {
+    display: block; font-size: .7rem; color: var(--text-muted); font-family: var(--font-mono);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Un color por día. El selector de atributo replica el criterio de la hoja
+   anterior: la plantilla escribe grid-column en un style inline, así que es de
+   donde se puede deducir el día sin agregar una clase por bloque. */
+.grilla__item[style*="grid-column: 2"] { border-left-color: var(--dia-lun);
+    background: color-mix(in oklab, var(--dia-lun) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 3"] { border-left-color: var(--dia-mar);
+    background: color-mix(in oklab, var(--dia-mar) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 4"] { border-left-color: var(--dia-mie);
+    background: color-mix(in oklab, var(--dia-mie) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 5"] { border-left-color: var(--dia-jue);
+    background: color-mix(in oklab, var(--dia-jue) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 6"] { border-left-color: var(--dia-vie);
+    background: color-mix(in oklab, var(--dia-vie) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 7"] { border-left-color: var(--dia-sab);
+    background: color-mix(in oklab, var(--dia-sab) 16%, var(--surface)); }
+.grilla__item[style*="grid-column: 8"] { border-left-color: var(--dia-dom);
+    background: color-mix(in oklab, var(--dia-dom) 16%, var(--surface)); }
+
+.grilla__footer { margin: var(--space) 0 0; font-size: .8rem; color: var(--text-dim); }
+
+/* ---- Detalle flotante ---- */
+.grilla-detalle {
+    position: absolute; z-index: 70;
+    min-width: 15rem; max-width: 20rem; padding: var(--space);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r); box-shadow: var(--shadow-lg);
+    font-size: .85rem;
+    animation: v-pop 160ms var(--ease) both;
+}
+.grilla-detalle__titulo { margin: 0 0 var(--space-sm); font-weight: 600; color: var(--text); }
+.grilla-detalle__datos {
+    display: grid; grid-template-columns: auto minmax(0, 1fr);
+    gap: 3px var(--space-sm); margin: 0 0 var(--space);
 }
 .grilla-detalle__datos dt { color: var(--text-muted); }
 .grilla-detalle__datos dd { margin: 0; color: var(--text); }
 
 /* ============================================================================
- *  MIGAS DE PAN
- *  Franja fina entre el menu y el contenido. Los grupos del menu van apagados
- *  porque no tienen pantalla propia: mostrarlos como enlace prometeria un
- *  destino que no existe.
+ *  PANTALLAS CON CÁMARA
+ *  El pase y el registro del rostro comparten esqueleto: la cámara a la
+ *  izquierda y todo lo demás a la derecha. La cámara se lleva algo más del 60%
+ *  porque es lo único que hay que mirar con detalle; el resultado va al costado
+ *  y a la altura de los ojos, no debajo del video.
  * ========================================================================== */
-.migas {
-    max-width: 1200px;
-    width: 100%;
-    margin: 0 auto;
-    padding: var(--space) var(--space-lg) 0;
-}
-.migas__lista {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-xs);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    font-size: 0.85rem;
-}
-.migas__item { color: var(--text-muted); }
-.migas__item + .migas__item::before {
-    content: "/";
-    margin-right: var(--space-xs);
-    color: var(--border);
-}
-.migas__item[aria-current="page"] { color: var(--text); font-weight: 600; }
-.migas__item--grupo { opacity: 0.7; }
-/* Cuando hay migas, el contenido no necesita todo el aire de arriba. */
-.migas + .container { padding-top: var(--space); }
-
-/* ========== Conmutador de tema ========== */
-.tema-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
-}
-.tema-toggle:hover { color: var(--text); border-color: var(--primary); }
-/* Se muestra el icono del tema al que se va a cambiar, no el actual: el boton
-   dice que hace, no donde estas. */
-.tema-toggle__luna { display: none; }
-:root[data-tema="claro"] .tema-toggle__luna { display: block; }
-:root[data-tema="claro"] .tema-toggle__sol  { display: none; }
-
-/* ========== Selector de hora (dos listas) ========== */
-.hora-picker {
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-.hora-picker__campo {
-    /* Ancho propio: estirados al 100% como el resto de los select quedaban dos
-       cajas enormes para dos digitos cada una. */
-    width: auto;
-    min-width: 4.5rem;
-    font-family: var(--font-mono);
-    text-align: center;
-}
-.hora-picker__sep {
-    color: var(--text-muted);
-    font-weight: 600;
-}
-
-/* ========== Password input con boton ojo ========== */
-.password-input {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-}
-.password-input input {
-    flex: 1;
-    padding-right: 44px !important;
-}
-
-/* Oculta los botones nativos que el navegador agrega encima de los inputs
- * type=password (revelar contrasena, autofill, "ver caracter ultimo"). En
- * Edge / IE es ::-ms-reveal y ::-ms-clear; en WebKit existe el contextual-info
- * para autofill. Como tenemos nuestro propio boton ojo, los duplicados confunden. */
-input[type="password"]::-ms-reveal,
-input[type="password"]::-ms-clear {
-    display: none;
-    width: 0;
-    height: 0;
-}
-input[type="password"]::-webkit-credentials-auto-fill-button,
-input[type="password"]::-webkit-strong-password-auto-fill-button {
-    display: none !important;
-    visibility: hidden;
-    pointer-events: none;
-    position: absolute;
-    right: 0;
-}
-.password-toggle {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-sm);
-    transition: color var(--t-rapido) var(--ease), background-color var(--t-rapido) var(--ease);
-}
-.password-toggle svg {
-    width: 20px;
-    height: 20px;
-    display: block;
-}
-.password-toggle:hover {
-    color: var(--text);
-    background: var(--bg-elev-2);
-}
-.password-toggle:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-}
-
-/* ========== Toasts ==========
-   Arriba a la derecha, no abajo: es donde queda la vista despues de apretar un
-   boton o guardar un formulario, asi que el aviso aparece donde ya se esta
-   mirando. Abajo competia ademas con la barra de estado del navegador. */
-#toast-container {
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-width: calc(100vw - 48px);
-    pointer-events: none;
-}
-.toast {
-    pointer-events: auto;
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-sm);
-    padding: 12px 14px 12px 14px;
-    background: var(--bg-elev);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--text-muted);
-    border-radius: var(--radius);
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
-    min-width: 280px;
-    max-width: 420px;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: opacity var(--t-base) var(--ease), transform var(--t-base) var(--ease);
-}
-.toast--in  { opacity: 1; transform: translateX(0); }
-.toast--out { opacity: 0; transform: translateX(20px); }
-
-.toast__icon {
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    border-radius: 50%;
-    font-size: 0.85rem;
-}
-.toast__msg {
-    flex: 1;
-    word-break: break-word;
-}
-.toast__close {
-    flex-shrink: 0;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: 0;
-    width: 22px;
-    height: 22px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 0.85rem;
-}
-.toast__close:hover { color: var(--text); background: var(--bg-elev-2); }
-
-.toast--success { border-left-color: var(--success); }
-.toast--success .toast__icon { background: var(--tinte-success); color: var(--sobre-tinte-success); }
-
-.toast--warning { border-left-color: var(--warning); }
-.toast--warning .toast__icon { background: var(--tinte-warning); color: var(--sobre-tinte-warning); }
-
-.toast--error   { border-left-color: var(--danger); }
-.toast--error   .toast__icon { background: var(--tinte-danger); color: var(--sobre-tinte-danger); }
-
-.toast--info    { border-left-color: var(--primary); }
-.toast--info    .toast__icon { background: var(--tinte-info); color: var(--sobre-tinte-info); }
-
-/* ========== Modal de confirmación ========== */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    padding: var(--space-lg);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--t-base) var(--ease);
-}
-.modal-overlay--in {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.modal {
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl) var(--space-lg) var(--space-lg);
-    max-width: 440px;
-    width: 100%;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
-    transform: scale(0.94);
-    transition: transform var(--t-base) var(--ease);
-}
-.modal-overlay--in .modal {
-    transform: scale(1);
-}
-
-.modal__icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--tinte-info);
-    color: var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto var(--space);
-}
-.modal__icon svg { display: block; }
-
-.modal--danger .modal__icon {
-    background: var(--tinte-danger);
-    color: var(--danger);
-}
-
-.modal__title {
-    text-align: center;
-    font-size: 1.15rem;
-    margin: 0 0 var(--space-sm);
-    color: var(--text);
-}
-
-.modal__detail {
-    text-align: center;
-    color: var(--text-muted);
-    margin: 0 0 var(--space-lg);
-    font-size: 0.95rem;
-    line-height: 1.45;
-}
-
-/* Campo opcional dentro del modal (por ejemplo, la fecha de baja de un docente).
-   Va entre el detalle y los botones, para que se lea la pregunta antes de responderla. */
-.modal__campo {
-    margin: 0 0 var(--space-lg);
-}
-.modal__campo[hidden] { display: none; }
-
-.modal__campo-label {
-    display: block;
-    margin-bottom: var(--space-xs);
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
-.modal__campo-input {
-    width: 100%;
-    padding: 0.55rem 0.7rem;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text);
-    font-size: 0.95rem;
-    font-family: inherit;
-}
-.modal__campo-input:focus:not(:focus-visible) {
-    outline: none;
-    border-color: var(--primary);
-}
-
-.modal__actions {
-    display: flex;
-    gap: var(--space-sm);
-    justify-content: flex-end;
-}
-.modal__actions .btn { min-width: 110px; }
-
-/* Variant del boton primary en modo destructivo */
-.btn--danger-solid {
-    background-color: var(--danger);
-    color: #fff;
-}
-.btn--danger-solid:hover {
-    background-color: var(--danger-hover);
-}
-
-/* ========== Boton hamburguesa + drawer responsive ========== */
-
-/* Boton hamburguesa: oculto por default (desktop) */
-.navbar__toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    margin-right: var(--space-sm);
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    color: var(--text);
-    cursor: pointer;
-    transition: background-color var(--t-rapido) var(--ease), border-color var(--t-rapido) var(--ease);
-}
-.navbar__toggle:hover {
-    background: var(--bg-elev-2);
-    border-color: var(--border);
-}
-.navbar__toggle:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-}
-.navbar__toggle svg { display: block; }
-
-/* Backdrop del drawer (fixed overlay) - oculto por default, lo activa nav-compact */
-.navbar__backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    z-index: 998;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--t-base) var(--ease);
-    display: none;                 /* Default: oculto */
-}
-
-/* ============================================================================
- *  NAV COMPACT MODE
- *  Activado por JS (navbar.js) cuando los links del navbar no entran en
- *  el ancho disponible. NO usa media queries con breakpoints fijos:
- *  se mide overflow real (scrollWidth > clientWidth) y se aplica/quita la
- *  clase body.nav-compact dinamicamente en resize.
- * ============================================================================ */
-
-body.nav-compact .navbar__toggle    { display: inline-flex; }
-body.nav-compact .navbar__backdrop  { display: block; }
-body.nav-compact .navbar__username  { display: none; }   /* ahorrar espacio */
-
-/* Durante la carga inicial (clase puesta por el script inline del layout)
-   suprimimos las transiciones del navbar, para que el modo compacto aplicado
-   antes del paint no "aparezca deslizando". navbar.js quita nav-preload tras
-   el primer frame, devolviendo la animación a las interacciones del usuario. */
-body.nav-preload .navbar__menu,
-body.nav-preload .navbar__backdrop {
-    transition: none !important;
-}
-
-/* El menu se transforma en drawer fijo a la izquierda, fuera de pantalla */
-body.nav-compact .navbar__menu {
-    position: fixed;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 280px;
-    max-width: 82vw;
-    margin: 0;
-    padding: var(--space-lg) var(--space);
-    flex: none;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    background-color: var(--bg-elev);
-    border-right: 1px solid var(--border);
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
-    transform: translateX(-100%);
-    transition: transform var(--t-lento) var(--ease);
-    z-index: 999;
-    overflow-y: auto;
-}
-
-/* Estilo de los links dentro del drawer (vertical, no inline) */
-body.nav-compact .navbar__link {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: 12px 14px;
-    margin: 0;
-    border-radius: var(--radius);
-    border-bottom: none !important;
-    color: var(--text);
-    font-size: 0.95rem;
-}
-body.nav-compact .navbar__link:hover {
-    background-color: var(--bg-elev-2);
-    color: var(--primary);
-    text-decoration: none;
-    border-bottom-color: transparent;
-}
-body.nav-compact .navbar__link--activo {
-    background-color: var(--bg-elev-2);
-    color: var(--primary);
-}
-
-/* En el drawer los grupos NO se despliegan: se muestran abiertos, como secciones
-   con su titulo. Hay altura de sobra y esconder los enlaces detras de un segundo
-   clic solo agrega un paso. El titulo deja de ser un boton a la vista. */
-body.nav-compact .navbar__grupo { position: static; }
-
-body.nav-compact .navbar__grupo-boton {
-    width: 100%;
-    justify-content: flex-start;
-    padding: var(--space) 14px var(--space-xs);
-    border-bottom: none !important;
-    color: var(--text-muted);
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    cursor: default;
-    pointer-events: none;
-}
-body.nav-compact .navbar__grupo--activo > .navbar__grupo-boton { color: var(--text-muted); }
-
-/* La flecha no tiene sentido si no hay nada que desplegar. */
-body.nav-compact .nav-flecha { display: none; }
-
-body.nav-compact .navbar__submenu {
-    display: block;
-    position: static;
-    min-width: 0;
-    padding: 0;
-    background: none;
-    border: none;
-    box-shadow: none;
-}
-
-body.nav-compact .navbar__sublink {
-    padding: 10px 14px 10px 34px;
-    color: var(--text);
-    font-size: 0.95rem;
-}
-body.nav-compact .navbar__sublink:hover {
-    background-color: var(--bg-elev-2);
-    color: var(--primary);
-}
-
-/* Cuando el drawer esta abierto */
-body.nav-compact.nav-open .navbar__menu     { transform: translateX(0); }
-body.nav-compact.nav-open .navbar__backdrop { opacity: 1; pointer-events: auto; }
-body.nav-compact.nav-open                   { overflow: hidden; }  /* bloquea scroll del fondo */
-
-/* ========== Grilla horaria semanal ========== */
-
-.grilla-selector {
-    display: flex;
-    align-items: center;
-    gap: var(--space);
-}
-.grilla-selector label {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-.grilla-selector select {
-    flex: 1;
-    max-width: 480px;
-    padding: var(--space-sm) var(--space);
-    background-color: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.95rem;
-}
-
-.grilla {
-    display: grid;
-    grid-template-columns: 64px repeat(7, minmax(80px, 1fr));
-    grid-template-rows: 38px repeat(32, 18px);   /* header + 32 slots de 30 min */
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: auto;
-    max-width: 100%;
-}
-
-.grilla__corner {
-    grid-row: 1;
-    grid-column: 1;
-    background: var(--bg-elev-2);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-}
-
-.grilla__day-header {
-    grid-row: 1;
-    background: var(--bg-elev-2);
-    padding: 8px 4px;
-    font-weight: 600;
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.grilla__day-header:last-child { border-right: none; }
-
-.grilla__hour-label {
-    grid-column: 1;
-    /* Cada label cubre 2 slots = 1 hora completa */
-    grid-row-end: span 2;
-    padding: 2px 8px 0 0;
-    color: var(--text-muted);
-    font-size: 0.72rem;
-    text-align: right;
-    border-right: 1px solid var(--border);
-    border-top: 1px solid var(--bg-elev-2);
-}
-
-/* Ahora es un <button>: hay que anular los estilos que el navegador le pone y que
-   no le ponia al <a> anterior (borde, fondo propio, tipografia del sistema). */
-.grilla__item {
-    border: none;
-    font-family: inherit;
-    text-align: left;
-    display: block;
-    width: calc(100% - 4px);
-    margin: 1px 2px;
-    padding: 4px 6px;
-    background: var(--primary);
-    color: #fff;
-    border-radius: var(--radius-sm);
-    font-size: 0.72rem;
-    overflow: hidden;
-    cursor: pointer;
-    transition: opacity var(--t-rapido) var(--ease), transform var(--t-rapido) var(--ease);
-    text-decoration: none;
-    line-height: 1.25;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-}
-.grilla__item:hover {
-    opacity: 0.92;
-    transform: translateY(-1px);
-    text-decoration: none;
-    color: #fff;
-}
-.grilla__item strong {
-    display: block;
-    font-size: 0.78rem;
-    margin-bottom: 1px;
-}
-.grilla__item small {
-    display: block;
-    opacity: 0.88;
-    font-size: 0.66rem;
-}
-
-/* Variar el color de los items por dia para que sea mas legible */
-.grilla__item[style*="grid-column: 2"] { background: var(--dia-lun); }   /* Lun */
-.grilla__item[style*="grid-column: 3"] { background: var(--dia-mar); }   /* Mar */
-.grilla__item[style*="grid-column: 4"] { background: var(--dia-mie); }   /* Mie */
-.grilla__item[style*="grid-column: 5"] { background: var(--dia-jue); }   /* Jue */
-.grilla__item[style*="grid-column: 6"] { background: var(--dia-vie); }   /* Vie */
-.grilla__item[style*="grid-column: 7"] { background: var(--dia-sab); }   /* Sab */
-.grilla__item[style*="grid-column: 8"] { background: var(--dia-dom); }   /* Dom */
-
-.grilla__footer {
-    margin-top: var(--space);
-}
-
-/* ========== Pagina de error ========== */
-.error-body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: var(--space-lg);
-}
-
-.error-card {
-    width: 100%;
-    max-width: 480px;
-    background-color: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
-    text-align: center;
-}
-
-.error-card__code {
-    font-size: 4.5rem;
-    font-weight: 800;
-    line-height: 1;
-    color: var(--primary);
-    margin-bottom: var(--space-sm);
-    letter-spacing: -2px;
-}
-
-.error-card__title {
-    font-size: 1.4rem;
-    margin: 0 0 var(--space);
-    color: var(--text);
-}
-
-.error-card__msg {
-    color: var(--text-muted);
-    margin: 0 0 var(--space-lg);
-    line-height: 1.5;
-    font-size: 0.95rem;
-}
-
-.error-card__actions {
-    display: flex;
-    gap: var(--space-sm);
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.error-card__detail {
-    margin-top: var(--space-lg);
-    padding-top: var(--space);
-    border-top: 1px solid var(--border);
-    text-align: left;
-}
-.error-card__detail summary {
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    user-select: none;
-}
-.error-card__detail summary:hover {
-    color: var(--text);
-}
-.error-card__detail .kv {
-    margin-top: var(--space);
-    font-size: 0.82rem;
-    grid-template-columns: max-content 1fr;
-}
-.error-card__detail .kv dd {
-    word-break: break-word;
-    font-family: var(--font-mono);
-    color: var(--text-muted);
-}
-
-/* ============================================================================
- *  PANTALLAS CON CAMARA: DISPOSICION EN DOS COLUMNAS
- *
- *  Las dos pantallas que usan camara -el pase y el registro del rostro- comparten
- *  el mismo esqueleto: la camara a la izquierda y todo lo demas a la derecha.
- *
- *  Por que dos columnas y no una centrada. Antes todo iba apilado y centrado, asi
- *  que en un monitor de escritorio quedaban dos franjas vacias a los costados y el
- *  video mas chico de lo que podia ser. Peor: el resultado caia DEBAJO del video,
- *  con lo cual habia que bajar la vista para leerlo. Al costado, la camara y el
- *  mensaje se miran de un vistazo, que es lo que hace falta cuando alguien esta
- *  parado enfrente esperando.
- *
- *  La camara manda: se lleva 1.6 de las 2.6 fracciones -algo mas del 60 %- porque
- *  es lo unico que el administrador necesita mirar con detalle.
- * ========================================================================== */
-
 .camara-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-    gap: var(--space-lg);
-    align-items: start;
+    grid-template-columns: minmax(0, 1.55fr) minmax(280px, .9fr);
+    gap: var(--gap); align-items: start;
 }
-
-/* La columna del video no debe encogerse por debajo de su contenido: minmax con
-   el minimo en 0 es lo que evita el desborde clasico de CSS Grid. */
 .camara-layout__principal { min-width: 0; }
+.camara-layout__lateral   { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
 
-.camara-layout__lateral {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space);
-    min-width: 0;
-}
+/* El panel lateral acompaña a la cámara al hacer scroll en pantallas altas: si
+   el video queda arriba y el mensaje se va de vista, no sirve de nada. */
+@media (min-height: 800px) { .camara-layout__lateral { position: sticky; top: var(--space-lg); } }
 
-/* El panel lateral acompaña a la camara mientras se hace scroll en pantallas
-   altas: si el video queda arriba y el mensaje se va de vista, no sirve de nada. */
-@media (min-height: 800px) {
-    .camara-layout__lateral { position: sticky; top: var(--space-lg); }
-}
-
-/* Una sola columna cuando el ancho no alcanza. El limite no es un tamaño de
-   dispositivo sino el punto en que la columna lateral bajaria de 280 px y el
-   texto empezaria a cortarse. */
 @media (max-width: 900px) {
-    .camara-layout          { grid-template-columns: 1fr; }
+    .camara-layout { grid-template-columns: 1fr; }
     .camara-layout__lateral { position: static; }
-
-    /* Apilado, el video se lleva todo el ancho y crece tanto que el estado y los
-       botones quedan debajo del pliegue. Acá el video cede: de nada sirve verlo
-       enorme si hay que scrollear para saber si marco o no. */
-    .camara-video           { max-height: 45vh; }
-
+    /* Apilado, el video crece tanto que el estado y los botones quedan debajo
+       del pliegue. Acá el video cede: de nada sirve verlo enorme si hay que
+       scrollear para saber si marcó o no. */
+    .camara-video { max-height: 45vh; }
 }
+@media (max-height: 760px) { .camara-video { max-height: 56vh; } }
+@media (max-height: 620px) { .camara-video { max-height: 46vh; } }
 
-/* Caja del video: el canvas del recuadro se superpone encima, por eso relative. */
-.camara-caja {
-    position: relative;
-    width: 100%;
-    line-height: 0;              /* saca el espacio fantasma debajo del video */
-}
-
+.camara-caja { position: relative; width: 100%; line-height: 0; background: #0a0d11; }
 .camara-video {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;           /* llena la caja sin deformar la imagen */
-    border-radius: var(--radius);
-    background: #000;
-    display: block;
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+    background: #0a0d11; display: block;
 }
+.camara-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* El overlay se estira sobre el video; el JS le fija el tamaño interno en pixeles
-   del fotograma, y el CSS lo escala para que el recuadro caiga sobre la cara. */
-.camara-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+/* Guía sobre el video. El recuadro cambia de color según el estado, que es la
+   señal que se ve estando parado a dos metros de la pantalla. */
+.camara-guia {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(56%, 300px); aspect-ratio: 3 / 4;
+    border: 2px solid var(--border-strong);
+    border-radius: 26% / 32%;
     pointer-events: none;
+    transition: border-color var(--t-base) var(--ease);
 }
-
-/* En pantallas bajas el video cede altura para que el panel lateral y los botones
-   entren sin scrollear. Medido en 1600x600, que es donde peor se veia. */
-@media (max-height: 760px) {
-    .camara-video { max-height: 56vh; }
+.camara-guia--buscando { border-color: var(--primary); }
+.camara-guia--ok       { border-color: var(--success); }
+.camara-guia--error    { border-color: var(--danger); }
+/* Línea de barrido: dice que el sistema está mirando. Sólo mientras busca. */
+.camara-guia--buscando::after {
+    content: ''; position: absolute; left: 6%; right: 6%; top: 50%; height: 2px;
+    background: var(--primary); box-shadow: 0 0 14px 2px var(--primary-ring);
+    animation: v-scan 1500ms var(--ease) infinite;
 }
-@media (max-height: 620px) {
-    .camara-video { max-height: 46vh; }
-}
-
-/* ============================================================================
- *  PASE DE ASISTENCIA
- * ========================================================================== */
 
 .pase__header { margin-bottom: var(--space); }
 
-/* El resultado es lo segundo mas importante de la pantalla, asi que ocupa el tope
-   de la columna y con cuerpo grande: se tiene que poder leer de reojo. */
+/* El resultado es lo segundo más importante de la pantalla: ocupa el tope de la
+   columna y con cuerpo grande, para poder leerse de reojo. */
 .pase__estado {
     min-height: 5.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    display: flex; flex-direction: column; justify-content: center;
     line-height: normal;
 }
-
+.pase__etiqueta {
+    display: flex; align-items: center; gap: 9px; margin: 0 0 12px;
+    font-size: .74rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--text-dim);
+}
+.pase__punto {
+    width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    background: var(--text-dim);
+}
+.pase__punto--buscando { background: var(--primary); animation: v-pulse 1400ms var(--ease) infinite; }
+.pase__punto--ok       { background: var(--success); }
 .pase__mensaje {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
+    margin: 0 0 6px; font-size: 1.12rem; font-weight: 600; line-height: 1.3;
     transition: color var(--t-base) var(--ease);
 }
-
-/* Los cuatro estados del pase. Antes el color lo escribia pase-asistencia.js como
-   estilo inline, con hex de otra paleta y sin manera de responder al tema claro. */
 .pase__mensaje--success { color: var(--success); }
 .pase__mensaje--error   { color: var(--danger); }
 .pase__mensaje--warn    { color: var(--warning); }
 .pase__mensaje--info    { color: var(--text); font-weight: 400; }
 
-/* Confirmacion de marca. Es la unica animacion de la pantalla y dura poco menos de
-   medio segundo: quien toma asistencia esta mirando la camara y al docente, no el
-   panel, asi que el aviso tiene que alcanzar con verlo de reojo.
-
-   Escala apenas 1.04 y vuelve. Mas que eso empuja el texto de abajo y se lee como
-   un salto; menos, no se registra. */
+/* Confirmación de marca. La única animación de la pantalla, y dura menos de
+   medio segundo: quien toma asistencia está mirando la cámara y al docente, no
+   el panel, así que el aviso tiene que alcanzar con verlo de reojo. Escala
+   apenas 1.04: más empuja el texto de abajo y se lee como un salto. */
 @keyframes pase-confirma {
-    0%   { transform: scale(1);    }
-    35%  { transform: scale(1.04); }
-    100% { transform: scale(1);    }
+    0% { transform: scale(1); } 35% { transform: scale(1.04); } 100% { transform: scale(1); }
 }
-.pase__mensaje--confirma {
-    animation: pase-confirma 420ms var(--ease);
-    transform-origin: left center;
-}
+.pase__mensaje--confirma { animation: pase-confirma 420ms var(--ease); transform-origin: left center; }
 
-/* El panel entero da un destello verde muy tenue en el mismo momento. Es lo que se
-   ve con vision periferica cuando la vista esta en otro lado. */
 @keyframes pase-destello {
-    0%   { background-color: transparent; }
-    30%  { background-color: var(--tinte-success); }
-    100% { background-color: transparent; }
+    0% { background: transparent; } 30% { background: var(--t-success); } 100% { background: transparent; }
 }
 .pase__estado:has(.pase__mensaje--confirma) {
-    animation: pase-destello 700ms var(--ease);
-    border-radius: var(--radius);
+    animation: pase-destello 700ms var(--ease); border-radius: var(--r);
 }
 
-.pase__clase {
-    margin: 0.35rem 0 0;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
+.pase__clase { margin: 0; font-size: .86rem; color: var(--text-muted); min-height: 2.4em; }
 
-/* Botones a lo ancho de la columna: son los dos unicos de la pantalla y se usan
-   todo el dia, asi que conviene que sean grandes y esten siempre en el mismo lugar. */
-.pase__acciones {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-}
+.pase__acciones { display: flex; flex-direction: column; gap: 9px; }
 .pase__acciones .btn { width: 100%; }
+.pase__ayuda { margin: 0; color: var(--text-dim); font-size: .82rem;
+               line-height: 1.55; text-wrap: pretty; }
 
-/* Ayuda breve al pie del panel, para quien opera por primera vez. */
-.pase__ayuda {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-    line-height: 1.45;
-}
+/* Últimas marcas: confirma que el sistema viene registrando y permite ver de un
+   vistazo si alguien quedó afuera. */
+.pase__marcas { list-style: none; margin: 0; padding: 0;
+                display: flex; flex-direction: column; gap: 10px; }
+.pase__marca { display: flex; align-items: center; gap: 10px; font-size: .85rem; }
+.pase__marca-hora { font-family: var(--font-mono); font-size: .79rem; color: var(--text-dim);
+                    font-variant-numeric: tabular-nums; }
+.pase__marca-nombre { flex: 1; min-width: 0; overflow: hidden;
+                      text-overflow: ellipsis; white-space: nowrap; }
 
 @media (max-height: 700px) {
     .pase__header .page-header__subtitle { display: none; }
-    .pase__header                        { margin-bottom: 0.5rem; }
-    .pase__estado                        { min-height: 4rem; }
-    .pase__ayuda                         { display: none; }
+    .pase__header { margin-bottom: var(--space-sm); }
+    .pase__estado { min-height: 4rem; }
+    .pase__ayuda  { display: none; }
+}
+/* Apilado, los botones pasan a una fila: a lo ancho de la pantalla se ven
+   desproporcionados y empujan otros 50px hacia abajo, justo lo que hace que
+   queden fuera de la vista. Va al final para ganarle por cascada a las reglas
+   de una sola columna de más arriba. */
+@media (max-width: 900px) {
+    .pase__acciones, .captura__acciones { flex-direction: row; }
+    .pase__acciones .btn, .captura__acciones .btn { flex: 1; width: auto; }
 }
 
-/* Apilado, los botones pasan a una fila: a lo ancho de la pantalla se ven
-   desproporcionados y encima empujan otros 50 px hacia abajo, justo lo que hace
-   que queden fuera de la vista.
-   Va acá, al final, porque estas reglas tienen que ganarle por orden de cascada a
-   las de una sola columna definidas más arriba: misma especificidad, gana la
-   última. */
-@media (max-width: 900px) {
-    .pase__acciones,
-    .captura__acciones      { flex-direction: row; }
-    .pase__acciones .btn,
-    .captura__acciones .btn { flex: 1; width: auto; }
+/* ---- Captura guiada del rostro ---- */
+.captura__card { text-align: center; }
+.captura__guia { margin-bottom: var(--space); }
+.captura__paso { margin: 0; color: var(--text-dim); font-size: .74rem;
+                 text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+.captura__instruccion { margin: 6px 0 0; font-size: 1.2rem; font-weight: 600; }
+.captura__detalle { margin: 6px 0 0; color: var(--text-muted); font-size: .88rem; }
+.captura__feedback {
+    min-height: 2.6rem; margin: var(--space) 0 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: .93rem;
+}
+.captura__feedback--ok       { color: var(--on-success); font-weight: 600; }
+.captura__feedback--corregir { color: var(--on-warning); font-weight: 600; }
+.captura__titulo-lateral {
+    margin: 0 0 var(--space-sm); font-size: .74rem; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: .08em; font-weight: 600;
+}
+.captura__etapas { margin: 0; padding: 0; list-style: none; text-align: left; }
+.captura__etapa {
+    display: flex; align-items: center; gap: var(--space-sm);
+    padding: var(--space-sm); border-radius: var(--r-sm);
+    color: var(--text-muted); font-size: .87rem;
+}
+.captura__etapa-num {
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 22px; height: 22px;
+    border: 1px solid var(--border-strong); border-radius: 50%; font-size: .75rem;
+}
+.captura__etapa-nombre { flex: 1; }
+.captura__etapa-marca  { font-variant-numeric: tabular-nums; font-size: .8rem; }
+.captura__etapa--activa { background: var(--surface-2); color: var(--text); }
+.captura__etapa--activa .captura__etapa-num { border-color: var(--primary); color: var(--primary); }
+.captura__etapa--lista { color: var(--on-success); }
+.captura__etapa--lista .captura__etapa-num { background: var(--success); border-color: var(--success); color: #fff; }
+.captura__acciones { display: flex; flex-direction: column; gap: 9px; }
+.captura__acciones .btn { width: 100%; }
+.captura__ayuda { margin: 0; color: var(--text-dim); font-size: .82rem; line-height: 1.5; }
+
+/* En pantallas bajas cede primero el texto explicativo, no la lista de poses:
+   sin ver en qué paso va, la guía no sirve de nada. */
+@media (max-height: 760px) {
+    .captura__detalle, .captura__ayuda { display: none; }
 }
 
 /* ============================================================================
- *  ALTA DE INSTITUCION
- *  Usa la tarjeta del login, pero con mas ancho: son tres bloques de datos
- *  (clave, institucion y primera cuenta) y a 380 px quedaba muy angosta.
+ *  REPORTES
  * ========================================================================== */
-
-.login-card--ancha {
-    max-width: 560px;
+.reporte__filtros {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 12px;
 }
+.reporte__acciones {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--gap); margin-bottom: 12px; flex-wrap: wrap;
+}
+/* Los dos botones son la misma decisión —en qué formato me lo llevo— así que
+   van pegados y no repartidos a lo ancho de la fila. */
+.reporte__descargas { display: flex; align-items: center; gap: 9px; }
 
-/* Separa los bloques del formulario sin cargar la pantalla con recuadros. */
-.separador {
-    border: 0;
+/* ============================================================================
+ *  DERECHOS ARCO
+ * ========================================================================== */
+.arco__nota { margin: 0 0 4px; font-size: .86rem; color: var(--text-muted); text-wrap: pretty; }
+.arco__historial {
+    margin: var(--space-xs) 0 0; padding-left: var(--space);
+    font-size: .85rem; color: var(--text-muted);
+}
+.arco__derechos { list-style: none; margin: 0; padding: 0; }
+.arco__derechos li {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; padding: 16px 0; flex-wrap: wrap;
     border-top: 1px solid var(--border);
-    margin: var(--space-lg) 0 var(--space);
 }
-
-.form-seccion {
-    margin: 0 0 var(--space);
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
+.arco__derechos li > div { display: flex; flex-direction: column; min-width: 15rem; flex: 1; }
+.arco__derechos li strong { font-weight: 500; }
+.arco__derechos li span { font-size: .85rem; color: var(--text-muted); text-wrap: pretty; }
 
 /* ============================================================================
  *  PUESTO DE CAPTURA NO AUTORIZADO
- *  La pantalla a la que se llega cuando se intenta abrir el pase o el registro
- *  del rostro desde un equipo que no esta habilitado (ADR-0015).
- *
- *  No se parece a la pagina de error a proposito. Un error dice que algo se
- *  rompio; esto dice que el sistema funciona y que falta estar en otra maquina.
- *  Por eso usa las tarjetas normales del sistema y ofrece a donde ir, en vez
- *  del cartel centrado de error.html.
+ *  No se parece a la página de error a propósito: un error dice que algo se
+ *  rompió, esto dice que el sistema funciona y que falta estar en otra máquina.
  * ========================================================================== */
-.puesto__nota {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-.puesto__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin-top: var(--space-lg);
-}
-
+.puesto__nota { color: var(--text-muted); font-size: .89rem; }
+.puesto__acciones { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
 .puesto__subtitulo {
-    margin: var(--space-xl) 0 var(--space);
-    font-size: 1.05rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    margin: var(--space-xl) 0 var(--space); font-size: .76rem; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: .08em; font-weight: 600;
 }
+/* Uno al lado del otro quedan por debajo del mínimo de 44px de un objetivo táctil. */
+@media (max-width: 480px) { .puesto__acciones .btn { width: 100%; } }
 
-/* A lo ancho de un telefono los dos botones se apilan: uno al lado del otro
-   quedan por debajo del minimo de 44 px que necesita un objetivo tactil. */
-@media (max-width: 480px) {
-    .puesto__acciones .btn { width: 100%; }
+/* ============================================================================
+ *  PÁGINA DE ERROR
+ * ========================================================================== */
+.error-body {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: var(--space-lg);
 }
+.error-card {
+    width: 100%; max-width: 480px; padding: var(--space-xl); text-align: center;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+}
+.error-card__code {
+    font-size: 4rem; font-weight: 600; line-height: 1;
+    color: var(--primary); margin-bottom: var(--space-sm); letter-spacing: -.04em;
+    font-variant-numeric: tabular-nums;
+}
+.error-card__title { font-size: 1.3rem; margin: 0 0 var(--space); }
+.error-card__msg   { margin: 0 0 var(--space-lg); color: var(--text-muted);
+                     font-size: .93rem; line-height: 1.55; }
+.error-card__actions { display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap; }
+.error-card__detail {
+    margin-top: var(--space-lg); padding-top: var(--space);
+    border-top: 1px solid var(--border); text-align: left;
+}
+.error-card__detail summary { cursor: pointer; color: var(--text-muted);
+                              font-size: .85rem; user-select: none; }
+.error-card__detail summary:hover { color: var(--text); }
+.error-card__detail .kv { margin-top: var(--space); font-size: .82rem; }
+.error-card__detail .kv dd { word-break: break-word; font-family: var(--font-mono); color: var(--text-muted); }
 
 /* ============================================================================
  *  TABLAS COMO TARJETAS EN PANTALLA ANGOSTA
  *
- *  Las tablas de listado declaran min-width: 720px, asi que en un telefono de
- *  360 px habia que desplazarse el doble del ancho de la pantalla para leer una
- *  fila entera. El degradado del borde avisa que hay mas, pero avisar de un mal
- *  camino no lo arregla.
+ *  Las tablas declaran min-width: 760px, así que en un teléfono de 360px había
+ *  que desplazarse el doble del ancho de la pantalla para leer una fila entera.
  *
- *  Debajo de 760 px --justo donde la tabla empezaria a desplazarse-- cada fila
- *  pasa a ser una tarjeta y cada celda una linea "etiqueta: valor". La etiqueta
- *  sale de data-label, que las plantillas ponen en cada <td>, porque el <thead>
- *  deja de estar a la vista y sin el los valores quedan sueltos sin decir de que
- *  son.
+ *  Debajo de 760px cada fila pasa a ser una tarjeta y cada celda una línea
+ *  "etiqueta: valor". La etiqueta sale de data-label, que las plantillas ponen
+ *  en cada <td>, porque el <thead> deja de estar a la vista.
  *
- *  Por que los roles ARIA. Cambiar el display de los elementos de una tabla hace
- *  que Chrome y Safari le saquen la semantica de tabla al arbol de
- *  accesibilidad: deja de anunciarse como tabla, con sus filas y sus celdas.
- *  Declarar role="table" / "row" / "cell" a mano la repone. Los roles van
- *  siempre en el HTML, no solo en movil: en escritorio coinciden con los
- *  implicitos, asi que no cambian nada.
+ *  Los roles ARIA del HTML son los que reponen la semántica: cambiar el display
+ *  de los elementos de una tabla hace que Chrome y Safari le saquen la
+ *  semántica de tabla al árbol de accesibilidad.
  * ========================================================================== */
 @media (max-width: 760px) {
+    .table-wrap:has(.table--tarjetas) { overflow: visible; max-height: none; min-height: 0; }
 
-    /* El contenedor deja de ser una caja con scroll propio: ya no hay nada que
-       desplazar de costado, y limitarle el alto agregaria un segundo scroll
-       adentro de la pagina. */
-    .table-wrap:has(.table--tarjetas) {
-        overflow: visible;
-        max-height: none;
-        min-height: 0;
-    }
-    /* Los degradados de borde avisaban de un desplazamiento que ya no existe. */
-    .table-wrap:has(.table--tarjetas)::before,
-    .table-wrap:has(.table--tarjetas)::after { display: none; }
+    .table--tarjetas, .table--tarjetas tbody,
+    .table--tarjetas tr, .table--tarjetas td { display: block; width: auto; }
 
-    .table--tarjetas,
-    .table--tarjetas tbody,
-    .table--tarjetas tr,
-    .table--tarjetas td { display: block; width: auto; }
+    /* El selector repite .table-wrap porque así lo declara la regla de
+       escritorio y una media query no suma especificidad: con .table a secas el
+       ancho mínimo seguía ganando y la tarjeta se desbordaba 760px igual. */
+    .table-wrap .table--tarjetas { min-width: 0; font-size: .93rem; }
 
-    /* El selector repite .table-wrap porque asi lo declara la regla de escritorio
-       (.table-wrap .table { min-width: 720px }) y una media query no suma
-       especificidad: con .table a secas el ancho minimo seguia ganando y la tarjeta
-       se desbordaba 720 px igual. */
-    .table-wrap .table--tarjetas { min-width: 0; font-size: 0.95rem; }
-
-    /* El encabezado se oculta sin sacarlo del arbol de accesibilidad: display:none
-       lo haria desaparecer tambien para un lector de pantalla, y las etiquetas de
-       columna son justamente lo que da sentido a cada valor. */
+    /* El encabezado se oculta sin sacarlo del árbol de accesibilidad:
+       display:none lo haría desaparecer también para un lector de pantalla, y
+       las etiquetas de columna son justamente lo que da sentido a cada valor. */
     .table--tarjetas thead {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip-path: inset(50%);
-        white-space: nowrap;
+        position: absolute; width: 1px; height: 1px;
+        overflow: hidden; clip-path: inset(50%); white-space: nowrap;
     }
 
     .table--tarjetas tbody tr {
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background-color: var(--bg-elev);
-        padding: var(--space-sm) var(--space);
-        margin-bottom: var(--space-sm);
+        margin-bottom: var(--space-sm); padding: var(--space-sm) var(--space);
+        background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
     }
     .table--tarjetas tbody tr:last-child { margin-bottom: 0; }
-    /* En tarjetas el resaltado al pasar el mouse no aporta --se toca, no se
-       apunta-- y en un telefono queda pegado despues del toque. */
-    .table--tarjetas tbody tr:hover { background-color: var(--bg-elev); }
+    /* En tarjetas el resaltado al pasar el mouse no aporta —se toca, no se
+       apunta— y en un teléfono queda pegado después del toque. */
+    .table--tarjetas tbody tr:hover { background: var(--surface); }
 
     .table--tarjetas tbody td {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        gap: var(--space);
-        padding: 6px 0;
-        border-bottom: 1px solid var(--border);
-        text-align: right;
+        display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline;
+        gap: var(--space); height: auto; padding: 6px 0;
+        border-bottom: 1px solid var(--border); text-align: right;
     }
     .table--tarjetas tbody tr td:last-child { border-bottom: none; }
 
-    /* La etiqueta de la columna, delante del valor. */
     .table--tarjetas tbody td::before {
         content: attr(data-label);
-        flex: 0 0 auto;
-        margin-right: var(--space);
-        color: var(--text-muted);
-        font-size: 0.78rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-align: left;
+        flex: 0 0 auto; margin-right: var(--space);
+        color: var(--text-dim); font-size: .72rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: .06em; text-align: left;
     }
-    /* Una celda sin data-label no dibuja el hueco de la etiqueta. */
     .table--tarjetas tbody td:not([data-label])::before { content: none; }
 
-    /* Celdas de dos partes: un valor principal y un dato secundario en <small>
-       --el codigo de la materia con su nombre, el docente con su DNI--. Los tres
-       elementos (etiqueta, valor, secundario) compiten por el mismo renglon, y el
-       del medio es el que se comprime: TUP-004 se partia en TUP- / 004.
-
-       El secundario baja a su propio renglon cuando no entra, y el valor principal
-       no se encoge ni se corta por la mitad. Un codigo partido no es un codigo. */
-    .table--tarjetas tbody td { flex-wrap: wrap; }
+    /* Celdas de dos partes: un valor principal y un dato secundario en <small>.
+       Los tres elementos compiten por el mismo renglón y el del medio es el que
+       se comprime: TUP-004 se partía en TUP- / 004. Con shrink en 0 el
+       secundario se mantiene entero y, cuando no entra, baja completo. */
     .table--tarjetas tbody td > code,
-    .table--tarjetas tbody td > .badge {
-        flex: 0 0 auto;
-        white-space: nowrap;
-    }
-    /* flex-shrink en 0 y no en 1: un elemento flexible se encoge ANTES de bajar de
-       renglon, asi que con shrink el secundario se quedaba en la linea metido en una
-       columna finita partiendo su texto. Con 0 se mantiene entero y, cuando no entra,
-       baja completo. max-width lo acota si el solo es mas ancho que la tarjeta. */
+    .table--tarjetas tbody td > .badge { flex: 0 0 auto; white-space: nowrap; }
     .table--tarjetas tbody td > small {
-        flex: 0 0 auto;
-        max-width: 100%;
-        /* Solo en el renglon compartido lo empuja space-between; cuando baja queda
-           unico en su linea y sin esto se pega a la izquierda, contra la columna de
-           valores que va toda a la derecha. */
-        margin-left: auto;
-        text-align: right;
+        flex: 0 0 auto; max-width: 100%; margin-left: auto; text-align: right;
     }
+    .table--tarjetas .celda-nombre { white-space: normal; }
 
-    /* Las acciones van abajo, a lo ancho y con altura de dedo: los 44 px son el
-       minimo de un objetivo tactil, y los botones de tabla son de 24. */
+    /* Las acciones van abajo, a lo ancho y con altura de dedo: 44px es el
+       mínimo de un objetivo táctil y los botones de tabla miden 28. */
     .table--tarjetas tbody td.table__actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--space-sm);
-        justify-content: flex-start;
-        padding-top: var(--space-sm);
-        text-align: left;
+        display: flex; flex-wrap: wrap; gap: var(--space-sm);
+        justify-content: flex-start; padding-top: var(--space-sm); text-align: left;
     }
     .table--tarjetas tbody td.table__actions::before { content: none; }
+    .table--tarjetas tbody td.table__actions > * + * { margin-left: 0; }
     .table--tarjetas tbody td.table__actions .btn--sm {
-        flex: 1 1 auto;
-        min-height: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0;
+        flex: 1 1 auto; min-height: 44px; height: auto;
     }
     .table--tarjetas tbody td.table__actions .inline-form { display: contents; }
 
-    /* El estado vacio no es una fila de datos: no lleva recuadro ni etiquetas. */
-    .table--tarjetas tbody tr:has(.table__empty) {
-        border: none;
-        background: none;
-        padding: 0;
-    }
-    .table--tarjetas td.table__empty {
-        display: block;
-        text-align: center;
-        border-bottom: none;
-    }
+    /* El estado vacío no es una fila de datos: no lleva recuadro ni etiquetas. */
+    .table--tarjetas tbody tr:has(.table__empty) { border: none; background: none; padding: 0; }
+    .table--tarjetas td.table__empty { display: block; text-align: center; border-bottom: none; }
     .table--tarjetas td.table__empty::before { content: none; }
 }
