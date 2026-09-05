@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Revocar el puesto a distancia - Visum</title>
+</head>
+<body>
+    <section class="puesto">
+
+        <header class="page-header">
+            <h1>Revocar el puesto desde otra máquina</h1>
+            <p class="page-header__subtitle">
+                El equipo autorizado se revoca desde esa misma computadora. Cuando ya no la
+                tenés, esta es la salida.
+            </p>
+        </header>
+
+        <div class="card">
+            <h2>Equipo que vas a revocar</h2>
+            <p>
+                <strong th:text="${puesto.nombre}">Secretaría PC-1</strong>
+                <span class="text-muted"
+                      th:text="${puesto.ultimoUsoEn != null}
+                               ? '· último uso ' + ${#temporals.format(puesto.ultimoUsoEn, 'dd/MM/yy HH:mm')}
+                               : '· nunca se usó'">·</span>
+            </p>
+
+            <!-- El porque, no solo el como: alguien que ya inicio sesion como institucion
+                 podria preguntarse para que le piden otra cosa mas. La respuesta es que la
+                 contrasena sola alcanzaria para mudar la captura biometrica a cualquier
+                 maquina, y el codigo es lo que lo impide. -->
+            <p class="alert alert--warning" role="alert">
+                Revocar desde acá exige además un código que llega al correo de la institución.
+                Con solo la contraseña, cualquiera que la tuviera podría llevarse la captura de
+                asistencia a su propia computadora desde donde estuviera.
+            </p>
+
+            <form th:action="@{/puestos/{id}/revocar/codigo(id=${puesto.id})}" method="post">
+                <button type="submit" class="btn btn--secondary"
+                        data-texto-enviando="Enviando...">Enviarme el código</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Confirmar</h2>
+            <form th:action="@{/puestos/{id}/revocar/confirmar(id=${puesto.id})}" method="post"
+                  novalidate
+                  data-confirm="¿Revocar este puesto?"
+                  data-confirm-detail="Después de esto nadie va a poder tomar asistencia hasta que autorices un equipo nuevo."
+                  data-confirm-action="Revocar"
+                  data-confirm-style="danger">
+                <!-- Un codigo vencido o mal tipeado no es un error de formato del campo, asi
+                     que no lo puede reportar el navegador: llega del servidor y se muestra
+                     aca, junto al formulario que hay que corregir. -->
+                <div th:if="${error}" class="alert alert--error" role="alert">
+                    <p th:text="${error}">Error</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="codigo">Código de 6 dígitos <span class="required">*</span></label>
+                    <input type="text" id="codigo" name="codigo" required
+                           inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+                    <small class="form-hint">
+                        Vence a los pocos minutos y se puede usar una sola vez.
+                    </small>
+                </div>
+                <button type="submit" class="btn btn--primary btn--danger"
+                        data-texto-enviando="Revocando...">Revocar el puesto</button>
+            </form>
+        </div>
+
+        <p class="text-muted">
+            <a th:href="@{/puestos}">Volver a puestos de captura</a>
+        </p>
+
+    </section>
+</body>
+</html>

@@ -11,7 +11,7 @@ Esquema gestionado exclusivamente por Flyway. Hibernate solo valida.
 ## Tablas vigentes: 19
 
 El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` (V017) y
-`bloques_presencia` (V019).
+`bloques_presencia` (V019). De V020 en adelante solo se agregan columnas e índices, no tablas.
 
 > Nota: el `CHANGELOG.md` dice "esquema completo de 16 tablas" en el Sprint 0. En ese
 > momento eran 15 — `auditoria` existía y `codigos_verificacion` y `puestos_captura`
@@ -168,6 +168,27 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V018__cuenta_institucional_sin_persona` | `usuarios.persona_id` pasa a admitir NULL: la cuenta institucional no es una persona física |
 | `V019__bloques_de_presencia` | Tabla `bloques_presencia`, `asistencias.bloque_id` y `instituciones.umbral_separacion_min` (ADR-0017) |
 | `V020__cierre_manual_del_bloque` | Quién cerró el bloque a mano y por qué: `cerrado_por_usuario_id`, `motivo_cierre_id`, `detalle_cierre` (RF-83) |
+| `V021__limite_de_cambio_de_password` | `usuarios.password_cambiada_en` y el destrabe administrativo: una contraseña nueva cada 24 h |
+| `V022__un_solo_puesto_habilitado` | Índice único sobre columna generada: una institución no puede tener dos puestos habilitados a la vez (ADR-0015) |
+
+### Invariantes que agregaron V021 y V022
+
+**Una contraseña nueva cada 24 horas.** `usuarios.password_cambiada_en` se sella en los dos
+caminos que fijan contraseña —Mi cuenta y la recuperación pública— y ninguno deja cambiarla
+otra vez dentro de la ventana. `NULL` significa "nunca se cambió desde V021" y **no** traba:
+sellar la fecha de la migración habría dejado a todo el mundo esperando 24 horas por un cambio
+que nadie hizo.
+
+El destrabe vive en `cambio_password_habilitado_en` y no en borrar la fecha de cambio, porque
+esa fecha es el registro de cuándo cambió de verdad. Vale mientras sea **posterior** al último
+cambio, y se consume al usarlo; sin ese "posterior", un destrabe viejo serviría para siempre.
+Nadie puede destrabarse a sí mismo: si pudiera, el límite no existiría.
+
+**Un solo puesto habilitado por institución.** No hay índices únicos parciales, así que
+`institucion_si_habilitado` es una columna generada que vale `institucion_id` mientras el
+puesto esté activo y `NULL` cuando no. En un `UNIQUE` los `NULL` no chocan entre sí, de modo
+que los revocados quedan afuera de la restricción y el historial se conserva. La regla está
+además en `PuestoCapturaService`, porque el índice no explica nada cuando falla.
 
 > ⚠ Las quince migraciones originales viven en `db/historico/`, fuera de
 > `spring.flyway.locations`. Lo que se aplica es `V001__esquema_consolidado.sql` y de ahí

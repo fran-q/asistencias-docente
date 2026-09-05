@@ -10,7 +10,12 @@ public enum PropositoCodigo {
     VERIFICACION_EMAIL("Verificación de correo"),
 
     // Permitir fijar una contraseña nueva sin intervención del superadmin.
-    RECUPERACION_PASSWORD("Recuperación de contraseña");
+    RECUPERACION_PASSWORD("Recuperación de contraseña"),
+
+    // Revocar el puesto de captura desde una maquina que no es ese puesto. La regla es que
+    // solo se revoca desde el propio equipo; esto es la salida para cuando esa maquina se
+    // rompio o se formateo, y exige el buzon de la institucion ademas de su contrasena.
+    REVOCACION_PUESTO("Revocación del puesto de captura");
 
     private final String etiqueta;
 

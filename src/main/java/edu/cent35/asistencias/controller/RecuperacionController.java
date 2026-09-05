@@ -96,8 +96,18 @@ public class RecuperacionController {
             return "auth/recuperar-codigo";
         }
 
-        CodigoVerificacionService.Resultado resultado = verificacionService.completarRecuperacion(
-            (Long) id, form.getCodigo(), form.getNuevaPassword());
+        CodigoVerificacionService.Resultado resultado;
+        try {
+            resultado = verificacionService.completarRecuperacion(
+                (Long) id, form.getCodigo(), form.getNuevaPassword());
+        } catch (IllegalStateException ex) {
+            // El codigo era correcto pero la cuenta cambio su contrasena hace menos de la
+            // ventana. El mensaje explica el plazo y el destrabe; solo lo ve quien acaba de
+            // probar que controla el buzon, asi que no delata la existencia de nada.
+            session.removeAttribute(SESION_USUARIO);
+            binding.reject("error.global", ex.getMessage());
+            return "auth/recuperar-codigo";
+        }
 
         if (resultado == CodigoVerificacionService.Resultado.OK) {
             // La sesion del flujo se cierra si o si: el codigo ya se consumio.

@@ -93,6 +93,39 @@ entrada y una salida cubren la jornada entera.
   Sigue siendo baja lógica: revocar es oposición, no cancelación. Volver a otorgar el
   consentimiento **no** reactiva el modelo — hay que registrar el rostro de nuevo.
 
+- **Una contraseña nueva cada 24 horas (V021).** Había un tope de cinco *códigos* por hora,
+  que es otra cosa: acota cuántas veces se pide el código, no cuántas veces se fija una clave.
+  Con un código en la mano se podía cambiar la contraseña las veces que uno quisiera.
+
+  Rige para los dos caminos —Mi cuenta y la recuperación pública— y lo destraba **otro**
+  administrador o la institución, desde el listado de usuarios. Quien destraba no ve ni elige
+  la contraseña: solo habilita un intento nuevo, y la persona la vuelve a recuperar por correo.
+  Nadie puede destrabarse a sí mismo, porque entonces el límite no existiría.
+
+  En la recuperación el límite se comprueba **después** de validar el código, no antes:
+  comprobarlo antes haría que una cuenta que existe respondiera distinto que un identificador
+  que no es de nadie, y bastaría con llegar a esa pantalla para averiguar qué cuentas hay.
+
+- **Un solo puesto de captura por institución (V022, ADR-0015).** Antes podían coexistir
+  varios, y uno nuevo se autorizaba estando sentado en otro ya autorizado. Ahora hay uno solo:
+  para mudar la captura hay que revocar el actual **desde esa misma máquina**.
+
+  Las dos reglas van juntas y no por separado. Con el tope de uno pero la revocación abierta,
+  la contraseña institucional habría alcanzado para revocar el puesto de secretaría desde una
+  notebook cualquiera y designar esa notebook — el agujero que ADR-0015 existe para tapar,
+  reaparecido por otra puerta.
+
+  Cuando la máquina del puesto se rompe o se formatea queda la salida por código al correo de
+  la institución. Sin ella el sistema podía quedarse sin poder tomar asistencia para siempre.
+
+  El tope se declara en el servicio y también en la base, con un índice único sobre una
+  columna generada: los revocados quedan fuera de la restricción, así que el historial de
+  puestos se conserva.
+
+- **La pantalla de puestos ahora marca cuál es este equipo.** Listaba nombres y no decía en
+  cuál de todos estaba parado quien la miraba, que es el único dato necesario para saber si se
+  puede revocar desde ahí.
+
 - **Un pedido de recuperación que no emitía código no se distinguía de un canal roto.**
   Cuando el identificador no era de nadie, el flujo cortaba antes de generar nada y no
   quedaba rastro en ninguna parte: la pantalla contesta lo mismo exista o no la cuenta

@@ -25,10 +25,15 @@ public class UsuarioListItemDto {
     // de lo contrario se descubre recien cuando la persona avisa que no entra a ningun lado.
     boolean emailVerificado;
     LocalDateTime ultimoLogin;
+    // Si la cuenta esta dentro de la ventana de 24 horas y todavia no puede cambiar su
+    // contrasena. Lo resuelve el servicio, que es quien conoce la ventana configurada; el
+    // listado solo lo necesita para no ofrecer un destrabe donde no hay nada trabado.
+    boolean cambioPasswordBloqueado;
 
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
-    public static UsuarioListItemDto from(Usuario u) {
+    public static UsuarioListItemDto from(Usuario u, boolean cambioPasswordBloqueado) {
         return UsuarioListItemDto.builder()
+            .cambioPasswordBloqueado(cambioPasswordBloqueado)
             .id(u.getId())
             .username(u.getUsername())
             .email(u.getEmail())

@@ -12,10 +12,13 @@ import edu.cent35.asistencias.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -43,6 +46,10 @@ public class UsuarioService {
     private final PersonaRepository personaRepository;
     private final PersonaService personaService;
     private final PasswordEncoder passwordEncoder;
+
+    // Horas entre una contrasena nueva y la siguiente. En cero, sin limite.
+    @Value("${app.password.horas-entre-cambios}")
+    private long horasEntreCambios;
 
     // Lista los usuarios de la institucion actual (activos + inactivos, ordenados).
     @Transactional(readOnly = true)
@@ -255,12 +262,91 @@ public class UsuarioService {
     @Transactional
     public void fijarPasswordPropia(Long usuarioId, String nueva) {
         Usuario u = buscarPorId(usuarioId);
+
+        String impedimento = motivoQueImpideCambiarPassword(u);
+        if (impedimento != null) {
+            throw new IllegalStateException(impedimento);
+        }
         if (passwordEncoder.matches(nueva, u.getPasswordHash())) {
             throw new IllegalArgumentException(
                 "La contraseña nueva tiene que ser distinta de la que ya tenías.");
         }
         u.setPasswordHash(passwordEncoder.encode(nueva));
+        sellarCambioDePassword(u);
         usuarioRepository.save(u);
         log.info("Password cambiada por el propio usuario: id={}", usuarioId);
+    }
+
+    // ========================================================================
+    //  Limite de un cambio de contrasena cada 24 horas
+    // ========================================================================
+
+    /**
+     * Por qué esta cuenta no puede fijar una contraseña nueva ahora, o {@code null} si puede.
+     *
+     * <p>Devuelve el texto y no un booleano porque el mensaje es la mitad de la función: sin
+     * él la persona ve un rechazo y no sabe si esperar, si insistir o si pedir ayuda. Mismo
+     * criterio que {@code DocenteService.motivoQueImpideLaBaja}.
+     *
+     * <p><b>Lo aplican dos caminos.</b> El cambio voluntario desde Mi cuenta y la recuperación
+     * pública, que no se conocen entre sí. La regla en sí vive en {@code Usuario} —donde
+     * ninguno de los dos puede tenerla a medias— y acá se le pone la ventana configurada y las
+     * palabras.
+     */
+    // Sin @Transactional a proposito: no toca la base, calcula sobre la entidad que ya
+    // trajo quien llama. Anotarlo abriria una transaccion por fila del listado.
+    public String motivoQueImpideCambiarPassword(Usuario u) {
+        if (horasEntreCambios <= 0) {
+            return null;                              // limite desactivado por configuracion
+        }
+        if (u.puedeCambiarPassword(LocalDateTime.now(), Duration.ofHours(horasEntreCambios))) {
+            return null;
+        }
+        return "Ya cambiaste tu contraseña hace menos de " + horasEntreCambios + " horas. "
+             + "Esperá a que pase ese plazo, o pedile a otro administrador o a la institución "
+             + "que te habilite un cambio nuevo.";
+    }
+
+    /**
+     * Deja la cuenta marcada como recién cambiada y consume el destrabe si lo había.
+     *
+     * <p>No guarda: lo hace quien llama, dentro de su propia transacción. Así el sello y el
+     * hash nuevo entran o no entran juntos —una contraseña cambiada sin sellar dejaría la
+     * ventana abierta, y un sello sin contraseña nueva la cerraría por nada—.
+     */
+    public void sellarCambioDePassword(Usuario u) {
+        u.setPasswordCambiadaEn(LocalDateTime.now());
+        u.setCambioPasswordHabilitadoEn(null);
+        u.setCambioPasswordHabilitadoPor(null);
+    }
+
+    /**
+     * Levanta el bloqueo de una cuenta para que pueda volver a cambiar la contraseña.
+     *
+     * <p><b>No fija ni ve la contraseña.</b> Solo habilita un intento: la persona vuelve a
+     * recuperarla por correo como siempre. Es lo que mantiene la propiedad de que la
+     * contraseña la conoce únicamente su titular — un administrador que la tipeara podría
+     * después entrar con ella.
+     *
+     * <p><b>Nadie se destraba a sí mismo.</b> Si pudiera, el límite no existiría: alcanzaría
+     * con levantarlo antes de cada cambio. Por eso la cuenta que habilita tiene que ser otra,
+     * que es además lo que el pedido dice —"a través de otro administrador o la institución"—.
+     */
+    @Transactional
+    public void habilitarCambioDePassword(Long objetivoId, Long quienHabilitaId) {
+        if (objetivoId != null && objetivoId.equals(quienHabilitaId)) {
+            throw new IllegalArgumentException(
+                "No podés habilitarte el cambio a vos mismo. Tiene que hacerlo otro "
+                + "administrador o la institución.");
+        }
+        // buscarPorId valida el tenant y responde "no encontrado" si es de otra institucion.
+        Usuario objetivo = buscarPorId(objetivoId);
+
+        objetivo.setCambioPasswordHabilitadoEn(LocalDateTime.now());
+        objetivo.setCambioPasswordHabilitadoPor(quienHabilitaId);
+        usuarioRepository.save(objetivo);
+
+        log.info("Cambio de contrasena habilitado: usuario={}, por usuario={}",
+                 objetivoId, quienHabilitaId);
     }
 }

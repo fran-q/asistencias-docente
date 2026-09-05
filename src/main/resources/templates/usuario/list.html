@@ -117,14 +117,24 @@
                                   th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yy HH:mm')}">-</span>
                             <span th:unless="${u.ultimoLogin}" class="text-muted">Nunca</span>
                         </td>
-                        <!-- Solo "Editar". La contraseña de otra cuenta no se cambia desde
-                             ningún lado del sistema: todo cambio exige un código enviado al
-                             correo de su dueño, así que quien se quedó afuera lo recupera
-                             desde el login. Y la baja vive adentro de Editar, donde se ve de
-                             quién es la cuenta antes de desactivarla. -->
+                        <!-- La contraseña de otra cuenta sigue sin poder cambiarse desde
+                             acá: todo cambio exige un código al correo de su dueño. Lo único
+                             que se puede hacer es levantarle el bloqueo de 24 horas para que
+                             vuelva a recuperarla ella misma, y aparece solo cuando esa cuenta
+                             está efectivamente trabada. La baja vive adentro de Editar, donde
+                             se ve de quién es la cuenta antes de desactivarla. -->
                         <td class="table__actions">
                             <a th:href="@{/usuarios/{id}/editar(id=${u.id})}"
                                class="btn btn--ghost btn--sm">Editar</a>
+                            <form th:if="${u.cambioPasswordBloqueado}"
+                                  th:action="@{/usuarios/{id}/habilitar-cambio-password(id=${u.id})}"
+                                  method="post" class="inline-form">
+                                <button type="submit" class="btn btn--ghost btn--sm"
+                                        title="Esta cuenta cambió su contraseña hace menos de 24 horas. Habilitarle un cambio no te muestra ni te deja elegir su contraseña: solo le permite volver a recuperarla por correo."
+                                        onclick="return confirm('Habilitar un cambio de contraseña para esta cuenta?')">
+                                    Habilitar cambio
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     <tr class="table__empty-fila" hidden>

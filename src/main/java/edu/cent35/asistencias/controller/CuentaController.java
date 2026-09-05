@@ -227,7 +227,10 @@ public class CuentaController {
 
         try {
             usuarioService.fijarPasswordPropia(principal.getUsuarioId(), form.getNuevaPassword());
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            // IllegalState es el limite de 24 horas. Llega hasta aca solo si trabaron la cuenta
+            // entre el paso 1 y este, porque el paso 1 ya lo comprueba; aun asi hay que
+            // atajarlo, o el cambio pasaria igual por una ventana que se cerro en el medio.
             binding.rejectValue("nuevaPassword", "error.igual", ex.getMessage());
             redirect.addFlashAttribute(
                 "org.springframework.validation.BindingResult.formPassword", binding);

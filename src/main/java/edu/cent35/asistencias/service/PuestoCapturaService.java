@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.model.PropositoCodigo;
 import edu.cent35.asistencias.model.PuestoCaptura;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
@@ -38,6 +39,11 @@ public class PuestoCapturaService {
     private static final int BYTES_TOKEN = 32;
 
     private final PuestoCapturaRepository puestoRepository;
+    // Revocar a distancia exige un codigo de un solo uso. Se reusan las defensas que ya
+    // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
+    // inventar un segundo mecanismo que habria que endurecer por separado.
+    private final CodigoVerificacionService codigoService;
+    private final CanalDeCodigos notificador;
 
     /** Un puesto recién designado, con su token en claro. Es la única vez que el token existe fuera del navegador. */
     @Value
@@ -54,32 +60,32 @@ public class PuestoCapturaService {
     /**
      * Designa el equipo desde el que llega la petición.
      *
-     * <p><b>El primer puesto es un arranque; los demás no.</b> Mientras la institución no
-     * tenga ninguno, nadie puede tomar asistencia y hay que poder salir de esa situación desde
-     * cualquier máquina — para eso alcanza con la cuenta institucional. Pero una vez que hay
-     * un puesto habilitado, autorizar otro <b>solo se puede desde uno ya autorizado</b>.
+     * <p><b>Uno por institución.</b> Mientras haya un equipo habilitado no se puede autorizar
+     * otro: para mudar la captura hay que revocar el actual primero, y eso se hace desde ese
+     * mismo equipo. Las dos reglas juntas son las que sostienen que la captura biométrica
+     * ocurre en una máquina conocida — con la contraseña institucional sola, desde afuera, no
+     * alcanza para llevarse el puesto a otro lado.
      *
-     * <p>Sin esa condición el control no controlaba nada: cualquiera con la cuenta
-     * institucional podía convertir su propia máquina en puesto desde donde estuviera, que es
-     * exactamente lo que ADR-0015 quiere impedir. La restricción vive acá y no en la pantalla
-     * porque una vista que esconde el formulario no frena un POST hecho a mano.
+     * <p><b>El primero es un arranque.</b> Sin ningún puesto nadie puede tomar asistencia, y
+     * hay que poder salir de esa situación desde cualquier máquina; para eso alcanza con la
+     * cuenta institucional.
      *
-     * @param vieneDePuestoAutorizado si la petición trae la cookie de un puesto habilitado
+     * <p>La restricción vive acá y no en la pantalla porque una vista que esconde el
+     * formulario no frena un POST hecho a mano. Y también en la base, con el índice único que
+     * agrega V022, porque un servicio no frena un INSERT.
      */
     @Transactional
-    public PuestoDesignado designar(Long institucionId, String nombre, Usuario designadoPor,
-                                    boolean vieneDePuestoAutorizado) {
+    public PuestoDesignado designar(Long institucionId, String nombre, Usuario designadoPor) {
         String limpio = nombre == null ? "" : nombre.trim();
         if (limpio.isEmpty()) {
             throw new IllegalArgumentException("El puesto necesita un nombre.");
         }
-        if (!vieneDePuestoAutorizado && contarHabilitados(institucionId) > 0) {
-            log.warn("Designacion rechazada: la institucion {} ya tiene puesto(s) habilitado(s) "
-                     + "y la peticion no viene de uno", institucionId);
+        if (contarHabilitados(institucionId) > 0) {
+            log.warn("Designacion rechazada: la institucion {} ya tiene un puesto habilitado",
+                     institucionId);
             throw new IllegalArgumentException(
-                "Esta institución ya tiene un equipo autorizado, así que un equipo nuevo solo "
-                + "se puede autorizar desde uno que ya lo esté. Entrá desde el equipo "
-                + "autorizado y agregalo desde la pantalla de puestos.");
+                "Esta institución ya tiene un equipo autorizado y solo puede haber uno. "
+                + "Revocá el actual desde esa misma máquina y después autorizá este.");
         }
         if (puestoRepository.existeNombre(institucionId, limpio, null)) {
             throw new IllegalArgumentException(
@@ -138,12 +144,73 @@ public class PuestoCapturaService {
     }
 
     /**
-     * Revoca un puesto. Es baja lógica como en el resto del sistema, pero acá tiene una
-     * consecuencia inmediata: la cookie que vive en ese equipo deja de servir en la siguiente
-     * petición, sin necesidad de tocar la máquina.
+     * Revoca el puesto desde ese mismo equipo. Es baja lógica como en el resto del sistema,
+     * pero acá tiene una consecuencia inmediata: la cookie que vive en ese equipo deja de
+     * servir en la siguiente petición.
+     *
+     * <p><b>Por qué solo desde ahí.</b> Con un único puesto permitido, quien puede revocar
+     * puede mudar la captura: revoca y designa el suyo. Si eso se pudiera hacer desde
+     * cualquier lado, la contraseña institucional alcanzaría para llevarse la captura
+     * biométrica a una máquina cualquiera, que es exactamente lo que ADR-0015 impide. Con el
+     * equipo de por medio, hay que estar sentado ahí.
+     *
+     * <p>Cuando esa máquina se rompe o se formatea queda {@link #revocarConCodigo}, que exige
+     * además el buzón de la institución.
+     *
+     * @param desdeEsePuesto si la petición trae la cookie de ese mismo puesto
      */
     @Transactional
-    public void revocar(Long puestoId, Long institucionId) {
+    public void revocar(Long puestoId, Long institucionId, boolean desdeEsePuesto) {
+        if (!desdeEsePuesto) {
+            log.warn("Revocacion rechazada: la peticion no viene del puesto {} (institucion {})",
+                     puestoId, institucionId);
+            throw new IllegalArgumentException(
+                "El equipo autorizado solo se revoca desde esa misma máquina. Si ya no la "
+                + "tenés, pedí un código al correo de la institución para revocarlo desde acá.");
+        }
+        revocarSinControles(puestoId, institucionId);
+    }
+
+    /**
+     * Revoca el puesto desde otra máquina, con un código de un solo uso al correo de la
+     * institución. Es la salida para cuando el equipo autorizado ya no existe.
+     *
+     * <p>El código no es un trámite: es lo que convierte "sé la contraseña institucional" en
+     * "sé la contraseña y además entro al buzón de la institución". Sin él, permitir la
+     * revocación a distancia devolvería el agujero que {@link #revocar} cierra.
+     */
+    @Transactional
+    public void revocarConCodigo(Long puestoId, Long institucionId, Usuario solicitante,
+                                 String codigoIngresado) {
+        CodigoVerificacionService.Resultado resultado = codigoService.validar(
+            solicitante.getId(), PropositoCodigo.REVOCACION_PUESTO, codigoIngresado);
+
+        if (resultado != CodigoVerificacionService.Resultado.OK) {
+            throw new IllegalArgumentException(mensajeDelCodigo(resultado));
+        }
+        revocarSinControles(puestoId, institucionId);
+        log.info("Puesto revocado a distancia con codigo: id={}, institucion={}, por usuario={}",
+                 puestoId, institucionId, solicitante.getId());
+    }
+
+    /**
+     * Emite y manda el código para revocar a distancia, al correo de quien lo pide.
+     *
+     * <p>Va al correo que la cuenta tiene cargado y no a uno que se escriba en la pantalla: si
+     * el destino lo eligiera quien pide, el código no probaría nada.
+     */
+    @Transactional
+    public void pedirCodigoDeRevocacion(Usuario solicitante, String ip) {
+        String codigo = codigoService.emitir(
+            solicitante, PropositoCodigo.REVOCACION_PUESTO, solicitante.getEmail(), ip);
+        notificador.enviarCodigo(
+            solicitante, PropositoCodigo.REVOCACION_PUESTO, solicitante.getEmail(), codigo);
+        log.info("Codigo de revocacion de puesto emitido para el usuario {}", solicitante.getId());
+    }
+
+    // La baja en si, sin decidir quien tiene derecho a pedirla: eso ya lo resolvieron los dos
+    // metodos de arriba, cada uno con su prueba.
+    private void revocarSinControles(Long puestoId, Long institucionId) {
         PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
             .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));
 
@@ -155,6 +222,17 @@ public class PuestoCapturaService {
         puestoRepository.save(puesto);
 
         log.info("Puesto de captura revocado: id={}, institucion={}", puestoId, institucionId);
+    }
+
+    // Traduce el resultado del codigo a algo que se pueda leer en la pantalla.
+    private String mensajeDelCodigo(CodigoVerificacionService.Resultado resultado) {
+        return switch (resultado) {
+            case OK -> "";
+            case INEXISTENTE -> "No hay ningún código pendiente. Pedí uno nuevo.";
+            case VENCIDO -> "El código venció. Pedí uno nuevo.";
+            case INCORRECTO -> "El código no es correcto.";
+            case SIN_INTENTOS -> "Se agotaron los intentos. Pedí un código nuevo.";
+        };
     }
 
     /**

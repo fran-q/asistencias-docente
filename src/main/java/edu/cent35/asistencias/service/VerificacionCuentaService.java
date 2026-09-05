@@ -30,6 +30,9 @@ public class VerificacionCuentaService {
     // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
     private final CanalDeCodigos notificador;
     private final PasswordEncoder passwordEncoder;
+    // Solo por el limite de un cambio cada 24 horas: la regla tiene que ser la misma que
+    // aplica "Mi cuenta", y tenerla escrita dos veces es tenerla escrita mal una de las dos.
+    private final UsuarioService usuarioService;
 
     // ========================================================================
     //  Verificacion del correo (con sesion iniciada)
@@ -88,6 +91,15 @@ public class VerificacionCuentaService {
     public void enviarCodigoParaCambiarPassword(Long usuarioId, String ip) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + usuarioId));
+
+        // Aca si conviene mirar el limite ANTES de emitir, al reves que en la recuperacion
+        // publica: quien pide esto ya inicio sesion, asi que el mensaje no le revela a nadie
+        // nada que no supiera, y le evita gastar un codigo para enterarse al final de que no
+        // podia cambiarla. El paso 3 lo vuelve a comprobar por si lo trabaron en el medio.
+        String impedimento = usuarioService.motivoQueImpideCambiarPassword(usuario);
+        if (impedimento != null) {
+            throw new IllegalStateException(impedimento);
+        }
 
         String codigo = codigoService.emitir(
             usuario, PropositoCodigo.RECUPERACION_PASSWORD, usuario.getEmail(), ip);
@@ -148,7 +160,22 @@ public class VerificacionCuentaService {
         return Optional.of(usuario.getId());
     }
 
-    // Fija la contrasena nueva si el codigo es correcto. El codigo queda consumido en el intento.
+    /**
+     * Fija la contraseña nueva si el código es correcto. El código queda consumido en el intento.
+     *
+     * <p><b>El límite de 24 horas se comprueba después de validar el código, no antes.</b> El
+     * orden importa y no es una cuestión de estilo: comprobarlo antes haría que una cuenta que
+     * existe y cambió su contraseña hace poco respondiera distinto que un identificador que no
+     * es de nadie, y bastaría con llegar hasta acá sin ningún código para averiguar qué cuentas
+     * existen. Validando primero, el mensaje del límite solo lo ve quien ya probó que controla
+     * el buzón. Es la misma propiedad que sostiene {@code RecuperacionController} (ADR-0009).
+     *
+     * <p>El costo es que el código se gasta aunque el cambio no llegue a hacerse. Es el lado
+     * correcto del intercambio: pedir uno nuevo cuesta un correo.
+     *
+     * @throws IllegalStateException si el código era válido pero la cuenta todavía está dentro
+     *                               de la ventana y nadie le habilitó un cambio
+     */
     @Transactional
     public CodigoVerificacionService.Resultado completarRecuperacion(Long usuarioId,
                                                                     String codigoIngresado,
@@ -159,7 +186,15 @@ public class VerificacionCuentaService {
         if (resultado == CodigoVerificacionService.Resultado.OK) {
             Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + usuarioId));
+
+            String impedimento = usuarioService.motivoQueImpideCambiarPassword(usuario);
+            if (impedimento != null) {
+                log.info("Recuperacion frenada por el limite de cambios: usuario={}", usuarioId);
+                throw new IllegalStateException(impedimento);
+            }
+
             usuario.setPasswordHash(passwordEncoder.encode(passwordNueva));
+            usuarioService.sellarCambioDePassword(usuario);
             usuarioRepository.save(usuario);
             log.info("Contrasena recuperada por el propio usuario: {}", usuarioId);
         }

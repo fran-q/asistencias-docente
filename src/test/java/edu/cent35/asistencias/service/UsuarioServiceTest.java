@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -274,8 +275,145 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
+    //  Una contrasena nueva cada 24 horas
+    // ====================================================================
+
+    @Test
+    @DisplayName("fijarPasswordPropia: rechaza si ya cambio hace menos de la ventana")
+    void password_rechazaDentroDeLaVentana() {
+        conVentanaDe(24);
+        Usuario u = usuarioActivo(50L, RolCodigo.ADMIN);
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(2));
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(u));
+
+        assertThatThrownBy(() -> service.fijarPasswordPropia(50L, "NuevaClave1"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("menos de 24 horas");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("fijarPasswordPropia: pasada la ventana deja cambiar y vuelve a sellar")
+    void password_dejaCambiarPasadaLaVentana() {
+        conVentanaDe(24);
+        Usuario u = usuarioActivo(51L, RolCodigo.ADMIN);
+        LocalDateTime hace25Horas = LocalDateTime.now().minusHours(25);
+        u.setPasswordCambiadaEn(hace25Horas);
+        when(usuarioRepository.findById(51L)).thenReturn(Optional.of(u));
+
+        service.fijarPasswordPropia(51L, "NuevaClave1");
+
+        verify(usuarioRepository).save(u);
+        assertThat(u.getPasswordCambiadaEn())
+            .as("sin volver a sellar, la ventana quedaria abierta para siempre")
+            .isAfter(hace25Horas);
+    }
+
+    @Test
+    @DisplayName("fijarPasswordPropia: el destrabe de un admin abre la ventana una vez")
+    void password_elDestrabeAbreLaVentana() {
+        conVentanaDe(24);
+        Usuario u = usuarioActivo(52L, RolCodigo.ADMIN);
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(1));
+        u.setCambioPasswordHabilitadoEn(LocalDateTime.now());
+        u.setCambioPasswordHabilitadoPor(USUARIO_ACTUAL);
+        when(usuarioRepository.findById(52L)).thenReturn(Optional.of(u));
+
+        service.fijarPasswordPropia(52L, "NuevaClave1");
+
+        verify(usuarioRepository).save(u);
+        assertThat(u.getCambioPasswordHabilitadoEn())
+            .as("el destrabe se consume: si quedara puesto serviria para siempre")
+            .isNull();
+        assertThat(u.getCambioPasswordHabilitadoPor()).isNull();
+    }
+
+    @Test
+    @DisplayName("fijarPasswordPropia: un destrabe anterior al ultimo cambio no sirve")
+    void password_destrabeViejoNoSirve() {
+        conVentanaDe(24);
+        Usuario u = usuarioActivo(53L, RolCodigo.ADMIN);
+        u.setCambioPasswordHabilitadoEn(LocalDateTime.now().minusHours(3));
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(2));   // se uso despues
+        when(usuarioRepository.findById(53L)).thenReturn(Optional.of(u));
+
+        assertThatThrownBy(() -> service.fijarPasswordPropia(53L, "NuevaClave1"))
+            .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("fijarPasswordPropia: una cuenta que nunca la cambio no esta trabada")
+    void password_sinFechaNoTraba() {
+        conVentanaDe(24);
+        Usuario u = usuarioActivo(54L, RolCodigo.ADMIN);          // passwordCambiadaEn = null
+        when(usuarioRepository.findById(54L)).thenReturn(Optional.of(u));
+
+        service.fijarPasswordPropia(54L, "NuevaClave1");
+
+        verify(usuarioRepository).save(u);
+    }
+
+    @Test
+    @DisplayName("habilitarCambioDePassword: nadie se destraba a si mismo")
+    void destrabe_noSePuedeUnoMismo() {
+        // Si pudiera, el limite no existiria: alcanzaria con levantarlo antes de cada cambio.
+        assertThatThrownBy(() -> service.habilitarCambioDePassword(USUARIO_ACTUAL, USUARIO_ACTUAL))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("vos mismo");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("habilitarCambioDePassword: no alcanza a una cuenta de otra institucion")
+    void destrabe_noCruzaTenant() {
+        Usuario ajeno = usuarioActivo(55L, RolCodigo.ADMIN);
+        ajeno.setInstitucionId(TENANT_B);
+        when(usuarioRepository.findById(55L)).thenReturn(Optional.of(ajeno));
+
+        // Se responde "no encontrado" y no "no autorizado": lo segundo revelaria que existe.
+        assertThatThrownBy(() -> service.habilitarCambioDePassword(55L, USUARIO_ACTUAL))
+            .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("habilitarCambioDePassword: deja quien lo hizo, para poder rastrearlo")
+    void destrabe_dejaConstancia() {
+        Usuario u = usuarioActivo(56L, RolCodigo.ADMIN);
+        when(usuarioRepository.findById(56L)).thenReturn(Optional.of(u));
+
+        service.habilitarCambioDePassword(56L, USUARIO_ACTUAL);
+
+        assertThat(u.getCambioPasswordHabilitadoEn()).isNotNull();
+        assertThat(u.getCambioPasswordHabilitadoPor()).isEqualTo(USUARIO_ACTUAL);
+        verify(usuarioRepository).save(u);
+    }
+
+    @Test
+    @DisplayName("Con la ventana en cero el limite queda desactivado")
+    void password_ventanaEnCeroNoLimita() {
+        conVentanaDe(0);
+        Usuario u = usuarioActivo(57L, RolCodigo.ADMIN);
+        u.setPasswordCambiadaEn(LocalDateTime.now());
+        when(usuarioRepository.findById(57L)).thenReturn(Optional.of(u));
+
+        service.fijarPasswordPropia(57L, "NuevaClave1");
+
+        verify(usuarioRepository).save(u);
+    }
+
+    // ====================================================================
     //  Helpers
     // ====================================================================
+
+    // La ventana llega por @Value, que en un test unitario no se inyecta: sin esto queda en
+    // cero y el limite no se ejercita, con lo que los casos de arriba pasarian sin probar nada.
+    private void conVentanaDe(long horas) {
+        org.springframework.test.util.ReflectionTestUtils.setField(
+            service, "horasEntreCambios", horas);
+    }
+
     private Usuario usuarioActivo(Long id, RolCodigo rolCodigo) {
         Rol r = rolCodigo == RolCodigo.INSTITUCION ? rolInstitucion : rolAdmin;
         Usuario u = Usuario.builder().persona(DatosDePrueba.persona("N", "A")).id(id).username("u" + id).email("u" + id + "@x.com").passwordHash("h").activo(true).rol(r).build();

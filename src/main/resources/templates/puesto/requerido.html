@@ -28,18 +28,21 @@
             </p>
         </header>
 
-        <!-- Ya hay un equipo autorizado y este no es uno: no se ofrece autorizarlo. Un
-             equipo nuevo solo se habilita desde uno que ya lo esté, si no cualquiera con la
-             cuenta institucional se autoriza a sí mismo desde donde quiera (ADR-0015). -->
+        <!-- Ya hay un equipo autorizado y este no es uno: no se ofrece autorizarlo. Solo
+             puede haber uno, y para mudarlo hay que revocar el actual desde esa misma
+             maquina; si no, cualquiera con la cuenta institucional se lleva la captura a
+             donde quiera (ADR-0015). -->
         <div class="card" th:if="${bloqueado and hayAlguno}">
             <p>
                 Tu institución ya tiene un equipo autorizado y <strong>este no es uno</strong>.
                 Para tomar asistencia o registrar rostros, usá el equipo autorizado.
             </p>
             <p class="puesto__nota" th:if="${puedeDesignar}">
-                Si querés sumar esta computadora, hay que autorizarla <strong>desde el equipo
-                que ya está habilitado</strong>: entrá ahí y agregala desde la pantalla de
-                puestos. No se puede habilitar una máquina a distancia.
+                Puede haber <strong>uno solo a la vez</strong>. Si querés mudar la captura a
+                esta computadora, hay que revocar el actual <strong>desde esa misma
+                máquina</strong> y después autorizar esta. Si esa computadora ya no existe, se
+                puede revocar desde la pantalla de puestos con un código al correo de la
+                institución.
             </p>
             <p class="puesto__nota">
                 Desde este equipo sí podés hacer todo lo demás: ver el listado del día,
@@ -60,10 +63,9 @@
                 nadie puede tomar asistencia. Si esta es la computadora de secretaría,
                 autorizala acá.
             </p>
-            <p th:if="${hayAlguno}">
-                Estás en un equipo autorizado, así que podés sumar otro. Se autoriza
-                <strong>este</strong> equipo y este navegador: no hay forma de habilitar otra
-                máquina a distancia.
+            <p>
+                Se autoriza <strong>este</strong> equipo y este navegador: no hay forma de
+                habilitar otra máquina a distancia.
             </p>
 
             <form th:action="@{/puestos/designar}" method="post" novalidate>
@@ -88,6 +90,22 @@
             </form>
         </div>
 
+        <!-- Con un solo puesto permitido, quien llega desde otra maquina no tiene ningun
+             formulario que completar. Sin este parrafo la pantalla se le queda muda: ve una
+             tabla con un nombre y ninguna explicacion de por que no puede hacer nada. -->
+        <div class="card" th:if="${puedeDesignar and hayAlguno and idDeEsteEquipo == null}">
+            <h2>Ya hay un equipo autorizado</h2>
+            <p>
+                Solo puede haber uno a la vez. Para mudar la captura a otra máquina hay que
+                revocar el actual <strong>desde esa misma máquina</strong>, y recién después
+                autorizar la nueva.
+            </p>
+            <p class="text-muted">
+                Si esa computadora ya no existe —se rompió, se formateó, se cambió—, se puede
+                revocar desde acá con un código que llega al correo de la institución.
+            </p>
+        </div>
+
         <!-- Los puestos ya cargados, para poder revocar el que ya no corresponda. -->
         <h2 class="puesto__subtitulo" th:if="${puedeDesignar and !#lists.isEmpty(puestos)}">Equipos autorizados</h2>
         <div class="card card--no-padding" th:if="${puedeDesignar and !#lists.isEmpty(puestos)}">
@@ -103,7 +121,15 @@
                     </thead>
                     <tbody>
                         <tr th:each="p : ${puestos}" th:classappend="${!p.activo} ? 'row--inactive'">
-                            <td th:text="${p.nombre}">Secretaría PC-1</td>
+                            <td>
+                                <span th:text="${p.nombre}">Secretaría PC-1</span>
+                                <!-- Sin esta marca la pantalla lista nombres y no dice cual
+                                     de todos es la maquina en la que uno esta sentado, que es
+                                     el unico dato que hace falta para saber si se puede
+                                     revocar desde aca. -->
+                                <span th:if="${p.id == idDeEsteEquipo}"
+                                      class="badge badge--accent">Este equipo</span>
+                            </td>
                             <td>
                                 <span th:if="${p.activo}" class="badge badge--success">Autorizado</span>
                                 <span th:unless="${p.activo}" class="badge badge--neutral">Revocado</span>
@@ -112,16 +138,26 @@
                                          ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yy HH:mm')}
                                          : 'Nunca'">—</td>
                             <td class="table__actions">
-                                <form th:if="${p.activo}"
+                                <!-- Dos caminos y no uno con un mensaje de error: revocar el
+                                     propio equipo es un clic, y hacerlo desde otro exige el
+                                     codigo. Ofrecer el mismo boton para los dos casos manda a
+                                     la persona a chocarse con un rechazo que ya sabiamos. -->
+                                <form th:if="${p.activo and p.id == idDeEsteEquipo}"
                                       th:action="@{/puestos/{id}/revocar(id=${p.id})}"
                                       method="post" class="inline-form"
                                       data-confirm="¿Revocar este puesto?"
-                                      data-confirm-detail="El equipo deja de poder tomar asistencia en cuanto haga la próxima petición. Se puede volver a autorizar desde esa misma máquina."
+                                      data-confirm-detail="Este equipo deja de poder tomar asistencia en cuanto haga la próxima petición. Después vas a poder autorizar otro, o volver a autorizar este."
                                       data-confirm-action="Revocar"
                                       data-confirm-style="danger">
                                     <button type="submit" class="btn btn--ghost btn--danger btn--sm"
                                             data-texto-enviando="Revocando...">Revocar</button>
                                 </form>
+                                <a th:if="${p.activo and p.id != idDeEsteEquipo}"
+                                   th:href="@{/puestos/{id}/revocar-a-distancia(id=${p.id})}"
+                                   class="btn btn--ghost btn--sm"
+                                   title="Solo se revoca desde esa misma máquina. Desde acá hace falta un código enviado al correo de la institución.">
+                                    Revocar con código
+                                </a>
                                 <span th:unless="${p.activo}" class="text-muted">—</span>
                             </td>
                         </tr>

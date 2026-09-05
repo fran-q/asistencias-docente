@@ -37,6 +37,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -286,7 +287,7 @@ class PuestoCapturaIT {
             .andExpect(status().isOk());
 
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
-        puestoService.revocar(puestoId, institucionA);
+        puestoService.revocar(puestoId, institucionA, true);
 
         mockMvc.perform(get("/asistencia/pase")
                 .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
@@ -353,8 +354,14 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Dos puestos nunca comparten token")
     void dosPuestosNuncaCompartenToken() {
+        // Desde que solo puede haber uno habilitado, los dos puestos de este caso son el
+        // actual y el que lo reemplaza. La propiedad que importa es la misma: el token del
+        // equipo revocado no puede volver a servir en el que viene atras.
         String primero = designarEn(institucionA);
-        String segundo = puestoService.designar(institucionA, "Secretaria PC-2", cuentaA, true)
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+        puestoService.revocar(puestoId, institucionA, true);
+
+        String segundo = puestoService.designar(institucionA, "Secretaria PC-2", cuentaA)
             .getTokenEnClaro();
 
         assertThat(primero).isNotEqualTo(segundo);
@@ -370,7 +377,7 @@ class PuestoCapturaIT {
 
         assertThatNombreRepetidoFalla();
         // Pero en otra institucion el mismo nombre si va: son espacios separados.
-        assertThat(puestoService.designar(institucionB, "Secretaria PC-1", cuentaB, false).getPuesto())
+        assertThat(puestoService.designar(institucionB, "Secretaria PC-1", cuentaB).getPuesto())
             .isNotNull();
     }
 
@@ -383,20 +390,20 @@ class PuestoCapturaIT {
     void elPrimeroSeAutorizaDesdeDondeSea() {
         // Sin ningun puesto nadie puede tomar asistencia, y hay que poder salir de esa
         // situacion. Para eso alcanza con la cuenta institucional.
-        assertThat(puestoService.designar(institucionA, "Secretaria PC-1", cuentaA, false))
+        assertThat(puestoService.designar(institucionA, "Secretaria PC-1", cuentaA))
             .isNotNull();
     }
 
     @Test
-    @DisplayName("Con un puesto ya habilitado, otro equipo NO se puede autorizar a si mismo")
-    void elSegundoNoSeAutorizaDesdeAfuera() {
+    @DisplayName("Con un puesto ya habilitado no se autoriza ningun otro")
+    void elSegundoNoSeAutoriza() {
         // Es lo que sostiene todo el control. Sin esta regla, cualquiera con la cuenta
         // institucional convierte su propia maquina en puesto desde donde este, que es
         // justo lo que ADR-0015 quiere impedir.
         designarEn(institucionA);
 
         try {
-            puestoService.designar(institucionA, "Mi notebook", cuentaA, false);
+            puestoService.designar(institucionA, "Mi notebook", cuentaA);
             throw new AssertionError("tendria que haber rechazado la designacion");
         } catch (IllegalArgumentException esperado) {
             assertThat(esperado.getMessage()).contains("ya tiene un equipo autorizado");
@@ -404,12 +411,76 @@ class PuestoCapturaIT {
     }
 
     @Test
-    @DisplayName("Desde un puesto ya autorizado si se puede sumar otro")
-    void desdeUnPuestoSiSeSumaOtro() {
+    @DisplayName("Hay que revocar el actual antes de autorizar el que viene")
+    void primeroSeRevocaYDespuesSeAutoriza() {
         designarEn(institucionA);
+        Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
-        assertThat(puestoService.designar(institucionA, "Secretaria PC-2", cuentaA, true)
-            .getPuesto()).isNotNull();
+        puestoService.revocar(actual, institucionA, true);
+
+        assertThat(puestoService.designar(institucionA, "Secretaria PC-2", cuentaA).getPuesto())
+            .as("con el anterior revocado, el lugar quedo libre")
+            .isNotNull();
+        assertThat(puestoService.contarHabilitados(institucionA))
+            .as("y sigue habiendo uno solo")
+            .isEqualTo(1);
+    }
+
+    // ========================================================================
+    //  Revocar: solo desde el propio equipo, o con codigo
+    // ========================================================================
+
+    @Test
+    @DisplayName("Desde otra maquina no se revoca sin codigo")
+    void noSeRevocaDesdeOtraMaquina() {
+        // Con un solo puesto permitido, quien revoca puede mudar la captura: revoca y
+        // designa el suyo. Si esto se pudiera desde cualquier lado, la contrasena
+        // institucional alcanzaria para llevarse la captura biometrica a otra maquina.
+        designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        try {
+            puestoService.revocar(puestoId, institucionA, false);
+            throw new AssertionError("tendria que haber rechazado la revocacion");
+        } catch (IllegalArgumentException esperado) {
+            assertThat(esperado.getMessage()).contains("desde esa misma máquina");
+        }
+        assertThat(puestoService.contarHabilitados(institucionA))
+            .as("el puesto tiene que seguir habilitado")
+            .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Con un codigo que no es el emitido tampoco se revoca")
+    void noSeRevocaConCodigoInvalido() {
+        designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        try {
+            puestoService.revocarConCodigo(puestoId, institucionA, cuentaA, "000000");
+            throw new AssertionError("tendria que haber rechazado el codigo");
+        } catch (IllegalArgumentException esperado) {
+            assertThat(esperado.getMessage()).isNotBlank();
+        }
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("El POST de revocar desde otra maquina manda a la pantalla del codigo")
+    void elPostDeRevocarDesdeAfueraDesvia() throws Exception {
+        // No es un rechazo seco: el caso legitimo --la PC del puesto se rompio-- es
+        // exactamente ese, y quien lo vive necesita saber como salir.
+        designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        mockMvc.perform(post("/puestos/" + puestoId + "/revocar")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/puestos/" + puestoId + "/revocar-a-distancia"));
+
+        assertThat(puestoService.contarHabilitados(institucionA))
+            .as("el desvio no puede revocar nada por si solo")
+            .isEqualTo(1);
     }
 
     @Test
@@ -463,8 +534,14 @@ class PuestoCapturaIT {
     // ========================================================================
 
     private void assertThatNombreRepetidoFalla() {
+        // Hay que revocar el actual primero: con el tope de uno, la designacion se frenaria
+        // por el tope y el test pasaria sin haber ejercitado nunca el control del nombre.
+        // El nombre sigue tomado despues de revocar, a proposito: el historial lo conserva.
+        Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
+        puestoService.revocar(actual, institucionA, true);
+
         try {
-            puestoService.designar(institucionA, "Secretaria PC-1", cuentaA, true);
+            puestoService.designar(institucionA, "Secretaria PC-1", cuentaA);
             throw new AssertionError("tendria que haber rechazado el nombre repetido");
         } catch (IllegalArgumentException esperado) {
             assertThat(esperado.getMessage()).contains("nombre");
@@ -473,7 +550,7 @@ class PuestoCapturaIT {
 
     private String designarEn(Long institucionId) {
         Usuario designante = institucionId.equals(institucionA) ? cuentaA : cuentaB;
-        return puestoService.designar(institucionId, "Secretaria PC-1", designante, false).getTokenEnClaro();
+        return puestoService.designar(institucionId, "Secretaria PC-1", designante).getTokenEnClaro();
     }
 
     private Usuario cuenta(String username, Long institucionId) {

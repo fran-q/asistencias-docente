@@ -22,6 +22,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.ArgumentCaptor;
+
+import java.time.LocalDateTime;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -202,8 +206,73 @@ class RecuperacionPublicaIT {
     }
 
     // ========================================================================
+    //  Una contrasena nueva cada 24 horas
+    // ========================================================================
+
+    @Test
+    @DisplayName("Recuperar dos veces dentro de la ventana no cambia la contrasena")
+    void segundaRecuperacionDentroDeLaVentanaSeFrena() throws Exception {
+        // Se simula que la cuenta acaba de cambiarla. Es lo que pasa cuando alguien recupera,
+        // se olvida de nuevo al rato y vuelve a intentarlo el mismo dia.
+        Usuario u = usuarioRepository.findByUsername(USUARIO_REAL).get(0);
+        String hashOriginal = u.getPasswordHash();
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(1));
+        usuarioRepository.save(u);
+
+        String html = recuperarCon("NuevaClave1");
+
+        assertThat(html)
+            .as("el mensaje tiene que decir el plazo y como salir, no solo que no se pudo")
+            .contains("menos de 24 horas");
+        assertThat(usuarioRepository.findById(u.getId()).get().getPasswordHash())
+            .as("la contrasena no puede haber cambiado")
+            .isEqualTo(hashOriginal);
+    }
+
+    @Test
+    @DisplayName("Con el cambio habilitado por un administrador, la recuperacion pasa")
+    void conDestrabeLaRecuperacionPasa() throws Exception {
+        Usuario u = usuarioRepository.findByUsername(USUARIO_REAL).get(0);
+        String hashOriginal = u.getPasswordHash();
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(1));
+        u.setCambioPasswordHabilitadoEn(LocalDateTime.now());
+        usuarioRepository.save(u);
+
+        recuperarCon("NuevaClave1");
+
+        Usuario despues = usuarioRepository.findById(u.getId()).get();
+        assertThat(despues.getPasswordHash())
+            .as("el destrabe tiene que dejar pasar el cambio")
+            .isNotEqualTo(hashOriginal);
+        assertThat(despues.getCambioPasswordHabilitadoEn())
+            .as("y consumirse, para que no sirva la proxima vez")
+            .isNull();
+    }
+
+    // ========================================================================
     //  helpers
     // ========================================================================
+
+    /**
+     * Recorre el flujo entero de recuperación con la cuenta real y devuelve el HTML del
+     * último paso. El código se toma del notificador mockeado: es la única forma de
+     * conocerlo, porque en la base queda hasheado.
+     */
+    private String recuperarCon(String passwordNueva) throws Exception {
+        MvcResult paso1 = pedirCodigo(USUARIO_REAL);
+        MockHttpSession sesion = (MockHttpSession) paso1.getRequest().getSession(false);
+
+        ArgumentCaptor<String> codigo = ArgumentCaptor.forClass(String.class);
+        verify(notificador).enviarCodigo(any(), any(), any(), codigo.capture());
+
+        return mockMvc.perform(post("/recuperar/codigo")
+                .with(csrf())
+                .session(sesion)
+                .param("codigo", codigo.getValue())
+                .param("nuevaPassword", passwordNueva)
+                .param("confirmacion", passwordNueva))
+            .andReturn().getResponse().getContentAsString();
+    }
 
     // Dispara el paso 1 del flujo. En el perfil de test no hay SMTP escuchando, asi que el
     // envio falla: se aprovecha para verificar que ni aun asi cambia la respuesta.

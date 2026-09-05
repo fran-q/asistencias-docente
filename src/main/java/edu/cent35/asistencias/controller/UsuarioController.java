@@ -48,7 +48,8 @@ public class UsuarioController {
     public String listar(Model model) {
         List<UsuarioListItemDto> items = usuarioService.listarMiInstitucion()
             .stream()
-            .map(UsuarioListItemDto::from)
+            .map(u -> UsuarioListItemDto.from(
+                u, usuarioService.motivoQueImpideCambiarPassword(u) != null))
             .toList();
         model.addAttribute("usuarios", items);
         return "usuario/list";
@@ -199,6 +200,33 @@ public class UsuarioController {
     //  Manejador de "no encontrado" - camufla cross-tenant
     // ============================================================
     @org.springframework.web.bind.annotation.ExceptionHandler(EntityNotFoundException.class)
+    /**
+     * Le habilita a otra cuenta un cambio de contraseña dentro de la ventana de 24 horas.
+     *
+     * <p><b>No cambia ninguna contraseña ni la deja ver.</b> Levanta el bloqueo y nada más: la
+     * persona vuelve a recuperarla por correo como siempre. Es lo que permite destrabar a
+     * alguien sin que quien destraba termine sabiendo con qué clave entra.
+     *
+     * <p>Vive en este controlador, que es de rol institucional, porque es la única pantalla
+     * donde se ven las cuentas. El pedido decía "otro administrador o la institución" y el
+     * servicio no mira roles, así que abrirlo a los administradores es cambiar esta anotación
+     * —pero antes hay que decidir cuánto del resto de esta pantalla se les abre—.
+     */
+    @PostMapping("/{id}/habilitar-cambio-password")
+    public String habilitarCambioDePassword(@PathVariable Long id,
+                                            @AuthenticationPrincipal UsuarioAutenticado principal,
+                                            RedirectAttributes redirect) {
+        try {
+            usuarioService.habilitarCambioDePassword(id, principal.getUsuarioId());
+            redirect.addFlashAttribute("flashMensaje",
+                "Listo. Esa cuenta ya puede volver a cambiar su contraseña desde "
+                + "\"Olvidé mi contraseña\".");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/usuarios";
+    }
+
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El usuario solicitado no existe.");
         return "redirect:/usuarios";

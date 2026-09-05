@@ -88,11 +88,16 @@ public class PuestoCapturaController {
         // Designar un equipo es autorizar el tratamiento de datos sensibles en esa maquina:
         // lo decide la cuenta institucional, no cualquier administrativo.
         model.addAttribute("puedeDesignar", tieneRolInstitucion(principal));
-        // El formulario solo aparece cuando designar es realmente posible: para el primer
-        // puesto, o estando en uno ya autorizado. Es la misma regla que aplica el service,
-        // repetida en la vista para no ofrecer un boton que va a fallar.
+        // El formulario solo aparece cuando designar es realmente posible: cuando no hay
+        // ninguno. Es la misma regla que aplica el service, repetida en la vista para no
+        // ofrecer un boton que va a fallar.
         model.addAttribute("puedeAutorizarEsteEquipo",
-            tieneRolInstitucion(principal) && (!hayAlguno || desdePuesto));
+            tieneRolInstitucion(principal) && !hayAlguno);
+        // Cual de los puestos listados es esta misma maquina. Sin esto la pantalla muestra
+        // nombres y quien la mira no sabe si esta sentado en el equipo autorizado o no, que
+        // es justo lo que necesita saber para revocarlo.
+        model.addAttribute("idDeEsteEquipo", idDeEsteEquipo(request, institucionId));
+        model.addAttribute("desdePuesto", desdePuesto);
         return VIEW;
     }
 
@@ -123,8 +128,7 @@ public class PuestoCapturaController {
 
         try {
             PuestoCapturaService.PuestoDesignado alta = puestoService.designar(
-                institucionId, nombre, designante,
-                vieneDePuestoAutorizado(request, institucionId));
+                institucionId, nombre, designante);
 
             CookiePuesto.escribir(request, response, alta.getTokenEnClaro());
             redirect.addFlashAttribute("flashMensaje",
@@ -142,8 +146,12 @@ public class PuestoCapturaController {
     }
 
     /**
-     * Revoca un puesto. Si es el equipo desde el que se está llamando, además le borra la
-     * cookie: dejarla sería guardar una credencial que ya no sirve.
+     * Revoca el puesto desde esa misma máquina, y le borra la cookie: dejarla sería guardar
+     * una credencial que ya no sirve.
+     *
+     * <p>Desde cualquier otra máquina no revoca: manda a la pantalla del código. No es un
+     * rechazo seco porque el caso legítimo —la PC del puesto se rompió— es exactamente ese, y
+     * quien lo vive necesita saber cómo salir, no enterarse de que no puede.
      */
     @PostMapping("/puestos/{id}/revocar")
     @PreAuthorize("hasRole('INSTITUCION')")
@@ -155,16 +163,92 @@ public class PuestoCapturaController {
         Long institucionId = TenantContext.getRequired();
         boolean esEsteEquipo = esteEquipoEs(id, institucionId, request);
 
+        if (!esEsteEquipo) {
+            return "redirect:/puestos/" + id + "/revocar-a-distancia";
+        }
+
         try {
-            puestoService.revocar(id, institucionId);
-            if (esEsteEquipo) {
-                CookiePuesto.borrar(request, response);
-            }
+            puestoService.revocar(id, institucionId, true);
+            CookiePuesto.borrar(request, response);
             redirect.addFlashAttribute("flashMensaje", "Puesto revocado.");
         } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("flashError", e.getMessage());
         }
         return "redirect:" + VUELTA;
+    }
+
+    // ========================================================================
+    //  Revocacion a distancia, para cuando la maquina del puesto ya no existe
+    // ========================================================================
+
+    /** La pantalla del código: se pide, llega al correo de la institución y se tipea acá. */
+    @GetMapping("/puestos/{id}/revocar-a-distancia")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String formRevocarADistancia(@PathVariable Long id, Model model,
+                                        @AuthenticationPrincipal UsuarioAutenticado principal) {
+        Long institucionId = TenantContext.getRequired();
+        PuestoCaptura puesto = puestoService.listar(institucionId).stream()
+            .filter(p -> p.getId().equals(id))
+            .findFirst()
+            .orElse(null);
+
+        if (puesto == null || !puesto.habilitado()) {
+            // Puede haberlo revocado otra sesion mientras esta miraba la pantalla.
+            return "redirect:" + VUELTA;
+        }
+        model.addAttribute("puesto", puesto);
+        return "puesto/revocar-a-distancia";
+    }
+
+    /** Manda el código al correo de la cuenta institucional. */
+    @PostMapping("/puestos/{id}/revocar/codigo")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String pedirCodigoDeRevocacion(@PathVariable Long id,
+                                          @AuthenticationPrincipal UsuarioAutenticado principal,
+                                          HttpServletRequest request,
+                                          RedirectAttributes redirect) {
+        Usuario solicitante = usuarioRepository.findById(principal.getUsuarioId()).orElse(null);
+        if (solicitante == null) {
+            return "redirect:" + VUELTA;
+        }
+        try {
+            puestoService.pedirCodigoDeRevocacion(solicitante, CuentaController.ipDe(request));
+            redirect.addFlashAttribute("flashMensaje",
+                "Te enviamos un código al correo de la institución. Vence en unos minutos.");
+        } catch (IllegalStateException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("No se pudo enviar el codigo de revocacion: {}", e.toString());
+            redirect.addFlashAttribute("flashError",
+                "No pudimos enviar el correo en este momento. Probá de nuevo en un rato.");
+        }
+        return "redirect:/puestos/" + id + "/revocar-a-distancia";
+    }
+
+    /** Comprueba el código y, recién ahí, revoca. */
+    @PostMapping("/puestos/{id}/revocar/confirmar")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String confirmarRevocacionADistancia(@PathVariable Long id,
+                                                @RequestParam(name = "codigo", required = false) String codigo,
+                                                @AuthenticationPrincipal UsuarioAutenticado principal,
+                                                RedirectAttributes redirect) {
+        Long institucionId = TenantContext.getRequired();
+        Usuario solicitante = usuarioRepository.findById(principal.getUsuarioId()).orElse(null);
+        if (solicitante == null) {
+            return "redirect:" + VUELTA;
+        }
+        try {
+            puestoService.revocarConCodigo(id, institucionId, solicitante, codigo);
+            redirect.addFlashAttribute("flashMensaje",
+                "Puesto revocado. Ya podés autorizar el equipo que vayas a usar.");
+            return "redirect:" + VUELTA;
+        } catch (IllegalArgumentException e) {
+            // Va como "error" y no como "flashError", igual que en designar: un codigo mal
+            // tipeado es un formulario que hay que corregir, no el resultado de una accion
+            // terminada, y el mensaje tiene que quedar al lado del campo.
+            redirect.addFlashAttribute("error", e.getMessage());
+            return "redirect:/puestos/" + id + "/revocar-a-distancia";
+        }
     }
 
     // Si el puesto que se esta revocando es el de esta misma maquina. Se resuelve ANTES de
@@ -175,6 +259,14 @@ public class PuestoCapturaController {
             .map(PuestoCaptura::getId)
             .filter(puestoId::equals)
             .isPresent();
+    }
+
+    // El id del puesto de esta misma maquina, o null si esta no es ningun puesto.
+    private Long idDeEsteEquipo(HttpServletRequest request, Long institucionId) {
+        return CookiePuesto.leer(request)
+            .flatMap(token -> puestoService.verificar(token, institucionId))
+            .map(PuestoCaptura::getId)
+            .orElse(null);
     }
 
     private boolean tieneRolInstitucion(UsuarioAutenticado principal) {

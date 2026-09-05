@@ -61,6 +61,7 @@ public class NotificadorEmailService implements CanalDeCodigos {
         return switch (proposito) {
             case VERIFICACION_EMAIL -> "Confirmá tu correo - Asistencias";
             case RECUPERACION_PASSWORD -> "Código para recuperar tu contraseña - Asistencias";
+            case REVOCACION_PUESTO -> "Código para revocar el puesto de captura - Asistencias";
         };
     }
 
@@ -70,6 +71,8 @@ public class NotificadorEmailService implements CanalDeCodigos {
                 "Pediste confirmar esta dirección de correo para tu cuenta.";
             case RECUPERACION_PASSWORD ->
                 "Pediste recuperar la contraseña de tu cuenta.";
+            case REVOCACION_PUESTO ->
+                "Pediste revocar el equipo autorizado a tomar asistencia desde otra máquina.";
         };
 
         return """

@@ -137,6 +137,7 @@ public class CanalConsola implements CanalDeCodigos {
         return switch (proposito) {
             case VERIFICACION_EMAIL -> "confirmar la direccion de correo";
             case RECUPERACION_PASSWORD -> "recuperar la contrasena";
+            case REVOCACION_PUESTO -> "revocar el puesto de captura";
         };
     }
 }

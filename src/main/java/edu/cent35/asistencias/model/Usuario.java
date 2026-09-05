@@ -156,4 +156,39 @@ public class Usuario extends BaseTenantEntity {
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;
+
+    // Ultima vez que se fijo una contrasena nueva, por cualquiera de los dos caminos que lo
+    // permiten. NULL en las cuentas anteriores a V021: nunca cambiaron y no estan trabadas.
+    @Column(name = "password_cambiada_en")
+    private LocalDateTime passwordCambiadaEn;
+
+    // Cuando un administrador levanto el bloqueo de 24 horas. Ver puedeCambiarPassword.
+    @Column(name = "cambio_password_habilitado_en")
+    private LocalDateTime cambioPasswordHabilitadoEn;
+
+    // Quien lo levanto. Mismo criterio que dadoDeBajaPor: el id pelado, no la relacion.
+    @Column(name = "cambio_password_habilitado_por")
+    private Long cambioPasswordHabilitadoPor;
+
+    /**
+     * Si la cuenta puede fijar una contraseña nueva en este momento.
+     *
+     * <p>La regla vive en la entidad porque la aplican dos servicios distintos —el cambio
+     * voluntario desde Mi cuenta y la recuperación pública— y tienen que aplicar exactamente
+     * la misma. Duplicada en cada uno, alcanza con tocar una para que dejen de coincidir.
+     *
+     * <p>Tres formas de poder: nunca se cambió, ya pasó la ventana, o un administrador
+     * habilitó un cambio <b>después</b> del último. Ese "después" es lo que impide que un
+     * destrabe viejo siga sirviendo para siempre.
+     */
+    public boolean puedeCambiarPassword(LocalDateTime ahora, java.time.Duration ventana) {
+        if (passwordCambiadaEn == null) {
+            return true;
+        }
+        if (!passwordCambiadaEn.isAfter(ahora.minus(ventana))) {
+            return true;
+        }
+        return cambioPasswordHabilitadoEn != null
+            && cambioPasswordHabilitadoEn.isAfter(passwordCambiadaEn);
+    }
 }
