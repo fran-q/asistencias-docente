@@ -56,6 +56,24 @@ ausencias en enero, en el receso y en cada feriado.
 
 
 
+- **En un día sin clases el pase abría bloque igual.** Media corrección es peor que ninguna: el
+  job dejó de generar ausencias esos días, pero la cámara seguía marcando PRESENTE, así que el
+  feriado quedaba con presencias de unos docentes y ninguna ausencia de los demás.
+
+  Y hay un motivo más de fondo que la asimetría. **La asistencia se guarda contra un horario**,
+  de modo que una marca en un feriado afirma que se dictó una clase que la institución había
+  cancelado: es el mismo dato falso que la ausencia automática, del otro lado.
+
+  El corte alcanza **solo a la apertura del bloque**. Uno ya abierto se puede cerrar siempre, o
+  quedaría colgado hasta que lo levante el job. Y el rechazo dice el motivo del día y adónde
+  ir: si alguien vino a recuperar una clase, esa asistencia se carga a mano, que ya pide motivo
+  y deja el nombre de quien la cargó — que es lo que corresponde para una excepción.
+
+  ⚠ **Esto corrige una decisión que estaba escrita al revés.** La primera versión de los días
+  sin clase decía explícitamente que el pase no se bloqueaba, con el argumento de que "no
+  esperes que vengan" no es lo mismo que "no pueden venir". El argumento no se sostiene cuando
+  lo que se registra es una clase y no una presencia en el edificio.
+
 - **El job de ausencias no miraba el calendario.** Traía todos los horarios activos de ese día
   de la semana, sin ningún límite de fechas. Generaba ausencias en enero y en el receso, y en
   marzo de 2027 habría seguido generándolas con los horarios de 2026 hasta que alguien los

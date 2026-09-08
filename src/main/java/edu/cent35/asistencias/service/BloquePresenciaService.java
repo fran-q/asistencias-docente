@@ -58,6 +58,9 @@ public class BloquePresenciaService {
     private final DocenteRepository docenteRepository;
     private final ModeloFacialRepository modeloFacialRepository;
     private final ResolutorDeBloquesService resolutor;
+    // El pase pregunta lo mismo que ya pregunta el job de ausencias. Sin esto, un feriado
+    // quedaba con presencias de unos docentes y sin ausencias de los demas.
+    private final DiaNoLaborableService diaNoLaborableService;
     private final AsistenciaService asistenciaService;
     private final ConsentimientoBiometricoService consentimientoService;
     private final AsistenciaRepository asistenciaRepository;
@@ -172,6 +175,23 @@ public class BloquePresenciaService {
     private ResultadoPresencia abrir(Docente docente, Long tenantId, Long modeloFacialId,
                                      Double distanciaLbph, LocalDateTime instante,
                                      PuestoCaptura puesto) {
+        // Un dia declarado sin clases no abre bloque (V024). La asistencia se registra CONTRA
+        // UN HORARIO, asi que una marca en un feriado afirma que se dicto una clase que la
+        // institucion habia cancelado: es el mismo dato falso que la ausencia automatica, del
+        // otro lado. Con el kiosco pesa mas, porque nadie mira la pantalla para notarlo.
+        //
+        // Corta solo la APERTURA. Un bloque ya abierto se tiene que poder cerrar siempre, o
+        // quedaria colgado hasta que lo levante el job.
+        Optional<String> motivoSinClases =
+            diaNoLaborableService.motivoSinClases(tenantId, instante.toLocalDate());
+        if (motivoSinClases.isPresent()) {
+            log.info("Entrada rechazada: {} esta marcado como dia sin clases ({}), docente={}",
+                     instante.toLocalDate(), motivoSinClases.get(), docente.getId());
+            return ResultadoPresencia.rechazada(
+                "Hoy no hay clases: " + motivoSinClases.get() + ". Si viniste igual, pedile a "
+                + "secretaría que cargue la asistencia a mano.");
+        }
+
         Optional<BloqueDeHorarios> enCurso = resolutor.bloqueEnCurso(docente.getId(), instante);
         if (enCurso.isEmpty()) {
             log.info("Entrada rechazada: docente {} no tiene clase en ventana a las {}",

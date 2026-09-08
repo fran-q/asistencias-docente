@@ -14,11 +14,20 @@ import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
+import edu.cent35.asistencias.repository.BloquePresenciaRepository;
+import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
+import edu.cent35.asistencias.model.ConsentimientoBiometrico;
+import edu.cent35.asistencias.model.MetodoConsentimiento;
+import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
+import edu.cent35.asistencias.repository.RolRepository;
+import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.service.BloquePresenciaService;
 import edu.cent35.asistencias.service.CicloLectivoService;
 import edu.cent35.asistencias.service.DiaNoLaborableService;
 import edu.cent35.asistencias.service.GeneradorAusenciasService;
@@ -73,6 +82,13 @@ class CiclosLectivosIT {
     @Autowired private CicloLectivoService cicloService;
     @Autowired private DiaNoLaborableService diaService;
     @Autowired private GeneradorAusenciasService generador;
+    @Autowired private BloquePresenciaService bloqueService;
+    @Autowired private ConsentimientoBiometricoRepository consentimientoRepository;
+    @Autowired private BloquePresenciaRepository bloqueRepository;
+    @Autowired private DiaNoLaborableRepository diaRepository;
+    @Autowired private PeriodoLectivoRepository periodoLectivoRepository;
+    @Autowired private RolRepository rolRepository;
+    @Autowired private UsuarioRepository usuarioRepository;
 
     // Cada metodo trabaja sobre su propia institucion: asi el estado de uno no filtra al
     // siguiente y cada caso arranca con un calendario limpio.
@@ -117,20 +133,47 @@ class CiclosLectivosIT {
     }
 
     /**
-     * Borra las ausencias que generó este test.
+     * Borra todo lo que sembró este test, en orden de dependencias.
      *
-     * <p>La base de H2 se comparte entre clases y no se hace rollback: las asistencias que
-     * quedaran acá apuntan a horarios que otro test después intenta borrar, y ese otro test
-     * falla por una FK que no tiene nada que ver con lo que estaba probando. Se limpia lo
-     * propio en vez de dejarle el problema al siguiente.
+     * <p><b>Por qué hace falta.</b> La base de H2 se comparte entre clases y no hay rollback:
+     * cada método de acá crea una institución entera —carrera, materia, docente, ciclos,
+     * comisiones, horarios— y lo que queda vivo hace fallar la limpieza de <i>otras</i> clases
+     * por una FK que no tiene nada que ver con lo que estaban probando. Se limpia lo propio en
+     * vez de dejarle el problema al siguiente.
+     *
+     * <p>El orden es el inverso al de creación y no es negociable: borrar una carrera antes que
+     * sus materias es exactamente el error que esto evita.
      */
     @AfterEach
     void limpiar() {
-        asistenciaRepository.deleteAll(
-            asistenciaRepository.findAll().stream()
-                .filter(a -> tenantId.equals(a.getInstitucionId()))
-                .toList());
+        if (tenantId != null) {
+            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
+            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
+            borrar(consentimientoRepository,
+                   c -> docente != null && docente.getId().equals(c.getDocente().getId()));
+            // Solo getId() sobre los proxies lazy: Hibernate lo devuelve sin ir a la base.
+            // Cualquier otro getter --getInstitucionId(), por ejemplo-- intenta inicializar el
+            // proxy fuera de sesion y revienta con LazyInitializationException.
+            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
+                .map(Comision::getId).toList();
+            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
+            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
+            borrar(periodoLectivoRepository, p -> tenantId.equals(p.getInstitucionId()));
+            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
+            borrar(diaRepository, d -> tenantId.equals(d.getInstitucionId()));
+            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
+            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
+            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
+            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
+        }
         TenantContext.clear();
+    }
+
+    // Borra de un repositorio las filas que cumplan la condicion. Se filtra en memoria porque
+    // son fixtures de un solo test: la claridad vale mas que la consulta.
+    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
+                            java.util.function.Predicate<T> condicion) {
+        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
     }
 
     // ========================================================================
@@ -291,6 +334,32 @@ class CiclosLectivosIT {
             .isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("En un dia sin clases el pase tampoco abre bloque")
+    void elPaseNoAbreEnDiaSinClases() {
+        // La otra mitad del arreglo. Antes el job --correctamente-- no generaba ausencias pero
+        // el pase SI marcaba PRESENTE, asi que el feriado quedaba con marcas de unos docentes
+        // y nada de los demas. Y como la asistencia se guarda contra un horario, esa marca
+        // afirmaba que se dicto una clase que la institucion habia cancelado.
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
+        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+        conConsentimientoVigente();
+
+        BloquePresenciaService.ResultadoPresencia r = bloqueService.registrar(
+            docente.getId(), null, null, MARTES_2026.atTime(18, 5), null);
+
+        assertThat(r.tipo())
+            .as("un feriado no puede abrir jornada")
+            .isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
+        assertThat(r.motivo())
+            .as("tiene que decir el motivo y adonde ir: la carga manual es la salida")
+            .contains("Feriado de prueba");
+        assertThat(asistenciaRepository.findDelDia(tenantId, MARTES_2026))
+            .as("ni una marca ese dia, ni presencia ni ausencia")
+            .isEmpty();
+    }
+
     // ========================================================================
     //  Las pantallas nuevas, renderizadas de verdad
     // ========================================================================
@@ -317,7 +386,7 @@ class CiclosLectivosIT {
     }
 
     @Test
-    @DisplayName("La pantalla de dias sin clase renderiza y aclara que no bloquea la camara")
+    @DisplayName("La pantalla de dias sin clase renderiza y aclara que apaga tambien el pase")
     void laPantallaDeDiasRenderiza() throws Exception {
         diaService.crear(MARTES_2026, "Feriado de prueba", null);
 
@@ -328,9 +397,10 @@ class CiclosLectivosIT {
 
         assertThat(html)
             .contains("Feriado de prueba")
-            .as("alguien podria cargar un feriado esperando que la camara se apague: la "
-                + "pantalla tiene que decir que no es asi")
-            .contains("no impide tomar asistencia");
+            .as("alguien podria cargar un feriado sin darse cuenta de que ademas apaga el "
+                + "pase: la pantalla tiene que decirlo, y decir cual es la salida")
+            .contains("el pase tampoco")
+            .contains("a mano");
     }
 
     // ========================================================================
@@ -370,6 +440,36 @@ class CiclosLectivosIT {
         ciclo.agregarPeriodo(PeriodoLectivo.builder()
             .nombre(nombrePeriodo).fechaInicio(desde).fechaFin(hasta).orden((short) 1).build());
         return cicloRepository.save(ciclo);
+    }
+
+    /**
+     * Le da al docente de prueba un consentimiento biométrico vigente.
+     *
+     * <p>Sin esto el pase rebota en la regla dura —sin consentimiento no se usa un rostro— y
+     * el test nunca llega a ejercitar lo que quiere probar. Que esa regla corra primero es
+     * deliberado (RF-82, RNF-13), así que el test se acomoda a ella y no al revés.
+     */
+    private void conConsentimientoVigente() {
+        Rol rol = new Rol();
+        rol.setCodigo("INSTITUCION");
+        rol.setDescripcion("Institucion");
+        rol = rolRepository.save(rol);
+
+        Usuario registrante = Usuario.builder()
+            .username("consent." + tenantId).email("consent." + tenantId + "@x.com")
+            .passwordHash("x").activo(true).rol(rol).build();
+        registrante.setInstitucionId(tenantId);
+        registrante = usuarioRepository.save(registrante);
+
+        ConsentimientoBiometrico c = ConsentimientoBiometrico.builder()
+            .docente(docente)
+            .versionTerminos("v1")
+            .metodo(MetodoConsentimiento.DIGITAL)
+            .fechaConsentimiento(LocalDate.of(2026, 1, 1).atStartOfDay())
+            .vigente(true)
+            .registradoPor(registrante)
+            .build();
+        consentimientoRepository.save(c);
     }
 
     private Comision comisionEn(CicloLectivo ciclo, String codigo) {

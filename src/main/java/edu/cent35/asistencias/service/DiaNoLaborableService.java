@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Los días de adentro del ciclo en los que no se dicta clase: feriados, receso, jornadas
@@ -37,6 +38,22 @@ public class DiaNoLaborableService {
     @Transactional(readOnly = true)
     public boolean esDiaSinClases(Long institucionId, LocalDate fecha) {
         return repository.existsByInstitucionIdAndFecha(institucionId, fecha);
+    }
+
+    /**
+     * Por qué ese día no hay clases, o vacío si es un día normal.
+     *
+     * <p>Devuelve el motivo y no un booleano porque el pase lo muestra en pantalla: un docente
+     * parado frente a la cámara al que le dicen "hoy no hay clases" sin decirle por qué no
+     * sabe si el sistema se equivocó o si él se equivocó de día.
+     *
+     * <p>Recibe el institucionId por la misma razón que {@link #esDiaSinClases}: lo llaman
+     * flujos que no siempre tienen el tenant en contexto.
+     */
+    @Transactional(readOnly = true)
+    public Optional<String> motivoSinClases(Long institucionId, LocalDate fecha) {
+        return repository.findByInstitucionIdAndFecha(institucionId, fecha)
+            .map(DiaNoLaborable::getMotivo);
     }
 
     // El listado de un ano, que es como se los carga y se los revisa.

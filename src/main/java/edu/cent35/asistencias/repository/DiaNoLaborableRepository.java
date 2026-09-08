@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio de días sin clase. Lo consulta el job de ausencias una vez por corrida, así que
@@ -19,6 +20,10 @@ public interface DiaNoLaborableRepository extends JpaRepository<DiaNoLaborable, 
 
     // Si ese dia esta marcado como sin clases. Es lo que consulta el job antes de generar nada.
     boolean existsByInstitucionIdAndFecha(Long institucionId, LocalDate fecha);
+
+    // El dia entero, cuando ademas del si o no hace falta el motivo: el pase lo muestra en
+    // pantalla, y "hoy no hay clases" sin decir por que no le sirve a quien esta parado ahi.
+    Optional<DiaNoLaborable> findByInstitucionIdAndFecha(Long institucionId, LocalDate fecha);
 
     // El listado de la pantalla, acotado a un rango para no traer todos los anos cargados.
     @Query("""

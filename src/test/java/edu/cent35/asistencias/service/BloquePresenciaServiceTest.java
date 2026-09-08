@@ -72,6 +72,8 @@ class BloquePresenciaServiceTest {
     @Mock private ResolutorDeBloquesService resolutor;
     @Mock private AsistenciaService asistenciaService;
     @Mock private ConsentimientoBiometricoService consentimientoService;
+    // Desde el arreglo del dia no laborable, la apertura lo consulta antes del resolutor.
+    @Mock private DiaNoLaborableService diaNoLaborableService;
     @Mock private edu.cent35.asistencias.repository.AsistenciaRepository asistenciaRepository;
     @Mock private edu.cent35.asistencias.repository.UsuarioRepository usuarioRepository;
     @Mock private edu.cent35.asistencias.repository.MotivoCargaManualRepository motivoCargaManualRepository;
@@ -92,6 +94,53 @@ class BloquePresenciaServiceTest {
     // ========================================================================
     //  Guarda legal
     // ========================================================================
+
+    @Nested
+    @DisplayName("dias sin clase")
+    class DiasSinClase {
+
+        @Test
+        @DisplayName("un dia marcado sin clases no abre bloque, y dice por que")
+        void enDiaSinClasesNoAbre() {
+            // La asistencia se guarda CONTRA UN HORARIO: una marca en un feriado afirma que se
+            // dicto una clase que la institucion habia cancelado. Es el mismo dato falso que
+            // la ausencia automatica, del otro lado.
+            docenteDelTenant();
+            when(consentimientoService.estadoActual(DOCENTE_ID))
+                .thenReturn(EstadoConsentimiento.ACTIVO);
+            when(diaNoLaborableService.motivoSinClases(TENANT_A, UN_LUNES))
+                .thenReturn(java.util.Optional.of("Feriado nacional"));
+
+            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(18, 0), null);
+
+            assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
+            assertThat(r.motivo())
+                .as("un docente parado frente a la camara necesita saber POR QUE no se registro")
+                .contains("Feriado nacional")
+                .contains("a mano");
+            verify(bloqueRepository, never()).saveAndFlush(any());
+        }
+
+        @Test
+        @DisplayName("un bloque ya abierto se puede cerrar aunque el dia este marcado")
+        void enDiaSinClasesSiCierra() {
+            // El corte es solo de la apertura. Si tambien frenara el cierre, un bloque abierto
+            // quedaria colgado hasta que lo levante el job: peor que el problema que resuelve.
+            docenteDelTenant();
+            when(consentimientoService.estadoActual(DOCENTE_ID))
+                .thenReturn(EstadoConsentimiento.ACTIVO);
+            conBloqueAbierto(LocalTime.of(18, 0), UN_LUNES);
+            horariosDelDia(horario(1L, 18, 0, 20, 0));
+            guardaElBloque();
+
+            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(21, 0), null);
+
+            assertThat(r.tipo())
+                .as("el cierre no puede depender de que el dia sea laborable")
+                .isNotEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
+            verify(diaNoLaborableService, never()).motivoSinClases(any(), any());
+        }
+    }
 
     @Nested
     @DisplayName("consentimiento")

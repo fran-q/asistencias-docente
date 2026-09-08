@@ -109,28 +109,6 @@ build verde** y por eso conviene tenerlas escritas:
 
 ---
 
-## El pase no respeta los días no laborables
-
-> ⚠ **Desvío conocido, decidido no resolver en el trabajo del modo kiosco (2026-09-06).**
-
-`DiaNoLaborableService.esDiaSinClases` lo consulta **únicamente**
-`GeneradorAusenciasService`. Ni `ResolutorDeBloquesService`, ni `BloquePresenciaService`,
-ni `AsistenciaService` lo miran.
-
-Consecuencia: **un feriado el pase igual abre bloque y marca PRESENTE**, mientras el job
-—correctamente— no genera ausencias. Quedan presencias registradas en un día que la
-institución declaró sin clases, y la asimetría hace que ese día se vea con marcas de unos
-docentes y nada de los demás.
-
-**Por qué importa más ahora.** Hoy alguien está mirando la pantalla del pase y lo nota. Con
-el modo kiosco (ADR-0019) la máquina opera desatendida: nadie ve el feriado, nadie ve la
-marca, y el error aparece recién cuando alguien mire el reporte del mes.
-
-El arreglo es chico —que el resolutor consulte lo mismo que el job— y toca el paso 6 del
-pipeline de identificación. Se pospuso a propósito para no mezclarlo con el kiosco.
-
----
-
 ## Rumbo hacia el producto final
 
 Definido por el cliente. **El orden de esta lista no implica prioridad ni cronograma.**

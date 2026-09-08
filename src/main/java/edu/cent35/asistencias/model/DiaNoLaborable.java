@@ -28,9 +28,18 @@ import java.time.LocalDateTime;
  * tenía clase ese día: no es un dato incompleto, es un dato falso —dice que alguien faltó un
  * día en que la institución estaba cerrada— y limpiarlo después cuesta más que no generarlo.
  *
- * <p><b>Qué no hace.</b> No impide tomar asistencia. Si alguien viene a trabajar un feriado, la
- * cámara lo registra igual y esa marca vale como cualquier otra. Lo que el día dice es "no
- * esperes que vengan", no "no pueden venir".
+ * <p><b>El pase tampoco abre bloque ese día.</b> La primera versión dejaba pasar la cámara con
+ * el argumento de que "no esperes que vengan" no es lo mismo que "no pueden venir". Estaba
+ * mal, y por una razón concreta: la asistencia se registra <b>contra un horario</b>, así que
+ * una marca en un feriado afirma que se dictó una clase que la institución había cancelado.
+ * Es el mismo dato falso que la ausencia automática, del otro lado.
+ *
+ * <p>Y sin el corte el día quedaba asimétrico —presencias de unos docentes y ninguna ausencia
+ * de los demás—, que es peor que cualquiera de las dos cosas por separado.
+ *
+ * <p><b>La salida es la carga manual</b>, que ya pide motivo y deja el nombre de quien la
+ * hizo. Si alguien vino a recuperar una clase un feriado, eso es exactamente una excepción
+ * administrativa y merece quedar asentada como tal, no colarse como una marca automática más.
  *
  * <p>No lleva baja lógica, al revés que el resto del sistema: nada referencia a un día no
  * laborable, así que uno cargado por error se borra en vez de quedar como fila inactiva
