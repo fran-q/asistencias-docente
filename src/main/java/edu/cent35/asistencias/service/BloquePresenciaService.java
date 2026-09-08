@@ -11,6 +11,7 @@ import edu.cent35.asistencias.model.EstadoSalida;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.ModeloFacial;
 import edu.cent35.asistencias.model.OrigenMarca;
+import edu.cent35.asistencias.model.PuestoCaptura;
 import edu.cent35.asistencias.model.MotivoCargaManual;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
@@ -80,7 +81,8 @@ public class BloquePresenciaService {
      *                         devuelve la marca existente en vez de duplicarla
      * @param asistencia       la clase que se marcó al entrar, para poder nombrarla en pantalla.
      *                         Null al salir: ahí puede haber varias y ninguna es "la" clase
-     * @param motivo           por qué se rechazó, en texto para el operador; null si no se rechazó
+     * @param motivo           por qué se rechazó, en texto para la pantalla; null si no se rechazó.
+     *                         <b>Nunca nombra a nadie</b>: ver la nota de {@link #rechazada}
      */
     public record ResultadoPresencia(
         TipoDeMarca tipo,
@@ -95,6 +97,23 @@ public class BloquePresenciaService {
         public static ResultadoPresencia salida(BloquePresencia b, int imputadas) {
             return new ResultadoPresencia(TipoDeMarca.SALIDA, b, imputadas, null, null);
         }
+        /**
+         * Un rechazo con su explicación.
+         *
+         * <p><b>El motivo no puede contener el nombre de nadie.</b> El kiosco lo muestra tal
+         * cual, y ahí es una pantalla encendida a la vista de cualquiera que pase (RF-87). El
+         * DTO del kiosco no tiene campo para el nombre completo justamente para que no salga,
+         * pero un nombre concatenado adentro del mensaje se lo saltea: pasa por el campo del
+         * texto, no por el de la identidad.
+         *
+         * <p>Así estuvo hasta el 2026-09-08, y en pantalla se veía "No hay clase en este
+         * momento para Apellido, Nombre" arriba del apellido — el nombre completo filtrado, y
+         * encima repetido.
+         *
+         * <p>El motivo describe la situación; a quién le pasa lo dice el campo de identidad
+         * que cada pantalla llena según lo que tiene permitido mostrar: el pase con sesión, el
+         * nombre completo; el kiosco, solo el apellido.
+         */
         public static ResultadoPresencia rechazada(String motivo) {
             return new ResultadoPresencia(TipoDeMarca.RECHAZADA, null, 0, null, motivo);
         }
@@ -108,10 +127,16 @@ public class BloquePresenciaService {
      *
      * <p>La identidad ya viene confirmada por el pipeline de identificación: acá no se decide
      * quién es la persona, solo qué significa que esté parada frente a la cámara ahora.
+     *
+     * @param puesto equipo del que salió la marca, para dejarlo asentado en el bloque y en las
+     *               clases que se imputen (RF-89). Puede venir en null en las marcas anteriores
+     *               a que el equipo se registrara, y el registro sigue siendo válido: lo que
+     *               falta es saber desde dónde, no qué pasó
      */
     @Transactional
     public ResultadoPresencia registrar(Long docenteId, Long modeloFacialId,
-                                        Double distanciaLbph, LocalDateTime instante) {
+                                        Double distanciaLbph, LocalDateTime instante,
+                                        PuestoCaptura puesto) {
         Long tenantId = TenantContext.getRequired();
         Docente docente = obtenerDocenteValidado(docenteId, tenantId);
 
@@ -121,9 +146,8 @@ public class BloquePresenciaService {
         if (consentimientoService.estadoActual(docenteId) != EstadoConsentimiento.ACTIVO) {
             log.warn("Presencia rechazada por consentimiento no vigente: docente={}", docenteId);
             return ResultadoPresencia.rechazada(
-                "El consentimiento biométrico de " + docente.getNombreCompleto()
-                + " no está vigente, así que su rostro no se puede usar. "
-                + "Registrá la asistencia por carga manual.");
+                "El consentimiento biométrico no está vigente, así que ese rostro no se "
+                + "puede usar. Registrá la asistencia por carga manual.");
         }
 
         Optional<BloquePresencia> abierto =
@@ -131,7 +155,7 @@ public class BloquePresenciaService {
 
         return abierto.isPresent()
             ? cerrar(abierto.get(), docente, modeloFacialId, distanciaLbph, instante)
-            : abrir(docente, tenantId, modeloFacialId, distanciaLbph, instante);
+            : abrir(docente, tenantId, modeloFacialId, distanciaLbph, instante, puesto);
     }
 
     // ------------------------------------------------------------------------
@@ -146,13 +170,14 @@ public class BloquePresenciaService {
      * registrado que dictó algo que no dictó. Se imputan al cerrar, según lo que haya cubierto.
      */
     private ResultadoPresencia abrir(Docente docente, Long tenantId, Long modeloFacialId,
-                                     Double distanciaLbph, LocalDateTime instante) {
+                                     Double distanciaLbph, LocalDateTime instante,
+                                     PuestoCaptura puesto) {
         Optional<BloqueDeHorarios> enCurso = resolutor.bloqueEnCurso(docente.getId(), instante);
         if (enCurso.isEmpty()) {
             log.info("Entrada rechazada: docente {} no tiene clase en ventana a las {}",
                      docente.getId(), instante.toLocalTime());
             return ResultadoPresencia.rechazada(
-                "No hay clase en este momento para " + docente.getNombreCompleto() + ".");
+                "No hay clase en este momento.");
         }
 
         LocalTime horaEntrada = instante.toLocalTime().withNano(0);
@@ -164,6 +189,9 @@ public class BloquePresenciaService {
             .fecha(instante.toLocalDate())
             .horaEntrada(horaEntrada)
             .origenEntrada(OrigenMarca.AUTOMATICO)
+            // De que equipo salio la jornada (RF-89). Sin sesion no hay usuario a quien
+            // atribuir el registro, y "desde donde" es lo que reemplaza a "quien".
+            .puesto(puesto)
             .modeloFacialEntrada(modelo)
             .confianzaEntrada(distanciaLbph == null ? null
                 : asistenciaService.distanciaToConfianza(distanciaLbph))
@@ -217,8 +245,8 @@ public class BloquePresenciaService {
             log.info("Salida rechazada por permanencia mínima: docente={}, lleva {} min de {}",
                      docente.getId(), minutosAdentro, permanenciaMinimaMin);
             return ResultadoPresencia.rechazada(
-                "Todavía no pasaron " + permanenciaMinimaMin + " minutos desde que "
-                + docente.getNombreCompleto() + " registró su entrada.");
+                "Todavía no pasaron " + permanenciaMinimaMin
+                + " minutos desde la entrada.");
         }
 
         ModeloFacial modelo = (modeloFacialId == null) ? null

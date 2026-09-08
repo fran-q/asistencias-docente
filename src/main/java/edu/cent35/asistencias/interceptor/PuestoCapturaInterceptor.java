@@ -53,11 +53,17 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws IOException {
 
-        // Sin tenant no hay contra que validar. Pasa de largo y lo resuelve la cadena de
-        // seguridad, que para estas rutas ya exige sesion.
+        // Sin tenant no hay contra que validar, y en estas rutas eso ya no puede pasar de
+        // largo. Hasta el modo kiosco, llegar aca implicaba tener sesion —Spring Security
+        // exigia autenticacion antes— y por eso alcanzaba con seguir. Desde ADR-0019 /kiosco
+        // es permitAll: si no hay tenant significa que la credencial del equipo no resolvio,
+        // y dejar pasar abriria la ruta a cualquiera. Se rechaza.
         Optional<Long> tenant = TenantContext.get();
         if (tenant.isEmpty()) {
-            return true;
+            log.info("Captura biometrica bloqueada: {} {} sin institucion en contexto",
+                     request.getMethod(), request.getRequestURI());
+            rechazar(request, response, handler);
+            return false;
         }
         Long institucionId = tenant.get();
 

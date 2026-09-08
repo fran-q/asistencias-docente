@@ -38,6 +38,38 @@ public interface PuestoCapturaRepository extends JpaRepository<PuestoCaptura, Lo
     Optional<PuestoCaptura> habilitadoPorToken(@Param("tokenHash") String tokenHash,
                                                @Param("institucionId") Long institucionId);
 
+    /**
+     * El puesto habilitado para operar <b>sin sesión</b> que corresponde a ese token, en
+     * cualquier institución (RF-84, ADR-0019).
+     *
+     * <p><b>Es la única consulta del sistema que no recibe la institución</b>, y es
+     * deliberado: acá el tenant todavía no se conoce — se está resolviendo. Lo que lo hace
+     * seguro es que {@code token_hash} tiene un UNIQUE <b>global</b>, así que un token
+     * identifica como máximo un puesto en todo el sistema y con él una sola institución. El
+     * token no es un filtro más: es la credencial.
+     *
+     * <p>Exige las dos banderas. {@code activo} sola no alcanza: un puesto puede estar
+     * designado y aun así no tener permiso de funcionar desatendido, que es justamente la
+     * distinción que introduce V025.
+     *
+     * <p><b>Es nativa a propósito, y es la única del sistema que no lleva el WHERE de
+     * institución.</b> {@code PuestoCaptura} es tenant-scoped, así que en HQL el filtro de
+     * Hibernate se activaría si quedara un tenant en contexto y la consulta pasaría a buscar
+     * solo dentro de esa institución — devolviendo vacío para cualquier otra, <b>en silencio</b>.
+     * La consulta que <i>resuelve</i> el tenant no puede estar sujeta al tenant. El filtro no
+     * alcanza a las nativas, así que acá el resultado no depende de qué haya en el contexto.
+     *
+     * <p>Lo que la hace segura no es el filtro sino el UNIQUE global sobre {@code token_hash}:
+     * el token es la credencial, y devuelve un puesto o ninguno.
+     */
+    @Query(value = """
+        SELECT * FROM puestos_captura
+        WHERE token_hash = :tokenHash
+          AND activo = 1
+          AND kiosco_habilitado = 1
+    """, nativeQuery = true)
+    Optional<PuestoCaptura> paraKioscoPorToken(@Param("tokenHash") String tokenHash);
+
     /** Los puestos de una institución, activos primero y después por nombre. */
     @Query("""
         SELECT p FROM PuestoCaptura p

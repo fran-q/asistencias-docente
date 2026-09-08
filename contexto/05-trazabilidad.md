@@ -15,9 +15,10 @@
 ## Resumen
 
 > ⚠ **Los conteos de esta tabla están desactualizados y no hay que usarlos.** El documento de
-> requerimientos tiene RF-01 a RF-83 y RNF hasta RNF-50; esta matriz cubre RF-01 a RF-37 más
-> la sección de marca de salida (RF-74 a RF-83). Faltan de la matriz RF-38 a RF-73, varios de
-> ellos ya implementados. Reconciliarla es una tarea pendiente en sí misma: hay que verificar
+> requerimientos tiene RF-01 a RF-89 y RNF hasta RNF-50; esta matriz cubre RF-01 a RF-37, la
+> marca de salida (RF-74 a RF-83) y el kiosco (RF-84 a RF-89). Faltan de la matriz RF-38 a
+> RF-73, varios de ellos ya implementados, y los de ciclos lectivos (V023/V024), que además
+> no tienen requerimiento escrito. Reconciliarla es una tarea pendiente en sí misma: hay que verificar
 > el estado de cada uno contra el código, no darlo por hecho porque figure en el documento.
 
 | | RF (37) | RNF (27) |
@@ -152,6 +153,83 @@ identificación quedan intactos los pasos 1 a 5: detección, comparación LBPH, 
 margen (ADR-0014) y ventana de confirmación (ADR-0013). La salida se identifica con el
 mismo modelo ya entrenado y el mismo criterio que la entrada. Todo el cambio vive del cruce
 con horarios para abajo.
+
+## Modo kiosco: asistencia sin sesión abierta
+
+> 🚧 **Ninguno implementado.** Requerimientos incorporados el 2026-09-06 a pedido de la
+> institución, que necesita tomar asistencia en turnos sin personal administrativo presente.
+> Especificado en ADR-0019, en estado Propuesta.
+
+| ID | Requerimiento | Estado | Dónde va a vivir |
+|---|---|---|---|
+| RF-84 | Toma de asistencia sin sesión abierta | ✅ | `KioscoController` (`GET /kiosco`, `POST /kiosco/marcar`), `PaseAsistenciaService.pasarEnKiosco`, `KioscoTenantInterceptor`, cadena propia en `SecurityConfig`, `FrenoDeKioscoService`, `templates/asistencia/kiosco.html` + `js/facial/kiosco.js` |
+| RF-85 | El funcionamiento desatendido se habilita explícitamente | ✅ | `PuestoCapturaService.habilitarKiosco` / `deshabilitarKiosco`, `POST /puestos/{id}/kiosco/habilitar` y `/deshabilitar`, columna Kiosco en `templates/puesto/requerido.html`. **Asimétrico a propósito**: habilitar exige la cookie de ese mismo equipo (convierte esa cookie en la credencial completa), apagarlo funciona desde cualquier máquina |
+| RF-86 | El registro del rostro nunca opera sin sesión | ✅ | `WebMvcConfig.PUEDEN_SIN_SESION` es una lista aparte que solo tiene `/kiosco/**`; la ruta de registro sigue en la cadena principal |
+| RF-87 | Identificación mínima en la pantalla desatendida | ✅ | `KioscoResultadoDto` no tiene campo para el nombre completo; el recorte lo hace `Docente.getApellido()` en el servidor. Los mensajes de rechazo de `BloquePresenciaService` tampoco nombran a nadie — ver la nota de abajo |
+| RF-88 | Vencimiento de la credencial por inactividad | ✅ | `PuestoCapturaService.resolverKiosco` contra `ultimo_uso_en` (ya existía desde V001), `app.biometria.puesto.dias-inactividad` (30). Sin uso previo cuenta desde `creado_en` |
+| RF-89 | Trazabilidad del equipo en cada marca | ✅ | `BloquePresenciaService.registrar` anota el equipo en el bloque y `AsistenciaService.imputarDelBloque` lo hereda de ahí. Vale también para el pase con sesión |
+
+**Fuga de RF-87 detectada y cerrada el 2026-09-08.** El DTO del kiosco está diseñado para que
+el nombre completo no pueda salir: no tiene campo donde ponerlo. Pero **el mensaje de texto
+se saltea ese control**. Tres rechazos de `BloquePresenciaService` concatenaban
+`docente.getNombreCompleto()` adentro del motivo, y el kiosco lo muestra tal cual: en pantalla
+se leía «No hay clase en este momento para Apellido, Nombre» arriba del apellido — el nombre
+completo filtrado, y encima repetido.
+
+Se detectó usando el sistema, no con los tests. Los de RF-87 que había miraban los campos del
+DTO y ninguno miraba el texto del mensaje.
+
+El criterio quedó escrito en `BloquePresenciaService.ResultadoPresencia.rechazada`: **el motivo
+describe la situación y no nombra a nadie**; la identidad viaja por su propio campo, que cada
+pantalla llena según lo que tiene permitido mostrar. `BloquePresenciaServiceTest.MotivoSinNombres`
+lo ancla en los tres rechazos.
+
+Efecto lateral buscado: el pase con sesión también dejó de repetir el nombre, que ya venía en
+el recuadro sobre la cara.
+
+**La consulta que resuelve el tenant es nativa a propósito.** `PuestoCaptura` es
+tenant-scoped, así que en HQL el filtro de Hibernate se activaría si quedara un tenant en
+contexto y la consulta buscaría solo dentro de esa institución, devolviendo vacío para
+cualquier otra **en silencio**. La consulta que *resuelve* el tenant no puede estar sujeta al
+tenant. Lo que la hace segura no es el filtro sino el UNIQUE global sobre `token_hash`.
+
+**La pantalla del kiosco no extiende `layout/base`.** Ese layout trae la barra lateral con
+accesos a docentes, reportes, ciclos y configuración: heredarla dejaría el sistema entero
+abierto en una máquina que nadie vigila, que es *peor* que la práctica de la sesión abierta que
+el kiosco viene a reemplazar. `KioscoPantallaIT` verifica que el HTML no contenga ninguno de
+esos enlaces ni el de cerrar sesión.
+
+**Agujero encontrado y cerrado el 2026-09-07.** `PuestoCapturaInterceptor` dejaba pasar la
+petición cuando no había tenant en contexto —"lo resuelve la cadena de seguridad, que para
+estas rutas ya exige sesión"—. Eso era cierto hasta que `/kiosco` pasó a `permitAll`: desde
+entonces, sin tenant significaba que la credencial del equipo no resolvió, y dejar pasar abría
+la ruta a cualquiera. Ahora rechaza.
+
+**El CSRF del kiosco va en cookie, no en sesión.** El default de Spring guarda el token en la
+`HttpSession`, que expira a los 30 minutos: un kiosco encendido todo el día en un turno
+tranquilo se quedaría sin token y los POST empezarían a fallar con 403 sin explicación. Por eso
+el kiosco tiene **cadena de seguridad propia** y no una excepción dentro de la principal — el
+repositorio de CSRF no se puede cambiar por ruta dentro de una misma cadena.
+
+**Que Spring Security no exija autenticación no deja el endpoint abierto.** `PuestoCapturaInterceptor`
+sigue exigiendo la credencial del equipo y `KioscoTenantInterceptor` solo publica la institución
+si esa credencial resuelve. La autenticación se reemplaza por la credencial del equipo, no se
+elimina. Y el tope de `FrenoDeKioscoService` acota cuánto puede pedir cada equipo, porque el
+endpoint corre reconocimiento facial sin usuario detrás.
+
+**La sesión siempre gana sobre el equipo.** `KioscoTenantInterceptor` corre en el orden 0 y no
+hace nada si hay usuario autenticado. Al revés, un administrador de una institución trabajando
+en la máquina de otra terminaría operando sobre los datos de la máquina.
+
+**Lo que NO cambia.** El consentimiento se sigue verificando igual: es la primera guarda de
+`BloquePresenciaService.registrar` y no depende de que haya sesión. Tampoco cambia ningún
+paso del pipeline de identificación —detección, LBPH, umbral, margen, ventana de
+confirmación—: lo único que se mueve es de dónde sale la institución y quién puede llegar
+al endpoint.
+
+**Lo que este trabajo deja sin resolver a propósito:** el pase no consulta los días no
+laborables, así que en un feriado registra presencias. Es preexistente y el kiosco lo vuelve
+invisible. Ver `07-pendientes.md`.
 
 ## Carga manual
 

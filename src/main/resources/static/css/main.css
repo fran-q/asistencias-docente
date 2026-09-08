@@ -1919,7 +1919,15 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     animation: v-scan 1500ms var(--ease) infinite;
 }
 
-.pase__header { margin-bottom: var(--space); }
+/* El encabezado lleva el titulo a la izquierda y el paso al modo sin supervision a la
+   derecha: son dos modos de la misma pantalla, y el salto de uno al otro no es un control
+   de la camara. Envuelve en pantallas angostas en vez de apretar el titulo. */
+.pase__header {
+    margin-bottom: var(--space);
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: var(--space); flex-wrap: wrap;
+}
+.pase__titulo { flex: 1 1 22rem; }
 
 /* El resultado es lo segundo más importante de la pantalla: ocupa el tope de la
    columna y con cuerpo grande, para poder leerse de reojo. */
@@ -2203,4 +2211,89 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     .table--tarjetas tbody tr:has(.table__empty) { border: none; background: none; padding: 0; }
     .table--tarjetas td.table__empty { display: block; text-align: center; border-bottom: none; }
     .table--tarjetas td.table__empty::before { content: none; }
+}
+
+/* ============================================================================
+   Kiosco: la pantalla desatendida (ADR-0019)
+
+   No hereda el layout con barra lateral a propósito, así que define acá el poco
+   marco que necesita. Todo lo que hay en pantalla es la cámara y una línea de
+   texto: cualquier cosa de más es un lugar donde alguien podría hacer clic en
+   una máquina que nadie está mirando.
+
+   Los tamaños son grandes porque quien marca lee de pie y a un metro, no
+   sentado frente al monitor.
+   ============================================================================ */
+
+.kiosco {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kiosco__marco {
+    width: min(1100px, 96vw);
+    display: grid;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+}
+
+.kiosco__camara {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius, 12px);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.kiosco__panel {
+    text-align: center;
+    display: grid;
+    gap: var(--space-sm);
+    min-height: 8rem;      /* reservado: sin esto la pantalla salta al aparecer el resultado */
+}
+
+.kiosco__mensaje {
+    margin: 0;
+    font-size: clamp(1.4rem, 3vw, 2.2rem);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.kiosco__mensaje--success { color: var(--success); }
+.kiosco__mensaje--info    { color: var(--primary); }
+.kiosco__mensaje--warn    { color: var(--warning); }
+.kiosco__mensaje--error   { color: var(--danger); }
+
+/* El apellido es lo que el docente mira para confirmar que lo reconoció a él, así
+   que va más grande que el resto. Nunca lleva el nombre completo: el servidor no
+   lo manda (RF-87). */
+.kiosco__apellido {
+    margin: 0;
+    font-size: clamp(2rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.kiosco__detalle {
+    margin: 0;
+    font-size: clamp(1rem, 2vw, 1.4rem);
+    color: var(--text-muted);
+}
+
+.kiosco__iniciar {
+    justify-self: center;
+}
+
+/* En pantallas anchas la cámara y el texto van lado a lado; en la PC de secretaría,
+   que suele ser 1366x768, apilados dejan el texto abajo del pliegue. */
+@media (min-width: 900px) {
+    .kiosco__marco {
+        grid-template-columns: 1.4fr 1fr;
+        align-items: center;
+    }
 }

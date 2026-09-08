@@ -2,6 +2,7 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
 import edu.cent35.asistencias.dto.IdentificacionResultadoDto;
+import edu.cent35.asistencias.dto.KioscoResultadoDto;
 import edu.cent35.asistencias.dto.PaseAsistenciaResultadoDto;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.BloquePresencia;
@@ -38,6 +39,7 @@ class PaseAsistenciaServiceTest {
 
     private static final Long DOCENTE_ID = 50L;
     private static final String NOMBRE = "Pérez, Juana";
+    private static final String APELLIDO = "Pérez";
 
     @Mock private IdentificacionFacialService identificacionService;
     @Mock private BloquePresenciaService bloquePresenciaService;
@@ -50,12 +52,12 @@ class PaseAsistenciaServiceTest {
     void sinRostro() {
         when(identificacionService.identificar(any())).thenReturn(IdentificacionResultadoDto.sinRostro());
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.rostroDetectado()).isFalse();
         assertThat(r.tipoDeMarca()).isNull();
         verify(ventanaConfirmacion).cortar(any());
-        verify(bloquePresenciaService, never()).registrar(any(), any(), any(), any());
+        verify(bloquePresenciaService, never()).registrar(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -65,14 +67,14 @@ class PaseAsistenciaServiceTest {
         when(ventanaConfirmacion.registrar(any(), any(), anyLongArg()))
             .thenReturn(new VentanaConfirmacionService.Estado(false, 1200L, 3000L));
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.confirmando()).isTrue();
         assertThat(r.tipoDeMarca()).isNull();
         // El nombre no viaja hasta que la identidad está confirmada: mostrarlo antes es lo que
         // hace que alguien vea el nombre equivocado durante un parpadeo.
         assertThat(r.docenteNombre()).isNull();
-        verify(bloquePresenciaService, never()).registrar(any(), any(), any(), any());
+        verify(bloquePresenciaService, never()).registrar(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -81,10 +83,10 @@ class PaseAsistenciaServiceTest {
         identificado();
         confirmado();
         Asistencia a = asistencia(EstadoAsistencia.PRESENTE);
-        when(bloquePresenciaService.registrar(any(), any(), any(), any()))
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
             .thenReturn(BloquePresenciaService.ResultadoPresencia.entrada(bloque(), 1, a));
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.tipoDeMarca()).isEqualTo("ENTRADA");
         assertThat(r.asistenciaMarcada()).isTrue();
@@ -101,11 +103,11 @@ class PaseAsistenciaServiceTest {
     void salida() {
         identificado();
         confirmado();
-        when(bloquePresenciaService.registrar(any(), any(), any(), any()))
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
             .thenReturn(BloquePresenciaService.ResultadoPresencia.salida(
                 bloqueCerrado(LocalTime.of(18, 2), LocalTime.of(22, 5), EstadoSalida.EN_HORA), 2));
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.tipoDeMarca()).isEqualTo("SALIDA");
         assertThat(r.mensaje()).isEqualTo("Salida registrada: 18:02 a 22:05 - 2 clases");
@@ -118,11 +120,11 @@ class PaseAsistenciaServiceTest {
     void salidaAnticipada() {
         identificado();
         confirmado();
-        when(bloquePresenciaService.registrar(any(), any(), any(), any()))
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
             .thenReturn(BloquePresenciaService.ResultadoPresencia.salida(
                 bloqueCerrado(LocalTime.of(18, 0), LocalTime.of(19, 0), EstadoSalida.ANTICIPADA), 1));
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.mensaje()).contains("anticipada");
         assertThat(r.mensaje()).contains("1 clase");
@@ -133,11 +135,11 @@ class PaseAsistenciaServiceTest {
     void rechazada() {
         identificado();
         confirmado();
-        when(bloquePresenciaService.registrar(any(), any(), any(), any()))
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
             .thenReturn(BloquePresenciaService.ResultadoPresencia.rechazada(
                 "Todavía no pasaron 10 minutos desde que Pérez, Juana registró su entrada."));
 
-        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad());
+        PaseAsistenciaResultadoDto r = service.pasar(new byte[]{1}, new ConfirmacionIdentidad(), null);
 
         assertThat(r.asistenciaMarcada()).isFalse();
         assertThat(r.tipoDeMarca()).isNull();
@@ -147,11 +149,85 @@ class PaseAsistenciaServiceTest {
         assertThat(r.docenteNombre()).isEqualTo(NOMBRE);
     }
 
+    // ========================================================================
+    //  Kiosco: que datos NO salen del servidor (RF-87)
+    // ========================================================================
+
+    @Test
+    @DisplayName("kiosco: una entrada registrada manda el apellido, nunca el nombre completo")
+    void kioscoMandaSoloElApellido() {
+        // Es una pantalla encendida a la vista de cualquiera que pase por secretaria. El
+        // recorte se hace ACA y no en el navegador: una vez que el dato salio del servidor
+        // ya esta fuera de control, basta abrir las herramientas del navegador para verlo.
+        identificado();
+        confirmado();
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
+            .thenReturn(BloquePresenciaService.ResultadoPresencia.entrada(
+                bloque(), 1, asistencia(EstadoAsistencia.PRESENTE)));
+
+        KioscoResultadoDto r = service.pasarEnKiosco(
+            new byte[]{1}, new ConfirmacionIdentidad(), null);
+
+        assertThat(r.apellido()).isEqualTo(APELLIDO);
+        assertThat(r.registrada()).isTrue();
+        assertThat(r.tipoDeMarca()).isEqualTo("ENTRADA");
+        // El nombre completo no puede aparecer en NINGUN campo de la respuesta.
+        assertThat(r.toString())
+            .as("el nombre de pila no puede viajar al navegador")
+            .doesNotContain("Juana");
+    }
+
+    @Test
+    @DisplayName("kiosco: mientras confirma no se nombra a nadie")
+    void kioscoNoNombraMientrasConfirma() {
+        // Mostrar el apellido antes de confirmar es lo que hace que alguien vea el apellido
+        // equivocado durante un parpadeo, y con LBPH eso pasa.
+        identificado();
+        when(ventanaConfirmacion.registrar(any(), any(), anyLongArg()))
+            .thenReturn(new VentanaConfirmacionService.Estado(false, 1200L, 3000L));
+
+        KioscoResultadoDto r = service.pasarEnKiosco(
+            new byte[]{1}, new ConfirmacionIdentidad(), null);
+
+        assertThat(r.confirmando()).isTrue();
+        assertThat(r.apellido()).isNull();
+    }
+
+    @Test
+    @DisplayName("kiosco: un rostro no reconocido no nombra a quien se parecio")
+    void kioscoNoNombraAlNoReconocido() {
+        when(identificacionService.identificar(any())).thenReturn(
+            IdentificacionResultadoDto.noReconocido(90.0, 10, 20, 100, 100));
+
+        KioscoResultadoDto r = service.pasarEnKiosco(
+            new byte[]{1}, new ConfirmacionIdentidad(), null);
+
+        assertThat(r.reconocido()).isFalse();
+        assertThat(r.apellido()).isNull();
+    }
+
+    @Test
+    @DisplayName("kiosco: una salida informa el horario de la jornada, sin contar clases")
+    void kioscoSalidaInformaElHorario() {
+        identificado();
+        confirmado();
+        when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
+            .thenReturn(BloquePresenciaService.ResultadoPresencia.salida(
+                bloqueCerrado(LocalTime.of(18, 2), LocalTime.of(22, 5), EstadoSalida.EN_HORA), 2));
+
+        KioscoResultadoDto r = service.pasarEnKiosco(
+            new byte[]{1}, new ConfirmacionIdentidad(), null);
+
+        assertThat(r.tipoDeMarca()).isEqualTo("SALIDA");
+        assertThat(r.detalle()).isEqualTo("18:02 a 22:05");
+        assertThat(r.mensaje()).startsWith("Salida registrada:");
+    }
+
     // ------------------------------------------------------------------------
 
     private void identificado() {
         when(identificacionService.identificar(any())).thenReturn(
-            IdentificacionResultadoDto.match(DOCENTE_ID, NOMBRE, 9L, 42.0, 10, 20, 100, 100));
+            IdentificacionResultadoDto.match(DOCENTE_ID, NOMBRE, APELLIDO, 9L, 42.0, 10, 20, 100, 100));
     }
 
     private void confirmado() {

@@ -202,6 +202,9 @@ public class AsistenciaService {
             .comision(horario.getComision())
             .horario(horario)
             .bloque(bloque)
+            // Sale del bloque y no por parametro: una clase imputada viene del mismo equipo
+            // que abrio la jornada, y pasarlo aparte permitiria que discreparan (RF-89).
+            .puesto(bloque.getPuesto())
             .fecha(fecha)
             .horaRegistrada(horaLlegada.withNano(0))
             .estado(calcularEstado(horario, horaLlegada))

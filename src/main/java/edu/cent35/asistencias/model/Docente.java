@@ -90,6 +90,20 @@ public class Docente extends BaseTenantEntity {
     }
 
     /**
+     * Solo el apellido, para las pantallas que no deben mostrar la nómina completa.
+     *
+     * <p>Lo usa el kiosco (RF-87): es una pantalla encendida a la vista de cualquiera que
+     * pase, y el apellido alcanza para que el docente verifique que el sistema lo reconoció a
+     * él sin exponer el nombre de todo el personal. Si no hay apellido cargado cae al nombre,
+     * que es lo mismo que hace {@code Persona.getNombreCompleto}.
+     */
+    public String getApellido() {
+        if (persona == null) return "";
+        String apellido = persona.getApellido();
+        return (apellido == null || apellido.isBlank()) ? persona.getNombre() : apellido;
+    }
+
+    /**
      * Deja la persona en la misma institución que el vínculo.
      *
      * <p>No es una comodidad: es el invariante del que dependen las consultas. Todas filtran por

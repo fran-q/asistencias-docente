@@ -104,7 +104,7 @@ class BloquePresenciaServiceTest {
             when(consentimientoService.estadoActual(DOCENTE_ID))
                 .thenReturn(EstadoConsentimiento.REVOCADO);
 
-            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(18, 0));
+            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(18, 0), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
             assertThat(r.motivo()).contains("consentimiento");
@@ -120,7 +120,7 @@ class BloquePresenciaServiceTest {
             when(consentimientoService.estadoActual(DOCENTE_ID))
                 .thenReturn(EstadoConsentimiento.REVOCADO);
 
-            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(21, 0));
+            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(21, 0), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
             assertThat(r.motivo()).contains("carga manual");
@@ -150,7 +150,7 @@ class BloquePresenciaServiceTest {
             bloqueEnCursoCon(LocalTime.of(18, 0), LocalTime.of(22, 0), primera, segunda);
             guardaElBloque();
 
-            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 2));
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 2), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.ENTRADA);
             assertThat(r.clasesImputadas()).isEqualTo(1);
@@ -170,7 +170,7 @@ class BloquePresenciaServiceTest {
             bloqueEnCursoCon(LocalTime.of(18, 0), LocalTime.of(20, 0), horario(1L, 18, 0, 20, 0));
             guardaElBloque();
 
-            service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 2));
+            service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 2), null);
 
             ArgumentCaptor<BloquePresencia> captor = ArgumentCaptor.forClass(BloquePresencia.class);
             verify(bloqueRepository).saveAndFlush(captor.capture());
@@ -195,7 +195,7 @@ class BloquePresenciaServiceTest {
             sinBloqueAbierto();
             when(resolutor.bloqueEnCurso(eq(DOCENTE_ID), any())).thenReturn(Optional.empty());
 
-            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(15, 0));
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(15, 0), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
             assertThat(r.motivo()).contains("No hay clase");
@@ -220,7 +220,7 @@ class BloquePresenciaServiceTest {
             consentimientoActivo();
             conBloqueAbierto(LocalTime.of(18, 0), UN_LUNES);
 
-            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 7));
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 7), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
             assertThat(r.motivo()).contains("10 minutos");
@@ -236,7 +236,7 @@ class BloquePresenciaServiceTest {
             horariosDelDia(horario(1L, 18, 0, 20, 0));
             guardaElBloque();
 
-            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 10));
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 10), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.SALIDA);
             assertThat(abierto.getEstadoCierre()).isEqualTo(EstadoCierre.CERRADO_POR_ROSTRO);
@@ -252,7 +252,7 @@ class BloquePresenciaServiceTest {
             guardaElBloque();
 
             // 19:50 está dentro de la tolerancia de 15 previa al fin: es salida en hora.
-            var r = service.registrar(DOCENTE_ID, 9L, 45.0, UN_LUNES.atTime(19, 50));
+            var r = service.registrar(DOCENTE_ID, 9L, 45.0, UN_LUNES.atTime(19, 50), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.SALIDA);
             assertThat(abierto.getEstadoCierre()).isEqualTo(EstadoCierre.CERRADO_POR_ROSTRO);
@@ -271,7 +271,7 @@ class BloquePresenciaServiceTest {
             guardaElBloque();
 
             // 19:30 es anterior a 20:00 menos la tolerancia de 15.
-            service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(19, 30));
+            service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(19, 30), null);
 
             assertThat(abierto.getEstadoSalida()).isEqualTo(EstadoSalida.ANTICIPADA);
         }
@@ -289,7 +289,7 @@ class BloquePresenciaServiceTest {
             guardaElBloque();
 
             // Se va 20:05: cubrió la primera entera y apenas cinco minutos de la segunda.
-            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(20, 5));
+            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(20, 5), null);
 
             assertThat(r.clasesImputadas()).isEqualTo(2);
             // En la clase donde entró, la hora de llegada es la de la entrada real.
@@ -311,7 +311,7 @@ class BloquePresenciaServiceTest {
             horariosDelDia(primera, segunda);
             guardaElBloque();
 
-            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(19, 0));
+            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(19, 0), null);
 
             assertThat(r.clasesImputadas()).isEqualTo(1);
             verify(asistenciaService, never()).imputarDelBloque(any(), eq(segunda), any());
@@ -328,7 +328,7 @@ class BloquePresenciaServiceTest {
             horariosDelDia(horario(1L, 18, 0, 20, 0));
             guardaElBloque();
 
-            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(8, 5));
+            var r = service.registrar(DOCENTE_ID, null, 45.0, UN_LUNES.atTime(8, 5), null);
 
             assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.SALIDA);
         }
@@ -556,6 +556,74 @@ class BloquePresenciaServiceTest {
             assertThat(r.imputadas()).isEqualTo(1);
             assertThat(r.fueraDeRango()).extracting(Asistencia::getId).containsExactly(2L);
             verify(asistenciaRepository, never()).delete(any());
+        }
+    }
+
+    // ========================================================================
+    //  Que el motivo no nombre a nadie (RF-87)
+    // ========================================================================
+
+    /**
+     * El kiosco muestra {@code motivo} tal cual, en una pantalla que mira cualquiera que pase
+     * por secretaría. Un nombre concatenado adentro del texto se saltea el recorte: el DTO del
+     * kiosco no tiene campo para el nombre completo, pero el mensaje no pasa por ese control.
+     *
+     * <p>Así estuvo hasta el 2026-09-08. En pantalla se leía "No hay clase en este momento
+     * para Pérez, Juana" arriba del apellido — el nombre completo filtrado, y repetido. Los
+     * tests de RF-87 que había miraban los campos del DTO, no el texto, así que no lo vieron.
+     */
+    @Nested
+    @DisplayName("el motivo del rechazo")
+    class MotivoSinNombres {
+
+        @Test
+        @DisplayName("sin clase: explica la situacion sin decir a quien le pasa")
+        void sinClaseNoNombra() {
+            docenteDelTenant();
+            consentimientoActivo();
+            sinBloqueAbierto();
+            when(resolutor.bloqueEnCurso(eq(DOCENTE_ID), any())).thenReturn(Optional.empty());
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(15, 0), null);
+
+            assertThat(r.motivo()).contains("No hay clase");
+            noNombraANadie(r.motivo());
+        }
+
+        @Test
+        @DisplayName("consentimiento no vigente: tampoco nombra a nadie")
+        void consentimientoNoNombra() {
+            docenteDelTenant();
+            when(consentimientoService.estadoActual(DOCENTE_ID))
+                .thenReturn(EstadoConsentimiento.REVOCADO);
+
+            var r = service.registrar(DOCENTE_ID, 9L, 40.0, UN_LUNES.atTime(18, 0), null);
+
+            assertThat(r.motivo()).contains("consentimiento");
+            noNombraANadie(r.motivo());
+        }
+
+        @Test
+        @DisplayName("permanencia minima: tampoco nombra a nadie")
+        void permanenciaMinimaNoNombra() {
+            docenteDelTenant();
+            consentimientoActivo();
+            conBloqueAbierto(LocalTime.of(18, 0), UN_LUNES);
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 7), null);
+
+            assertThat(r.motivo()).contains("10 minutos");
+            noNombraANadie(r.motivo());
+        }
+
+        // El docente de las fixtures es "Perez, Juana": ninguna de las dos partes puede
+        // aparecer en el texto. El apellido tampoco: en el kiosco viaja por su propio campo,
+        // y repetirlo en el mensaje es como se veia duplicado en pantalla.
+        private void noNombraANadie(String motivo) {
+            assertThat(motivo)
+                .as("el motivo describe la situacion; la identidad va por su propio campo")
+                .doesNotContain("Juana")
+                .doesNotContain("Pérez");
         }
     }
 

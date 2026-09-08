@@ -2,12 +2,15 @@ package edu.cent35.asistencias.controller;
 
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
+import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
 import edu.cent35.asistencias.service.PaseAsistenciaService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,9 +33,17 @@ public class PaseAsistenciaController {
 
     private final PaseAsistenciaService paseAsistenciaService;
 
-    // Pantalla del pase: webcam + loop de reconocimiento + marca automática.
+    /**
+     * Pantalla del pase: webcam + loop de reconocimiento + marca automática.
+     *
+     * <p>Ofrece pasar al modo sin supervisión solo si <b>este</b> equipo lo tiene habilitado.
+     * El botón lleva a cerrar la sesión, así que mostrarlo cuando el kiosco está apagado
+     * dejaría a la persona sin sesión y contra una pantalla que no abre.
+     */
     @GetMapping
-    public String pantalla() {
+    public String pantalla(HttpServletRequest request, Model model) {
+        PuestoCaptura puesto = puestoDe(request);
+        model.addAttribute("kioscoDisponible", puesto != null && puesto.operaDesatendido());
         return "asistencia/pase";
     }
 
@@ -43,7 +54,8 @@ public class PaseAsistenciaController {
     @PostMapping("/marcar")
     @ResponseBody
     public PaseAsistenciaResultadoDto marcar(@RequestBody CapturaImagenDto captura,
-                                             HttpSession sesion) {
+                                             HttpSession sesion,
+                                             HttpServletRequest request) {
         byte[] imagen;
         try {
             imagen = decodificarDataUrl(captura.imagen());
@@ -51,7 +63,7 @@ public class PaseAsistenciaController {
             log.warn("Captura inválida en /asistencia/pase/marcar: {}", ex.getMessage());
             return PaseAsistenciaResultadoDto.sinRostro();
         }
-        return paseAsistenciaService.pasar(imagen, rachaDe(sesion));
+        return paseAsistenciaService.pasar(imagen, rachaDe(sesion), puestoDe(request));
     }
 
     // La racha vive en la sesion, no en el navegador ni en un mapa del servidor: asi no se
@@ -63,6 +75,18 @@ public class PaseAsistenciaController {
             sesion.setAttribute(RACHA, racha);
         }
         return racha;
+    }
+
+    /**
+     * El equipo desde el que llegó la petición, para dejarlo asentado en la marca (RF-89).
+     *
+     * <p>Lo publica {@code PuestoCapturaInterceptor}, que ya tuvo que resolverlo para dejar
+     * pasar la petición: volver a leer la cookie acá sería resolver dos veces lo mismo y abrir
+     * la puerta a que las dos lecturas no coincidan.
+     */
+    private static PuestoCaptura puestoDe(HttpServletRequest request) {
+        Object p = request.getAttribute(PuestoCapturaInterceptor.ATRIBUTO_PUESTO);
+        return (p instanceof PuestoCaptura puesto) ? puesto : null;
     }
 
     // Convierte un data URL base64 en los bytes de la imagen.

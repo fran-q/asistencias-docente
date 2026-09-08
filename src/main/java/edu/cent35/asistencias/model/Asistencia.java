@@ -90,6 +90,20 @@ public class Asistencia extends BaseTenantEntity {
     @JoinColumn(name = "bloque_id")
     private BloquePresencia bloque;
 
+    /**
+     * Equipo desde el que se registró esta marca (RF-89).
+     *
+     * <p>Sin sesión no hay usuario a quien atribuir el registro, y "desde dónde se hizo" es lo
+     * que reemplaza a "quién lo hizo".
+     *
+     * <p><b>NULL significa tres cosas distintas</b>, y ninguna es un dato faltante: marcas
+     * anteriores a V025; cargas manuales, donde ya hay una persona identificada y el equipo no
+     * agrega nada; y ausencias generadas por el job, que no salen de ningún equipo.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "puesto_id")
+    private PuestoCaptura puesto;
+
     @Column(nullable = false)
     private LocalDate fecha;
 

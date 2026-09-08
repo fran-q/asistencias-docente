@@ -104,6 +104,13 @@
                 Si esa computadora ya no existe —se rompió, se formateó, se cambió—, se puede
                 revocar desde acá con un código que llega al correo de la institución.
             </p>
+            <!-- Sin esto, quien mira la tabla desde otra maquina ve un boton que no esta y no
+                 tiene forma de saber si falta porque no le corresponde o porque algo se rompio. -->
+            <p class="text-muted">
+                Lo mismo vale para el <strong>modo kiosco</strong>, que deja al equipo tomando
+                asistencia sin ninguna sesión abierta: se habilita desde esa misma máquina.
+                Apagarlo, en cambio, se puede desde acá.
+            </p>
         </div>
 
         <!-- Los puestos ya cargados, para poder revocar el que ya no corresponda. -->
@@ -115,6 +122,7 @@
                         <tr>
                             <th>Puesto</th>
                             <th>Estado</th>
+                            <th>Kiosco</th>
                             <th>Último uso</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
@@ -134,10 +142,51 @@
                                 <span th:if="${p.activo}" class="badge badge--success">Autorizado</span>
                                 <span th:unless="${p.activo}" class="badge badge--neutral">Revocado</span>
                             </td>
+                            <!-- Estado y kiosco son dos columnas y no una: un equipo puede
+                                 estar autorizado y aun asi no tener permiso de funcionar solo,
+                                 que es justo la distincion que hay que poder ver de un vistazo
+                                 (RF-85). Juntarlas obligaria a inventar un tercer estado. -->
+                            <td>
+                                <span th:if="${p.operaDesatendido()}" class="badge badge--warning"
+                                      th:title="${p.kioscoHabilitadoEn != null}
+                                                ? 'Habilitado el ' + ${#temporals.format(p.kioscoHabilitadoEn, 'dd/MM/yy HH:mm')}
+                                                : null">Sin sesión</span>
+                                <span th:if="${p.activo and !p.operaDesatendido()}"
+                                      class="badge badge--neutral">Requiere sesión</span>
+                                <span th:unless="${p.activo}" class="text-muted">—</span>
+                            </td>
                             <td th:text="${p.ultimoUsoEn != null}
                                          ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yy HH:mm')}
                                          : 'Nunca'">—</td>
                             <td class="table__actions">
+                                <!-- Habilitar el kiosco exige estar en esa maquina, igual
+                                     que revocar. Convierte la cookie del equipo en la
+                                     credencial completa: si se pudiera a distancia, la
+                                     contrasena institucional sola alcanzaria para volverla
+                                     una credencial. -->
+                                <form th:if="${p.activo and !p.operaDesatendido() and p.id == idDeEsteEquipo}"
+                                      th:action="@{/puestos/{id}/kiosco/habilitar(id=${p.id})}"
+                                      method="post" class="inline-form"
+                                      data-confirm="¿Habilitar el modo kiosco en este equipo?"
+                                      data-confirm-detail="Este equipo va a registrar entradas y salidas sin ninguna sesión abierta: alcanza con que el docente se acerque a la cámara. Solo tiene sentido si la máquina está en un lugar controlado."
+                                      data-confirm-action="Habilitar">
+                                    <button type="submit" class="btn btn--ghost btn--sm"
+                                            data-texto-enviando="Habilitando...">Habilitar kiosco</button>
+                                </form>
+
+                                <!-- Apagarlo, en cambio, funciona desde cualquier lado: el
+                                     momento en que hace falta es justo aquel en el que no se
+                                     puede llegar hasta esa maquina. -->
+                                <form th:if="${p.operaDesatendido()}"
+                                      th:action="@{/puestos/{id}/kiosco/deshabilitar(id=${p.id})}"
+                                      method="post" class="inline-form"
+                                      data-confirm="¿Apagar el modo kiosco?"
+                                      data-confirm-detail="El equipo sigue autorizado, pero para tomar asistencia va a hacer falta una sesión abierta. Se puede volver a habilitar desde esa misma máquina."
+                                      data-confirm-action="Apagar">
+                                    <button type="submit" class="btn btn--ghost btn--sm"
+                                            data-texto-enviando="Apagando...">Apagar kiosco</button>
+                                </form>
+
                                 <!-- Dos caminos y no uno con un mensaje de error: revocar el
                                      propio equipo es un clic, y hacerlo desde otro exige el
                                      codigo. Ofrecer el mismo boton para los dos casos manda a
@@ -152,6 +201,7 @@
                                     <button type="submit" class="btn btn--ghost btn--danger btn--sm"
                                             data-texto-enviando="Revocando...">Revocar</button>
                                 </form>
+
                                 <a th:if="${p.activo and p.id != idDeEsteEquipo}"
                                    th:href="@{/puestos/{id}/revocar-a-distancia(id=${p.id})}"
                                    class="btn btn--ghost btn--sm"

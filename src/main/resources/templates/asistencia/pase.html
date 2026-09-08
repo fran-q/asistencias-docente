@@ -7,11 +7,32 @@
 <body>
     <section class="pase">
         <header class="page-header pase__header">
-            <h1>Pase de asistencia</h1>
-            <p class="page-header__subtitle">
-                Identifica al docente frente a la cámara y marca su asistencia
-                a la clase que está en curso.
-            </p>
+            <div class="pase__titulo">
+                <h1>Pase de asistencia</h1>
+                <p class="page-header__subtitle">
+                    Identifica al docente frente a la cámara y marca su asistencia
+                    a la clase que está en curso.
+                </p>
+            </div>
+
+            <!-- Solo si ESTE equipo tiene el kiosco habilitado. El botón cierra la sesión,
+                 así que ofrecerlo con el kiosco apagado dejaría a la persona afuera y contra
+                 una pantalla que no abre.
+
+                 Va en el encabezado y no entre los controles de la cámara: apretarlo cierra
+                 la sesión, y no puede quedar al lado de "Apagar cámara" donde se aprieta de
+                 rebote. -->
+            <form th:if="${kioscoDisponible}" th:action="@{/logout}" method="post"
+                  class="inline-form"
+                  data-confirm="¿Dejar el equipo tomando asistencia sin supervisión?"
+                  data-confirm-detail="Se cierra tu sesión y la pantalla queda registrando entradas y salidas sola. Es a propósito: si la sesión siguiera abierta detrás, alcanzaría con apretar Atrás para entrar a todo el sistema. Para volver vas a tener que iniciar sesión de nuevo."
+                  data-confirm-action="Dejar sin supervisión">
+                <input type="hidden" name="destino" value="kiosco">
+                <button type="submit" class="btn btn--ghost"
+                        data-texto-enviando="Cerrando sesión...">
+                    Asistencia sin supervisión
+                </button>
+            </form>
         </header>
 
         <div class="camara-layout">

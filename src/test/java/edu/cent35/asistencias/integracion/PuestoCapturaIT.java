@@ -530,6 +530,46 @@ class PuestoCapturaIT {
     }
 
     // ========================================================================
+    //  El kiosco no pasa por el login (ADR-0019)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Sin sesion, el kiosco NO manda al login: lo autoriza el equipo, no un usuario")
+    void elKioscoNoRedirigeAlLogin() throws Exception {
+        // Sin cookie de puesto la peticion se rechaza, y esta bien: lo que importa es QUIEN la
+        // rechaza. Tiene que ser el control del equipo —que manda a /puesto-requerido— y no
+        // Spring Security mandando al login, porque eso significaria que la cadena del kiosco
+        // no toma la ruta y el equipo nunca podria operar solo.
+        var respuesta = mockMvc.perform(post("/kiosco/marcar").with(csrf())
+                .contentType("application/json").content("{\"imagen\":\"x\"}"))
+            .andReturn().getResponse();
+        String destino = respuesta.getRedirectedUrl();
+
+        assertThat(destino == null || !destino.toLowerCase().contains("login"))
+            .as("no puede terminar en el login: el kiosco no se autoriza con un usuario")
+            .isTrue();
+        // El endpoint que consume fetch responde 403 con JSON en vez de redirigir: un
+        // redirect llegaria al script como HTML dentro de un response.json().
+        assertThat(respuesta.getStatus())
+            .as("lo rechaza el control del equipo, no el login")
+            .isEqualTo(403);
+    }
+
+    @Test
+    @DisplayName("El resto del sistema sigue exigiendo sesion")
+    void elRestoSigueCerrado() {
+        // La cadena del kiosco cubre solo /kiosco/**. Si se hubiera abierto de mas, esto lo
+        // dice: /docentes tiene que seguir mandando al login sin sesion.
+        try {
+            var respuesta = mockMvc.perform(get("/docentes")).andReturn().getResponse();
+            assertThat(respuesta.getStatus()).isEqualTo(302);
+            assertThat(respuesta.getRedirectedUrl()).containsIgnoringCase("login");
+        } catch (Exception e) {
+            throw new AssertionError("no deberia fallar: " + e.getMessage(), e);
+        }
+    }
+
+    // ========================================================================
     //  helpers
     // ========================================================================
 

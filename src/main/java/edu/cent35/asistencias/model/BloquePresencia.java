@@ -123,6 +123,11 @@ public class BloquePresencia extends BaseTenantEntity {
     @Column(name = "estado_salida", length = 15)
     private EstadoSalida estadoSalida;
 
+    // Equipo desde el que se abrio el bloque (RF-89). NULL en los previos a V025.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "puesto_id")
+    private PuestoCaptura puesto;
+
     /**
      * Quién cerró o corrigió la salida a mano (RF-83). NULL en los otros cierres.
      *

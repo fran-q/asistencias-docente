@@ -26,7 +26,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 | `roles` | Catálogo global: `INSTITUCION`, `ADMIN`. | No |
 | `usuarios` | Login del sistema. Solo institución y admins. **El docente no es usuario.** | Sí |
 | `codigos_verificacion` | Códigos de un solo uso para verificar correo y recuperar contraseña. | Vía usuario |
-| `puestos_captura` | Equipos autorizados a capturar datos biométricos. Guarda el hash del token, no el token. Ver ADR-0015. | Sí |
+| `puestos_captura` | Equipos autorizados a capturar datos biométricos. Guarda el hash del token, no el token. Desde V025 puede habilitarse para operar **sin sesión** (ADR-0019). Ver ADR-0015. | Sí |
 
 ### Personas
 
@@ -75,6 +75,28 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
 - FK a `modelos_faciales` con `ON DELETE SET NULL`: si el docente ejerce ARCO y se borra
   su modelo, **el historial de asistencias se conserva**.
 
+**`puestos_captura`** (V015, V022, V025)
+- `UNIQUE (institucion_si_habilitado)` sobre columna generada: una institución no puede tener
+  dos puestos habilitados a la vez. Los revocados no chocan porque la columna vale NULL (V022).
+- `UNIQUE (token_hash)` **global**, no por institución. Por eso un token identifica un puesto
+  —y con él una institución— sin ambigüedad, que es lo que permite resolver el tenant desde el
+  equipo cuando no hay sesión (V025, ADR-0019).
+- Un kiosco habilitado siempre tiene fecha de habilitación: `ck_puestos_kiosco_fechado`. Sin
+  fecha no se podría decir desde cuándo ese equipo opera sin supervisión.
+- **El rastro de la habilitación no se borra al deshabilitar.** `kiosco_habilitado_en` y
+  `kiosco_habilitado_por` se conservan aunque la bandera vuelva a 0: es lo que permite
+  responder por un período pasado.
+- `kiosco_habilitado_por` hace `SET NULL`, igual que `designado_por`: suprimir una cuenta no
+  puede romper una fila ya escrita.
+
+**`asistencias` y `bloques_presencia`, columna `puesto_id`** (V025)
+- `ON DELETE RESTRICT`, que es la regla general. Los puestos no se borran: se revocan con baja
+  lógica, y su historial se conserva a propósito porque dice desde dónde se capturó y hasta
+  cuándo. No aplica el `SET NULL` de `modelos_faciales`, que existe porque ARCO sí borra.
+- **NULL significa tres cosas distintas y ninguna es un dato faltante**: marcas anteriores a
+  V025; cargas manuales, donde ya hay una persona identificada; y ausencias generadas por el
+  job, que no salen de ningún equipo.
+
 **`bloques_presencia`** (V019)
 - `UNIQUE (bloque_abierto_de)` sobre una **columna generada** que vale `docente_id`
   mientras `estado_cierre = 'ABIERTO'` y `NULL` cuando no. Es lo que garantiza que un
@@ -102,11 +124,20 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
 las entidades y no de las migraciones. Un build verde no dice nada sobre estos
 constraints. Es la misma clase de punto ciego que dejó pasar el problema de esquema de V015.
 
-✅ **Verificados a mano el 2026-09-01 contra MariaDB 10.4.32**, aplicando V019 sobre una copia
-estructural de la base real: la migración entra limpia, el UNIQUE sobre la columna generada
-funciona —era el punto que estaba en duda—, los diez CHECK rechazan lo que deben, y el
-`ON DELETE SET NULL` conserva el bloque tras borrar el modelo facial. **Como no está
-automatizado, hay que repetirlo si se toca el esquema de la tabla.**
+✅ **Verificados a mano contra MariaDB 10.4.32**, aplicando cada migración sobre una copia
+estructural de la base real:
+
+- **V019** (2026-09-01): entra limpia, el UNIQUE sobre la columna generada funciona —era el
+  punto que estaba en duda—, los diez CHECK rechazan lo que deben y el `ON DELETE SET NULL`
+  conserva el bloque tras borrar el modelo facial.
+- **V025** (2026-09-06): `ck_puestos_kiosco_fechado` rechaza habilitar el kiosco sin fecha;
+  deshabilitar conserva el rastro; el `RESTRICT` impide borrar un puesto que originó marcas y
+  la baja lógica sí lo permite; suprimir la cuenta que habilitó el kiosco deja
+  `kiosco_habilitado_por` en NULL sin romper la fila.
+
+**Como no está automatizado, hay que repetirlo si se toca el esquema de estas tablas.**
+`MigracionesIT` sí verifica que todas las migraciones apliquen de cero contra MariaDB y que
+las columnas estén; lo que no comprueba es que los CHECK rechacen.
 
 **`horarios`**
 - `dia_semana` entre 1 y 7 (ISO 8601, 1 = lunes).
@@ -176,6 +207,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V022__un_solo_puesto_habilitado` | Índice único sobre columna generada: una institución no puede tener dos puestos habilitados a la vez (ADR-0015) |
 | `V023__ciclos_y_periodos_lectivos` | Tablas `ciclos_lectivos` y `periodos_lectivos`; `comisiones.periodo_id` y el UNIQUE por materia, código y período |
 | `V024__dias_no_laborables` | Tabla `dias_no_laborables`: los días de adentro del ciclo en los que no se dicta clase |
+| `V025__modo_kiosco` | `puestos_captura.kiosco_habilitado` (+ quién y cuándo) y `puesto_id` en `asistencias` y `bloques_presencia` (ADR-0019) |
 
 ### Invariantes que agregaron V023 y V024
 

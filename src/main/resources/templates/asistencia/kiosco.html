@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--
+  Pantalla desatendida (RF-84, ADR-0019).
+
+  NO extiende layout/base: ese layout trae la barra lateral con accesos a docentes,
+  reportes, ciclos y configuración. Esta pantalla queda encendida en secretaría sin nadie
+  vigilándola, así que no puede ser una puerta al resto del sistema. Es una pantalla sin
+  salida, y por eso repite el poco encabezado que necesita en vez de heredar uno que trae
+  navegación.
+
+  Tampoco muestra el nombre completo de nadie: solo el apellido, y ese recorte ya viene
+  hecho del servidor (RF-87).
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Token CSRF: lo lee el script para el POST de cada cuadro. Acá viaja en cookie y no
+         en la sesión, porque la sesión expira a los 30 minutos y el kiosco queda encendido
+         todo el día (ADR-0019). -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+    <title>Registro de asistencia - Visum</title>
+
+    <script>
+        // Mismo criterio que el layout: se aplica antes de la hoja de estilos para que la
+        // pantalla no alcance a pintarse de un color y saltar al otro.
+        (function () {
+            var raiz = document.documentElement;
+            function leer(clave) {
+                try { return localStorage.getItem(clave); } catch (e) { return null; }
+            }
+            var tema = leer('tema');
+            if (!tema) {
+                tema = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            raiz.setAttribute('data-tema', tema);
+            raiz.setAttribute('data-densidad', 'equilibrada');
+        })();
+    </script>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="kiosco">
+
+    <main class="kiosco__marco">
+
+        <div class="kiosco__camara">
+            <!-- El video y el recuadro comparten caja: el canvas se superpone y ambos
+                 escalan juntos, así el recuadro cae sobre la cara. -->
+            <div class="camara-caja">
+                <video id="k-video" class="camara-video" autoplay playsinline muted></video>
+                <canvas id="k-overlay" class="camara-overlay"></canvas>
+                <canvas id="k-canvas" hidden></canvas>
+            </div>
+        </div>
+
+        <!-- El texto va grande y aparte del video: quien marca lo lee de pie y a un metro
+             de la pantalla, no sentado frente a ella. -->
+        <div class="kiosco__panel">
+            <p id="k-mensaje" class="kiosco__mensaje">Acercate a la cámara</p>
+            <p id="k-apellido" class="kiosco__apellido"></p>
+            <p id="k-detalle" class="kiosco__detalle"></p>
+
+            <!-- Solo aparece si el navegador no deja arrancar la cámara sola. Un kiosco no
+                 debería necesitar que alguien apriete nada, pero la primera vez el permiso
+                 lo tiene que dar una persona. -->
+            <button id="k-iniciar" class="btn btn--primary kiosco__iniciar" hidden>
+                Encender la cámara
+            </button>
+        </div>
+
+    </main>
+
+    <script th:src="@{/js/facial/kiosco.js}" defer></script>
+</body>
+</html>

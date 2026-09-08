@@ -65,12 +65,11 @@ con documento adjunto.
 **Ausencia generada** — Las ausencias no se marcan: las deriva un proceso programado a
 partir de los horarios cuyo `hora_fin` ya pasó sin marca.
 
-### Marca de salida y bloques
+### Marca de salida, bloques y kiosco
 
-> 🚧 **Implementado por dentro, todavía sin conectar al pase.** Los términos corresponden a
-> ADR-0017 y ADR-0018, los dos Aceptados. El esquema, el ciclo de vida del bloque y el cierre
-> automático existen y están probados, pero **la pantalla del pase todavía no los usa**: en la
-> aplicación corriendo, la marca de salida aún no ocurre.
+> Los términos de esta sección vienen de ADR-0017 y ADR-0018 (marca de salida y bloques,
+> **en funcionamiento**) y de ADR-0019 (modo kiosco, **en diseño**). El kiosco está acá para
+> que el vocabulario sea uno solo desde el principio, no porque el sistema ya lo haga.
 
 **Bloque de presencia** — El lapso continuo durante el cual un docente estuvo en la
 institución. Agrupa uno o varios horarios consecutivos y tiene exactamente **una entrada y
@@ -101,6 +100,13 @@ tomando el fin de la última clase del bloque. Se distingue explícitamente de u
 observada: el sistema la completa para poder imputar la asistencia, pero nunca la hace
 pasar por medida. Un cierre por reconocimiento, un cierre manual y una hora presumida
 tienen distinto valor probatorio y no pueden verse iguales en un reporte.
+
+**Modo kiosco** — El equipo autorizado tomando asistencia **sin ninguna sesión abierta**,
+para los turnos en que no hay personal administrativo. La institución del registro se
+deduce del propio equipo, cuya credencial identifica a una sola. Se habilita como decisión
+aparte de designar el equipo, y **no alcanza al registro del rostro**, que sigue exigiendo
+sesión: marcar sin supervisión registra un hecho, enrolar sin supervisión crea una
+identidad. Ver ADR-0019.
 
 **Salida anticipada** — Retirarse antes de `hora_fin` menos la tolerancia. **No cambia el
 estado de la asistencia**, que sigue describiendo cómo llegó el docente: se registra en su

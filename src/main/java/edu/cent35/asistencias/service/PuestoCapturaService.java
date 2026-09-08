@@ -38,6 +38,17 @@ public class PuestoCapturaService {
     // 32 bytes = 256 bits. En Base64 sin relleno son 43 caracteres, comodos para una cookie.
     private static final int BYTES_TOKEN = 32;
 
+    /**
+     * Días sin uso tras los cuales la credencial del puesto deja de servir para el kiosco.
+     *
+     * <p>Solo aplica al funcionamiento sin sesión: con un administrador logueado el puesto es
+     * un control adicional sobre una sesión que ya se validó, y ahí la credencial no es lo
+     * único que autoriza.
+     */
+    @org.springframework.beans.factory.annotation.Value(
+        "${app.biometria.puesto.dias-inactividad:30}")
+    private long diasDeInactividad;
+
     private final PuestoCapturaRepository puestoRepository;
     // Revocar a distancia exige un codigo de un solo uso. Se reusan las defensas que ya
     // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
@@ -126,6 +137,49 @@ public class PuestoCapturaService {
         return puestoRepository.habilitadoPorToken(hashear(tokenEnClaro), institucionId);
     }
 
+    /**
+     * Resuelve el puesto —y con él la institución— a partir del token, sin sesión de por
+     * medio (RF-84, RF-88).
+     *
+     * <p><b>Es el único punto del sistema donde la institución sale de algo que no es el
+     * usuario autenticado.</b> Se apoya en que el token tiene un UNIQUE global: identifica un
+     * puesto y una sola institución. Devuelve vacío ante cualquier duda —token que no existe,
+     * puesto revocado, kiosco no habilitado, credencial vencida— y nunca una institución
+     * "por defecto".
+     *
+     * <p><b>El vencimiento es por inactividad, no por fecha fija</b> (RF-88). En uso normal el
+     * equipo marca todos los días y la credencial se renueva sola, así que no hay una mañana
+     * en que la secretaría descubra que el sistema dejó de andar. Lo que caduca es el token de
+     * una máquina que dejó de usarse: la que se robaron, la que se dio de baja.
+     *
+     * <p>Un puesto recién habilitado todavía no tiene {@code ultimoUsoEn}; ahí cuenta desde
+     * cuándo se creó. Tratarlo como vencido dejaría el kiosco sin poder arrancar nunca.
+     */
+    @Transactional(readOnly = true)
+    public Optional<PuestoCaptura> resolverKiosco(String tokenEnClaro) {
+        if (tokenEnClaro == null || tokenEnClaro.isBlank()) {
+            return Optional.empty();
+        }
+        return puestoRepository.paraKioscoPorToken(hashear(tokenEnClaro))
+            .filter(this::credencialVigente);
+    }
+
+    // Si el puesto se uso dentro de la ventana de inactividad admitida.
+    private boolean credencialVigente(PuestoCaptura puesto) {
+        LocalDateTime referencia = puesto.getUltimoUsoEn() != null
+            ? puesto.getUltimoUsoEn()
+            : puesto.getCreadoEn();
+        if (referencia == null) {
+            return false;
+        }
+        boolean vigente = referencia.isAfter(LocalDateTime.now().minusDays(diasDeInactividad));
+        if (!vigente) {
+            log.warn("Credencial de kiosco vencida: puesto={}, institucion={}, ultimo uso={}",
+                     puesto.getId(), puesto.getInstitucionId(), referencia);
+        }
+        return vigente;
+    }
+
     /** Deja constancia de que el puesto se usó. Va aparte de {@link #verificar} para no escribir en una consulta de solo lectura. */
     @Transactional
     public void registrarUso(Long puestoId, Long institucionId) {
@@ -141,6 +195,93 @@ public class PuestoCapturaService {
     @Transactional(readOnly = true)
     public long contarHabilitados(Long institucionId) {
         return puestoRepository.contarHabilitados(institucionId);
+    }
+
+    // ========================================================================
+    //  Modo kiosco: operar sin sesion abierta (RF-85, ADR-0019)
+    // ========================================================================
+
+    /**
+     * Habilita el equipo para tomar asistencia <b>sin ninguna sesión abierta</b> (RF-85).
+     *
+     * <p><b>Solo desde ese mismo equipo</b>, y ahí hay dos razones distintas.
+     *
+     * <p>La primera es de criterio: habilitar el kiosco es decidir que esa máquina, en el
+     * lugar físico donde está, se puede dejar operando sola. Desde una lista de nombres eso
+     * no se puede juzgar — "Secretaría PC-1" puede estar detrás de un mostrador o en un
+     * pasillo abierto. Sentado ahí, sí.
+     *
+     * <p>La segunda es de credenciales, y es la que importa. El kiosco convierte la cookie
+     * del puesto en la credencial completa: sola alcanza para registrar asistencia. Si esto
+     * se pudiera habilitar a distancia, la contraseña institucional sola —filtrada,
+     * reutilizada, adivinada— bastaría para convertir esa cookie en una credencial. Exigir
+     * la cookie hace falta las dos cosas a la vez, que es la misma lógica con la que ya se
+     * defiende {@link #revocar}.
+     *
+     * <p>Es idempotente: si ya estaba habilitado no reescribe la fecha. La fecha responde
+     * "desde cuándo opera desatendido", y pisarla en cada visita a la pantalla la volvería
+     * inútil justo para la pregunta que existe para responder.
+     *
+     * @param desdeEsePuesto si la petición trae la cookie de ese mismo puesto
+     */
+    @Transactional
+    public void habilitarKiosco(Long puestoId, Long institucionId, Usuario quien,
+                                boolean desdeEsePuesto) {
+        PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
+            .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));
+
+        if (!puesto.habilitado()) {
+            throw new IllegalArgumentException(
+                "Este equipo está revocado. Autorizá un equipo antes de habilitar el kiosco.");
+        }
+        if (!desdeEsePuesto) {
+            log.warn("Habilitacion de kiosco rechazada: la peticion no viene del puesto {} "
+                     + "(institucion {})", puestoId, institucionId);
+            throw new IllegalArgumentException(
+                "El modo kiosco se habilita desde esa misma máquina. Iniciá sesión con la "
+                + "cuenta de la institución en el equipo autorizado y habilitalo desde ahí.");
+        }
+        if (Boolean.TRUE.equals(puesto.getKioscoHabilitado())) {
+            return;                                        // ya estaba: no hay nada que hacer
+        }
+
+        puesto.setKioscoHabilitado(true);
+        puesto.setKioscoHabilitadoEn(LocalDateTime.now());
+        puesto.setKioscoHabilitadoPor(quien);
+        puestoRepository.save(puesto);
+
+        log.info("Modo kiosco HABILITADO: puesto={}, institucion={}, por usuario={}",
+                 puestoId, institucionId, quien == null ? null : quien.getId());
+    }
+
+    /**
+     * Deja de admitir el funcionamiento sin sesión, sin revocar el equipo (RF-85).
+     *
+     * <p><b>Funciona desde cualquier máquina</b>, al revés que habilitar. La asimetría es
+     * deliberada: aflojar un control exige estar ahí, apretarlo de nuevo no. El caso urgente
+     * —la máquina del kiosco se la llevaron, quedó sin llave, apareció una marca que nadie
+     * explica— es justamente aquel en el que no se puede ir hasta esa máquina, y ese es el
+     * momento en que apagarlo tiene que ser un clic.
+     *
+     * <p>El equipo sigue designado y sigue tomando asistencia con un administrador logueado.
+     * Es lo que separa "que deje de funcionar solo" de "que deje de funcionar".
+     *
+     * <p>No borra {@code kioscoHabilitadoEn} ni quién lo habilitó: son el rastro de que el
+     * equipo estuvo operando desatendido en un período, y esa pregunta se va a hacer después
+     * de apagarlo, no antes.
+     */
+    @Transactional
+    public void deshabilitarKiosco(Long puestoId, Long institucionId) {
+        PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
+            .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));
+
+        if (!Boolean.TRUE.equals(puesto.getKioscoHabilitado())) {
+            return;                                        // ya estaba apagado
+        }
+        puesto.setKioscoHabilitado(false);
+        puestoRepository.save(puesto);
+
+        log.info("Modo kiosco DESHABILITADO: puesto={}, institucion={}", puestoId, institucionId);
     }
 
     /**

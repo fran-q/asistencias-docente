@@ -81,6 +81,45 @@ public class PuestoCaptura extends BaseTenantEntity {
     @Column(name = "ultimo_uso_en")
     private LocalDateTime ultimoUsoEn;
 
+    /**
+     * Si este equipo puede tomar asistencia <b>sin ninguna sesión abierta</b> (RF-84, RF-85).
+     *
+     * <p>Es una decisión aparte de designar el equipo, y por eso una columna aparte. Designar
+     * dice "la captura ocurre acá"; habilitar el kiosco dice "además puede ocurrir sin nadie
+     * mirando", que es una atenuación deliberada de un control de seguridad.
+     */
+    @Column(name = "kiosco_habilitado", nullable = false)
+    @Builder.Default
+    private Boolean kioscoHabilitado = false;
+
+    /**
+     * Cuándo se habilitó el kiosco por última vez.
+     *
+     * <p><b>No se limpia al deshabilitar.</b> Conservarlo es lo que permite decir "este equipo
+     * estuvo operando desatendido desde tal fecha" cuando haya que responder por un período
+     * pasado; borrarlo sería perder justo ese dato.
+     */
+    @Column(name = "kiosco_habilitado_en")
+    private LocalDateTime kioscoHabilitadoEn;
+
+    // Quien lo habilito. NULL si esa cuenta se suprimio: la FK hace SET NULL, igual que
+    // designadoPor, para que suprimir una cuenta no rompa una fila ya escrita.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kiosco_habilitado_por")
+    private Usuario kioscoHabilitadoPor;
+
+    /**
+     * Si este equipo está operando sin supervisión ahora mismo.
+     *
+     * <p>Un puesto revocado no opera de ninguna forma, así que la bandera del kiosco sola no
+     * alcanza: hay que mirar las dos. Vive acá y no en cada servicio porque la responden el
+     * interceptor que resuelve el tenant y la pantalla de puestos, y con una copia en cada
+     * lado alcanza con tocar una para que dejen de coincidir.
+     */
+    public boolean operaDesatendido() {
+        return Boolean.TRUE.equals(activo) && Boolean.TRUE.equals(kioscoHabilitado);
+    }
+
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;

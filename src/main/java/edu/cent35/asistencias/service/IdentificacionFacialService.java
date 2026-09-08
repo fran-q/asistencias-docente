@@ -152,7 +152,7 @@ public class IdentificacionFacialService {
             if (reconocido) {
                 Docente d = mejorMatch.getDocente();
                 return IdentificacionResultadoDto.match(
-                    d.getId(), d.getNombreCompleto(),
+                    d.getId(), d.getNombreCompleto(), d.getApellido(),
                     mejorMatch.getId(), mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }

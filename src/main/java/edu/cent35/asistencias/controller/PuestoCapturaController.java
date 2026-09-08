@@ -178,6 +178,61 @@ public class PuestoCapturaController {
     }
 
     // ========================================================================
+    //  Modo kiosco: operar sin sesion abierta (RF-85, ADR-0019)
+    // ========================================================================
+
+    /**
+     * Habilita el funcionamiento sin sesión en este mismo equipo.
+     *
+     * <p>Como al revocar, el equipo se resuelve desde la cookie y no desde el formulario: lo
+     * que se habilita es la máquina en la que está sentada la persona que lo decide, no un
+     * nombre elegido de una lista.
+     */
+    @PostMapping("/puestos/{id}/kiosco/habilitar")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String habilitarKiosco(@PathVariable Long id,
+                                  @AuthenticationPrincipal UsuarioAutenticado principal,
+                                  HttpServletRequest request,
+                                  RedirectAttributes redirect) {
+
+        Long institucionId = TenantContext.getRequired();
+        Usuario quien = usuarioRepository.findById(principal.getUsuarioId()).orElse(null);
+
+        try {
+            puestoService.habilitarKiosco(id, institucionId, quien,
+                                          esteEquipoEs(id, institucionId, request));
+            redirect.addFlashAttribute("flashMensaje",
+                "Modo kiosco habilitado. Este equipo ya puede tomar asistencia sin que haya "
+                + "ninguna sesión abierta.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:" + VUELTA;
+    }
+
+    /**
+     * Apaga el funcionamiento sin sesión, sin revocar el equipo.
+     *
+     * <p>A diferencia de habilitar, funciona desde cualquier máquina. Apagarlo es lo que se
+     * necesita cuando algo salió mal, y en ese momento lo más probable es no poder ir hasta
+     * la máquina del kiosco.
+     */
+    @PostMapping("/puestos/{id}/kiosco/deshabilitar")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String deshabilitarKiosco(@PathVariable Long id, RedirectAttributes redirect) {
+        Long institucionId = TenantContext.getRequired();
+        try {
+            puestoService.deshabilitarKiosco(id, institucionId);
+            redirect.addFlashAttribute("flashMensaje",
+                "Modo kiosco deshabilitado. El equipo sigue autorizado: para tomar asistencia "
+                + "ahora hace falta una sesión abierta.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:" + VUELTA;
+    }
+
+    // ========================================================================
     //  Revocacion a distancia, para cuando la maquina del puesto ya no existe
     // ========================================================================
 

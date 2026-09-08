@@ -182,6 +182,11 @@ class MigracionesIT {
             // V020.
             "cerrado_por_usuario_id", "motivo_cierre_id", "detalle_cierre");
         assertThat(columnasDe("asistencias")).contains("bloque_id");
+        // V025. Modo kiosco: de que equipo salio cada marca, y cual puede operar sin sesion.
+        assertThat(columnasDe("asistencias")).contains("puesto_id");
+        assertThat(columnasDe("bloques_presencia")).contains("puesto_id");
+        assertThat(columnasDe("puestos_captura")).contains(
+            "kiosco_habilitado", "kiosco_habilitado_en", "kiosco_habilitado_por");
         assertThat(columnasDe("instituciones")).contains("umbral_separacion_min");
 
         // Lo que las migraciones sacaron tiene que estar efectivamente afuera.
