@@ -68,7 +68,6 @@
                             <label for="usuarioOEmail">Usuario o correo</label>
                             <input type="text" id="usuarioOEmail" th:field="*{usuarioOEmail}"
                                    required autofocus autocomplete="username"
-                                   placeholder="mgarcia o maria@cent35.edu.ar"
                                    th:errorclass="is-invalid">
                             <span class="form-error" th:if="${#fields.hasErrors('usuarioOEmail')}"
                                   th:errors="*{usuarioOEmail}">Error</span>

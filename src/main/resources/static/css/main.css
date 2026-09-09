@@ -1542,7 +1542,23 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
  *  Debajo de 860px el panel de marca desaparece —en un teléfono la mitad de la
  *  pantalla no puede ser decorativa— y el logo pasa arriba del formulario.
  * ========================================================================== */
-.auth { display: grid; grid-template-columns: var(--auth-cols); min-height: 100vh; }
+/* Alto fijo de ventana, no min-height. Con min-height el alto de la grilla lo fija
+   la columna mas larga, asi que un formulario de diez campos --el alta de
+   institucion-- estiraba tambien el panel azul: la trama y el circulo quedaban
+   repartidos en una franja de dos pantallas de alto y el pie legal caia fuera de
+   cuadro hasta que uno bajaba. El panel es un cartel, no un contenedor de datos:
+   mide una pantalla y ahi se queda.
+
+   dvh despues de vh: en el celular, 100vh no descuenta la barra de direcciones que
+   se repliega, asi que el ultimo campo del formulario queda debajo del borde. Los
+   navegadores que no conocen dvh se quedan con la linea anterior. */
+.auth {
+    display: grid;
+    grid-template-columns: var(--auth-cols);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+}
 
 .auth__marca {
     position: relative; overflow: hidden;
@@ -1587,7 +1603,24 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 .auth__legal { margin: 0; font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; }
 
-.auth__panel { display: flex; flex-direction: column; padding: 24px; background: var(--bg); }
+/* El que se desplaza es este, no la pagina: la barra aparece dentro de la columna
+   del formulario y el panel de marca no se mueve.
+
+   min-height 0 porque es un item de grilla: sin eso no puede achicarse por debajo
+   del alto de su contenido, se desborda igual y la barra nunca aparece. */
+.auth__panel {
+    display: flex; flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+    background: var(--bg);
+    /* Misma barra fina que la del menu lateral. */
+    scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+}
+.auth__panel::-webkit-scrollbar       { width: 9px; }
+.auth__panel::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 9px;
+                                        border: 2px solid transparent; background-clip: content-box; }
+.auth__panel::-webkit-scrollbar-track { background: transparent; }
 .auth__tema  { display: flex; justify-content: flex-end; }
 .auth__centro {
     flex: 1; display: flex; align-items: center; justify-content: center;

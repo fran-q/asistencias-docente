@@ -79,7 +79,7 @@
                         <label for="nombreInstitucion">Nombre <span class="required">*</span></label>
                         <input type="text" id="nombreInstitucion" th:field="*{nombreInstitucion}"
                                required autofocus maxlength="150"
-                               placeholder="CENT N° 35" th:errorclass="is-invalid">
+                               th:errorclass="is-invalid">
                         <span class="form-hint">
                             El nombre completo y oficial. Es el que va a figurar en los reportes
                             y en las constancias de datos biométricos, así que tiene que
@@ -120,7 +120,7 @@
                     <div class="form-group">
                         <label for="username">Nombre corto o siglas <span class="required">*</span></label>
                         <input type="text" id="username" th:field="*{username}" required maxlength="60"
-                               autocomplete="username" placeholder="cent-35"
+                               autocomplete="username"
                                data-sugerir-desde="nombreInstitucion"
                                th:errorclass="is-invalid">
                         <span class="form-hint">
@@ -135,7 +135,7 @@
                     <div class="form-group">
                         <label for="email">Correo <span class="required">*</span></label>
                         <input type="email" id="email" th:field="*{email}" required
-                               placeholder="direccion@cent35.edu.ar" th:errorclass="is-invalid">
+                               th:errorclass="is-invalid">
                         <!-- Se aclara para qué sirve el dato, no qué formato tiene: que sea
                              un correo válido ya lo dice el propio campo. -->
                         <span class="form-hint">
