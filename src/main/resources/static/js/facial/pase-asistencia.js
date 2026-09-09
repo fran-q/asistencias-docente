@@ -223,6 +223,19 @@
                 claseEl.textContent = 'Pedile a la cuenta institucional que lo autorice de nuevo.';
                 return;
             }
+            // La sesion se vencio o se cerro desde otra pestaña. Llega como 401 con cuerpo
+            // JSON --lo arma sesionVencidaEnApi-- y no como la redireccion al login, que
+            // fetch seguiria hasta recibir HTML con estado 200: ahi resp.ok da true, el
+            // resp.json() de abajo revienta, y el catch del final se lo come tomandolo por
+            // un corte de red. Sin esto la camara seguia encendida mandando cuadros que no
+            // registraban nada, sin decirlo.
+            if (resp.status === 401) {
+                detenerLoop();
+                apagarCamara();
+                mostrarMensaje('Se cerró la sesión. Volvé a entrar para seguir tomando asistencia.', 'error');
+                claseEl.textContent = 'Las marcas que ya se registraron quedaron guardadas.';
+                return;
+            }
             if (!resp.ok) return;
             const datos = await resp.json();
             // Si mientras viajaba el pedido se detuvo el pase, esta respuesta ya no interesa:

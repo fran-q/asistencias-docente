@@ -15,8 +15,17 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.DelegatingAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 
 /**
  * Configuración de Spring Security: form login en /login, logout que limpia la JSESSIONID,
@@ -110,6 +119,21 @@ public class SecurityConfig {
                 })
                 .permitAll()
             )
+            // El token CSRF va en cookie y no en sesion, por el mismo motivo que ya vale para
+            // el kiosco: el default de Spring lo guarda en la HttpSession, que expira a los 30
+            // minutos.
+            //
+            // Aca ademas es lo que hace que el 401 de abajo llegue a existir. Guardado en
+            // sesion, el token muere junto con ella, asi que el POST del pase se rechazaba
+            // primero por CSRF: 403, reenvio a /error y desde ahi la redireccion al login, sin
+            // que la entrada de autenticacion llegara a ver la ruta original. Medido: el
+            // matcher recibia /error. En cookie el token sobrevive, el filtro de CSRF deja
+            // pasar y recien entonces se evalua la sesion, que es lo que falta de verdad.
+            .csrf(csrf -> csrf.csrfTokenRepository(
+                CookieCsrfTokenRepository.withHttpOnlyFalse()))
+            // Sin esto, una sesion vencida contesta el POST de fetch con la redireccion al
+            // login. Ver el javadoc de sesionVencidaEnApi.
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(entradaDeAutenticacion()))
             .logout(logout -> logout
                 .logoutSuccessHandler(SecurityConfig::despuesDeCerrarSesion)
                 // Solo la de sesion. La del puesto identifica la MAQUINA y tiene que
@@ -118,6 +142,87 @@ public class SecurityConfig {
                 .permitAll()
             );
         return http.build();
+    }
+
+    /**
+     * Los endpoints que contestan JSON y viven detrás de la sesión.
+     *
+     * <p>Se enumeran por ruta y no por la anotación {@code @ResponseBody}, como sí hace
+     * {@code PuestoCapturaInterceptor} para resolver lo mismo un escalón más adentro. No es
+     * por gusto: los filtros de Spring Security corren <b>antes</b> del DispatcherServlet, así
+     * que en ese punto todavía no existe el {@code HandlerMethod} donde mirar la anotación.
+     *
+     * <p>La contrapartida es que una ruta que se mueva deja de coincidir sin avisar y vuelve a
+     * fallar en silencio. Es el precio de acotar el cambio a estas tres: la alternativa —dejar
+     * que la entrada propia sea también el comportamiento por defecto— alcanzaba a toda
+     * petición sin sesión que no pidiera HTML, mucho más de lo que hace falta.
+     *
+     * <p><b>Por qué el matcher se escribe a mano.</b> La versión con
+     * {@code PathPatternRequestMatcher} coincidía en MockMvc y <b>no</b> contra el servidor
+     * real: los tests daban 401 y el navegador seguía recibiendo la redirección. Ese matcher
+     * necesita la ruta ya parseada por el DispatcherServlet, y esta entrada corre en la cadena
+     * de filtros, antes. Comparar la URI a mano se comporta igual en los dos lados, que es lo
+     * único que importa cuando lo que se está arreglando es justamente un fallo mudo.
+     */
+    /**
+     * Quién contesta cada petición sin autenticar: el 401 con JSON para los endpoints de
+     * {@link #ENDPOINTS_JSON}, la redirección al login para todo lo demás.
+     *
+     * <p>El delegador se arma acá y no con {@code defaultAuthenticationEntryPointFor}, que
+     * parece hacer lo mismo y no lo hace. Con ese método, Spring construye el delegador solo
+     * si no hay una entrada explícita, y toma <b>la primera registrada</b> como comportamiento
+     * por defecto: la entrada de las tres rutas terminaba respondiendo también a cualquier otra
+     * petición sin sesión que no pidiera HTML. Agregarle encima un
+     * {@code authenticationEntryPoint} explícito tampoco sirve —ese gana entero y descarta el
+     * mapeo, así que las tres rutas volvían a redirigir—. Las dos variantes las detectó la
+     * suite: la primera rompió tres tests que ya existían, la segunda rompió los nuevos.
+     *
+     * <p>Construyéndolo a mano, el default es el que se elige y no el que queda.
+     */
+    private static AuthenticationEntryPoint entradaDeAutenticacion() {
+        LinkedHashMap<RequestMatcher, AuthenticationEntryPoint> porRuta = new LinkedHashMap<>();
+        porRuta.put(ENDPOINTS_JSON, SecurityConfig::sesionVencidaEnApi);
+
+        DelegatingAuthenticationEntryPoint entrada = new DelegatingAuthenticationEntryPoint(porRuta);
+        entrada.setDefaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
+        return entrada;
+    }
+
+    private static final RequestMatcher ENDPOINTS_JSON = peticion -> {
+        if (!"POST".equalsIgnoreCase(peticion.getMethod())) return false;
+        String ruta = peticion.getRequestURI().substring(peticion.getContextPath().length());
+        return ruta.equals("/asistencia/pase/marcar")
+            || ruta.startsWith("/reconocimiento/")
+            || (ruta.startsWith("/docentes/") && ruta.endsWith("/rostro/registrar"));
+    };
+
+    /**
+     * Qué se le contesta a una llamada JSON cuando la sesión ya no está.
+     *
+     * <p>Por defecto, Spring Security responde toda petición sin autenticar con una
+     * redirección al login. Para una pantalla eso es lo correcto; para un {@code fetch} es un
+     * desastre silencioso: {@code fetch} sigue la redirección, recibe el HTML del login con
+     * estado 200, y del lado del cliente {@code response.ok} da <b>true</b>. El
+     * {@code response.json()} que viene después revienta con un error de sintaxis, y el
+     * {@code catch} de la pantalla lo toma por un corte de red pasajero y no lo muestra.
+     *
+     * <p>El resultado, en el pase: la cámara queda encendida mandando un cuadro por segundo,
+     * no se registra ninguna asistencia y la pantalla no dice nada. Con la clase esperando.
+     *
+     * <p>Un 401 con cuerpo JSON deja que cada pantalla lo trate como ya trata el 403 del
+     * puesto revocado: frenar el bucle, apagar la cámara y decir qué pasó. El cuerpo tiene el
+     * mismo formato que usa {@code PuestoCapturaInterceptor} para que del otro lado se lean
+     * igual.
+     */
+    private static void sesionVencidaEnApi(HttpServletRequest request,
+                                           HttpServletResponse response,
+                                           AuthenticationException excepcion) throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.getWriter().write(
+            "{\"error\":\"SESION_VENCIDA\","
+          + "\"mensaje\":\"Se cerró la sesión. Volvé a entrar para seguir.\"}");
     }
 
     /**

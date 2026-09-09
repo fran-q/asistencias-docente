@@ -242,6 +242,18 @@
                 mostrarMensaje('Este equipo ya no está autorizado para registrar rostros.', 'error');
                 return;
             }
+            // La sesion se vencio o se cerro desde otra pestaña. Llega como 401 con cuerpo
+            // JSON --lo arma sesionVencidaEnApi-- y no como la redireccion al login, que
+            // fetch seguiria hasta recibir HTML con estado 200: ahi resp.ok da true, el
+            // resp.json() de abajo revienta, y el catch del final se lo come tomandolo por
+            // un corte de red. Sin esto la camara seguia encendida mandando cuadros que no
+            // registraban nada, sin decirlo.
+            if (resp.status === 401) {
+                detenerLoop();
+                apagarCamara();
+                mostrarMensaje('Se cerró la sesión. Volvé a entrar para registrar el rostro.', 'error');
+                return;
+            }
             if (!resp.ok) return;
             const datos = await resp.json();
 
@@ -339,6 +351,15 @@
                 apagarCamara();
                 mostrarMensaje('Este equipo ya no está autorizado para registrar rostros. '
                              + 'Las capturas no se guardaron.', 'error');
+                return;
+            }
+            // Igual que arriba, pero acá se pierde el trabajo ya hecho: hay que decirlo.
+            // Sin esto, resp.ok daba true con el HTML del login y el error de sintaxis del
+            // resp.json() salia como "El servidor respondio 200", que no orienta a nadie.
+            if (resp.status === 401) {
+                apagarCamara();
+                mostrarMensaje('Se cerró la sesión, así que las capturas no se guardaron. '
+                             + 'Volvé a entrar y repetí el registro.', 'error');
                 return;
             }
             if (!resp.ok) throw new Error('El servidor respondió ' + resp.status);
