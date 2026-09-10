@@ -379,13 +379,18 @@ class KioscoHabilitacionIT {
 
         // El boton cierra la sesion. Ofrecerlo con el kiosco apagado dejaria a la persona
         // afuera del sistema y contra una pantalla que no abre.
+        //
+        // Se busca el campo oculto y no el texto del boton. La etiqueta ya cambio una vez
+        // --el acceso paso del encabezado al pie y se renombro-- y el test fallo por eso, sin
+        // que nada del comportamiento se hubiera roto. Lo que hace al paso es ese value: es
+        // lo que el logout lee para mandar al kiosco en vez de al login.
         assertThat(pantallaDelPase(token))
             .as("con el kiosco apagado no se ofrece")
-            .doesNotContain("Asistencia sin supervisión");
+            .doesNotContain("value=\"kiosco\"");
 
         habilitar(puestoId, token, cuentaA);
 
-        assertThat(pantallaDelPase(token)).contains("Asistencia sin supervisión");
+        assertThat(pantallaDelPase(token)).contains("value=\"kiosco\"");
     }
 
     @Test

@@ -1962,6 +1962,23 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .pase__titulo { flex: 1 1 22rem; }
 
+/* El pase al kiosco, apartado al pie y a la derecha. Discreto por lo mismo que el
+   de la otra pantalla: cierra la sesión, así que tiene que estar para quien lo va a
+   buscar al final del día y no llamar la atención de quien vino a marcar asistencia. */
+.pase__pie {
+    display: flex; justify-content: flex-end;
+    margin-top: var(--space-lg);
+    padding-top: var(--space);
+    border-top: 1px solid var(--border);
+}
+.pase__ir-kiosco {
+    opacity: .6;
+    transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+                border-color var(--t-fast) var(--ease);
+}
+.pase__ir-kiosco:hover,
+.pase__ir-kiosco:focus-visible { opacity: 1; }
+
 /* El resultado es lo segundo más importante de la pantalla: ocupa el tope de la
    columna y con cuerpo grande, para poder leerse de reojo. */
 .pase__estado {
@@ -2266,7 +2283,37 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;   /* referencia de la barra */
 }
+
+/* La barra va posicionada y no como una fila mas del flujo: asi la camara sigue
+   centrada en la pantalla completa. Metida en el flujo, el video se corria hacia
+   abajo el alto de la barra, y en una pantalla que se mira de pie y a un metro
+   ese corrimiento se nota. */
+.kiosco__barra {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--space);
+    padding: var(--space) clamp(16px, 2.2vw, 28px);
+}
+
+.kiosco__marca {
+    display: inline-flex; align-items: center; gap: 11px;
+    color: var(--text); font-weight: 600; letter-spacing: -.01em;
+}
+.kiosco__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: 9px;
+    background: var(--marca); color: #fff;
+    font-weight: 700; font-size: .95rem;
+}
+
+/* Discreto a proposito: es la salida de una pantalla cuyo trabajo es quedarse
+   quieta. Tiene que estar para quien lo busca, sin invitar a nadie a apretarlo. */
+.kiosco__entrar { opacity: .55; transition: opacity var(--t-fast) var(--ease); }
+.kiosco__entrar:hover,
+.kiosco__entrar:focus-visible { opacity: 1; }
 
 .kiosco__marco {
     width: min(1100px, 96vw);

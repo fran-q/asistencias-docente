@@ -15,24 +15,6 @@
                 </p>
             </div>
 
-            <!-- Solo si ESTE equipo tiene el kiosco habilitado. El botón cierra la sesión,
-                 así que ofrecerlo con el kiosco apagado dejaría a la persona afuera y contra
-                 una pantalla que no abre.
-
-                 Va en el encabezado y no entre los controles de la cámara: apretarlo cierra
-                 la sesión, y no puede quedar al lado de "Apagar cámara" donde se aprieta de
-                 rebote. -->
-            <form th:if="${kioscoDisponible}" th:action="@{/logout}" method="post"
-                  class="inline-form"
-                  data-confirm="¿Dejar el equipo tomando asistencia sin supervisión?"
-                  data-confirm-detail="Se cierra tu sesión y la pantalla queda registrando entradas y salidas sola. Es a propósito: si la sesión siguiera abierta detrás, alcanzaría con apretar Atrás para entrar a todo el sistema. Para volver vas a tener que iniciar sesión de nuevo."
-                  data-confirm-action="Dejar sin supervisión">
-                <input type="hidden" name="destino" value="kiosco">
-                <button type="submit" class="btn btn--ghost"
-                        data-texto-enviando="Cerrando sesión...">
-                    Asistencia sin supervisión
-                </button>
-            </form>
         </header>
 
         <div class="camara-layout">
@@ -80,6 +62,34 @@
                     veces seguidas.
                 </p>
             </aside>
+        </div>
+
+        <!--
+          Pasar al kiosco. Solo si ESTE equipo lo tiene habilitado: el botón cierra la
+          sesión, así que ofrecerlo con el kiosco apagado dejaría a la persona afuera y
+          contra una pantalla que no abre.
+
+          Estaba arriba, al lado del título. Va acá abajo, apartado y a la derecha, porque
+          es lo último que se hace en el día y no algo que se elija al entrar: se deja el
+          equipo tomando asistencia solo cuando ya no queda nadie para atenderlo. Y sigue
+          lejos de "Apagar cámara", que es lo que el comentario anterior cuidaba: apretarlo
+          de rebote cierra la sesión.
+
+          Va uno solo y no dos. La versión anterior de esta pantalla lo tenía en el
+          encabezado; duplicarlo pondría la misma acción --que cierra la sesión-- en dos
+          lugares, y la que se aprieta sin querer es siempre la que sobra.
+        -->
+        <div class="pase__pie" th:if="${kioscoDisponible}">
+            <form th:action="@{/logout}" method="post" class="inline-form"
+                  data-confirm="¿Dejar el equipo tomando asistencia sin supervisión?"
+                  data-confirm-detail="Se cierra tu sesión y la pantalla queda registrando entradas y salidas sola. Es a propósito: si la sesión siguiera abierta detrás, alcanzaría con apretar Atrás para entrar a todo el sistema. Para volver vas a tener que iniciar sesión de nuevo."
+                  data-confirm-action="Dejar sin supervisión">
+                <input type="hidden" name="destino" value="kiosco">
+                <button type="submit" class="btn btn--ghost btn--sm pase__ir-kiosco"
+                        data-texto-enviando="Cerrando sesión...">
+                    Ir al kiosco: asistencia sin supervisión
+                </button>
+            </form>
         </div>
 
         <script th:src="@{/js/facial/pase-asistencia.js}" defer></script>

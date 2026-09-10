@@ -44,6 +44,28 @@
 </head>
 <body class="kiosco">
 
+    <!--
+      Barra del kiosco: la marca y la vuelta al sistema.
+
+      La marca no es decoración. Esta pantalla queda encendida en un mostrador y es lo
+      primero que ve alguien que se acerca: tiene que poder saber ante qué sistema está
+      parado antes de poner la cara frente a una cámara.
+
+      "Iniciar sesión" NO contradice que esta sea una pantalla sin salida. Lo que el kiosco
+      no puede ofrecer es la vuelta a una sesión que quedó abierta detrás --por eso se entra
+      cerrándola--; el formulario de ingreso no es eso. Pide las credenciales igual que
+      siempre, y a /login se llega tecleando la dirección de todos modos. Lo que se gana es
+      que quien tiene que volver a operar el sistema no tenga que saber eso.
+    -->
+    <header class="kiosco__barra">
+        <span class="kiosco__marca">
+            <span class="kiosco__logo" aria-hidden="true">V</span>
+            <span>Visum</span>
+        </span>
+
+        <a th:href="@{/login}" class="btn btn--ghost btn--sm kiosco__entrar">Iniciar sesión</a>
+    </header>
+
     <main class="kiosco__marco">
 
         <div class="kiosco__camara">
