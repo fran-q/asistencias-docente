@@ -101,12 +101,6 @@ build verde** y por eso conviene tenerlas escritas:
       migraciones apliquen de cero y que las columnas estén; lo que no comprueba es que los
       CHECK rechacen lo que deben.
 
-- [ ] **El umbral de separación solo se cambia por SQL** (RF-76 queda 🟡). Está en
-      `instituciones.umbral_separacion_min` con default 60 y la lógica lo respeta, pero no
-      hay pantalla para configurarlo. Mal elegido produce bloques absurdos: con un valor
-      generoso, el docente de la mañana y el mismo docente a la noche terminan en el mismo
-      bloque.
-
 ---
 
 ## Rumbo hacia el producto final
@@ -209,7 +203,7 @@ Cosas que hay que arreglar y no dependen de nadie más:
 - [ ] **Links rotos en `CHANGELOG.md`.** Apuntan a `docs/4-arquitectura/adr/`, ruta que
       dejó de existir cuando la documentación salió del repositorio.
 - [ ] **`CHANGELOG.md` dice "16 tablas"** en el Sprint 0. Son 15.
-- [ ] **`Documentacion/` no está versionada ni respaldada.** Son 14 ADR, la matriz legal
+- [ ] **`Documentacion/` no está versionada ni respaldada.** Son 19 ADR, la matriz legal
       y los apuntes de defensa dependiendo de que nadie borre una carpeta. De acá a marzo
       de 2027 es mucho tiempo.
 - [ ] **Inconsistencia de nombre:** el producto es Visum; el repositorio, el paquete Java
