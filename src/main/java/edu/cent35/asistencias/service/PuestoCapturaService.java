@@ -377,6 +377,57 @@ public class PuestoCapturaService {
     }
 
     /**
+     * Fija la cámara con la que captura este equipo (V026), o vuelve a la predeterminada si el
+     * identificador viene vacío.
+     *
+     * <p><b>Solo desde ese mismo equipo</b>, igual que habilitar el kiosco, pero acá por una
+     * razón técnica antes que de seguridad: el identificador de la cámara lo genera el
+     * navegador y vale únicamente en esa máquina. Elegido desde otra, apuntaría a un aparato
+     * que ahí no existe.
+     *
+     * <p>El identificador no se recorta si es largo: recortado deja de identificar nada. La
+     * etiqueta sí, porque es solo para mostrar.
+     */
+    @Transactional
+    public void elegirCamara(Long puestoId, Long institucionId, String dispositivoId,
+                             String etiqueta, boolean desdeEsePuesto) {
+        PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
+            .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));
+
+        if (!puesto.habilitado()) {
+            throw new IllegalArgumentException(
+                "Este equipo está revocado. Autorizá un equipo antes de elegir su cámara.");
+        }
+        if (!desdeEsePuesto) {
+            log.warn("Eleccion de camara rechazada: la peticion no viene del puesto {} "
+                     + "(institucion {})", puestoId, institucionId);
+            throw new IllegalArgumentException(
+                "La cámara se elige desde esa misma máquina: el navegador identifica cada "
+                + "cámara con un código que solo vale ahí.");
+        }
+
+        String id = (dispositivoId == null || dispositivoId.isBlank()) ? null : dispositivoId.trim();
+        if (id != null && id.length() > 255) {
+            throw new IllegalArgumentException("El identificador de la cámara no es válido.");
+        }
+
+        if (id == null) {
+            puesto.setCamaraDispositivoId(null);
+            puesto.setCamaraEtiqueta(null);
+        } else {
+            String nombre = (etiqueta == null || etiqueta.isBlank()) ? "Cámara sin nombre" : etiqueta.trim();
+            puesto.setCamaraDispositivoId(id);
+            puesto.setCamaraEtiqueta(nombre.length() > 120 ? nombre.substring(0, 120) : nombre);
+        }
+        puesto.setCamaraElegidaEn(LocalDateTime.now());
+        puestoRepository.save(puesto);
+
+        log.info("Camara del puesto {}: {} (institucion {})", puestoId,
+                 id == null ? "la predeterminada del sistema" : "'" + puesto.getCamaraEtiqueta() + "'",
+                 institucionId);
+    }
+
+    /**
      * Hash del token.
      *
      * <p><b>SHA-256 y no BCrypt, que es lo que usa el resto del proyecto para contraseñas y

@@ -24,6 +24,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Base64;
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
+import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
 
 /**
  * Pantalla de registro del modelo facial de un docente (RF-08, RF-09), para los roles
@@ -45,6 +47,7 @@ public class RegistroFacialController {
     @GetMapping("/registrar")
     public String pantallaRegistro(@PathVariable Long docenteId,
                                    Model model,
+                                   HttpServletRequest request,
                                    RedirectAttributes redirect) {
         Docente docente = docenteService.buscarPorId(docenteId); // valida tenant
 
@@ -65,6 +68,9 @@ public class RegistroFacialController {
         // entrenamiento hablen de las mismas etapas.
         model.addAttribute("etapas", EtapaCaptura.values());
         model.addAttribute("capturasPorEtapa", modeloFacialService.getCapturasPorEtapa());
+        // La misma camara que despues va a usar el pase (V026). Registrar el rostro con una
+        // camara y reconocerlo con otra es la forma mas facil de que el sistema reconozca peor.
+        model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         return "reconocimiento/registrar-rostro";
     }
 

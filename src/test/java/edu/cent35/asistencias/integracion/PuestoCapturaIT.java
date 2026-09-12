@@ -36,6 +36,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -567,6 +568,131 @@ class PuestoCapturaIT {
         } catch (Exception e) {
             throw new AssertionError("no deberia fallar: " + e.getMessage(), e);
         }
+    }
+
+    // ========================================================================
+    //  Camara del puesto (V026)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Desde el propio equipo se elige la camara, con su nombre y su fecha")
+    void seEligeLaCamaraDesdeElPropioEquipo() throws Exception {
+        String token = designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        mockMvc.perform(post("/puestos/" + puestoId + "/camara")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
+                .cookie(new Cookie(CookiePuesto.NOMBRE, token))
+                .param("dispositivoId", "a3f9c2")
+                .param("etiqueta", "Logitech C920"))
+            .andExpect(status().is3xxRedirection());
+
+        PuestoCaptura p = puestoRepository.findById(puestoId).get();
+        assertThat(p.getCamaraDispositivoId()).isEqualTo("a3f9c2");
+        assertThat(p.getCamaraEtiqueta())
+            .as("sin el nombre, la pantalla no podria decir que camara usa el equipo")
+            .isEqualTo("Logitech C920");
+        assertThat(p.getCamaraElegidaEn()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Desde otra maquina no se elige la camara: el identificador solo vale en esa")
+    void noSeEligeLaCamaraDesdeOtraMaquina() throws Exception {
+        designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        mockMvc.perform(post("/puestos/" + puestoId + "/camara")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
+                .param("dispositivoId", "a3f9c2")
+                .param("etiqueta", "Logitech C920"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attributeExists("flashError"));
+
+        assertThat(puestoRepository.findById(puestoId).get().getCamaraDispositivoId())
+            .as("elegida desde otra maquina apuntaria a un aparato que ahi no existe")
+            .isNull();
+    }
+
+    @Test
+    @DisplayName("Vaciar la eleccion vuelve a la predeterminada y conserva cuando se cambio")
+    void vaciarVuelveALaPredeterminada() throws Exception {
+        String token = designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+        puestoService.elegirCamara(puestoId, institucionA, "a3f9c2", "Logitech C920", true);
+
+        mockMvc.perform(post("/puestos/" + puestoId + "/camara")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
+                .cookie(new Cookie(CookiePuesto.NOMBRE, token))
+                .param("dispositivoId", ""))
+            .andExpect(status().is3xxRedirection());
+
+        PuestoCaptura p = puestoRepository.findById(puestoId).get();
+        assertThat(p.getCamaraDispositivoId()).isNull();
+        assertThat(p.getCamaraEtiqueta()).isNull();
+        assertThat(p.getCamaraElegidaEn())
+            .as("si el reconocimiento empieza a fallar, lo primero es saber si alguien cambio "
+                + "la camara: la fecha no se pierde al volver a la predeterminada")
+            .isNotNull();
+    }
+
+    @Test
+    @DisplayName("El pase recibe la camara del puesto en el video")
+    void elPaseRecibeLaCamaraDelPuesto() throws Exception {
+        String token = designarEn(institucionA);
+        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
+        puestoService.elegirCamara(puestoId, institucionA, "a3f9c2", "Logitech C920", true);
+
+        String html = mockMvc.perform(get("/asistencia/pase")
+                .with(user(new UsuarioAutenticado(cuentaA)))
+                .cookie(new Cookie(CookiePuesto.NOMBRE, token)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html).contains("data-camara=\"a3f9c2\"");
+        assertThat(html)
+            .as("sin el helper cargado, el pase no sabria pedir la camara elegida")
+            .contains("/js/facial/camara.js");
+    }
+
+    @Test
+    @DisplayName("Sin camara elegida el pase no fuerza ninguna")
+    void sinCamaraElegidaElPaseNoFuerzaNinguna() throws Exception {
+        String token = designarEn(institucionA);
+
+        String html = mockMvc.perform(get("/asistencia/pase")
+                .with(user(new UsuarioAutenticado(cuentaA)))
+                .cookie(new Cookie(CookiePuesto.NOMBRE, token)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("sin eleccion, el video no lleva camara y el navegador usa la predeterminada, "
+                + "que es lo que hacia siempre")
+            .doesNotContain("data-camara=");
+    }
+
+    @Test
+    @DisplayName("La eleccion de camara aparece solo en el equipo autorizado")
+    void laEleccionDeCamaraSoloEnEsteEquipo() throws Exception {
+        String token = designarEn(institucionA);
+
+        String enEsteEquipo = mockMvc.perform(get("/puestos")
+                .with(user(new UsuarioAutenticado(cuentaA)))
+                .cookie(new Cookie(CookiePuesto.NOMBRE, token)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        String desdeOtraMaquina = mockMvc.perform(get("/puestos")
+                .with(user(new UsuarioAutenticado(cuentaA))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(enEsteEquipo)
+            .contains("id=\"form-camara\"")
+            .as("el script tiene que llegar a la pagina: va adentro de la section a proposito")
+            .contains("/js/facial/camara-puesto.js");
+        assertThat(desdeOtraMaquina)
+            .as("desde otra maquina la lista mostraria camaras que no son las del puesto")
+            .doesNotContain("id=\"form-camara\"");
     }
 
     // ========================================================================

@@ -187,6 +187,36 @@ confirmada.
 también garantiza que un docente **no tenga dos bloques abiertos a la vez**, con un UNIQUE
 sobre una columna generada que vale su id solo mientras el bloque siga abierto.
 
+### Cámara del puesto
+
+Las tres pantallas que capturan —el pase, el kiosco y el registro del rostro— piden la
+cámara a través de `js/facial/camara.js` y no directo a `getUserMedia`. Así las tres respetan
+la cámara elegida para el equipo, y las tres caen igual a la predeterminada del sistema cuando
+esa cámara no está conectada: una webcam USB desenchufada no puede dejar a un docente sin
+poder marcar.
+
+**La elección vive en el puesto y no en la cuenta** (V026). El identificador de la cámara lo
+genera el navegador (`MediaDeviceInfo.deviceId`) y vale solo para ese navegador en esa
+máquina, que es exactamente el alcance de la cookie del puesto. En la cuenta de una persona
+dejaría de significar algo en cuanto entrara desde otra computadora, y en el modo kiosco no
+hay ninguna cuenta. Por la misma razón se elige **solo desde el propio equipo**.
+
+Límites que conviene saber:
+
+- El navegador no distingue una cámara integrada de una USB: da el nombre que reporta el
+  aparato. Los nombres aparecen recién después de conceder el permiso de cámara una vez.
+- Si se borran los datos del sitio, el identificador cambia y hay que volver a elegir. Es la
+  misma limitación que ya tiene la cookie del puesto.
+- El reconocimiento se calibró con una cámara concreta. Cambiarla puede empeorarlo; lo ideal
+  es registrar los rostros con la misma cámara con la que después se reconocen.
+
+**Cámaras de red: fuera de alcance, a propósito.** El navegador no puede descubrir
+dispositivos en la red ni reproducir RTSP. Hacerlo desde el servidor —que el backend tome los
+cuadros con JavaCV— mueve la captura fuera del puesto y choca con ADR-0015, que existe para
+que la captura biométrica ocurra en una máquina conocida. La salida que sí funciona sin tocar
+nada es presentar la cámara IP a Windows como una webcam más —con el programa del fabricante,
+o con la cámara virtual de OBS Studio—: hecho eso, aparece sola en la lista.
+
 ### Bloque de presencia
 
 La unidad de la que se predican una entrada y una salida **no es el horario**: es el lapso

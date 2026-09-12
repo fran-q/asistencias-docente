@@ -316,6 +316,34 @@ public class PuestoCapturaController {
             .isPresent();
     }
 
+    /**
+     * Elige la cámara de este equipo (V026).
+     *
+     * <p>Solo desde esa misma máquina, por lo que explica {@link PuestoCapturaService#elegirCamara}.
+     * El mensaje no repite el nombre que mandó el navegador: es texto que viene de afuera, y la
+     * tarjeta de la pantalla ya lo muestra escapado.
+     */
+    @PostMapping("/puestos/{id}/camara")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String elegirCamara(@PathVariable Long id,
+                               @RequestParam(name = "dispositivoId", required = false) String dispositivoId,
+                               @RequestParam(name = "etiqueta", required = false) String etiqueta,
+                               HttpServletRequest request,
+                               RedirectAttributes redirect) {
+        Long institucionId = TenantContext.getRequired();
+        try {
+            puestoService.elegirCamara(id, institucionId, dispositivoId, etiqueta,
+                                       esteEquipoEs(id, institucionId, request));
+            redirect.addFlashAttribute("flashMensaje",
+                (dispositivoId == null || dispositivoId.isBlank())
+                    ? "Listo. Este equipo va a usar la cámara predeterminada del sistema."
+                    : "Listo. Este equipo ya captura con la cámara elegida.");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:" + VUELTA;
+    }
+
     // El id del puesto de esta misma maquina, o null si esta no es ningun puesto.
     private Long idDeEsteEquipo(HttpServletRequest request, Long institucionId) {
         return CookiePuesto.leer(request)

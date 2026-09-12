@@ -109,6 +109,27 @@ public class PuestoCaptura extends BaseTenantEntity {
     private Usuario kioscoHabilitadoPor;
 
     /**
+     * Con qué cámara captura este equipo (V026). NULL es la predeterminada del sistema.
+     *
+     * <p>Es el identificador que da el navegador ({@code MediaDeviceInfo.deviceId}), y por eso
+     * vive en el puesto y no en la cuenta: vale solo para ese navegador en esa máquina, que es
+     * exactamente lo que identifica la cookie del puesto. En otra computadora no significa nada.
+     */
+    @Column(name = "camara_dispositivo_id", length = 255)
+    private String camaraDispositivoId;
+
+    // El nombre que reporto el dispositivo ("Logitech C920"). Aparte del id porque el id es un
+    // hash ilegible, y la pantalla de puestos tiene que poder decir que camara usa el equipo.
+    @Column(name = "camara_etiqueta", length = 120)
+    private String camaraEtiqueta;
+
+    // Ultimo cambio de camara, aunque se haya vuelto a la predeterminada. El reconocimiento se
+    // calibro con una camara concreta: si empieza a fallar, lo primero que conviene saber es si
+    // alguien la cambio.
+    @Column(name = "camara_elegida_en")
+    private LocalDateTime camaraElegidaEn;
+
+    /**
      * Si este equipo está operando sin supervisión ahora mismo.
      *
      * <p>Un puesto revocado no opera de ninguna forma, así que la bandera del kiosco sola no

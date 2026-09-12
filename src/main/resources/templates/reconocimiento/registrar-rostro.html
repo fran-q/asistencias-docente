@@ -42,7 +42,8 @@
                     </div>
 
                     <div class="camara-caja">
-                        <video id="rf-video" class="camara-video" autoplay playsinline muted></video>
+                        <video id="rf-video" class="camara-video" autoplay playsinline muted
+                       th:attr="data-camara=${camaraDelPuesto}"></video>
                         <canvas id="rf-overlay" class="camara-overlay"></canvas>
                         <canvas id="rf-canvas" hidden></canvas>
                     </div>
@@ -107,6 +108,7 @@
             </aside>
         </div>
 
+        <script th:src="@{/js/facial/camara.js}" defer></script>
         <script th:src="@{/js/facial/registro-facial.js}" defer></script>
     </section>
 </body>

@@ -25,7 +25,8 @@
                     <!-- El video y el recuadro comparten caja: el canvas se superpone al
                          video y ambos escalan juntos, asi el recuadro cae sobre la cara. -->
                     <div class="camara-caja">
-                        <video id="pa-video" class="camara-video" autoplay playsinline muted></video>
+                        <video id="pa-video" class="camara-video" autoplay playsinline muted
+                       th:attr="data-camara=${camaraDelPuesto}"></video>
                         <canvas id="pa-overlay" class="camara-overlay"></canvas>
                         <canvas id="pa-canvas" hidden></canvas>
                     </div>
@@ -92,6 +93,7 @@
             </form>
         </div>
 
+        <script th:src="@{/js/facial/camara.js}" defer></script>
         <script th:src="@{/js/facial/pase-asistencia.js}" defer></script>
     </section>
 </body>

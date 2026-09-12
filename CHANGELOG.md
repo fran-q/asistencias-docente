@@ -7,6 +7,45 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Cámara del puesto
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **Elegir con qué cámara captura cada puesto (V026).** Las tres pantallas que usan la
+  cámara la pedían sin decir cuál, y el navegador tomaba la predeterminada: en una PC con la
+  cámara integrada y una webcam USB enchufada no había forma de elegir la USB. Ahora la
+  pantalla de Puestos lista las cámaras que ve el navegador de ese equipo, deja probarlas en
+  vivo antes de guardar —con dos iguales o nombres genéricos como "USB Camera", mirar la
+  imagen es la única forma de saber cuál es cuál— y la elección vale para el pase, el kiosco
+  y el registro del rostro.
+
+  **Vive en el puesto y no en la cuenta**, porque el identificador que da el navegador vale
+  solo en esa máquina; y en el modo kiosco no hay ninguna cuenta. Por la misma razón se elige
+  solo desde el propio equipo.
+
+  Si la cámara elegida no está conectada, las pantallas no se bloquean: usan la
+  predeterminada y lo avisan junto a la imagen.
+
+- **Las cámaras de red quedan fuera, a propósito.** El navegador no puede buscarlas ni
+  reproducir su formato, y tomarlas desde el servidor mueve la captura biométrica fuera del
+  puesto, que es justo lo que ADR-0015 impide. La pantalla explica cómo presentarlas a Windows
+  como una webcam más, y con eso aparecen solas en la lista.
+
+### Corregido
+
+- **El botón de agregar período en Ciclos lectivos no hacía nada.** Su script estaba después
+  de la `<section>`, y el layout inserta cada plantilla por su `<section>`: lo que queda afuera
+  se descarta sin ningún aviso. El HTML se renderizaba bien —solo faltaba el script—, así que
+  ningún test lo vio. Ahora hay uno que revisa todas las plantillas y falla si alguna repite
+  el error.
+
+- **`puestoDe()` estaba copiado idéntico en dos controladores.** Pasó al interceptor que es
+  dueño del atributo que lee; la cámara del puesto habría sumado una tercera copia.
+
+---
+
 ## Ciclos lectivos y días sin clase
 
 **Período:** septiembre de 2026.

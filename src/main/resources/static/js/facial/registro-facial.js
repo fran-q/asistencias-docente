@@ -101,10 +101,9 @@
             return;
         }
         try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: false
-            });
+            // La camara elegida para este puesto (V026), o la predeterminada si no hay
+            // ninguna o si la elegida no esta conectada.
+            stream = await CamaraDelPuesto.abrir(video, { width: { ideal: 640 }, height: { ideal: 480 } });
             video.srcObject = stream;
             await video.play().catch(function () {});
             ajustarOverlay();

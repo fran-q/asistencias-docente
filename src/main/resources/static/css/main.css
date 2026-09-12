@@ -2377,3 +2377,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
         align-items: center;
     }
 }
+
+/* ---- Camara del puesto (V026) ---------------------------------------------------------- */
+/* La vista previa sirve para reconocer cual camara es, no para trabajar: chica alcanza. */
+.camara-caja--vista { max-width: 360px; margin: 12px 0; }
+/* El aviso de "la elegida no esta conectada" va pegado a la camara en las tres pantallas. */
+.camara-aviso { margin-top: 8px; }

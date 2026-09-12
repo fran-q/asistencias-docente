@@ -196,17 +196,20 @@
             </form>
         </div>
 
+        <!-- El script va ADENTRO de la section: la plantilla se inserta en el layout
+             por su <section>, y todo lo que quede afuera se descarta. Estuvo afuera
+             desde V023 y el boton de agregar periodo no hacia nada. -->
+        <script th:inline="javascript">
+            // Agrega una fila de periodo vacia. Se clona la primera para no repetir el markup:
+            // si cambian las clases o los names, cambian en un solo lugar.
+            document.getElementById('agregar-periodo')?.addEventListener('click', function () {
+                var contenedor = document.getElementById('periodos');
+                var copia = contenedor.querySelector('.periodo-fila').cloneNode(true);
+                copia.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+                contenedor.appendChild(copia);
+            });
+        </script>
     </section>
 
-    <script th:inline="javascript">
-        // Agrega una fila de periodo vacia. Se clona la primera para no repetir el markup:
-        // si cambian las clases o los names, cambian en un solo lugar.
-        document.getElementById('agregar-periodo')?.addEventListener('click', function () {
-            var contenedor = document.getElementById('periodos');
-            var copia = contenedor.querySelector('.periodo-fila').cloneNode(true);
-            copia.querySelectorAll('input').forEach(function (i) { i.value = ''; });
-            contenedor.appendChild(copia);
-        });
-    </script>
 </body>
 </html>

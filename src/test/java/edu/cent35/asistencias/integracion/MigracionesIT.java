@@ -164,6 +164,9 @@ class MigracionesIT {
         assertThat(columnasDe("materias")).contains("anio", "docente_titular_id", "fecha_baja");
         // V023. La comision se ata a un periodo, y con eso a un ano calendario.
         assertThat(columnasDe("comisiones")).contains("periodo_id");
+        // V026. La camara con la que captura cada puesto.
+        assertThat(columnasDe("puestos_captura"))
+            .contains("camara_dispositivo_id", "camara_etiqueta", "camara_elegida_en");
         assertThat(columnasDe("ciclos_lectivos")).contains("anio", "fecha_inicio", "fecha_fin", "estado");
         assertThat(columnasDe("periodos_lectivos")).contains("ciclo_id", "fecha_inicio", "fecha_fin", "orden");
         assertThat(columnasDe("carreras")).contains("duracion_anios", "fecha_baja");

@@ -49,7 +49,8 @@
      */
     async function encender() {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+            // La camara elegida para este puesto (V026), o la predeterminada.
+            stream = await CamaraDelPuesto.abrir(video, { facingMode: 'user' });
             video.srcObject = stream;
             botonEl.hidden = true;
             mostrar('Acercate a la cámara', 'info');

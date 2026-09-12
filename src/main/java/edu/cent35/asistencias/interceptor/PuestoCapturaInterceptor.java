@@ -83,6 +83,24 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
     }
 
     /**
+     * El puesto que este interceptor ya verificó para la petición en curso, o null.
+     *
+     * <p>Público y acá, junto al atributo que lee, porque lo necesitan las tres pantallas de
+     * captura. Hasta V026 el pase y el kiosco tenían cada uno su copia de estas tres líneas, y
+     * la cámara del puesto sumaba una tercera en el registro del rostro.
+     */
+    public static PuestoCaptura puestoDe(HttpServletRequest request) {
+        Object p = request.getAttribute(ATRIBUTO_PUESTO);
+        return (p instanceof PuestoCaptura puesto) ? puesto : null;
+    }
+
+    /** La cámara elegida para el puesto de esta petición, o null para usar la predeterminada. */
+    public static String camaraDe(HttpServletRequest request) {
+        PuestoCaptura puesto = puestoDe(request);
+        return puesto == null ? null : puesto.getCamaraDispositivoId();
+    }
+
+    /**
      * El rechazo se adapta a lo que quien llama sabe interpretar.
      *
      * <p>La distinción sale de si el handler está anotado con {@code @ResponseBody}, y no de

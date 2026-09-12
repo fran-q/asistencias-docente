@@ -383,6 +383,10 @@ class CiclosLectivosIT {
             .contains("1er cuatrimestre")
             .as("un ciclo activo tiene que poder cerrarse desde la pantalla")
             .contains("Cerrar");
+        assertThat(html)
+            .as("el script del boton de agregar periodo tiene que llegar a la pagina: estuvo "
+                + "afuera de la section y el layout lo descartaba sin avisar")
+            .contains("getElementById('agregar-periodo')");
     }
 
     @Test

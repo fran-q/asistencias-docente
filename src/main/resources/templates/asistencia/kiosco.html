@@ -72,7 +72,8 @@
             <!-- El video y el recuadro comparten caja: el canvas se superpone y ambos
                  escalan juntos, así el recuadro cae sobre la cara. -->
             <div class="camara-caja">
-                <video id="k-video" class="camara-video" autoplay playsinline muted></video>
+                <video id="k-video" class="camara-video" autoplay playsinline muted
+                       th:attr="data-camara=${camaraDelPuesto}"></video>
                 <canvas id="k-overlay" class="camara-overlay"></canvas>
                 <canvas id="k-canvas" hidden></canvas>
             </div>
@@ -95,6 +96,7 @@
 
     </main>
 
+    <script th:src="@{/js/facial/camara.js}" defer></script>
     <script th:src="@{/js/facial/kiosco.js}" defer></script>
 </body>
 </html>

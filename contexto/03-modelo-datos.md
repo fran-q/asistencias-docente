@@ -208,6 +208,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V023__ciclos_y_periodos_lectivos` | Tablas `ciclos_lectivos` y `periodos_lectivos`; `comisiones.periodo_id` y el UNIQUE por materia, código y período |
 | `V024__dias_no_laborables` | Tabla `dias_no_laborables`: los días de adentro del ciclo en los que no se dicta clase |
 | `V025__modo_kiosco` | `puestos_captura.kiosco_habilitado` (+ quién y cuándo) y `puesto_id` en `asistencias` y `bloques_presencia` (ADR-0019) |
+| `V026__camara_del_puesto` | `puestos_captura.camara_dispositivo_id`, `camara_etiqueta` y `camara_elegida_en`: con qué cámara captura cada puesto |
 
 ### Invariantes que agregaron V023 y V024
 

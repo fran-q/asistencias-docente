@@ -44,6 +44,8 @@ public class PaseAsistenciaController {
     public String pantalla(HttpServletRequest request, Model model) {
         PuestoCaptura puesto = puestoDe(request);
         model.addAttribute("kioscoDisponible", puesto != null && puesto.operaDesatendido());
+        // La camara elegida para este equipo (V026); null deja la predeterminada.
+        model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         return "asistencia/pase";
     }
 
@@ -85,8 +87,7 @@ public class PaseAsistenciaController {
      * la puerta a que las dos lecturas no coincidan.
      */
     private static PuestoCaptura puestoDe(HttpServletRequest request) {
-        Object p = request.getAttribute(PuestoCapturaInterceptor.ATRIBUTO_PUESTO);
-        return (p instanceof PuestoCaptura puesto) ? puesto : null;
+        return PuestoCapturaInterceptor.puestoDe(request);
     }
 
     // Convierte un data URL base64 en los bytes de la imagen.

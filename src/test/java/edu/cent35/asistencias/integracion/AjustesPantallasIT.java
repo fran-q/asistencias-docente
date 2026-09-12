@@ -464,6 +464,35 @@ class AjustesPantallasIT {
         }
     }
 
+    @Test
+    @DisplayName("Ninguna pantalla deja un script afuera de su section")
+    void ningunScriptQuedaAfueraDeLaSection() throws Exception {
+        // Las plantillas se insertan en el layout por su <section>, y lo que queda afuera se
+        // descarta sin ningun aviso. Paso en Ciclos lectivos: el boton de agregar periodo no
+        // hacia nada y ningun test lo vio, porque el HTML se renderizaba bien -solo faltaba el
+        // script-. Se revisan las plantillas y no la salida, igual que el test de arriba.
+        java.nio.file.Path base = java.nio.file.Path.of("src/main/resources/templates");
+        try (java.util.stream.Stream<java.nio.file.Path> archivos =
+                 java.nio.file.Files.walk(base)) {
+            java.util.List<String> conScriptAfuera = archivos
+                .filter(p -> p.toString().endsWith(".html"))
+                .filter(p -> {
+                    try {
+                        String c = java.nio.file.Files.readString(p);
+                        if (!c.contains("~{::section}")) return false;
+                        int cierre = c.lastIndexOf("</section>");
+                        return cierre >= 0 && c.substring(cierre).contains("<script");
+                    } catch (Exception e) { return false; }
+                })
+                .map(p -> base.relativize(p).toString())
+                .toList();
+
+            assertThat(conScriptAfuera)
+                .as("un script despues de </section> no llega nunca a la pagina")
+                .isEmpty();
+        }
+    }
+
     // ========================================================================
     //  Grilla: mirar y editar cuestan distinto
     // ========================================================================

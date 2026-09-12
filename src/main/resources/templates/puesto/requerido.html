@@ -216,6 +216,75 @@
             </div>
         </div>
 
+
+        <!-- ================= Camara de este equipo (V026) =================
+             Solo en el equipo autorizado y solo para la cuenta institucional. El
+             identificador de la camara lo genera el navegador y vale unicamente en esta
+             maquina: elegido desde otra, apuntaria a un aparato que ahi no existe.
+
+             El script va adentro del bloque y no al final del archivo: esta plantilla se
+             inserta en el layout por su <section>, y lo que quede afuera se descarta. -->
+        <th:block th:each="p : ${puestos}"
+                  th:if="${puedeDesignar and p.activo and p.id == idDeEsteEquipo}">
+            <h2 class="puesto__subtitulo">Cámara de este equipo</h2>
+            <div class="card">
+                <p>
+                    Con qué cámara captura este equipo el pase, el kiosco y el registro del
+                    rostro. Se listan las que el navegador ve conectadas a esta máquina:
+                    integrada, webcam o USB.
+                </p>
+                <p class="text-muted" th:if="${p.camaraEtiqueta == null}">
+                    Hoy usa la cámara predeterminada del sistema.
+                </p>
+                <p class="text-muted" th:if="${p.camaraEtiqueta != null}">
+                    Hoy usa <strong th:text="${p.camaraEtiqueta}">Logitech C920</strong><span
+                        th:if="${p.camaraElegidaEn != null}"
+                        th:text="|, elegida el ${#temporals.format(p.camaraElegidaEn, 'dd/MM/yy HH:mm')}|">, elegida el 01/09/26</span>.
+                </p>
+
+                <form th:action="@{/puestos/{id}/camara(id=${p.id})}" method="post" id="form-camara"
+                      th:attr="data-camara-actual=${p.camaraDispositivoId},data-camara-nombre=${p.camaraEtiqueta}">
+                    <div class="form-group">
+                        <label for="camara-dispositivo">Cámara</label>
+                        <select id="camara-dispositivo" name="dispositivoId">
+                            <option value="">Predeterminada del sistema</option>
+                        </select>
+                        <input type="hidden" id="camara-etiqueta" name="etiqueta">
+                        <small class="form-hint" id="camara-estado">Buscando las cámaras conectadas...</small>
+                    </div>
+
+                    <div class="camara-caja camara-caja--vista" id="camara-vista-caja" hidden>
+                        <video id="camara-vista" class="camara-video" autoplay playsinline muted></video>
+                    </div>
+
+                    <div class="puesto__acciones">
+                        <button type="button" class="btn btn--ghost" id="camara-probar">Probar</button>
+                        <button type="submit" class="btn btn--primary"
+                                data-texto-enviando="Guardando...">Guardar</button>
+                    </div>
+                </form>
+
+                <p class="alert alert--warning" role="note">
+                    El reconocimiento se calibró con una cámara concreta. Si cambiás de cámara,
+                    conviene volver a registrar los rostros con la nueva: comparar una cara
+                    registrada con una cámara contra la imagen de otra puede hacer que el
+                    sistema reconozca peor.
+                </p>
+
+                <details class="puesto__nota">
+                    <summary>¿Y una cámara de red?</summary>
+                    <p>
+                        El navegador no puede buscar cámaras en la red ni reproducir el formato
+                        en el que transmiten. La salida es presentarla a Windows como una webcam
+                        más: muchas traen un programa del fabricante que lo hace, y si no, OBS
+                        Studio puede tomar la transmisión de la cámara y ofrecerla como
+                        "cámara virtual". Hecho eso, aparece sola en esta lista.
+                    </p>
+                </details>
+            </div>
+            <script th:src="@{/js/facial/camara-puesto.js}" defer></script>
+        </th:block>
+
     </section>
 </body>
 </html>

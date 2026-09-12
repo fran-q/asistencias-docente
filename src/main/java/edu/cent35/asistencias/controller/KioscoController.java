@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Base64;
+import org.springframework.ui.Model;
 
 /**
  * Toma de asistencia en un equipo que opera <b>sin sesión abierta</b>, para los turnos en que
@@ -54,7 +55,10 @@ public class KioscoController {
      * nadie vigilándola. Un kiosco no puede ser una puerta al resto del sistema.
      */
     @GetMapping
-    public String pantalla() {
+    public String pantalla(HttpServletRequest request, Model model) {
+        // La camara elegida para este equipo (V026). El kiosco es donde mas importa: nadie
+        // mira la pantalla para darse cuenta de que tomo la camara equivocada.
+        model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         return "asistencia/kiosco";
     }
 
@@ -110,8 +114,7 @@ public class KioscoController {
 
     // El equipo que ya resolvio y valido PuestoCapturaInterceptor (RF-89).
     private static PuestoCaptura puestoDe(HttpServletRequest request) {
-        Object p = request.getAttribute(PuestoCapturaInterceptor.ATRIBUTO_PUESTO);
-        return (p instanceof PuestoCaptura puesto) ? puesto : null;
+        return PuestoCapturaInterceptor.puestoDe(request);
     }
 
     // Convierte un data URL base64 en los bytes de la imagen.
