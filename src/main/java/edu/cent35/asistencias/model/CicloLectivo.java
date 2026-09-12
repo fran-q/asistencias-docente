@@ -104,6 +104,16 @@ public class CicloLectivo extends BaseTenantEntity {
     @Column(name = "cerrado_por")
     private Long cerradoPor;
 
+    // Ultima vez que se reabrio despues de cerrado (V027). Al reabrir, cerradoEn y cerradoPor NO
+    // se borran: son el registro de que alguien lo cerro, y si el cierre fue un error es
+    // justamente lo que se va a querer mirar. Si esta cerrado o no lo dice el estado.
+    @Column(name = "reabierto_en")
+    private LocalDateTime reabiertoEn;
+
+    // Quien lo reabrio. Id pelado, igual que cerradoPor.
+    @Column(name = "reabierto_por")
+    private Long reabiertoPor;
+
     /** Si esa fecha cae dentro del ciclo. No dice si hay clases ese día: eso lo dice el período. */
     public boolean contiene(LocalDate fecha) {
         return fecha != null && !fecha.isBefore(fechaInicio) && !fecha.isAfter(fechaFin);

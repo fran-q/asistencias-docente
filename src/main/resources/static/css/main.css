@@ -2423,3 +2423,32 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .camara-caja--vista { max-width: 360px; margin: 12px 0; }
 /* El aviso de "la elegida no esta conectada" va pegado a la camara en las tres pantallas. */
 .camara-aviso { margin-top: 8px; }
+
+/* ---- Detalle del ciclo lectivo (V027) ------------------------------------------------ */
+/* Una fila por periodo, cada una con su formulario. Flex y no la grilla de .form-row: la
+   fila lleva ademas el conteo de comisiones y dos botones, y en una pantalla angosta tiene
+   que poder partirse sin que los campos queden de un dedo de ancho. */
+.periodo-item {
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-sm) var(--space);
+    padding: var(--space) 0; border-top: 1px solid var(--border);
+}
+.periodo-item:first-of-type { border-top: none; }
+.periodo-item__form {
+    flex: 1 1 34rem; display: flex; flex-wrap: wrap; align-items: flex-end;
+    gap: var(--space-sm) var(--space);
+}
+.periodo-item__form .form-group { flex: 1 1 9rem; margin: 0; }
+.periodo-item__lectura { flex: 1 1 20rem; display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+/* Alineado con la base de los botones, no con la etiqueta de arriba. */
+.periodo-item__comisiones { font-size: .85rem; white-space: nowrap; padding-bottom: 7px; }
+.ciclo-detalle .page-header__subtitle {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm);
+}
+.ciclo-detalle__registro { margin-top: var(--space-lg); }
+.ciclo-detalle__pie { margin: var(--space) 0 0; }
+/* El filtro por ano de Comisiones va en su propio form GET; display: contents lo deja ser un
+   control mas de la barra de filtros en vez de una caja aparte. */
+.filtro__ciclo { display: contents; }
+/* Lista sin viñetas: los periodos en el listado de ciclos, los dias sin clase en el detalle. */
+.lista-plana { list-style: none; margin: 0; padding: 0; }
+.lista-plana li + li { margin-top: 4px; }

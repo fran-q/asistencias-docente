@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -40,13 +41,31 @@ public class ComisionController {
 
     private final ComisionService service;
 
-    // Muestra el listado de las comisiones.
+    /**
+     * Muestra el listado de las comisiones, de todos los años o de uno solo.
+     *
+     * <p>El año se filtra en el servidor y no en el navegador como el texto y el estado: el
+     * detalle de cada ciclo enlaza acá con {@code ?ciclo=}, y el enlace tiene que llegar ya
+     * filtrado sin depender de un script (V027).
+     */
     @GetMapping
-    public String listar(Model model) {
-        List<ComisionListItemDto> items = service.listar().stream()
+    public String listar(@RequestParam(name = "ciclo", required = false) Long cicloId,
+                         Model model, RedirectAttributes redirect) {
+        List<Comision> comisiones;
+        try {
+            comisiones = cicloId == null ? service.listar() : service.listarDelCiclo(cicloId);
+        } catch (EntityNotFoundException ex) {
+            // No se deja al handler de la clase: ese dice "la comision no existe", y lo que no
+            // existe aca es el ciclo.
+            redirect.addFlashAttribute("flashError", "Ese ciclo lectivo no existe.");
+            return "redirect:/comisiones";
+        }
+        List<ComisionListItemDto> items = comisiones.stream()
             .map(ComisionListItemDto::from)
             .toList();
         model.addAttribute("comisiones", items);
+        model.addAttribute("ciclos", service.ciclosParaFiltro());
+        model.addAttribute("cicloElegido", cicloId);
         return "academico/comision-list";
     }
 

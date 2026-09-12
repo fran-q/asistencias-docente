@@ -67,4 +67,13 @@ public interface CicloLectivoRepository extends JpaRepository<CicloLectivo, Long
 
     // Cuantos ciclos hay en ese estado; evita que queden dos activos a la vez.
     long countByInstitucionIdAndEstado(Long institucionId, EstadoCiclo estado);
+
+    /**
+     * El ciclo que se cerró más recientemente (V027).
+     *
+     * <p>Es el único que se puede reabrir: el que se cerró por error. Desempata por id porque
+     * dos cierres en el mismo segundo no pueden dar una respuesta distinta en cada consulta.
+     */
+    Optional<CicloLectivo> findFirstByInstitucionIdAndEstadoOrderByCerradoEnDescIdDesc(
+        Long institucionId, EstadoCiclo estado);
 }

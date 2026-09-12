@@ -209,6 +209,28 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V024__dias_no_laborables` | Tabla `dias_no_laborables`: los días de adentro del ciclo en los que no se dicta clase |
 | `V025__modo_kiosco` | `puestos_captura.kiosco_habilitado` (+ quién y cuándo) y `puesto_id` en `asistencias` y `bloques_presencia` (ADR-0019) |
 | `V026__camara_del_puesto` | `puestos_captura.camara_dispositivo_id`, `camara_etiqueta` y `camara_elegida_en`: con qué cámara captura cada puesto |
+| `V027__reabrir_ciclo_lectivo` | `ciclos_lectivos.reabierto_en` y `reabierto_por`: el último ciclo cerrado se puede reabrir, y el cierre anterior se conserva |
+
+### Invariantes que agregó V027
+
+**Un ciclo cerrado se puede reabrir, con límites.** Solo el último que se cerró y solo si no hay
+otro activo: lo primero evita reabrir un año viejo, lo segundo dejar editable la oferta de un año
+terminado mientras corre el siguiente. Vuelve a `PREPARACION` y no a `ACTIVO`, porque pudo
+haberse cerrado sin llegar a correr, y de `ACTIVO` no se vuelve. `cerrado_en` y `cerrado_por`
+**no se borran** al reabrir: si el ciclo está cerrado lo dice `estado`, no `cerrado_en`.
+
+**Mover el calendario no deja asistencias afuera.** Achicar un ciclo o un período se rechaza si
+el tramo que se recorta tiene asistencias, y el mensaje dice la primera fecha. Se miran solo los
+tramos recortados y no todo lo que queda fuera del rango nuevo: una asistencia que ya estaba
+afuera no traba la edición para siempre. Mover fechas no crea ni borra nada hacia atrás, porque
+el job de ausencias trabaja solo sobre el día en curso.
+
+**El año se corrige solo en preparación.** Un ciclo que ya corrió tiene asistencias de ese año, y
+cambiarle el número diría que ocurrieron en otro.
+
+**Ciclos y períodos vacíos se borran de verdad.** Un ciclo en preparación sin comisiones, y un
+período sin comisiones de un ciclo abierto, siempre que no sea el único. Con una sola comisión
+colgando —aunque esté dada de baja— ya no se puede: esa comisión es historia y apunta a él.
 
 ### Invariantes que agregaron V023 y V024
 
@@ -232,9 +254,9 @@ dejaba de poder reconstruirse.
 quedan de solo lectura; justificar una ausencia o cargar una asistencia manual de ese año se
 sigue pudiendo. Un reclamo o una inspección llegan casi siempre después de terminado el año.
 
-**Los días no laborables no llevan baja lógica.** Es la excepción junto con la supresión ARCO:
-nada referencia a esas filas, así que una baja lógica solo dejaría basura marcada como inactiva
-en el listado.
+**Los días no laborables no llevan baja lógica.** Es la excepción junto con la supresión ARCO
+—y, desde V027, los ciclos y períodos vacíos—: nada referencia a esas filas, así que una baja
+lógica solo dejaría basura marcada como inactiva en el listado.
 
 ### Invariantes que agregaron V021 y V022
 

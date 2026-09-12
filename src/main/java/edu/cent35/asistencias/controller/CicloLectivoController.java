@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.model.CicloLectivo;
+import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.CicloLectivoService;
@@ -25,11 +25,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Los ciclos lectivos y sus períodos: el año calendario de cursada (V023). Desde acá se abre el
- * año que viene, se copia la oferta del anterior y se cierra el que terminó.
+ * Los ciclos lectivos y sus períodos: el año calendario de cursada (V023). Desde el listado se
+ * abre el año que viene, se copia la oferta del anterior y se cierra el que terminó; desde la
+ * pantalla de cada ciclo (V027) se ve qué tiene y se corrige su calendario.
  *
  * <p>Rol institucional en todo: definir el calendario académico decide cuándo el sistema toma
  * asistencia y cuándo genera ausencias, que no es una tarea administrativa del día a día.
+ *
+ * <p>Las fechas y los nombres de los formularios nuevos llegan como opcionales a propósito: un
+ * campo vacío tiene que volver con el mensaje del servicio, no con un error 400.
+ *
+ * <p><b>Dos canales para los rechazos.</b> Los de un formulario —alta, datos del ciclo,
+ * períodos— vuelven como {@code error} y la plantilla los muestra en la pantalla: son errores
+ * de lo que se cargó, y un "dejaría afuera el 07/04/2026" tiene que quedar a la vista mientras
+ * se corrige, no en un aviso que se va solo. Los de una acción —activar, cerrar, reabrir,
+ * borrar, quitar un período— van como {@code flashError}, igual que en el resto del sistema.
  */
 @Controller
 @RequestMapping("/ciclos")
@@ -38,15 +48,35 @@ import java.util.List;
 @Slf4j
 public class CicloLectivoController {
 
+    // Activar y cerrar se disparan desde el listado o desde el detalle, y cada uno vuelve a
+    // donde estaba. Se acepta solo esta palabra y no una direccion: un parametro que fuera una
+    // URL seria una redireccion abierta.
+    private static final String VOLVER_AL_DETALLE = "detalle";
+
     private final CicloLectivoService service;
 
-    // Listado con sus periodos. Es la pantalla completa: los ciclos son pocos --uno por ano--
-    // asi que no hace falta separar un detalle.
+    // Listado con sus periodos: los ciclos son pocos --uno por ano--, asi que entran todos en
+    // una pantalla. Lo que cuelga de cada uno se ve en su detalle.
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("ciclos", service.listar());
         model.addAttribute("hoy", LocalDate.now());
         return "academico/ciclo-list";
+    }
+
+    /**
+     * La pantalla de un ciclo (V027): sus períodos, cuántas comisiones cuelgan de cada uno, los
+     * días sin clase que caen adentro y lo que se puede hacer con él. Es también donde se edita.
+     */
+    @GetMapping("/{id}")
+    public String detalle(@PathVariable Long id, Model model) {
+        CicloLectivoService.DetalleCiclo detalle = service.detalle(id);
+        model.addAttribute("detalle", detalle);
+        model.addAttribute("ciclo", detalle.ciclo());
+        model.addAttribute("cerrado", detalle.ciclo().getEstado() == EstadoCiclo.CERRADO);
+        model.addAttribute("enPreparacion", detalle.ciclo().getEstado() == EstadoCiclo.PREPARACION);
+        model.addAttribute("hoy", LocalDate.now());
+        return "academico/ciclo-detalle";
     }
 
     /**
@@ -71,29 +101,88 @@ public class CicloLectivoController {
             service.crear(anio, fechaInicio, fechaFin, armarPeriodos(nombres, inicios, fines));
             redirect.addFlashAttribute("flashMensaje", "Ciclo lectivo " + anio + " creado.");
         } catch (IllegalArgumentException ex) {
+            // La plantilla lo mostraba dos veces --arriba de todo y dentro del formulario--;
+            // quedo solo el del formulario, junto a lo que se cargo.
             redirect.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/ciclos";
     }
 
-    // Cambia las fechas del ciclo. Los periodos se editan por su cuenta.
-    @PostMapping("/{id}/fechas")
-    public String actualizarFechas(@PathVariable Long id,
-                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-                                   @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
-                                   RedirectAttributes redirect) {
+    // Corrige el ano y las fechas. El ano llega solo si el ciclo esta en preparacion: en otro
+    // estado el campo va deshabilitado, el navegador no lo manda, y queda el que estaba.
+    @PostMapping("/{id}/datos")
+    public String actualizar(@PathVariable Long id,
+                             @RequestParam(required = false) Short anio,
+                             @RequestParam(required = false)
+                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+                             @RequestParam(required = false)
+                             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+                             RedirectAttributes redirect) {
         try {
-            service.actualizarFechas(id, fechaInicio, fechaFin);
-            redirect.addFlashAttribute("flashMensaje", "Fechas actualizadas.");
+            service.actualizar(id, anio, fechaInicio, fechaFin);
+            redirect.addFlashAttribute("flashMensaje", "Datos del ciclo actualizados.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("error", ex.getMessage());
+        }
+        return alDetalle(id);
+    }
+
+    // Suma un periodo al ciclo. El mensaje no repite el nombre: ya se ve en la lista.
+    @PostMapping("/{id}/periodos")
+    public String agregarPeriodo(@PathVariable Long id,
+                                 @RequestParam(required = false) String nombre,
+                                 @RequestParam(required = false)
+                                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+                                 @RequestParam(required = false)
+                                 @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+                                 RedirectAttributes redirect) {
+        try {
+            service.agregarPeriodo(id, nombre, fechaInicio, fechaFin);
+            redirect.addFlashAttribute("flashMensaje", "Período agregado.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("error", ex.getMessage());
+        }
+        return alDetalle(id);
+    }
+
+    // Renombra un periodo o le cambia las fechas.
+    @PostMapping("/{id}/periodos/{periodoId}")
+    public String editarPeriodo(@PathVariable Long id,
+                                @PathVariable Long periodoId,
+                                @RequestParam(required = false) String nombre,
+                                @RequestParam(required = false)
+                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+                                @RequestParam(required = false)
+                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+                                RedirectAttributes redirect) {
+        try {
+            service.editarPeriodo(id, periodoId, nombre, fechaInicio, fechaFin);
+            redirect.addFlashAttribute("flashMensaje", "Período actualizado.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("error", ex.getMessage());
+        }
+        return alDetalle(id);
+    }
+
+    // Quita un periodo sin comisiones. Borrado fisico: ver CicloLectivoService.quitarPeriodo.
+    @PostMapping("/{id}/periodos/{periodoId}/quitar")
+    public String quitarPeriodo(@PathVariable Long id,
+                                @PathVariable Long periodoId,
+                                RedirectAttributes redirect) {
+        try {
+            service.quitarPeriodo(id, periodoId);
+            redirect.addFlashAttribute("flashMensaje", "Período quitado.");
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("flashError", ex.getMessage());
         }
-        return "redirect:/ciclos";
+        return alDetalle(id);
     }
 
     // Pone el ciclo en curso. Solo uno a la vez.
     @PostMapping("/{id}/activar")
-    public String activar(@PathVariable Long id, RedirectAttributes redirect) {
+    public String activar(@PathVariable Long id,
+                          @RequestParam(required = false) String volver,
+                          RedirectAttributes redirect) {
         try {
             service.activar(id);
             redirect.addFlashAttribute("flashMensaje",
@@ -101,12 +190,13 @@ public class CicloLectivoController {
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("flashError", ex.getMessage());
         }
-        return "redirect:/ciclos";
+        return volverA(id, volver);
     }
 
     // Cierra el ciclo: la estructura queda congelada, las asistencias no.
     @PostMapping("/{id}/cerrar")
     public String cerrar(@PathVariable Long id,
+                         @RequestParam(required = false) String volver,
                          @AuthenticationPrincipal UsuarioAutenticado principal,
                          RedirectAttributes redirect) {
         try {
@@ -117,7 +207,36 @@ public class CicloLectivoController {
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("flashError", ex.getMessage());
         }
-        return "redirect:/ciclos";
+        return volverA(id, volver);
+    }
+
+    // Reabre el ultimo ciclo cerrado. Queda en preparacion: activarlo es un paso aparte.
+    @PostMapping("/{id}/reabrir")
+    public String reabrir(@PathVariable Long id,
+                          @AuthenticationPrincipal UsuarioAutenticado principal,
+                          RedirectAttributes redirect) {
+        try {
+            service.reabrir(id, principal == null ? null : principal.getUsuarioId());
+            redirect.addFlashAttribute("flashMensaje",
+                "Ciclo reabierto: quedó en preparación. Para volver a tomar asistencia contra "
+                + "su oferta, activalo.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return alDetalle(id);
+    }
+
+    // Borra un ciclo cargado por error. Si sale bien, ya no hay detalle al que volver.
+    @PostMapping("/{id}/borrar")
+    public String borrar(@PathVariable Long id, RedirectAttributes redirect) {
+        try {
+            service.borrar(id);
+            redirect.addFlashAttribute("flashMensaje", "Ciclo borrado.");
+            return "redirect:/ciclos";
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+            return alDetalle(id);
+        }
     }
 
     /**
@@ -150,12 +269,20 @@ public class CicloLectivoController {
         return "redirect:/ciclos";
     }
 
-    // Un ciclo de otra institucion responde "no encontrado" y vuelve al listado, sin pantalla
-    // de error: el mensaje ya dice todo lo que hay que decir.
+    // Un ciclo o un periodo de otra institucion responde "no encontrado" y vuelve al listado,
+    // sin pantalla de error: el mensaje ya dice todo lo que hay que decir.
     @ExceptionHandler(EntityNotFoundException.class)
     public String noEncontrado(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", ex.getMessage());
         return "redirect:/ciclos";
+    }
+
+    private String alDetalle(Long id) {
+        return "redirect:/ciclos/" + id;
+    }
+
+    private String volverA(Long id, String volver) {
+        return VOLVER_AL_DETALLE.equals(volver) ? alDetalle(id) : "redirect:/ciclos";
     }
 
     // Junta las tres listas paralelas del formulario en periodos, cortando por la mas corta.

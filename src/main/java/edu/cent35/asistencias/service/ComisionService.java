@@ -45,7 +45,34 @@ public class ComisionService {
     public List<Comision> listar() {
         Long tenantId = TenantContext.getRequired();
         List<Comision> comisiones = comisionRepository.findAllDelTenant(tenantId);
-        // Touch lazy: materia + carrera + docente asignado (necesarios para el listado)
+        inicializarParaListado(comisiones);
+        return comisiones;
+    }
+
+    /**
+     * Las comisiones de un solo ciclo, para el filtro por año del listado (V027).
+     *
+     * <p>Valida el ciclo antes de consultar: un id de otra institución tiene que responder "no
+     * encontrado", no un listado vacío que se leería como "ese año no tiene comisiones".
+     */
+    @Transactional(readOnly = true)
+    public List<Comision> listarDelCiclo(Long cicloId) {
+        Long tenantId = TenantContext.getRequired();
+        cicloLectivoService.buscarPorId(cicloId);
+        List<Comision> comisiones = comisionRepository.findDelCiclo(cicloId, tenantId);
+        inicializarParaListado(comisiones);
+        return comisiones;
+    }
+
+    // Los anos para el selector del listado, del mas nuevo al mas viejo.
+    @Transactional(readOnly = true)
+    public List<CicloLectivo> ciclosParaFiltro() {
+        return cicloLectivoService.listar();
+    }
+
+    // Touch lazy: materia + carrera + docente asignado, que el listado lee despues de cerrada
+    // la transaccion. Compartido por los dos listados para que no se desalineen.
+    private void inicializarParaListado(List<Comision> comisiones) {
         comisiones.forEach(c -> {
             if (c.getMateria() != null) {
                 c.getMateria().getCodigo();
@@ -55,7 +82,6 @@ public class ComisionService {
             }
             if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getPersona().getDni();
         });
-        return comisiones;
     }
 
     @Transactional(readOnly = true)

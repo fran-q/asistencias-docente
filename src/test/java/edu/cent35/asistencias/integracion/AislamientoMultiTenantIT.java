@@ -13,6 +13,7 @@ import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.service.CarreraService;
+import edu.cent35.asistencias.service.CicloLectivoService;
 import edu.cent35.asistencias.service.ComisionService;
 import edu.cent35.asistencias.service.MateriaService;
 import jakarta.persistence.EntityNotFoundException;
@@ -45,6 +46,7 @@ class AislamientoMultiTenantIT {
     @Autowired private CarreraService carreraService;
     @Autowired private MateriaService materiaService;
     @Autowired private ComisionService comisionService;
+    @Autowired private CicloLectivoService cicloLectivoService;
 
     @Autowired private CarreraRepository carreraRepository;
     @Autowired private CicloLectivoRepository cicloLectivoRepository;
@@ -159,6 +161,29 @@ class AislamientoMultiTenantIT {
         // por eso el service tiene que comparar el tenant a mano. Sin esa validacion, esto
         // devolveria la carrera de la otra institucion.
         assertThatThrownBy(() -> carreraService.buscarPorId(carreraDeB))
+            .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("El detalle, el filtro y los periodos de un ciclo ajeno responden 'no encontrado'")
+    void cicloAjenoRespondeNoEncontrado() {
+        PeriodoLectivo periodoDeA = periodoDe(TENANT_A);
+        PeriodoLectivo periodoDeB = periodoDe(TENANT_B);
+        Long cicloDeA = periodoDeA.getCiclo().getId();
+        Long cicloDeB = periodoDeB.getCiclo().getId();
+        TenantContext.set(TENANT_A);
+
+        assertThatThrownBy(() -> cicloLectivoService.detalle(cicloDeB))
+            .isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> comisionService.listarDelCiclo(cicloDeB))
+            .as("un listado vacio se leeria como 'ese ano no tiene comisiones'")
+            .isInstanceOf(EntityNotFoundException.class);
+        // El periodo de B por la direccion del ciclo propio: se busca dentro de la lista del
+        // ciclo, ya acotada al tenant, y no por findById, que no pasa por el filtro.
+        assertThatThrownBy(() -> cicloLectivoService.editarPeriodo(cicloDeA, periodoDeB.getId(),
+                "Ajeno", java.time.LocalDate.of(2026, 3, 1), java.time.LocalDate.of(2026, 7, 1)))
+            .isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> cicloLectivoService.quitarPeriodo(cicloDeA, periodoDeB.getId()))
             .isInstanceOf(EntityNotFoundException.class);
     }
 

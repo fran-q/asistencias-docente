@@ -7,6 +7,47 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Gestión de ciclos lectivos
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **Una pantalla por ciclo.** Después del alta, un ciclo no se podía cambiar: ni sus fechas, ni
+  sus períodos, ni su año. La lógica para mover las fechas existía, pero ningún formulario la
+  usaba. Ahora cada ciclo tiene su pantalla. Ahí se ven sus períodos con cuántas comisiones
+  cuelgan de cada uno, los días sin clase que caen adentro, y quién lo cerró o lo reabrió. Desde
+  esa misma pantalla se corrige.
+
+- **Corregir fechas y períodos.** Se pueden mover mientras el ciclo no esté cerrado, y agregar,
+  renombrar o quitar períodos. El rango nuevo no puede dejar afuera días que ya tienen
+  asistencias: el mensaje dice cuál lo impide. Es lo que faltaba para ajustar el ciclo del año
+  entero que armó V023; sin eso, el job iba a generar ausencias hasta el 31 de diciembre. El año
+  se corrige solo mientras el ciclo está en preparación.
+
+- **Reabrir el último ciclo cerrado (V027).** Cerrar por error el ciclo en curso dejaba a la
+  institución sin tomar asistencia el resto del año, y solo se arreglaba tocando la base. Ahora
+  se reabre, siempre que no haya otro activo, y vuelve a preparación: activarlo es un paso
+  aparte. Queda registrado quién lo reabrió, y el cierre anterior no se borra.
+
+- **Borrar lo cargado por error.** Se borran de verdad un ciclo en preparación sin comisiones, y
+  un período sin comisiones que no sea el único. Es la misma excepción a la baja lógica que ya
+  tenían los días sin clase: nada apunta a esas filas.
+
+- **Filtro por año en Comisiones.** El listado mezclaba las comisiones de todos los años. El
+  detalle de cada ciclo enlaza a Comisiones ya filtrada.
+
+### Corregido
+
+- **El error del alta de un ciclo aparecía dos veces**: arriba de la pantalla y otra vez dentro
+  del formulario.
+
+- **"Copiar la oferta" arrancaba con el año de origen y el de destino iguales**, así que
+  apretar Copiar sin cambiar nada respondía que eran el mismo. Ahora arranca del año anterior
+  hacia el más nuevo.
+
+---
+
 ## Cámara del puesto
 
 **Período:** septiembre de 2026.

@@ -46,11 +46,16 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -361,6 +366,243 @@ class CiclosLectivosIT {
     }
 
     // ========================================================================
+    //  Editar el calendario (V027)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Achicar un periodo no puede dejar afuera un dia que ya tiene asistencias")
+    void achicarUnPeriodoNoDejaAsistenciasAfuera() {
+        // El caso real: V023 armo el ciclo del ano entero y las clases empezaron en marzo. Hay
+        // que poder recortarlo, pero no dejar una asistencia de abril fuera de su propio periodo.
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
+        generador.generarParaInstitucion(tenantId, MARTES_2026, LocalTime.of(23, 0));
+        Long periodoId = ciclo.getPeriodos().get(0).getId();
+
+        assertThatThrownBy(() -> cicloService.editarPeriodo(ciclo.getId(), periodoId, "Anual",
+                LocalDate.of(2026, 5, 1), LocalDate.of(2026, 12, 15)))
+            .isInstanceOf(IllegalArgumentException.class)
+            .as("el mensaje tiene que decir que dia lo impide, o no hay forma de encontrarlo")
+            .hasMessageContaining("07/04/2026");
+
+        cicloService.editarPeriodo(ciclo.getId(), periodoId, "Anual",
+            LocalDate.of(2026, 3, 1), LocalDate.of(2026, 12, 15));
+
+        PeriodoLectivo recortado = periodoLectivoRepository.findById(periodoId).get();
+        assertThat(recortado.getFechaInicio()).isEqualTo(LocalDate.of(2026, 3, 1));
+        assertThat(recortado.getFechaFin()).isEqualTo(LocalDate.of(2026, 12, 15));
+    }
+
+    @Test
+    @DisplayName("El ciclo se achica despues de sus periodos, y deja de generar ausencias en diciembre")
+    void achicarElCiclo() {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
+        Long periodoId = ciclo.getPeriodos().get(0).getId();
+        LocalDate marzo = LocalDate.of(2026, 3, 1);
+        LocalDate diciembre = LocalDate.of(2026, 12, 15);
+
+        assertThatThrownBy(() -> cicloService.actualizar(ciclo.getId(), null, marzo, diciembre))
+            .as("un periodo que empieza antes que su ciclo es una contradiccion")
+            .hasMessageContaining("quedaría fuera del ciclo");
+
+        cicloService.editarPeriodo(ciclo.getId(), periodoId, "Anual", marzo, diciembre);
+        cicloService.actualizar(ciclo.getId(), null, marzo, diciembre);
+
+        CicloLectivo guardado = cicloRepository.findById(ciclo.getId()).get();
+        assertThat(guardado.getFechaInicio()).isEqualTo(marzo);
+        assertThat(guardado.getFechaFin()).isEqualTo(diciembre);
+        assertThat(guardado.getAnio())
+            .as("sin ano en el pedido queda el que estaba: la pantalla no lo manda si no se edita")
+            .isEqualTo((short) 2026);
+
+        LocalDate martesVeintidos = LocalDate.of(2026, 12, 22);
+        assertThat(martesVeintidos.getDayOfWeek()).isEqualTo(DayOfWeek.TUESDAY);
+        assertThat(generador.generarParaInstitucion(tenantId, martesVeintidos, LocalTime.of(23, 0)))
+            .as("es para lo que hacia falta: terminadas las clases, no hay ausencias que generar")
+            .isZero();
+    }
+
+    @Test
+    @DisplayName("El ano se corrige solo en preparacion, y sin pisar otro")
+    void elAnioSoloEnPreparacion() {
+        CicloLectivo activo = cicloCon(2026, "Anual");
+        assertThatThrownBy(() -> cicloService.actualizar(activo.getId(), (short) 2025,
+                activo.getFechaInicio(), activo.getFechaFin()))
+            .as("un ciclo que ya corrio tiene asistencias de ese ano")
+            .hasMessageContaining("preparación");
+
+        // Un tipeo al crear el del ano que viene: queria 2027 y puso 2028.
+        CicloLectivo mal = cicloCon(2028, "Anual");
+        enPreparacion(mal);
+        cicloService.actualizar(mal.getId(), (short) 2027, mal.getFechaInicio(), mal.getFechaFin());
+        assertThat(cicloRepository.findById(mal.getId()).get().getAnio()).isEqualTo((short) 2027);
+
+        assertThatThrownBy(() -> cicloService.actualizar(mal.getId(), (short) 2026,
+                mal.getFechaInicio(), mal.getFechaFin()))
+            .hasMessageContaining("Ya existe un ciclo lectivo 2026");
+    }
+
+    @Test
+    @DisplayName("Un periodo se agrega al final, con las mismas reglas que en el alta")
+    void agregarPeriodo() {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+
+        cicloService.agregarPeriodo(ciclo.getId(), "1er cuatrimestre",
+            LocalDate.of(2026, 3, 1), LocalDate.of(2026, 7, 15));
+
+        List<PeriodoLectivo> periodos = cicloService.buscarPorId(ciclo.getId()).getPeriodos();
+        assertThat(periodos).extracting(PeriodoLectivo::getNombre)
+            .containsExactly("Anual", "1er cuatrimestre");
+        assertThat(periodos.get(1).getOrden())
+            .as("va al final: el orden es el de carga")
+            .isEqualTo((short) 2);
+
+        assertThatThrownBy(() -> cicloService.agregarPeriodo(ciclo.getId(), "anual",
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 7, 15)))
+            .as("el nombre empareja los anos al copiar: con otras mayusculas sigue siendo el mismo")
+            .hasMessageContaining("Ya hay un período");
+        assertThatThrownBy(() -> cicloService.agregarPeriodo(ciclo.getId(), "Verano",
+                LocalDate.of(2027, 1, 5), LocalDate.of(2027, 2, 20)))
+            .hasMessageContaining("dentro del ciclo");
+    }
+
+    @Test
+    @DisplayName("Se quita un periodo vacio; uno con comisiones, no")
+    void quitarPeriodo() {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        comisionEn(ciclo, "A");                                   // cuelga del "Anual"
+        cicloService.agregarPeriodo(ciclo.getId(), "Sobrante",
+            LocalDate.of(2026, 3, 1), LocalDate.of(2026, 7, 15));
+        Long anual = ciclo.getPeriodos().get(0).getId();
+        Long sobrante = cicloService.buscarPorId(ciclo.getId()).getPeriodos().get(1).getId();
+
+        assertThatThrownBy(() -> cicloService.quitarPeriodo(ciclo.getId(), anual))
+            .as("una comision apunta a el: es historia")
+            .hasMessageContaining("comisión");
+
+        cicloService.quitarPeriodo(ciclo.getId(), sobrante);
+        assertThat(periodoLectivoRepository.findById(sobrante))
+            .as("borrado de verdad: nada apuntaba a el, y una baja logica lo dejaria en el combo")
+            .isEmpty();
+    }
+
+    @Test
+    @DisplayName("El unico periodo no se quita, aunque este vacio")
+    void elUnicoPeriodoNoSeQuita() {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+
+        assertThatThrownBy(() -> cicloService.quitarPeriodo(ciclo.getId(),
+                ciclo.getPeriodos().get(0).getId()))
+            .as("un ciclo sin periodos no admite comisiones")
+            .hasMessageContaining("único período");
+    }
+
+    @Test
+    @DisplayName("Un ciclo en preparacion y vacio se borra; activo o con oferta, no")
+    void borrarCiclo() {
+        CicloLectivo activo = cicloCon(2026, "Anual");
+        assertThatThrownBy(() -> cicloService.borrar(activo.getId()))
+            .as("un ciclo que corrio es historia de la institucion")
+            .hasMessageContaining("preparación");
+
+        CicloLectivo conOferta = cicloCon(2027, "Anual");
+        enPreparacion(conOferta);
+        comisionEn(conOferta, "A");
+        assertThatThrownBy(() -> cicloService.borrar(conOferta.getId()))
+            .hasMessageContaining("comisión");
+
+        CicloLectivo vacio = cicloCon(2028, "Anual");
+        Long suPeriodo = vacio.getPeriodos().get(0).getId();
+        enPreparacion(vacio);
+        cicloService.borrar(vacio.getId());
+
+        assertThat(cicloRepository.findById(vacio.getId())).isEmpty();
+        assertThat(periodoLectivoRepository.findById(suPeriodo))
+            .as("sus periodos se van con el")
+            .isEmpty();
+    }
+
+    @Test
+    @DisplayName("En un ciclo cerrado no se tocan ni las fechas ni los periodos")
+    void elCicloCerradoNoSeEdita() {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        cicloService.cerrar(ciclo.getId(), null);
+        Long periodoId = ciclo.getPeriodos().get(0).getId();
+        LocalDate marzo = LocalDate.of(2026, 3, 1);
+        LocalDate diciembre = LocalDate.of(2026, 12, 15);
+
+        assertThatThrownBy(() -> cicloService.actualizar(ciclo.getId(), null,
+                LocalDate.of(2026, 1, 1), diciembre))
+            .hasMessageContaining("cerrado");
+        assertThatThrownBy(() -> cicloService.editarPeriodo(ciclo.getId(), periodoId, "Anual",
+                marzo, diciembre))
+            .hasMessageContaining("cerrado");
+        assertThatThrownBy(() -> cicloService.agregarPeriodo(ciclo.getId(), "Extra", marzo, diciembre))
+            .hasMessageContaining("cerrado");
+        assertThatThrownBy(() -> cicloService.quitarPeriodo(ciclo.getId(), periodoId))
+            .hasMessageContaining("cerrado");
+    }
+
+    // ========================================================================
+    //  Reabrir un ciclo cerrado (V027)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Reabrir: el ultimo cerrado vuelve a preparacion y el cierre queda registrado")
+    void reabrirElUltimoCerrado() throws Exception {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        cicloService.cerrar(ciclo.getId(), null);
+
+        mockMvc.perform(post("/ciclos/" + ciclo.getId() + "/reabrir")
+                .with(user(principalInstitucional())).with(csrf()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attributeExists("flashMensaje"));
+
+        CicloLectivo reabierto = cicloRepository.findById(ciclo.getId()).get();
+        assertThat(reabierto.getEstado())
+            .as("a preparacion y no a activo: activarlo es una decision aparte, con su propia "
+                + "confirmacion")
+            .isEqualTo(EstadoCiclo.PREPARACION);
+        assertThat(reabierto.getCerradoEn())
+            .as("el cierre no se borra: si fue un error, es lo que se va a querer mirar")
+            .isNotNull();
+        assertThat(reabierto.getReabiertoEn()).isNotNull();
+        assertThat(reabierto.getReabiertoPor())
+            .as("queda quien lo reabrio")
+            .isEqualTo(principalInstitucional().getUsuarioId());
+
+        // Y desde preparacion se activa como siempre. La peticion de arriba limpia el tenant del
+        // hilo al terminar, asi que se vuelve a fijar antes de llamar al servicio.
+        TenantContext.set(tenantId);
+        cicloService.activar(ciclo.getId());
+        assertThat(cicloRepository.findById(ciclo.getId()).get().getEstado())
+            .isEqualTo(EstadoCiclo.ACTIVO);
+    }
+
+    @Test
+    @DisplayName("Reabrir no: ni con otro ciclo activo, ni uno que no es el ultimo cerrado")
+    void reabrirTieneLimites() {
+        CicloLectivo viejo = cicloCon(2025, "Anual");
+        cicloService.cerrar(viejo.getId(), null);
+        CicloLectivo reciente = cicloCon(2026, "Anual");
+        cicloService.cerrar(reciente.getId(), null);
+        // Fechas explicitas: dos cierres seguidos pueden caer en el mismo instante, y lo que se
+        // prueba es cual se cerro ultimo, no el desempate.
+        fijarCierre(viejo.getId(), LocalDateTime.of(2025, 12, 20, 10, 0));
+        fijarCierre(reciente.getId(), LocalDateTime.of(2026, 12, 20, 10, 0));
+
+        assertThatThrownBy(() -> cicloService.reabrir(viejo.getId(), null))
+            .as("reabrir un ano de hace tiempo no es corregir un error")
+            .hasMessageContaining("último ciclo que se cerró");
+
+        cicloCon(2027, "Anual");                                  // nace ACTIVO
+        assertThatThrownBy(() -> cicloService.reabrir(reciente.getId(), null))
+            .as("dejaria editable la oferta de un ano terminado mientras corre el siguiente")
+            .hasMessageContaining("otro ciclo activo");
+    }
+
+    // ========================================================================
     //  Las pantallas nuevas, renderizadas de verdad
     // ========================================================================
 
@@ -407,6 +649,109 @@ class CiclosLectivosIT {
             .contains("a mano");
     }
 
+    @Test
+    @DisplayName("El detalle del ciclo renderiza con sus periodos, sus comisiones y la edicion")
+    void elDetalleRenderiza() throws Exception {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        comisionEn(ciclo, "A");
+        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+
+        String html = mockMvc.perform(get("/ciclos/" + ciclo.getId())
+                .with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("Ciclo lectivo 2026")
+            .contains("1 comisión")
+            .as("un ciclo abierto se corrige desde aca")
+            .contains("/ciclos/" + ciclo.getId() + "/datos")
+            .as("los dias sin clase que caen dentro del ciclo")
+            .contains("Feriado de prueba")
+            .as("el detalle enlaza a Comisiones ya filtrada por este ano")
+            .contains("/comisiones?ciclo=" + ciclo.getId());
+        assertThat(html)
+            .as("con una comision colgando, el periodo no ofrece quitarse")
+            .doesNotContain("/quitar");
+    }
+
+    @Test
+    @DisplayName("El detalle de un ciclo cerrado es de solo lectura y ofrece reabrirlo")
+    void elDetalleDeUnCicloCerrado() throws Exception {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        cicloService.cerrar(ciclo.getId(), null);
+
+        String html = mockMvc.perform(get("/ciclos/" + ciclo.getId())
+                .with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("cerrado, no se ofrece editar nada: el servicio lo rechazaria igual")
+            .doesNotContain("/ciclos/" + ciclo.getId() + "/datos")
+            .doesNotContain("/ciclos/" + ciclo.getId() + "/periodos");
+        assertThat(html)
+            .as("es el ultimo cerrado y no hay otro activo: se puede reabrir")
+            .contains("/ciclos/" + ciclo.getId() + "/reabrir");
+    }
+
+    @Test
+    @DisplayName("Un periodo mal cargado vuelve al detalle con el error a la vista, no en un aviso que se va")
+    void elErrorDeUnPeriodoQuedaEnLaPantalla() throws Exception {
+        CicloLectivo ciclo = cicloCon(2026, "Anual");
+        Long periodoId = ciclo.getPeriodos().get(0).getId();
+
+        mockMvc.perform(post("/ciclos/" + ciclo.getId() + "/periodos/" + periodoId)
+                .with(user(principalInstitucional())).with(csrf())
+                .param("nombre", "Anual")
+                .param("fechaInicio", "2026-07-01")
+                .param("fechaFin", "2026-03-01"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/ciclos/" + ciclo.getId()))
+            .andExpect(flash().attribute("error",
+                org.hamcrest.Matchers.containsString("anterior a la de inicio")));
+    }
+
+    @Test
+    @DisplayName("Comisiones filtra por ano: el enlace del detalle llega ya filtrado")
+    void comisionesFiltraPorCiclo() throws Exception {
+        CicloLectivo dosMilVeintiseis = cicloCon(2026, "Anual");
+        CicloLectivo dosMilVeintisiete = cicloCon(2027, "Anual");
+        enPreparacion(dosMilVeintisiete);
+        comisionEn(dosMilVeintiseis, "QZ-26");
+        comisionEn(dosMilVeintisiete, "QZ-27");
+
+        String html = mockMvc.perform(get("/comisiones")
+                .param("ciclo", dosMilVeintisiete.getId().toString())
+                .with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("QZ-27")
+            .as("la de 2026 no es de este ano")
+            .doesNotContain("QZ-26");
+    }
+
+    @Test
+    @DisplayName("Copiar la oferta arranca del ano anterior hacia el mas nuevo")
+    void copiarArrancaDelAnioAnterior() throws Exception {
+        CicloLectivo anterior = cicloCon(2026, "Anual");
+        CicloLectivo nuevo = cicloCon(2027, "Anual");
+        enPreparacion(nuevo);
+
+        String html = mockMvc.perform(get("/ciclos").with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("antes origen y destino arrancaban los dos en el mas nuevo, y apretar Copiar "
+                + "sin tocar nada respondia 'el origen y el destino son el mismo'")
+            .containsPattern("<option value=\"" + anterior.getId()
+                             + "\"\\s+selected=\"selected\">2026</option>")
+            .contains("/ciclos/" + nuevo.getId() + "/copiar-desde");
+    }
+
     // ========================================================================
     //  helpers
     // ========================================================================
@@ -444,6 +789,20 @@ class CiclosLectivosIT {
         ciclo.agregarPeriodo(PeriodoLectivo.builder()
             .nombre(nombrePeriodo).fechaInicio(desde).fechaFin(hasta).orden((short) 1).build());
         return cicloRepository.save(ciclo);
+    }
+
+    // Pasa a preparacion un ciclo de los helpers, que nacen ACTIVO. No devuelve lo que guardo a
+    // proposito: es una copia desprendida, y sus periodos no se pueden leer fuera de la sesion.
+    // Se sigue usando la instancia original, que es la que conoce sus periodos.
+    private void enPreparacion(CicloLectivo ciclo) {
+        ciclo.setEstado(EstadoCiclo.PREPARACION);
+        cicloRepository.save(ciclo);
+    }
+
+    private void fijarCierre(Long cicloId, LocalDateTime cuando) {
+        CicloLectivo c = cicloRepository.findById(cicloId).get();
+        c.setCerradoEn(cuando);
+        cicloRepository.save(c);
     }
 
     /**

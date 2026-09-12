@@ -35,6 +35,19 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+            <!-- El ano va al servidor y no se filtra en el navegador como el texto y el estado:
+                 el detalle de un ciclo enlaza aca con ?ciclo=, y el enlace tiene que llegar ya
+                 filtrado sin depender de un script. select-menu.js dispara el change del
+                 select oculto, asi que el onchange sirve igual con el desplegable propio. -->
+            <form th:action="@{/comisiones}" method="get" class="filtro__ciclo">
+                <select name="ciclo" data-menu aria-label="Filtrar por ciclo lectivo"
+                        onchange="this.form.submit()">
+                    <option value="">Todos los años</option>
+                    <option th:each="cl : ${ciclos}" th:value="${cl.id}"
+                            th:selected="${cl.id == cicloElegido}"
+                            th:text="|Ciclo ${cl.anio}|">Ciclo 2026</option>
+                </select>
+            </form>
             <!-- Mismo selector de densidad que el listado de docentes. La preferencia es
                  global --la guarda densidad.js-- pero el control conviene tenerlo en los
                  cuatro catalogos, que es donde el alto de fila cambia algo. -->
@@ -141,10 +154,17 @@
                                 Ninguna comisión coincide con la búsqueda.
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(comisiones)}">
+                        <tr th:if="${#lists.isEmpty(comisiones) and cicloElegido == null}">
                             <td colspan="7" class="table__empty">
                                 Todavía no cargaste ninguna comisión.
                                 <a th:href="@{/comisiones/nueva}">Creá la primera</a>.
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(comisiones) and cicloElegido != null}">
+                            <td colspan="7" class="table__empty">
+                                Este ciclo todavía no tiene comisiones.
+                                <a th:href="@{/comisiones/nueva}">Cargá una</a>, o copiá la
+                                oferta de otro año desde <a th:href="@{/ciclos}">Ciclos lectivos</a>.
                             </td>
                         </tr>
                     </tbody>

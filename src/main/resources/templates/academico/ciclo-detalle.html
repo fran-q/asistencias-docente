@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Ciclo lectivo - Visum</title>
+</head>
+<body>
+    <!-- La pantalla de un ciclo (V027). Hasta aca todo vivia en el listado, que despues del alta
+         no dejaba cambiar nada: ni las fechas, ni los periodos, ni el ano. Aca se ve lo que
+         cuelga del ciclo y se corrige; el listado quedo para ver todos juntos y abrir uno nuevo.
+
+         Todo va adentro de la section, scripts incluidos si alguna vez hacen falta: el layout
+         inserta la plantilla por ella y descarta lo demas sin avisar. -->
+    <section class="ciclo-detalle">
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1 th:text="|Ciclo lectivo ${ciclo.anio}|">Ciclo lectivo 2026</h1>
+                <p class="page-header__subtitle">
+                    <span class="badge"
+                          th:classappend="${ciclo.estado.name() == 'ACTIVO'} ? 'badge--success'
+                                        : (${cerrado} ? 'badge--neutral' : 'badge--warning')"
+                          th:text="${ciclo.estado.etiqueta}">Activo</span>
+                    <span class="badge badge--warning"
+                          th:if="${ciclo.estado.name() == 'ACTIVO' and ciclo.fechaFin.isBefore(hoy)}"
+                          title="Las fechas de este ciclo ya pasaron pero sigue activo: mientras lo esté, se le siguen generando ausencias.">
+                        Vencido
+                    </span>
+                    <span th:text="|Del ${#temporals.format(ciclo.fechaInicio, 'dd/MM/yyyy')} al ${#temporals.format(ciclo.fechaFin, 'dd/MM/yyyy')}|">
+                        Del 01/03/2026 al 15/12/2026
+                    </span>
+                </p>
+            </div>
+            <a th:href="@{/ciclos}" class="btn btn--ghost">Volver a ciclos</a>
+        </header>
+
+        <!-- Los rechazos de los formularios de esta pantalla --datos y periodos-- vuelven aca
+             y no como aviso flotante: son errores de lo que se cargo, y tienen que quedar a la
+             vista mientras se corrige. Las acciones --activar, cerrar, reabrir-- van por aviso. -->
+        <div th:if="${error}" class="alert alert--error" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <div class="alert alert--info" role="note" th:if="${cerrado}">
+            <p>
+                Este ciclo está cerrado: sus fechas, sus períodos, sus comisiones y sus horarios
+                son de solo lectura. Las asistencias de ese año se siguen pudiendo corregir desde
+                Asistencias.
+            </p>
+        </div>
+
+        <!-- ================= Datos del ciclo ================= -->
+        <div class="card card--form">
+            <h2>Datos del ciclo</h2>
+
+            <form th:unless="${cerrado}" th:action="@{/ciclos/{id}/datos(id=${ciclo.id})}"
+                  method="post" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="anio">Año</label>
+                        <!-- Deshabilitado fuera de preparacion. Un campo deshabilitado no se
+                             envia, y el servicio se queda con el ano que estaba. -->
+                        <input type="number" id="anio" name="anio" min="2000" max="2200"
+                               th:value="${ciclo.anio}" th:disabled="${!enPreparacion}">
+                        <small class="form-hint" th:if="${enPreparacion}">
+                            Se puede corregir mientras el ciclo está en preparación.
+                        </small>
+                        <small class="form-hint" th:unless="${enPreparacion}">
+                            Ya corrió: sus asistencias son de ese año.
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaInicio">Desde <span class="required">*</span></label>
+                        <input type="date" id="fechaInicio" name="fechaInicio" required
+                               th:value="${ciclo.fechaInicio}">
+                    </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Hasta <span class="required">*</span></label>
+                        <input type="date" id="fechaFin" name="fechaFin" required
+                               th:value="${ciclo.fechaFin}">
+                    </div>
+                </div>
+                <small class="form-hint">
+                    Mover las fechas no crea ni borra nada hacia atrás. Lo que no se puede es
+                    dejar afuera a un período, ni a un día que ya tiene asistencias.
+                </small>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary"
+                            data-texto-enviando="Guardando...">Guardar</button>
+                </div>
+            </form>
+
+            <dl class="kv" th:if="${cerrado}">
+                <dt>Año</dt>
+                <dd th:text="${ciclo.anio}">2026</dd>
+                <dt>Desde</dt>
+                <dd th:text="${#temporals.format(ciclo.fechaInicio, 'dd/MM/yyyy')}">01/03/2026</dd>
+                <dt>Hasta</dt>
+                <dd th:text="${#temporals.format(ciclo.fechaFin, 'dd/MM/yyyy')}">15/12/2026</dd>
+            </dl>
+
+            <!-- Quien lo cerro y quien lo reabrio. El cierre se conserva aunque despues se haya
+                 reabierto (V027): si fue un error, es lo primero que alguien va a querer ver. -->
+            <dl class="kv ciclo-detalle__registro"
+                th:if="${ciclo.cerradoEn != null or ciclo.reabiertoEn != null}">
+                <th:block th:if="${ciclo.cerradoEn != null}">
+                    <dt th:text="${cerrado} ? 'Cerrado' : 'Último cierre'">Cerrado</dt>
+                    <dd>
+                        <span th:text="${#temporals.format(ciclo.cerradoEn, 'dd/MM/yyyy HH:mm')}">20/12/2026 10:00</span>
+                        <span th:if="${detalle.cerradoPor() != null}"
+                              th:text="|por ${detalle.cerradoPor()}|">por institucion</span>
+                    </dd>
+                </th:block>
+                <th:block th:if="${ciclo.reabiertoEn != null}">
+                    <dt>Reabierto</dt>
+                    <dd>
+                        <span th:text="${#temporals.format(ciclo.reabiertoEn, 'dd/MM/yyyy HH:mm')}">21/12/2026 09:00</span>
+                        <span th:if="${detalle.reabiertoPor() != null}"
+                              th:text="|por ${detalle.reabiertoPor()}|">por institucion</span>
+                    </dd>
+                </th:block>
+            </dl>
+        </div>
+
+        <!-- ================= Periodos ================= -->
+        <div class="card">
+            <h2>Períodos</h2>
+            <p class="form-hint" th:unless="${cerrado}">
+                Los nombres son los que emparejan un año con el siguiente cuando se copia la
+                oferta: si renombrás uno, conviene que el ciclo del año que viene lo repita igual.
+                Un período se puede quitar solo si no tiene ninguna comisión.
+            </p>
+
+            <!-- Una fila por periodo, cada una con su formulario. Quitar va en un formulario
+                 aparte y no anidado: HTML no admite un form adentro de otro. -->
+            <div class="periodo-item" th:each="p : ${ciclo.periodos}">
+                <form class="periodo-item__form" th:unless="${cerrado}"
+                      th:action="@{/ciclos/{id}/periodos/{pid}(id=${ciclo.id},pid=${p.id})}"
+                      method="post" novalidate>
+                    <div class="form-group">
+                        <label th:for="|periodo-nombre-${p.id}|">Nombre</label>
+                        <input type="text" th:id="|periodo-nombre-${p.id}|" name="nombre"
+                               maxlength="60" required th:value="${p.nombre}">
+                    </div>
+                    <div class="form-group">
+                        <label th:for="|periodo-desde-${p.id}|">Desde</label>
+                        <input type="date" th:id="|periodo-desde-${p.id}|" name="fechaInicio"
+                               required th:value="${p.fechaInicio}">
+                    </div>
+                    <div class="form-group">
+                        <label th:for="|periodo-hasta-${p.id}|">Hasta</label>
+                        <input type="date" th:id="|periodo-hasta-${p.id}|" name="fechaFin"
+                               required th:value="${p.fechaFin}">
+                    </div>
+                    <button type="submit" class="btn btn--ghost btn--sm"
+                            data-texto-enviando="Guardando...">Guardar</button>
+                </form>
+
+                <div class="periodo-item__lectura" th:if="${cerrado}">
+                    <strong th:text="${p.nombre}">Anual</strong>
+                    <span class="text-muted"
+                          th:text="|${#temporals.format(p.fechaInicio, 'dd/MM/yyyy')} al ${#temporals.format(p.fechaFin, 'dd/MM/yyyy')}|">01/03/2026 al 15/12/2026</span>
+                </div>
+
+                <span class="periodo-item__comisiones text-muted"
+                      th:text="${detalle.comisionesDe(p.id) == 1} ? '1 comisión'
+                             : (${detalle.comisionesDe(p.id)} + ' comisiones')">2 comisiones</span>
+
+                <form th:if="${detalle.sePuedeQuitar(p.id)}"
+                      th:action="@{/ciclos/{id}/periodos/{pid}/quitar(id=${ciclo.id},pid=${p.id})}"
+                      method="post" class="inline-form"
+                      th:data-confirm="|¿Quitar el período ${p.nombre}?|"
+                      data-confirm-detail="No tiene ninguna comisión, así que no se pierde nada: deja de aparecer al elegir el período de una comisión."
+                      data-confirm-action="Quitar"
+                      data-confirm-style="danger">
+                    <button type="submit" class="btn btn--ghost btn--danger btn--sm">Quitar</button>
+                </form>
+            </div>
+
+            <p class="ciclo-detalle__pie" th:if="${detalle.totalDeComisiones() > 0}">
+                <a th:href="@{/comisiones(ciclo=${ciclo.id})}"
+                   th:text="${detalle.totalDeComisiones() == 1} ? 'Ver la comisión de este ciclo →'
+                          : ('Ver las ' + ${detalle.totalDeComisiones()} + ' comisiones de este ciclo →')">Ver las comisiones de este ciclo →</a>
+            </p>
+            <p class="ciclo-detalle__pie text-muted" th:if="${detalle.totalDeComisiones() == 0}">
+                Todavía no tiene comisiones. Se cargan desde
+                <a th:href="@{/comisiones/nueva}">Comisiones</a>, o copiando la oferta de otro año
+                desde <a th:href="@{/ciclos}">el listado de ciclos</a>.
+            </p>
+        </div>
+
+        <!-- ================= Agregar un periodo ================= -->
+        <div class="card card--form" th:unless="${cerrado}">
+            <h2>Agregar un período</h2>
+            <form th:action="@{/ciclos/{id}/periodos(id=${ciclo.id})}" method="post" novalidate>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nuevo-nombre">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nuevo-nombre" name="nombre" maxlength="60" required
+                               placeholder="1er cuatrimestre, 2do cuatrimestre...">
+                    </div>
+                    <div class="form-group">
+                        <label for="nuevo-desde">Desde <span class="required">*</span></label>
+                        <input type="date" id="nuevo-desde" name="fechaInicio" required
+                               th:attr="min=${ciclo.fechaInicio},max=${ciclo.fechaFin}">
+                    </div>
+                    <div class="form-group">
+                        <label for="nuevo-hasta">Hasta <span class="required">*</span></label>
+                        <input type="date" id="nuevo-hasta" name="fechaFin" required
+                               th:attr="min=${ciclo.fechaInicio},max=${ciclo.fechaFin}">
+                    </div>
+                </div>
+                <small class="form-hint">Tiene que caer dentro del ciclo. Se suma al final de la lista.</small>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--secondary"
+                            data-texto-enviando="Agregando...">Agregar período</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ================= Dias sin clase ================= -->
+        <div class="card card--form">
+            <h2>Días sin clase dentro del ciclo</h2>
+            <ul class="lista-plana" th:unless="${#lists.isEmpty(detalle.diasSinClase())}">
+                <li th:each="d : ${detalle.diasSinClase()}">
+                    <strong th:text="${#temporals.format(d.fecha, 'dd/MM/yyyy')}">25/05/2026</strong>
+                    <span class="text-muted" th:text="${d.motivo}">Revolución de Mayo</span>
+                </li>
+            </ul>
+            <p class="text-muted" th:if="${#lists.isEmpty(detalle.diasSinClase())}">
+                No hay ninguno cargado. Sin ellos, un feriado genera una ausencia automática para
+                cada docente que tenía clase.
+            </p>
+            <div class="form-actions">
+                <a th:href="@{/dias-sin-clase(anio=${ciclo.anio})}" class="btn btn--ghost btn--sm">
+                    Ir a días sin clase
+                </a>
+            </div>
+        </div>
+
+        <!-- ================= Estado ================= -->
+        <div class="card card--form">
+            <h2>Estado</h2>
+            <p class="text-muted" th:if="${enPreparacion}">
+                En preparación: se arma la oferta, pero todavía no se toma asistencia contra ella
+                ni se generan ausencias.
+            </p>
+            <p class="text-muted" th:if="${ciclo.estado.name() == 'ACTIVO'}">
+                Activo: es el ciclo contra el que se toma asistencia y se generan las ausencias.
+            </p>
+
+            <div class="form-actions">
+                <form th:if="${enPreparacion}"
+                      th:action="@{/ciclos/{id}/activar(id=${ciclo.id})}" method="post"
+                      class="inline-form"
+                      data-confirm="¿Activar este ciclo?"
+                      data-confirm-detail="Desde ese momento se toma asistencia contra su oferta y se generan sus ausencias. Solo puede haber un ciclo activo a la vez."
+                      data-confirm-action="Activar">
+                    <input type="hidden" name="volver" value="detalle">
+                    <button type="submit" class="btn btn--primary">Activar</button>
+                </form>
+                <form th:unless="${cerrado}"
+                      th:action="@{/ciclos/{id}/cerrar(id=${ciclo.id})}" method="post"
+                      class="inline-form"
+                      data-confirm="¿Cerrar el ciclo?"
+                      data-confirm-detail="Su oferta queda congelada: no se van a poder editar sus fechas, sus períodos, sus comisiones ni sus horarios. Las asistencias de ese año sí se van a poder seguir corrigiendo. Si fue un error, se puede reabrir mientras no haya otro ciclo activo."
+                      data-confirm-action="Cerrar"
+                      data-confirm-style="danger">
+                    <input type="hidden" name="volver" value="detalle">
+                    <button type="submit" class="btn btn--ghost btn--danger">Cerrar ciclo</button>
+                </form>
+                <form th:if="${detalle.sePuedeReabrir()}"
+                      th:action="@{/ciclos/{id}/reabrir(id=${ciclo.id})}" method="post"
+                      class="inline-form"
+                      data-confirm="¿Reabrir el ciclo?"
+                      data-confirm-detail="Vuelve a quedar en preparación y su oferta se puede editar otra vez. Para tomar asistencia contra ella hay que activarlo. Queda registrado quién lo reabrió."
+                      data-confirm-action="Reabrir">
+                    <button type="submit" class="btn btn--secondary">Reabrir</button>
+                </form>
+                <form th:if="${detalle.sePuedeBorrar()}"
+                      th:action="@{/ciclos/{id}/borrar(id=${ciclo.id})}" method="post"
+                      class="inline-form"
+                      data-confirm="¿Borrar este ciclo?"
+                      data-confirm-detail="Se borra de verdad, con sus períodos. No tiene ninguna comisión, así que no se pierde historial."
+                      data-confirm-action="Borrar"
+                      data-confirm-style="danger">
+                    <button type="submit" class="btn btn--ghost btn--danger">Borrar ciclo</button>
+                </form>
+            </div>
+
+            <small class="form-hint" th:if="${cerrado and !detalle.sePuedeReabrir()}"
+                   th:text="${detalle.motivoParaNoReabrir()}">Hay otro ciclo activo.</small>
+            <small class="form-hint" th:if="${enPreparacion and !detalle.sePuedeBorrar()}">
+                Tiene comisiones cargadas, así que no se puede borrar. Si el año o las fechas
+                están mal, corregilos arriba.
+            </small>
+        </div>
+    </section>
+</body>
+</html>
