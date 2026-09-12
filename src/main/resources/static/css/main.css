@@ -187,6 +187,12 @@
     --t-slow: 300ms;
     --ease:   cubic-bezier(.22, .68, .28, 1);
 
+    /* El cambio de tema no es un escalón más. No responde a un clic: cambia la
+       luz de toda la pantalla, y de oscuro a claro, de golpe, encandila. Por
+       eso dura más y no usa --ease (ver "Cambio de tema"). Va en ms porque
+       tema.js la lee para saber cuándo terminó. */
+    --t-tema: 500ms;
+
     /* Columnas que cambian con el ancho. Se resuelven con media queries sobre
        la variable y no repitiendo el layout: así una sola regla define la
        estructura y la media query sólo dice cuántas columnas entran. */
@@ -654,6 +660,40 @@ input, select, button, textarea { font-family: inherit; }
 .tema-toggle__luna { display: none; }
 :root[data-tema="claro"] .tema-toggle__luna { display: block; }
 :root[data-tema="claro"] .tema-toggle__sol  { display: none; }
+
+/* ---- Cambio de tema ----
+   Un tema se funde en el otro en vez de saltar. Lo dispara tema.js; acá vive
+   cuánto dura y cómo se ve.
+
+   Camino principal: el navegador saca una foto de la pantalla, aplica el tema
+   nuevo y funde una en la otra. Cambia todo a la vez —degradados e iconos
+   incluidos, que una transición de color no sabe interpolar— y una tabla de
+   cientos de filas cuesta lo mismo que una pantalla vacía.
+
+   No se acorta con movimiento reducido, y no es un descuido: un fundido no
+   mueve nada de lugar, y a quien le molesta el movimiento le molesta más un
+   destello de pantalla completa. La regla de MOVIMIENTO REDUCIDO no alcanza a
+   estos pseudoelementos, y la del camino alternativo le gana por especificidad. */
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: var(--t-tema);
+    animation-timing-function: ease-in-out;
+}
+
+/* Camino alternativo, para navegadores sin esa función (Chrome 109, el último
+   que corre en Windows 7, entre otros): cada elemento funde sus colores
+   mientras dura el cambio, y solo entonces. El resto del tiempo el hover
+   necesita sus 120ms, no medio segundo. */
+:root.tema-cambiando,
+:root.tema-cambiando *,
+:root.tema-cambiando *::before,
+:root.tema-cambiando *::after {
+    transition-property: background-color, color, border-color, outline-color,
+                         fill, stroke, box-shadow, text-decoration-color !important;
+    transition-duration: var(--t-tema) !important;
+    transition-timing-function: ease-in-out !important;
+    transition-delay: 0s !important;
+}
 
 /* ---- Cajón en pantallas chicas ----
    Debajo de 1000px la barra lateral sale del flujo y entra como cajón. La
