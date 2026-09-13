@@ -26,6 +26,9 @@
         return (t || '').toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '');
     }
 
+    // Numera las listas de los combos sin id, para que cada opción tenga un id único.
+    var contador = 0;
+
     function construir(select) {
         var contenedor = document.createElement('div');
         contenedor.className = 'buscable';
@@ -42,6 +45,11 @@
         var lista = document.createElement('ul');
         lista.className = 'buscable__lista';
         lista.setAttribute('role', 'listbox');
+        // Con esto el lector de pantalla sabe qué lista maneja el campo y cuál opción está
+        // resaltada (aria-activedescendant, más abajo). Sin eso anunciaba un campo de texto
+        // común: no decía cuántas opciones quedaban ni en cuál estaba parado.
+        lista.id = (select.id || 'buscable-' + (++contador)) + '-opciones';
+        input.setAttribute('aria-controls', lista.id);
         lista.hidden = true;
 
         contenedor.appendChild(input);
@@ -80,6 +88,7 @@
                 var li = document.createElement('li');
                 li.className = 'buscable__opcion';
                 li.setAttribute('role', 'option');
+                li.id = lista.id + '-' + i;
                 li.textContent = o.texto;
                 li.dataset.valor = o.valor;
                 if (o.valor === select.value) li.classList.add('buscable__opcion--actual');
@@ -98,9 +107,16 @@
         function marcarResaltado() {
             Array.prototype.forEach.call(lista.children, function (li, i) {
                 li.classList.toggle('buscable__opcion--activa', i === resaltado);
+                if (li.getAttribute('role') === 'option') li.setAttribute('aria-selected', 'false');
             });
             var activa = lista.children[resaltado];
             if (activa && activa.scrollIntoView) activa.scrollIntoView({ block: 'nearest' });
+            if (activa && activa.id) {
+                input.setAttribute('aria-activedescendant', activa.id);
+                activa.setAttribute('aria-selected', 'true');
+            } else {
+                input.removeAttribute('aria-activedescendant');
+            }
         }
 
         function abrir() {
@@ -112,6 +128,7 @@
         function cerrar() {
             lista.hidden = true;
             input.setAttribute('aria-expanded', 'false');
+            input.removeAttribute('aria-activedescendant');
             // Se repone el texto de lo que este realmente elegido: si quedo escrito
             // algo a medias, el campo mostraria una cosa y el formulario mandaria otra.
             input.value = textoActual();

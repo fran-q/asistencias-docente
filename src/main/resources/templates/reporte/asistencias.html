@@ -31,7 +31,7 @@
                     <option value="">Todos</option>
                     <option th:each="d : ${docentes}"
                             th:value="${d.id}"
-                            th:text="|${d.nombreCompleto}|"
+                            th:text="|${d.nombreCompleto} — ${!#strings.isEmpty(d.legajo) ? 'Leg. ' + d.legajo : 'DNI ' + d.persona.dni}|"
                             th:selected="${d.id == filtro.docenteId}">Apellido, Nombre</option>
                 </select>
             </div>
@@ -51,7 +51,7 @@
                     <option value="">Todas</option>
                     <option th:each="m : ${materias}"
                             th:value="${m.id}"
-                            th:text="|${m.codigo} - ${m.nombre}|"
+                            th:text="|${m.codigo} — ${m.nombre}|"
                             th:selected="${m.id == filtro.materiaId}">MAT - Nombre</option>
                 </select>
             </div>
