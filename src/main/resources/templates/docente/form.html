@@ -280,7 +280,7 @@
                 <form th:unless="${docente.activo}"
                       th:action="@{/docentes/{id}/alta(id=${docente.id})}" method="post"
                       class="inline-form">
-                    <button type="submit" class="btn btn--ghost" data-texto-enviando="Reactivando...">Reactivar docente</button>
+                    <button type="submit" class="btn btn--ghost btn--success" data-texto-enviando="Reactivando...">Reactivar docente</button>
                 </form>
             </div>
         </div>

@@ -49,12 +49,12 @@
         </div>
 
         <!-- ================= Datos del ciclo ================= -->
-        <div class="card card--form">
+        <div class="card">
             <h2>Datos del ciclo</h2>
 
             <form th:unless="${cerrado}" th:action="@{/ciclos/{id}/datos(id=${ciclo.id})}"
                   method="post" novalidate>
-                <div class="form-row">
+                <div class="form-row form-row--3">
                     <div class="form-group">
                         <label for="anio">Año</label>
                         <!-- Deshabilitado fuera de preparacion. Un campo deshabilitado no se
@@ -189,10 +189,10 @@
         </div>
 
         <!-- ================= Agregar un periodo ================= -->
-        <div class="card card--form" th:unless="${cerrado}">
+        <div class="card" th:unless="${cerrado}">
             <h2>Agregar un período</h2>
             <form th:action="@{/ciclos/{id}/periodos(id=${ciclo.id})}" method="post" novalidate>
-                <div class="form-row">
+                <div class="form-row form-row--3">
                     <div class="form-group">
                         <label for="nuevo-nombre">Nombre <span class="required">*</span></label>
                         <input type="text" id="nuevo-nombre" name="nombre" maxlength="60" required
@@ -218,7 +218,7 @@
         </div>
 
         <!-- ================= Dias sin clase ================= -->
-        <div class="card card--form">
+        <div class="card">
             <h2>Días sin clase dentro del ciclo</h2>
             <ul class="lista-plana" th:unless="${#lists.isEmpty(detalle.diasSinClase())}">
                 <li th:each="d : ${detalle.diasSinClase()}">
@@ -238,7 +238,7 @@
         </div>
 
         <!-- ================= Estado ================= -->
-        <div class="card card--form">
+        <div class="card">
             <h2>Estado</h2>
             <p class="text-muted" th:if="${enPreparacion}">
                 En preparación: se arma la oferta, pero todavía no se toma asistencia contra ella

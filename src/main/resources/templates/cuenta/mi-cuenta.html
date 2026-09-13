@@ -17,15 +17,19 @@
 
         <div class="card">
             <dl class="kv">
-                <dt>Usuario</dt>
+                <dt>Usuario del sistema</dt>
                 <dd th:text="${usuario.username}">usuario</dd>
 
-                <dt>Nombre</dt>
+                <dt>Nombre completo</dt>
                 <dd th:text="${usuario.nombreParaMostrar}">Nombre Apellido</dd>
 
                 <dt>Correo</dt>
                 <dd th:text="${usuario.email}">correo@ejemplo.com</dd>
 
+                <!-- La cuenta de la institución confirma su correo al darse de alta: que diga
+                     VERIFICADO no le informa nada. En las cuentas de administrador sí
+                     informa, porque las crea la institución y pueden estar sin confirmar. -->
+                <th:block sec:authorize="!hasRole('INSTITUCION')">
                 <dt>Estado del correo</dt>
                 <dd>
                     <span th:if="${verificado}" class="badge badge--success">VERIFICADO</span>
@@ -35,6 +39,7 @@
                         Confirmado el ...
                     </small>
                 </dd>
+                </th:block>
             </dl>
 
             <!--
@@ -54,7 +59,7 @@
             -->
             <div class="form-actions">
                 <form th:action="@{/logout}" method="post" class="inline-form">
-                    <button type="submit" class="btn btn--ghost"
+                    <button type="submit" class="btn btn--ghost btn--danger"
                             data-texto-enviando="Saliendo...">Cerrar sesión</button>
                 </form>
             </div>

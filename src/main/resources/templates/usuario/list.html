@@ -129,7 +129,7 @@
                             <form th:if="${u.cambioPasswordBloqueado}"
                                   th:action="@{/usuarios/{id}/habilitar-cambio-password(id=${u.id})}"
                                   method="post" class="inline-form">
-                                <button type="submit" class="btn btn--ghost btn--sm"
+                                <button type="submit" class="btn btn--ghost btn--sm btn--success"
                                         title="Esta cuenta cambió su contraseña hace menos de 24 horas. Habilitarle un cambio no te muestra ni te deja elegir su contraseña: solo le permite volver a recuperarla por correo."
                                         onclick="return confirm('Habilitar un cambio de contraseña para esta cuenta?')">
                                     Habilitar cambio

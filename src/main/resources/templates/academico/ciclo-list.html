@@ -75,7 +75,7 @@
                                       th:data-confirm="|¿Activar el ciclo ${c.anio}?|"
                                       data-confirm-detail="Desde ese momento se toma asistencia contra su oferta y se generan sus ausencias. Solo puede haber un ciclo activo a la vez."
                                       data-confirm-action="Activar">
-                                    <button type="submit" class="btn btn--ghost btn--sm">Activar</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--success">Activar</button>
                                 </form>
                                 <form th:if="${c.estado.name() != 'CERRADO'}"
                                       th:action="@{/ciclos/{id}/cerrar(id=${c.id})}" method="post"
@@ -110,7 +110,7 @@
                     <p th:text="${error}">Error</p>
                 </div>
 
-                <div class="form-row">
+                <div class="form-row form-row--3">
                     <div class="form-group">
                         <label for="anio">Año <span class="required">*</span></label>
                         <input type="number" id="anio" name="anio" required min="2000" max="2200"
@@ -136,7 +136,7 @@
                 </p>
 
                 <div id="periodos">
-                    <div class="form-row periodo-fila">
+                    <div class="form-row form-row--3 periodo-fila">
                         <div class="form-group">
                             <label for="periodo-nombre-0">Nombre</label>
                             <input type="text" id="periodo-nombre-0" name="periodoNombre" maxlength="60" value="Anual"
@@ -153,7 +153,7 @@
                     </div>
                 </div>
 
-                <button type="button" class="btn btn--ghost btn--sm" id="agregar-periodo">
+                <button type="button" class="btn btn--ghost btn--sm btn--success periodo-agregar" id="agregar-periodo">
                     + Agregar período
                 </button>
 

@@ -47,6 +47,11 @@ public class GrillaController {
         if (carreraId == null && !carreras.isEmpty()) {
             carreraId = carreras.get(0).getId();
         }
+        // Un anio por vez, arrancando en 1ro. Con todos juntos las cohortes se apilan en las
+        // mismas franjas y la grilla deja de mostrar que esta libre y que se superpone.
+        if (carreraId != null && anio == null) {
+            anio = (short) 1;
+        }
 
         if (carreraId != null) {
             GrillaSemanalDto grilla = grillaService.cargarGrillaPara(carreraId, anio, cicloId);

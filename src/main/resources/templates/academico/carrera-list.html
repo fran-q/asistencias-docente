@@ -75,7 +75,6 @@
                             <th data-orden="texto">Nombre</th>
                             <th data-orden="numero">Duración</th>
                             <th data-orden="texto">Estado</th>
-                            <th data-orden="fecha">Última actualización</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
@@ -91,10 +90,6 @@
                             <td th:attr="data-valor=${c.activo} ? '0' : '1'">
                                 <span th:if="${c.activo}"   class="badge badge--success">Activa</span>
                                 <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>
-                            </td>
-                            <td>
-                                <span th:if="${c.actualizadoEn}"
-                                      th:text="${#temporals.format(c.actualizadoEn, 'dd/MM/yyyy HH:mm')}">-</span>
                             </td>
                             <td class="table__actions">
                                 <!-- Que materias conforman hoy este plan. El listado general
@@ -118,17 +113,17 @@
                                 <form th:unless="${c.activo}"
                                       th:action="@{/carreras/{id}/alta(id=${c.id})}" method="post"
                                       class="inline-form">
-                                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Reactivando...">Reactivar</button>
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--success" data-texto-enviando="Reactivando...">Reactivar</button>
                                 </form>
                             </td>
                         </tr>
                         <tr class="table__empty-fila" hidden>
-                            <td colspan="6" class="table__empty">
+                            <td colspan="5" class="table__empty">
                                 Ninguna carrera coincide con la búsqueda.
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(carreras)}">
-                            <td colspan="6" class="table__empty">
+                            <td colspan="5" class="table__empty">
                                 Todavía no cargaste ninguna carrera.
                                 <a th:href="@{/carreras/nueva}">Creá la primera</a>.
                             </td>

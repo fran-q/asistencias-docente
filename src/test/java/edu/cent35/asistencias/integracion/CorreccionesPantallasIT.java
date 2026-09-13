@@ -311,22 +311,37 @@ class CorreccionesPantallasIT {
     }
 
     @Test
-    @DisplayName("La grilla ofrece filtrar por año y respeta el filtro")
+    @DisplayName("El listado de carreras tampoco muestra la última actualización")
+    void carrerasSinUltimaActualizacion() throws Exception {
+        mockMvc.perform(get("/carreras").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("Última actualización"))))
+            .andExpect(content().string(containsString("Ver materias")));
+    }
+
+    @Test
+    @DisplayName("La grilla muestra un año por vez, arranca en 1° y no ofrece \"Todos\"")
     void grillaFiltraPorAnio() throws Exception {
-        // Sin filtro: la materia de 2do aparece.
-        mockMvc.perform(get("/grilla").param("carreraId", carreraId.toString())
+        // Sin año elegido arranca en 1°: la materia de 2do no aparece, y lo dice sin
+        // sugerir que la carrera esté vacía.
+        String html = mockMvc.perform(get("/grilla").param("carreraId", carreraId.toString())
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("id=\"anio\"")))
-            .andExpect(content().string(containsString("MCOR")));
+            .andExpect(content().string(not(containsString("MCOR"))))
+            .andExpect(content().string(containsString("no tiene horarios")))
+            .andReturn().getResponse().getContentAsString();
+        int selector = html.indexOf("id=\"anio\"");
+        assertThat(html.substring(selector, html.indexOf("</select>", selector)))
+            .as("con todos los años juntos las cohortes se pisan en las mismas franjas")
+            .doesNotContain("Todos");
 
-        // Filtrando por 1er anio no hay nada, y lo dice sin sugerir que la carrera este vacia.
+        // Con 2do elegido, aparece.
         mockMvc.perform(get("/grilla")
-                .param("carreraId", carreraId.toString()).param("anio", "1")
+                .param("carreraId", carreraId.toString()).param("anio", "2")
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
-            .andExpect(content().string(containsString("no tiene horarios")))
-            .andExpect(content().string(containsString("todos los años")));
+            .andExpect(content().string(containsString("MCOR")));
     }
 
     // Principal apuntando a una cuenta que existe en la base. Lo necesitan las pantallas

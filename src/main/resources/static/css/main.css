@@ -482,18 +482,21 @@ input, select, button, textarea { font-family: inherit; }
    detrás de un segundo clic sólo agrega un paso. */
 .lateral__grupo {
     display: block;
-    margin: 14px 0 4px; padding: 0 12px;
-    font-size: .7rem; font-weight: 600;
+    height: 18px; margin: 14px 0 4px; padding: 0 12px;
+    font-size: .76rem; line-height: 18px; font-weight: 600;
     text-transform: uppercase; letter-spacing: .08em;
     color: var(--text-dim);
-    text-decoration: none;
-    transition: color var(--t-fast) var(--ease);
+    text-decoration: underline; text-decoration-color: var(--border-strong);
+    text-underline-offset: 4px;
+    transition: color var(--t-fast) var(--ease), text-decoration-color var(--t-fast) var(--ease),
+                height var(--t-slow) var(--ease), margin var(--t-slow) var(--ease),
+                background-color var(--t-slow) var(--ease);
 }
-/* Es un enlace a la pantalla intermedia del grupo, pero sigue leyéndose como un
-   título: apagado en reposo, porque si compitiera con los destinos de abajo la
-   lista pasaría a tener cuatro niveles de énfasis en vez de dos. El hover es todo
-   el aviso que necesita, y el cursor hace el resto. */
-.lateral__grupo:hover { color: var(--text); text-decoration: none; }
+/* El título del grupo lleva a su pantalla intermedia, y tiene que parecerlo: sigue
+   apagado en reposo --si compitiera con los destinos de abajo la lista tendría cuatro
+   niveles de énfasis en vez de dos-- pero un poco más grande y con un subrayado tenue,
+   que se enciende con el hover. Solo con el hover pasaba desapercibido. */
+.lateral__grupo:hover { color: var(--text); text-decoration-color: currentColor; }
 
 .lateral__link {
     display: flex; align-items: center; gap: 11px;
@@ -535,9 +538,22 @@ input, select, button, textarea { font-family: inherit; }
 /* ---- Estado colapsado: sólo iconos ----
    Los títulos de grupo se convierten en un separador: sin texto no dicen nada,
    pero sin nada en su lugar los tres grupos quedan pegados en una sola lista. */
-:root[data-lateral="cerrado"] .lateral__texto   { display: none; }
+/* Colapsar anima el ancho de la columna y los textos se desvanecen en vez de desaparecer
+   de golpe. Por eso los iconos no se centran con justify-content: se quedan donde
+   estaban, con el relleno justo para caer en el medio de la columna angosta (70px, 10px
+   de margen del nav y del pie, iconos de 18px: 16px a cada lado). Centrados, arrancaban
+   saltando al medio de la columna ancha y recién después viajaban a su lugar. El texto
+   sigue en el HTML: el lector de pantalla lo lee aunque no se vea, cosa que con
+   display:none se perdía. */
+.app { transition: grid-template-columns var(--t-slow) var(--ease); }
+.lateral__texto { transition: opacity var(--t-fast) var(--ease); }
+.lateral__link, .lateral__colapsar, .lateral__marca {
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
+                padding var(--t-slow) var(--ease);
+}
+:root[data-lateral="cerrado"] .lateral__texto   { opacity: 0; }
 :root[data-lateral="cerrado"] .lateral__link,
-:root[data-lateral="cerrado"] .lateral__colapsar { justify-content: center; padding: 0; }
+:root[data-lateral="cerrado"] .lateral__colapsar { padding: 0 16px; }
 /* Colapsada, el titulo se vuelve un separador. pointer-events none porque sigue
    siendo un enlace: sin esto queda una franja de 1px apretable entre dos iconos,
    que solo se puede acertar de casualidad y lleva a una pantalla que no se
@@ -545,9 +561,10 @@ input, select, button, textarea { font-family: inherit; }
 :root[data-lateral="cerrado"] .lateral__grupo {
     height: 1px; margin: 10px 12px; padding: 0;
     background: var(--border); overflow: hidden; color: transparent;
+    text-decoration-color: transparent;
     pointer-events: none;
 }
-:root[data-lateral="cerrado"] .lateral__marca { justify-content: center; padding: 0; }
+:root[data-lateral="cerrado"] .lateral__marca { padding: 0 20px; }
 
 /* ---- Barra superior ---- */
 /* sticky ya alcanza como referencia de la marca centrada: cualquier position
@@ -711,11 +728,12 @@ input, select, button, textarea { font-family: inherit; }
     }
     :root[data-cajon="abierto"] .lateral { transform: translateX(0); }
     /* Colapsar a iconos no tiene sentido dentro del cajón. */
-    :root[data-lateral="cerrado"] .lateral__texto { display: inline; }
+    :root[data-lateral="cerrado"] .lateral__texto { opacity: 1; }
     :root[data-lateral="cerrado"] .lateral__link  { justify-content: flex-start; padding: 0 12px; }
     :root[data-lateral="cerrado"] .lateral__grupo {
         height: auto; margin: 14px 0 4px; padding: 0 12px;
         background: none; color: var(--text-dim);
+        text-decoration-color: var(--border-strong);
     }
     :root[data-lateral="cerrado"] .lateral__marca { justify-content: flex-start; padding: 0 16px; }
 
@@ -926,9 +944,19 @@ input, select, button, textarea { font-family: inherit; }
 .btn--ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
 .btn--ghost:hover { color: var(--text); border-color: var(--border-strong); background: var(--surface-2); }
 
-.btn--ghost.btn--danger { color: var(--on-danger); border-color: var(--borde-danger); }
+/* Botones fantasma con intención. Rojo tenue: las acciones que quitan, cierran o
+   apagan (dar de baja, revocar, cerrar sesión, apagar la cámara). Verde tenue: las que
+   agregan, reactivan o habilitan, y las descargas. El tinte en reposo es lo que avisa
+   antes del clic: sin él, "Cerrar sesión" o "Descargar CSV" se veían iguales a un
+   "Cancelar", y el CSV parecía algo para descartar. */
+.btn--ghost.btn--danger { color: var(--on-danger); border-color: var(--borde-danger);
+                          background: var(--t-danger); }
 .btn--ghost.btn--danger:hover { color: var(--on-danger); border-color: var(--danger);
                                 background: var(--t-danger); }
+.btn--ghost.btn--success { color: var(--on-success); border-color: var(--borde-success);
+                           background: var(--t-success); }
+.btn--ghost.btn--success:hover { color: var(--on-success); border-color: var(--success);
+                                 background: var(--t-success); }
 
 .btn--danger-solid { background: var(--danger); color: #fff; }
 .btn--danger-solid:hover { background: var(--danger); color: #fff; filter: brightness(.9); }
@@ -1040,6 +1068,12 @@ input, select, button, textarea { font-family: inherit; }
 .form-row {
     display: grid; grid-template-columns: var(--form-cols); gap: var(--gap);
 }
+/* Tres campos que van juntos (año, desde, hasta; nombre, desde, hasta). En la grilla de
+   dos columnas el tercero caía solo en una fila nueva y la fila se leía rota. */
+.form-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .form-row--3 { grid-template-columns: 1fr; } }
+/* Agregar otra fila: separado de la última fila y del botón que envía el formulario. */
+.periodo-agregar { margin: var(--space-sm) 0 var(--space); }
 
 .form-hint, .hint {
     display: block; margin-top: 6px;
@@ -1708,7 +1742,6 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
                   font-size: .92rem; color: rgba(255,255,255,.9); }
 .auth__lista svg { flex-shrink: 0; margin-top: 2px; opacity: .8; }
 
-.auth__legal { margin: 0; font-size: .78rem; color: rgba(255,255,255,.62); line-height: 1.6; }
 
 /* El que se desplaza es este, no la pagina: la barra aparece dentro de la columna
    del formulario y el panel de marca no se mueve.

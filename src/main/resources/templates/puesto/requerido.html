@@ -170,7 +170,7 @@
                                       data-confirm="¿Habilitar el modo kiosco en este equipo?"
                                       data-confirm-detail="Este equipo va a registrar entradas y salidas sin ninguna sesión abierta: alcanza con que el docente se acerque a la cámara. Solo tiene sentido si la máquina está en un lugar controlado."
                                       data-confirm-action="Habilitar">
-                                    <button type="submit" class="btn btn--ghost btn--sm"
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--success"
                                             data-texto-enviando="Habilitando...">Habilitar kiosco</button>
                                 </form>
 
@@ -183,7 +183,7 @@
                                       th:data-confirm="|¿Apagar el modo kiosco en ${p.nombre}?|"
                                       data-confirm-detail="El equipo sigue autorizado, pero para tomar asistencia va a hacer falta una sesión abierta. Se puede volver a habilitar desde esa misma máquina."
                                       data-confirm-action="Apagar">
-                                    <button type="submit" class="btn btn--ghost btn--sm"
+                                    <button type="submit" class="btn btn--ghost btn--sm btn--danger"
                                             data-texto-enviando="Apagando...">Apagar kiosco</button>
                                 </form>
 
@@ -204,7 +204,7 @@
 
                                 <a th:if="${p.activo and p.id != idDeEsteEquipo}"
                                    th:href="@{/puestos/{id}/revocar-a-distancia(id=${p.id})}"
-                                   class="btn btn--ghost btn--sm"
+                                   class="btn btn--ghost btn--sm btn--danger"
                                    title="Solo se revoca desde esa misma máquina. Desde acá hace falta un código enviado al correo de la institución.">
                                     Revocar con código
                                 </a>
