@@ -60,6 +60,14 @@
                 <h1>Iniciar sesión</h1>
                 <p>Ingresá con tu cuenta institucional.</p>
 
+                <!-- Llegar al login sin haber pedido salir desconcierta: la persona estaba
+                     trabajando y de golpe está afuera. Decir por qué es lo que evita que lo
+                     tome por un error del sistema. Lo pide SecurityConfig.alLogin. -->
+                <div th:if="${param.expirada}" class="alert alert--info" role="status">
+                    Se cerró tu sesión, por inactividad o porque se reinició el sistema.
+                    Volvé a entrar para seguir.
+                </div>
+
                 <form th:action="@{/login}" method="post">
                     <div class="auth__campos">
                         <div class="form-group" style="margin:0">

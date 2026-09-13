@@ -27,7 +27,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
     // respondía cada .woff2 con la redirección al login, así que el navegador recibía HTML
     // donde esperaba una fuente y la aplicación caía a la tipografía del sistema sin avisar.
     private static final String[] SIN_INTERCEPTAR = {
-        "/css/**", "/js/**", "/img/**", "/fonts/**", "/webjars/**", "/actuator/**"
+        "/css/**", "/js/**", "/img/**", "/fonts/**", "/webjars/**", "/actuator/**",
+        // Renovar la sesión no toca datos de nadie, así que no necesita la institución. Y un
+        // usuario sin verificar tiene que poder renovarla igual: el interceptor de
+        // verificación le contestaría con una redirección a Mi cuenta.
+        "/sesion/**"
     };
 
     /**

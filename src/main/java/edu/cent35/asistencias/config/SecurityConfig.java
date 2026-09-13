@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -184,13 +185,42 @@ public class SecurityConfig {
         porRuta.put(ENDPOINTS_JSON, SecurityConfig::sesionVencidaEnApi);
 
         DelegatingAuthenticationEntryPoint entrada = new DelegatingAuthenticationEntryPoint(porRuta);
-        entrada.setDefaultEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"));
+        entrada.setDefaultEntryPoint(SecurityConfig::alLogin);
         return entrada;
     }
 
+    private static final LoginUrlAuthenticationEntryPoint AL_LOGIN =
+        new LoginUrlAuthenticationEntryPoint("/login");
+
+    /**
+     * Una pantalla pedida sin sesión va al login; si la sesión existía y venció, el login dice
+     * por qué.
+     *
+     * <p>Distinguirlo es lo que evita que parezca un error: quien estaba trabajando y de golpe
+     * ve el formulario de ingreso no sabe si se cortó algo, si lo echaron o si tocó algo mal. El
+     * navegador sigue mandando el identificador de la sesión vieja y el servidor sabe que ya no
+     * es válido: con eso alcanza, sin guardar nada.
+     *
+     * <p>Después de cerrar sesión no aparece, y no es casualidad: el logout borra la cookie
+     * ({@code deleteCookies("JSESSIONID")}), así que el pedido siguiente llega sin identificador
+     * y no con uno vencido.
+     */
+    private static void alLogin(HttpServletRequest request, HttpServletResponse response,
+                                AuthenticationException excepcion)
+            throws IOException, ServletException {
+        if (request.getRequestedSessionId() != null && !request.isRequestedSessionIdValid()) {
+            response.sendRedirect(request.getContextPath() + "/login?expirada");
+            return;
+        }
+        AL_LOGIN.commence(request, response, excepcion);
+    }
+
     private static final RequestMatcher ENDPOINTS_JSON = peticion -> {
-        if (!"POST".equalsIgnoreCase(peticion.getMethod())) return false;
         String ruta = peticion.getRequestURI().substring(peticion.getContextPath().length());
+        // La renovación de la sesión (sesion.js) es un GET, pero del otro lado hay un fetch
+        // igual que en las demás: tiene que recibir un 401 y no el HTML del login.
+        if (ruta.equals("/sesion/mantener")) return true;
+        if (!"POST".equalsIgnoreCase(peticion.getMethod())) return false;
         return ruta.equals("/asistencia/pase/marcar")
             || ruta.startsWith("/reconocimiento/")
             || (ruta.startsWith("/docentes/") && ruta.endsWith("/rostro/registrar"));

@@ -61,15 +61,16 @@
             <a href="javascript:history.back()" class="btn btn--ghost">Volver atrás</a>
         </div>
 
-        <!-- Detalle tecnico: util en desarrollo, discreto para el usuario -->
-        <details class="error-card__detail" th:if="${path != null or message != null}">
+        <!-- Detalle tecnico: lo justo para que soporte encuentre el error en el registro
+             del servidor (codigo, ruta y hora). El mensaje interno de la excepcion no se
+             muestra: para quien usa el sistema no significa nada, y puede traer nombres de
+             tablas o de restricciones de la base (server.error.include-message=never). -->
+        <details class="error-card__detail" th:if="${path != null}">
             <summary>Detalle técnico</summary>
             <dl class="kv">
                 <dt th:if="${status}">Código</dt>      <dd th:if="${status}" th:text="${status}">-</dd>
-                <dt th:if="${error}">Error</dt>        <dd th:if="${error}" th:text="${error}">-</dd>
                 <dt th:if="${path}">Ruta</dt>          <dd th:if="${path}" th:text="${path}">-</dd>
-                <dt th:if="${message}">Mensaje</dt>    <dd th:if="${message}" th:text="${message}">-</dd>
-                <dt th:if="${timestamp}">Fecha/hora</dt><dd th:if="${timestamp}" th:text="${timestamp}">-</dd>
+                <dt th:if="${timestamp}">Fecha y hora</dt><dd th:if="${timestamp}" th:text="${#dates.format(timestamp, 'dd/MM/yyyy HH:mm:ss')}">-</dd>
             </dl>
         </details>
 

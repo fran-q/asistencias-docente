@@ -975,6 +975,23 @@ class AjustesPantallasIT {
 
     // ------------------------------------------------------------------------
 
+    // ========================================================================
+    //  Aviso de cierre de sesión (heurística 1)
+    // ========================================================================
+
+    @Test
+    @DisplayName("Toda pantalla con sesión sabe cuánto dura, para avisar antes del cierre")
+    void laPantallaConoceLaDuracionDeLaSesion() throws Exception {
+        String html = mockMvc.perform(get("/docentes").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("sin la duración, sesion.js no tiene contra qué contar y no avisa nada")
+            .contains("name=\"sesion-segundos\" content=\"1800\"")
+            .contains("/js/comun/sesion.js");
+    }
+
     private UsuarioAutenticado principal(String rol) {
         Rol r = new Rol();
         r.setId((short) 1);

@@ -9,6 +9,8 @@
     <!-- Token CSRF: lo leen los scripts que hacen fetch POST (ej. reconocimiento) -->
     <meta name="_csrf" th:content="${_csrf?.token}">
     <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+    <!-- Cuánto dura la sesión, para que sesion.js avise antes del cierre (SesionAdvice). -->
+    <meta name="sesion-segundos" th:content="${sesionSegundos}" sec:authorize="isAuthenticated()">
     <title th:replace="${title}">Visum</title>
 
     <!--
@@ -268,6 +270,9 @@
                   data-error=${flashError}"
          hidden></div>
 
+    <!-- Primero de todos: su freno de envíos con la sesión cerrada tiene que registrarse
+         antes que el del modal de confirmación. -->
+    <script th:src="@{/js/comun/sesion.js}" defer sec:authorize="isAuthenticated()"></script>
     <script th:src="@{/js/comun/migas.js}" defer></script>
     <script th:src="@{/js/comun/tema.js}" defer></script>
     <script th:src="@{/js/comun/lateral.js}" defer></script>

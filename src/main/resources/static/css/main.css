@@ -1233,6 +1233,24 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
  *  botón o guardar un formulario, así que el aviso aparece donde ya se está
  *  mirando.
  * ========================================================================== */
+/* ---- Aviso de sesión (sesion.js) ----
+   Abajo al centro: los avisos pasajeros van arriba a la derecha, y este no es pasajero,
+   se queda hasta que la persona hace algo. Por encima del contenido y del cajón, por
+   debajo del modal de confirmación. El fondo teñido de .alert es translúcido y acá flota
+   sobre la pantalla: se apoya en la superficie para que el texto no se mezcle con lo de
+   abajo. */
+.sesion-aviso {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 9000;
+    width: max-content; max-width: calc(100vw - 32px); margin: 0;
+    align-items: center; box-shadow: var(--shadow-lg);
+}
+.sesion-aviso.alert--warning { background: linear-gradient(var(--t-warning), var(--t-warning)), var(--surface); }
+.sesion-aviso.alert--error   { background: linear-gradient(var(--t-danger), var(--t-danger)), var(--surface); }
+.sesion-aviso__texto { margin: 0; }
+.sesion-aviso__reloj { font-weight: 600; font-variant-numeric: tabular-nums; }
+.sesion-aviso__reloj:empty { display: none; }
+.sesion-aviso .btn { flex-shrink: 0; }
+
 #toast-container {
     position: fixed; top: 20px; right: 20px; z-index: 9999;
     display: flex; flex-direction: column; gap: 10px;
