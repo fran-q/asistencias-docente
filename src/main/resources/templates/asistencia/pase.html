@@ -39,6 +39,13 @@
                 <div class="card">
                     <div id="pa-estado-box" class="pase__estado">
                         <p id="pa-estado-mensaje" class="pase__mensaje">Cámara apagada</p>
+                        <!-- Cuánto falta para que la identidad quede confirmada. El dato lo
+                             manda el servidor con cada cuadro (progresoMs / objetivoMs). -->
+                        <div id="pa-progreso" class="progreso" role="progressbar"
+                             aria-label="Confirmación de la identidad"
+                             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+                            <div class="progreso__barra"></div>
+                        </div>
                         <p id="pa-clase" class="pase__clase"></p>
                     </div>
                 </div>
@@ -57,10 +64,54 @@
                     </div>
                 </div>
 
+                <!-- A quién está esperando el pase (heurística 6). Es el mismo cálculo que el
+                     inicio (PanelInicioService.clasesDeAhora) y la misma lista, para que las
+                     dos pantallas muestren lo mismo del mismo modo. La pantalla la vuelve a
+                     pedir al marcar y cada minuto mientras el pase está andando. -->
+                <div class="card" id="pa-clases" th:fragment="clases" data-clases-de-ahora>
+                    <h2 class="home__titulo">Clases de ahora</h2>
+                    <p class="home__vacio" th:if="${clases.nadaMasHoy()}">
+                        No hay clases en curso ni por venir hoy.
+                    </p>
+                    <div th:if="${clases.sinClasesAhora() and !clases.nadaMasHoy()}">
+                        <p class="home__vacio home__proximas-titulo">Nada en curso. Lo que sigue:</p>
+                        <ul class="home__clases">
+                            <li th:each="p : ${clases.proximas()}" class="home__clase home__clase--proxima">
+                                <span class="home__clase-hora"
+                                      th:text="${#temporals.format(p.horaInicio(), 'HH:mm')} + '–'
+                                             + ${#temporals.format(p.horaFin(), 'HH:mm')}">14:00–16:00</span>
+                                <span class="home__clase-datos">
+                                    <strong th:text="${p.docenteNombre()}">Docente</strong>
+                                    <span class="text-muted"
+                                          th:text="${p.comisionCodigo()} + ' · ' + ${p.materiaNombre()}">COM · Materia</span>
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <ul class="home__clases" th:unless="${clases.sinClasesAhora()}">
+                        <li th:each="c : ${clases.enCurso()}" class="home__clase"
+                            th:classappend="'home__clase--' + (${c.marcada()} ? 'ok' : 'falta')">
+                            <span class="home__clase-hora"
+                                  th:text="${#temporals.format(c.horaInicio(), 'HH:mm')} + '–'
+                                         + ${#temporals.format(c.horaFin(), 'HH:mm')}">08:00–10:00</span>
+                            <span class="home__clase-datos">
+                                <strong th:text="${c.docenteNombre()}">Docente</strong>
+                                <span class="text-muted"
+                                      th:text="${c.comisionCodigo()} + ' · ' + ${c.materiaNombre()}">COM · Materia</span>
+                            </span>
+                            <span class="home__clase-estado">
+                                <span th:if="${c.marcada()}" class="badge badge--success"
+                                      th:text="${c.estado()} + ' ' + ${#temporals.format(c.horaMarca(), 'HH:mm')}">PRESENTE</span>
+                                <span th:unless="${c.marcada()}" class="badge badge--warning">Sin marcar</span>
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+
                 <p class="pase__ayuda">
                     El docente tiene que sostener la posición unos segundos: la asistencia
                     se marca recién cuando el sistema confirma la misma identidad varias
-                    veces seguidas.
+                    veces seguidas. La barra muestra cuánto falta.
                 </p>
             </aside>
         </div>

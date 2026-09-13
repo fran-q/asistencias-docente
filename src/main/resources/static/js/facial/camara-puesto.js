@@ -101,6 +101,14 @@
                 audio: false
             });
             vista.srcObject = streamVista;
+            // Si la camara se desconecta con la vista abierta, se dice: si no, la imagen se
+            // queda congelada en el ultimo cuadro y parece que sigue andando.
+            streamVista.getVideoTracks().forEach(function (t) {
+                t.addEventListener('ended', function () {
+                    detenerVista();
+                    estado.textContent = 'La cámara dejó de responder: se desconectó o la está usando otro programa.';
+                });
+            });
             cajaVista.hidden = false;
             probar.textContent = 'Dejar de probar';
         } catch (e) {

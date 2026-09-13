@@ -221,6 +221,36 @@ class PuestoCapturaIT {
             .andExpect(status().isOk());
     }
 
+    /**
+     * El pase dice a quién está esperando (heurística 6: reconocer antes que recordar).
+     *
+     * <p>Antes mostraba la cámara y el resultado, pero no qué clase correspondía: quien tomaba
+     * asistencia tenía que saberlo de memoria o ir a buscarlo al inicio, con el docente
+     * adelante. La tarjeta también se puede pedir sola, que es como la pantalla la actualiza
+     * al marcar sin recargarse; tiene que llegar sin el layout, porque se pega en su lugar.
+     */
+    @Test
+    @DisplayName("El pase muestra las clases de ahora, y la tarjeta se puede pedir sola")
+    void elPaseMuestraLasClasesDeAhora() throws Exception {
+        Cookie cookie = new Cookie(CookiePuesto.NOMBRE, designarEn(institucionA));
+
+        String pantalla = mockMvc.perform(get("/asistencia/pase")
+                .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(pantalla).contains("Clases de ahora").contains("data-clases-de-ahora");
+
+        String tarjeta = mockMvc.perform(get("/asistencia/pase/clases")
+                .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(tarjeta)
+            .as("la tarjeta sola, sin el layout: es lo que la pantalla reemplaza en su lugar")
+            .contains("data-clases-de-ahora")
+            .contains("Clases de ahora")
+            .doesNotContain("<html");
+    }
+
     // ========================================================================
     //  Aislamiento entre instituciones: lo que sostiene todo el control
     // ========================================================================

@@ -19,13 +19,25 @@
     const apellidoEl = document.getElementById('k-apellido');
     const detalleEl = document.getElementById('k-detalle');
     const botonEl   = document.getElementById('k-iniciar');
+    const progresoEl    = document.getElementById('k-progreso');
+    const progresoBarra = progresoEl.querySelector('.progreso__barra');
 
     // Un cuadro por segundo, igual que el pase. Es lo que el servidor espera y contra lo
     // que está dimensionado el tope de peticiones.
     const INTERVALO_MS = 1000;
     // Tras registrar, la pantalla se queda mostrando el resultado sin mandar cuadros. Más
-    // largo que en el pase: acá nadie está para leerlo enseguida.
-    const PAUSA_TRAS_MARCAR_MS = 5000;
+    // largo que en el pase: acá nadie está para leerlo enseguida. Eran 5 s y no alcanzaban
+    // para leer el apellido y la hora de pie, a un metro de la pantalla.
+    const PAUSA_TRAS_MARCAR_MS = 6000;
+    // Cuánto se sostiene un resultado que hay que leer --un rechazo, un "no tenés clase
+    // ahora"-- antes de que lo pise el "Acercate a la cámara" del cuadro siguiente. Antes
+    // duraba un cuadro, un segundo: alcanzaba con correrse un paso para no enterarse del
+    // motivo.
+    const LECTURA_MINIMA_MS = 4000;
+    // Si la cámara se corta, cada cuánto se intenta volver a abrirla. Acá no hay nadie para
+    // apretar un botón: si no se reintenta sola, el kiosco deja de tomar asistencia hasta que
+    // pase alguien.
+    const REINTENTO_CAMARA_MS = 10000;
     // Si el servidor frena por exceso de pedidos, se espera de más antes de reintentar.
     const ESPERA_TRAS_FRENO_MS = 10000;
 
@@ -36,6 +48,10 @@
     let loopId = null;
     let pausaId = null;
     let enVuelo = false;
+    let dejarDeVigilar = null;
+    let camaraSinImagen = false;
+    let fijoHasta = 0;
+    let reintentoId = null;
 
     // ------------------------------------------------------------------ arranque
 
@@ -47,21 +63,34 @@
      * un gesto: si falla, se muestra el botón en vez de quedar con la pantalla muerta y sin
      * explicación.
      */
-    async function encender() {
+    async function encender(esReintento) {
+        if (reintentoId) { clearTimeout(reintentoId); reintentoId = null; }
         try {
             // La camara elegida para este puesto (V026), o la predeterminada.
             stream = await CamaraDelPuesto.abrir(video, { facingMode: 'user' });
             video.srcObject = stream;
+            camaraSinImagen = false;
+            dejarDeVigilar = CamaraDelPuesto.vigilar(stream, {
+                perdida: camaraPerdida,
+                sinImagen: camaraSinImagenAviso,
+                volvio: camaraVolvio
+            });
             botonEl.hidden = true;
             mostrar('Acercate a la cámara', 'info');
             arrancarLoop();
         } catch (e) {
+            // Tras un corte, la cámara puede seguir desenchufada: se sigue intentando sola.
+            // Salvo que falte el permiso, que solo lo puede dar una persona.
+            if (esReintento && !(e && e.name === 'NotAllowedError')) {
+                programarReintento();
+                return;
+            }
             botonEl.hidden = false;
             mostrar('Encendé la cámara para empezar', 'warn');
         }
     }
 
-    botonEl.addEventListener('click', encender);
+    botonEl.addEventListener('click', function () { encender(false); });
     encender();
 
     function arrancarLoop() {
@@ -86,6 +115,7 @@
         pausaId = setTimeout(function () {
             pausaId = null;
             limpiarResultado();
+            ocultarProgreso();
             mostrar('Acercate a la cámara', 'info');
             if (stream) arrancarLoop();
         }, ms);
@@ -94,7 +124,7 @@
     // ------------------------------------------------------------------ envío
 
     async function enviarCuadro() {
-        if (!stream || enVuelo) return;
+        if (!stream || enVuelo || camaraSinImagen) return;
         ajustarOverlay();
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -138,11 +168,78 @@
         }
     }
 
+    // ------------------------------------------------------------------ progreso
+
+    // La barra muestra el dato del servidor --cuánto lleva sostenida la identidad y cuánto
+    // hace falta--, no una animación de relleno: si la persona se corre, la barra baja o se
+    // va. Al registrar se llena de golpe y queda verde durante la pausa.
+    function mostrarProgreso(fraccion, listo) {
+        const pct = Math.round(Math.max(0, Math.min(1, fraccion || 0)) * 100);
+        progresoEl.hidden = false;
+        progresoEl.classList.toggle('progreso--ok', !!listo);
+        progresoBarra.style.width = pct + '%';
+        progresoEl.setAttribute('aria-valuenow', String(pct));
+    }
+
+    function ocultarProgreso() {
+        progresoEl.hidden = true;
+        progresoEl.classList.remove('progreso--ok');
+        progresoBarra.style.width = '0%';
+        progresoEl.setAttribute('aria-valuenow', '0');
+    }
+
+    // ------------------------------------------------------------------ la cámara se corta
+
+    // Se desenchufó o se la llevó otra aplicación. Se dice y se reintenta sola: en un kiosco
+    // no hay nadie para apretar "Encender".
+    function camaraPerdida() {
+        dejarDeVigilar = null;
+        detenerLoop();
+        if (pausaId) { clearTimeout(pausaId); pausaId = null; }
+        if (stream) {
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            stream = null;
+        }
+        video.srcObject = null;
+        camaraSinImagen = false;
+        limpiarRecuadro();
+        limpiarResultado();
+        ocultarProgreso();
+        mostrar('Se perdió la cámara. Reintentando…', 'error');
+        programarReintento();
+    }
+
+    function programarReintento() {
+        if (reintentoId) clearTimeout(reintentoId);
+        reintentoId = setTimeout(function () {
+            reintentoId = null;
+            encender(true);
+        }, REINTENTO_CAMARA_MS);
+    }
+
+    // Pausa: la cámara sigue abierta pero no manda imagen. No se envían cuadros --llegarían
+    // negros-- y se avisa; si vuelve, se sigue solo.
+    function camaraSinImagenAviso() {
+        camaraSinImagen = true;
+        limpiarRecuadro();
+        limpiarResultado();
+        ocultarProgreso();
+        mostrar('La cámara dejó de mandar imagen. Esperando que vuelva…', 'warn');
+    }
+
+    function camaraVolvio() {
+        camaraSinImagen = false;
+        mostrar('Acercate a la cámara', 'info');
+    }
+
     // ------------------------------------------------------------------ pintado
 
     function pintar(data) {
         if (!data.rostroDetectado) {
             limpiarRecuadro();
+            ocultarProgreso();
+            // Es el mensaje de rutina: no pisa un resultado que todavía se está leyendo.
+            if (Date.now() < fijoHasta) return;
             limpiarResultado();
             mostrar(data.mensaje, 'info');
             return;
@@ -154,6 +251,7 @@
             recuadro(data, color, esSalida ? 'SALE' : 'ENTRA');
             apellidoEl.textContent = data.apellido || '';
             detalleEl.textContent = data.detalle || '';
+            mostrarProgreso(1, true);
             mostrar(data.mensaje, esSalida ? 'info' : 'success');
             // La pantalla se queda mostrando el resultado: es la única confirmación que el
             // docente va a recibir, porque no hay nadie a quien preguntarle.
@@ -166,6 +264,7 @@
             // alguien vea el apellido equivocado durante un parpadeo.
             recuadro(data, color1('--warning'), null);
             limpiarResultado();
+            mostrarProgreso(data.progresoMs / data.objetivoMs, false);
             mostrar(data.mensaje, 'info');
             return;
         }
@@ -174,7 +273,9 @@
         recuadro(data, color1('--warning'), null);
         apellidoEl.textContent = data.apellido || '';
         detalleEl.textContent = '';
+        ocultarProgreso();
         mostrar(data.mensaje, 'warn');
+        fijoHasta = Date.now() + LECTURA_MINIMA_MS;
     }
 
     function recuadro(data, color, etiqueta) {
@@ -210,6 +311,8 @@
     }
 
     function mostrar(texto, tipo) {
+        // Cualquier mensaje puesto a propósito reemplaza al que se estaba sosteniendo.
+        fijoHasta = 0;
         mensajeEl.textContent = texto || '';
         mensajeEl.className = 'kiosco__mensaje' + (tipo ? ' kiosco__mensaje--' + tipo : '');
     }

@@ -3,6 +3,7 @@ package edu.cent35.asistencias.controller;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.service.PanelInicioService;
 import edu.cent35.asistencias.service.PaseAsistenciaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -32,6 +33,7 @@ import java.util.Base64;
 public class PaseAsistenciaController {
 
     private final PaseAsistenciaService paseAsistenciaService;
+    private final PanelInicioService panelInicioService;
 
     /**
      * Pantalla del pase: webcam + loop de reconocimiento + marca automática.
@@ -46,7 +48,18 @@ public class PaseAsistenciaController {
         model.addAttribute("kioscoDisponible", puesto != null && puesto.operaDesatendido());
         // La camara elegida para este equipo (V026); null deja la predeterminada.
         model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
+        model.addAttribute("clases", panelInicioService.clasesDeAhora());
         return "asistencia/pase";
+    }
+
+    /**
+     * La tarjeta de las clases de ahora, sola, para que el pase la actualice sin recargarse: al
+     * marcar y cada minuto mientras esta andando.
+     */
+    @GetMapping("/clases")
+    public String clases(Model model) {
+        model.addAttribute("clases", panelInicioService.clasesDeAhora());
+        return "asistencia/pase :: clases";
     }
 
     // Nombre del atributo de sesion donde vive la racha de confirmacion del pase.

@@ -27,13 +27,26 @@
     const btnPase    = document.getElementById('pa-btn-pase');
     const mensajeEl  = document.getElementById('pa-estado-mensaje');
     const claseEl    = document.getElementById('pa-clase');
+    const progresoEl    = document.getElementById('pa-progreso');
+    const progresoBarra = progresoEl.querySelector('.progreso__barra');
 
     if (!video || !btnCamara) return;
 
     /** Tiempo entre frames enviados al servidor. */
     const INTERVALO_MS = 1000;
-    /** Pausa tras marcar (nueva o ya estaba) — evita ruido continuo. */
-    const PAUSA_TRAS_MARCAR_MS = 3000;
+    /**
+     * Pausa tras marcar: el resultado queda en pantalla sin mandar cuadros. Eran 3 s y no
+     * alcanzaban para leer la clase antes de que volviera "Buscando rostros".
+     */
+    const PAUSA_TRAS_MARCAR_MS = 4000;
+    /**
+     * Cuanto se sostiene un resultado que hay que leer --un rechazo, un "no tenes clase
+     * ahora"-- antes de que lo pise el "No se detecta ningun rostro" del cuadro siguiente.
+     * Antes duraba lo que tardaba ese cuadro, un segundo: alcanzaba con que el docente se
+     * corriera un paso para que el motivo desapareciera sin leerse, y era justo el mensaje
+     * que decia que habia que hacer.
+     */
+    const LECTURA_MINIMA_MS = 4000;
 
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -48,6 +61,13 @@
     // del boton: durante la pausa posterior a una marca loopId queda en null aunque el pase
     // sigue activo, y con esa confusion el boton "Detener" terminaba arrancando otro loop.
     let paseActivo = false;
+    // Deja de vigilar la camara (CamaraDelPuesto.vigilar). Null mientras no hay camara.
+    let dejarDeVigilar = null;
+    // La camara esta abierta pero no manda imagen: no se envian cuadros, que llegarian
+    // negros y pisarian el aviso con "No se detecta ningun rostro".
+    let camaraSinImagen = false;
+    // Hasta cuando se sostiene en pantalla un resultado que hay que leer.
+    let fijoHasta = 0;
 
     // ---- Cámara -----------------------------------------------------------
 
@@ -64,6 +84,12 @@
             // ninguna o si la elegida no esta conectada.
             stream = await CamaraDelPuesto.abrir(video, { width: { ideal: 640 }, height: { ideal: 480 } });
             video.srcObject = stream;
+            camaraSinImagen = false;
+            dejarDeVigilar = CamaraDelPuesto.vigilar(stream, {
+                perdida: camaraPerdida,
+                sinImagen: camaraSinImagenAviso,
+                volvio: camaraVolvio
+            });
             await video.play().catch(function () {});
             ajustarOverlay();
             btnCamara.hidden = false;
@@ -85,6 +111,8 @@
 
     function apagarCamara() {
         detenerLoop();
+        if (dejarDeVigilar) { dejarDeVigilar(); dejarDeVigilar = null; }
+        camaraSinImagen = false;
         limpiarOverlay();
         if (stream) {
             stream.getTracks().forEach(function (t) { t.stop(); });
@@ -126,6 +154,8 @@
         mostrarMensaje('Buscando rostros…', 'info');
         marcarFrame();
         loopId = setInterval(marcarFrame, INTERVALO_MS);
+        refrescarClases();
+        refrescoClasesId = setInterval(refrescarClases, REFRESCO_CLASES_MS);
     }
 
     // Deja el pase completamente frenado: el envio de frames y tambien la pausa pendiente, que
@@ -137,6 +167,8 @@
             loopId = null;
         }
         cancelarPausa();
+        ocultarProgreso();
+        if (refrescoClasesId) { clearInterval(refrescoClasesId); refrescoClasesId = null; }
         btnPase.textContent = 'Iniciar pase';
     }
 
@@ -164,6 +196,7 @@
 
         pausaTimeoutId = setTimeout(function () {
             cancelarPausa();
+            ocultarProgreso();
             // Se reanuda solo si el pase sigue activo. Antes esto miraba el TEXTO del boton,
             // que es estado de presentacion y no de la logica.
             if (stream && paseActivo) {
@@ -195,7 +228,7 @@
     }
 
     async function marcarFrame() {
-        if (!stream || enVuelo) return;
+        if (!stream || enVuelo || camaraSinImagen) return;
         ajustarOverlay();
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -251,8 +284,12 @@
     function renderizar(data) {
         if (!data.rostroDetectado) {
             limpiarOverlay();
-            mostrarMensaje('No se detecta ningún rostro.', 'info');
-            claseEl.textContent = '';
+            ocultarProgreso();
+            // Es el mensaje de rutina: no pisa un resultado que todavia se esta leyendo.
+            if (Date.now() >= fijoHasta) {
+                mostrarMensaje('No se detecta ningún rostro.', 'info');
+                claseEl.textContent = '';
+            }
             return;
         }
 
@@ -269,7 +306,8 @@
             } else {
                 dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#e53935', 'No reconocido');
             }
-            mostrarMensaje(data.mensaje, 'error');
+            ocultarProgreso();
+            mensajeParaLeer(data.mensaje, 'error');
             claseEl.textContent = '';
             return;
         }
@@ -281,6 +319,7 @@
         if (data.confirmando) {
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#00acc1', null);
             var faltan = Math.max(0, Math.ceil((data.objetivoMs - data.progresoMs) / 1000));
+            mostrarProgreso(data.progresoMs / data.objetivoMs, false);
             mostrarMensaje('Sostené la posición… ' + faltan + ' s', 'info');
             claseEl.textContent = '';
             return;
@@ -298,7 +337,9 @@
                 ? (esSalida ? 'SALE · ' : 'ENTRA · ') + data.docenteNombre
                 : data.docenteNombre;
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, color, etiqueta);
+            mostrarProgreso(1, true);
             mostrarMensaje(data.mensaje, esSalida ? 'info' : 'success');
+            refrescarClases();
             claseEl.textContent = data.claseLabel || '';
             // Pausa breve para no bombardear el server con frames del mismo
             // docente que ya está marcado. Backend igual es idempotente.
@@ -312,7 +353,8 @@
         //    el mensaje; pintarlo de amarillo hacia parecer que el reconocimiento habia
         //    fallado, cuando el unico que fallo era el horario.
         dibujarRecuadro(data.x, data.y, data.ancho, data.alto, tokenColor('--success'), data.docenteNombre);
-        mostrarMensaje(data.mensaje, 'warn');
+        ocultarProgreso();
+        mensajeParaLeer(data.mensaje, 'warn');
         claseEl.textContent = '';
     }
 
@@ -350,6 +392,90 @@
         }
     }
 
+    // ---- Clases de ahora -----------------------------------------------------
+
+    // Cada cuanto se actualiza la lista mientras el pase anda. Solo mientras anda: con el
+    // pase quieto, un pedido por minuto mantendria viva la sesion para siempre.
+    const REFRESCO_CLASES_MS = 60000;
+    let refrescoClasesId = null;
+
+    async function refrescarClases() {
+        const actual = document.getElementById('pa-clases');
+        if (!actual) return;
+        try {
+            const resp = await fetch('/asistencia/pase/clases', { headers: { 'Accept': 'text/html' } });
+            // Con la sesion vencida o el equipo desautorizado llega otra pantalla, detras de
+            // una redireccion: eso no se pega en la tarjeta. Solo se reemplaza por la tarjeta.
+            if (!resp.ok || resp.redirected) return;
+            const html = await resp.text();
+            if (html.indexOf('data-clases-de-ahora') === -1) return;
+            actual.outerHTML = html;
+        } catch (e) {
+            /* Sin red: queda la lista anterior, y el proximo refresco lo reintenta. */
+        }
+    }
+
+    // ---- Progreso de la confirmacion --------------------------------------
+
+    // La barra muestra el dato del servidor --cuanto lleva sostenida la identidad y cuanto
+    // hace falta--, no una animacion de relleno: si el docente se corre, la barra baja o se
+    // va, que es justo lo que tiene que ver. Al marcar se llena de golpe y queda verde
+    // durante la pausa.
+    function mostrarProgreso(fraccion, listo) {
+        const pct = Math.round(Math.max(0, Math.min(1, fraccion || 0)) * 100);
+        progresoEl.hidden = false;
+        progresoEl.classList.toggle('progreso--ok', !!listo);
+        progresoBarra.style.width = pct + '%';
+        progresoEl.setAttribute('aria-valuenow', String(pct));
+    }
+
+    function ocultarProgreso() {
+        progresoEl.hidden = true;
+        progresoEl.classList.remove('progreso--ok');
+        progresoBarra.style.width = '0%';
+        progresoEl.setAttribute('aria-valuenow', '0');
+    }
+
+    // ---- La camara se corta -----------------------------------------------
+
+    // Definitivo: se desenchufo o se la llevo otra aplicacion. Se dice que paso y queda todo
+    // listo para arrancar de nuevo con un clic.
+    function camaraPerdida() {
+        dejarDeVigilar = null;
+        detenerLoop();
+        limpiarOverlay();
+        if (stream) {
+            stream.getTracks().forEach(function (t) { t.stop(); });
+            stream = null;
+        }
+        video.srcObject = null;
+        camaraSinImagen = false;
+        btnCamara.hidden = true;
+        mostrarMensaje('Se perdió la cámara: se desconectó o la está usando otra aplicación.', 'error');
+        claseEl.textContent = 'Revisá que esté conectada y apretá "Iniciar pase" para seguir.';
+    }
+
+    // Pausa: la camara sigue abierta pero no manda imagen. Se deja de enviar --llegarian
+    // cuadros negros-- y se avisa; si vuelve, el pase sigue solo.
+    function camaraSinImagenAviso() {
+        camaraSinImagen = true;
+        limpiarOverlay();
+        ocultarProgreso();
+        mostrarMensaje('La cámara dejó de mandar imagen. Si no vuelve en unos segundos, revisá la conexión.', 'warn');
+        claseEl.textContent = '';
+    }
+
+    function camaraVolvio() {
+        camaraSinImagen = false;
+        mostrarMensaje(paseActivo ? 'Buscando rostros…' : 'Cámara encendida.', 'info');
+    }
+
+    // Resultado que hay que leer: se muestra ya y se sostiene LECTURA_MINIMA_MS.
+    function mensajeParaLeer(texto, tipo) {
+        mostrarMensaje(texto, tipo);
+        fijoHasta = Date.now() + LECTURA_MINIMA_MS;
+    }
+
     // ---- UI helpers -------------------------------------------------------
 
     // El recuadro se dibuja en un canvas, y ahi no llegan las variables CSS: hay que
@@ -367,6 +493,8 @@
     var TIPOS = ['success', 'error', 'warn', 'info'];
 
     function mostrarMensaje(texto, tipo) {
+        // Cualquier mensaje puesto a proposito reemplaza al que se estaba sosteniendo.
+        fijoHasta = 0;
         var antes = mensajeEl.className;
 
         mensajeEl.textContent = texto;

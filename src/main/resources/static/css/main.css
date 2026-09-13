@@ -2088,6 +2088,26 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 /* El resultado es lo segundo más importante de la pantalla: ocupa el tope de la
    columna y con cuerpo grande, para poder leerse de reojo. */
+/* ---- Barra de confirmación (pase y kiosco) ----
+   Cuánto falta para que la identidad quede confirmada. Es el dato del servidor --cuánto
+   lleva sostenida y cuánto hace falta--, no una animación de relleno: si la persona se
+   corre, la barra baja o se va, que es lo que tiene que ver. Llega un dato por cuadro, uno
+   por segundo, y la transición dura eso mismo: une un valor con el siguiente para que la
+   barra avance en continuo y no a saltos. Al registrar se llena de golpe y queda verde. */
+.progreso {
+    --progreso-paso: 1s;   /* = INTERVALO_MS de pase-asistencia.js y kiosco.js */
+    height: 8px; border-radius: 999px; overflow: hidden;
+    background: var(--surface-3);
+}
+.progreso__barra {
+    width: 0; height: 100%; border-radius: inherit;
+    background: var(--primary-solid);
+    transition: width var(--progreso-paso) linear, background-color var(--t-base) var(--ease);
+}
+.progreso--ok .progreso__barra { background: var(--success); transition-duration: 0s, var(--t-base); }
+.progreso--grande { width: min(520px, 100%); height: 14px; margin: 0 auto; }
+.pase__estado .progreso { margin: 2px 0 8px; }
+
 .pase__estado {
     min-height: 5.5rem;
     display: flex; flex-direction: column; justify-content: center;

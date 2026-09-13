@@ -1,6 +1,7 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.dto.ClasesDeAhoraDto;
 import edu.cent35.asistencias.dto.PanelInicioDto;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.Comision;
@@ -80,6 +81,27 @@ public class PanelInicioService {
             proximasClases(clasesDeHoy, ahora),
             resumenDelDia(clasesDeHoy, marcasDeHoy, ahora),
             pendientes(tenantId));
+    }
+
+    /**
+     * Las clases de este momento, para el pase.
+     *
+     * <p>Quien toma asistencia tenia que saber de memoria, o ir a buscarlo al inicio, que clase
+     * correspondia y a quien estaba esperando (heuristica 6: reconocer antes que recordar). Es
+     * el mismo calculo que el inicio y no uno parecido: si el pase mostrara como en curso algo
+     * que el inicio no, las dos pantallas se contradirian sobre lo mismo.
+     */
+    @Transactional(readOnly = true)
+    public ClasesDeAhoraDto clasesDeAhora() {
+        Long tenantId = TenantContext.getRequired();
+        LocalDate hoy = LocalDate.now(clock);
+        LocalTime ahora = LocalTime.now(clock);
+        List<Horario> clasesDeHoy = horarioRepository.findActivosDelDiaConDocente(
+            (byte) hoy.getDayOfWeek().getValue(), hoy, tenantId);
+        List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(tenantId, hoy);
+        return new ClasesDeAhoraDto(
+            clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora),
+            proximasClases(clasesDeHoy, ahora));
     }
 
     // ------------------------------------------------------------------------

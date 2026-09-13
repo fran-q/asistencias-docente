@@ -69,5 +69,67 @@ window.CamaraDelPuesto = (function () {
         if (aviso) aviso.remove();
     }
 
-    return { abrir: abrir };
+    // Un silencio de un instante es normal --el sistema reajusta la camara al abrirla o al
+    // cambiar la luz--: se avisa recien si dura esto.
+    const SILENCIO_TOLERADO_MS = 3000;
+
+    /**
+     * Avisa si la camara deja de dar imagen con el stream ya abierto.
+     *
+     * Son dos casos distintos. 'ended' es definitivo: se desenchufo, el sistema la corto u
+     * otra aplicacion se la llevo, y hay que volver a abrirla. 'mute' es una pausa: el
+     * dispositivo dejo de mandar cuadros y a veces vuelve solo. Sin esto los dos se veian
+     * igual que "no hay nadie adelante": la pantalla seguia diciendo que no detectaba ningun
+     * rostro con la camara muerta, y quien operaba podia tardar minutos en darse cuenta.
+     *
+     *   avisos.perdida   - el stream ya no sirve.
+     *   avisos.sinImagen - lleva unos segundos sin cuadros; puede volver.
+     *   avisos.volvio    - despues de sinImagen, la imagen volvio.
+     *
+     * Devuelve la funcion que deja de vigilar, para cuando se apaga la camara a proposito.
+     * stop() no dispara 'ended', pero asi ninguna pantalla depende de ese detalle.
+     */
+    function vigilar(stream, avisos) {
+        const pistas = stream ? stream.getVideoTracks() : [];
+        let espera = null;
+        let sinImagen = false;
+        let activo = true;
+
+        function alTerminar() {
+            if (!activo) return;
+            dejarDeVigilar();
+            if (avisos.perdida) avisos.perdida();
+        }
+        function alSilenciar() {
+            if (!activo) return;
+            clearTimeout(espera);
+            espera = setTimeout(function () {
+                sinImagen = true;
+                if (avisos.sinImagen) avisos.sinImagen();
+            }, SILENCIO_TOLERADO_MS);
+        }
+        function alVolver() {
+            clearTimeout(espera);
+            if (activo && sinImagen && avisos.volvio) avisos.volvio();
+            sinImagen = false;
+        }
+        function dejarDeVigilar() {
+            activo = false;
+            clearTimeout(espera);
+            pistas.forEach(function (p) {
+                p.removeEventListener('ended', alTerminar);
+                p.removeEventListener('mute', alSilenciar);
+                p.removeEventListener('unmute', alVolver);
+            });
+        }
+
+        pistas.forEach(function (p) {
+            p.addEventListener('ended', alTerminar);
+            p.addEventListener('mute', alSilenciar);
+            p.addEventListener('unmute', alVolver);
+        });
+        return dejarDeVigilar;
+    }
+
+    return { abrir: abrir, vigilar: vigilar };
 })();

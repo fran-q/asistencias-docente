@@ -83,6 +83,13 @@
              de la pantalla, no sentado frente a ella. -->
         <div class="kiosco__panel">
             <p id="k-mensaje" class="kiosco__mensaje">Acercate a la cámara</p>
+            <!-- Cuánto falta para que la identidad quede confirmada. El dato lo manda el
+                 servidor con cada cuadro: si la persona se corre, la barra baja o se va. -->
+            <div id="k-progreso" class="progreso progreso--grande" role="progressbar"
+                 aria-label="Confirmación de la identidad"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+                <div class="progreso__barra"></div>
+            </div>
             <p id="k-apellido" class="kiosco__apellido"></p>
             <p id="k-detalle" class="kiosco__detalle"></p>
 

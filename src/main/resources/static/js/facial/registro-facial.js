@@ -88,6 +88,8 @@
     let buenasSeguidas = 0;
     let capturas = [];
     let enviando = false;
+    // Deja de vigilar la camara (CamaraDelPuesto.vigilar). Null mientras no hay camara.
+    let dejarDeVigilar = null;
 
     // ---- Cámara -----------------------------------------------------------
 
@@ -105,6 +107,21 @@
             // ninguna o si la elegida no esta conectada.
             stream = await CamaraDelPuesto.abrir(video, { width: { ideal: 640 }, height: { ideal: 480 } });
             video.srcObject = stream;
+            dejarDeVigilar = CamaraDelPuesto.vigilar(stream, {
+                perdida: camaraPerdida,
+                // Sin imagen, cada evaluacion daria "no hay rostro" y la secuencia se
+                // quedaria esperando sin decir por que: se frena y se avisa.
+                sinImagen: function () {
+                    detenerLoop();
+                    feedbackEl.textContent = 'La cámara dejó de mandar imagen. Esperando que vuelva…';
+                    feedbackEl.className = 'captura__feedback captura__feedback--corregir';
+                },
+                volvio: function () {
+                    feedbackEl.textContent = '';
+                    feedbackEl.className = 'captura__feedback';
+                    if (!enviando) arrancarLoop();
+                }
+            });
             await video.play().catch(function () {});
             ajustarOverlay();
 
@@ -121,6 +138,7 @@
     // Corta el loop, libera la camara y deja la pantalla como al principio.
     function apagarCamara() {
         detenerLoop();
+        if (dejarDeVigilar) { dejarDeVigilar(); dejarDeVigilar = null; }
         limpiarOverlay();
         if (stream) {
             stream.getTracks().forEach(function (t) { t.stop(); });
@@ -131,6 +149,19 @@
         btnReiniciar.hidden = true;
         feedbackEl.textContent = 'Cámara apagada';
         feedbackEl.className = 'captura__feedback';
+    }
+
+    // La camara se corto en medio del registro: se desenchufo o se la llevo otra aplicacion.
+    // Lo capturado en esta vuelta no alcanza para registrar, asi que se dice y queda todo
+    // listo para empezar de nuevo. Si las capturas ya estaban viajando, el envio sigue su
+    // curso y es el que dice como termino.
+    function camaraPerdida() {
+        dejarDeVigilar = null;
+        if (enviando) return;
+        apagarCamara();
+        reiniciarSecuencia();
+        mostrarMensaje('Se perdió la cámara: se desconectó o la está usando otra aplicación. '
+                     + 'Las capturas de esta vuelta no se guardaron; volvé a encenderla para empezar de nuevo.', 'error');
     }
 
     // ---- Secuencia --------------------------------------------------------
