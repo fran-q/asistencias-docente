@@ -22,8 +22,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioEditFormDto {
 
-    @NotBlank(message = "El email es obligatorio")
-    @Email(message = "El email debe ser valido")
+    @NotBlank(message = "El correo es obligatorio")
+    @Email(message = "El correo debe ser válido")
     @Size(max = 120)
     private String email;
 

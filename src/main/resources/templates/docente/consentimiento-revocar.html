@@ -17,7 +17,7 @@
             </p>
         </header>
 
-        <div class="alert alert--error" role="alert" style="max-width: 760px;">
+        <div class="alert alert--error form-max" role="alert">
             <p>
                 <strong>Atención:</strong> al revocar el consentimiento, el
                 docente deja de poder usar el sistema de reconocimiento facial.
@@ -28,7 +28,7 @@
             </p>
         </div>
 
-        <div class="card card--readonly" style="max-width: 760px;">
+        <div class="card card--readonly form-max">
             <h2>Consentimiento que se va a revocar</h2>
             <dl class="kv">
                 <dt>Versión firmada</dt>
@@ -54,7 +54,7 @@
             </dl>
         </div>
 
-        <div class="card" style="max-width: 760px;">
+        <div class="card form-max">
             <h2>Confirmación</h2>
 
             <form th:action="@{/docentes/{id}/consentimiento/revocar(id=${docente.id})}"
@@ -76,9 +76,9 @@
                     <span class="form-error" th:if="${#fields.hasErrors('motivo')}" th:errors="*{motivo}">err</span>
                 </div>
 
-                <div class="form-group form-group--checkbox" style="margin-top: 1.5rem;">
-                    <label style="display:flex; gap:0.6rem; align-items:flex-start; cursor:pointer;">
-                        <input type="checkbox" th:field="*{confirmaRevocacion}" style="margin-top:0.25rem;">
+                <div class="form-group">
+                    <label class="checkbox-label checkbox-label--texto">
+                        <input type="checkbox" th:field="*{confirmaRevocacion}">
                         <span>
                             Confirmo que quiero revocar el consentimiento de
                             <strong th:text="${docente.nombreCompleto}">Apellido, Nombre</strong>.
@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="form-actions" style="margin-top: 1.5rem;">
-                    <button type="submit" class="btn btn--primary btn--danger" data-texto-enviando="Revocando...">Revocar consentimiento</button>
+                    <button type="submit" class="btn btn--danger-solid" data-texto-enviando="Revocando...">Revocar consentimiento</button>
                     <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
                 </div>
             </form>

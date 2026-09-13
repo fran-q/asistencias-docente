@@ -38,18 +38,18 @@ public class InstitucionFormDto {
         message = "El CUIT tiene que ser 11 dígitos: 30-12345678-1 o 30123456781"
     )
     @CuitValido
-    @Size(max = 13, message = "El CUIT no puede superar 13 caracteres")
+    @Size(max = 13, message = "El CUIT no puede superar los 13 caracteres")
     private String cuit;
 
-    @Size(max = 200, message = "La direccion no puede superar 200 caracteres")
+    @Size(max = 200, message = "La dirección no puede superar los 200 caracteres")
     private String direccion;
 
-    @Email(message = "El email de contacto debe ser valido")
-    @Size(max = 120, message = "El email no puede superar 120 caracteres")
+    @Email(message = "El correo de contacto debe ser válido")
+    @Size(max = 120, message = "El correo de contacto no puede superar los 120 caracteres")
     private String emailContacto;
 
     // Mismo criterio que el teléfono del docente: permisivo con el formato, pero sin letras.
-    @Size(max = 30, message = "El telefono no puede superar 30 caracteres")
+    @Size(max = 30, message = "El teléfono no puede superar los 30 caracteres")
     @Pattern(regexp = "^$|^[0-9+()\\s-]{6,30}$",
              message = "El teléfono solo admite números, espacios y los signos + ( ) -")
     private String telefonoContacto;

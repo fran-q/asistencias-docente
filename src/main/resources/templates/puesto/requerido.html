@@ -149,14 +149,14 @@
                             <td>
                                 <span th:if="${p.operaDesatendido()}" class="badge badge--warning"
                                       th:title="${p.kioscoHabilitadoEn != null}
-                                                ? 'Habilitado el ' + ${#temporals.format(p.kioscoHabilitadoEn, 'dd/MM/yy HH:mm')}
+                                                ? 'Habilitado el ' + ${#temporals.format(p.kioscoHabilitadoEn, 'dd/MM/yyyy HH:mm')}
                                                 : null">Sin sesión</span>
                                 <span th:if="${p.activo and !p.operaDesatendido()}"
                                       class="badge badge--neutral">Requiere sesión</span>
                                 <span th:unless="${p.activo}" class="text-muted">—</span>
                             </td>
                             <td th:text="${p.ultimoUsoEn != null}
-                                         ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yy HH:mm')}
+                                         ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yyyy HH:mm')}
                                          : 'Nunca'">—</td>
                             <td class="table__actions">
                                 <!-- Habilitar el kiosco exige estar en esa maquina, igual
@@ -180,7 +180,7 @@
                                 <form th:if="${p.operaDesatendido()}"
                                       th:action="@{/puestos/{id}/kiosco/deshabilitar(id=${p.id})}"
                                       method="post" class="inline-form"
-                                      data-confirm="¿Apagar el modo kiosco?"
+                                      th:data-confirm="|¿Apagar el modo kiosco en ${p.nombre}?|"
                                       data-confirm-detail="El equipo sigue autorizado, pero para tomar asistencia va a hacer falta una sesión abierta. Se puede volver a habilitar desde esa misma máquina."
                                       data-confirm-action="Apagar">
                                     <button type="submit" class="btn btn--ghost btn--sm"
@@ -194,7 +194,7 @@
                                 <form th:if="${p.activo and p.id == idDeEsteEquipo}"
                                       th:action="@{/puestos/{id}/revocar(id=${p.id})}"
                                       method="post" class="inline-form"
-                                      data-confirm="¿Revocar este puesto?"
+                                      th:data-confirm="|¿Revocar el puesto ${p.nombre}?|"
                                       data-confirm-detail="Este equipo deja de poder tomar asistencia en cuanto haga la próxima petición. Después vas a poder autorizar otro, o volver a autorizar este."
                                       data-confirm-action="Revocar"
                                       data-confirm-style="danger">
@@ -239,7 +239,7 @@
                 <p class="text-muted" th:if="${p.camaraEtiqueta != null}">
                     Hoy usa <strong th:text="${p.camaraEtiqueta}">Logitech C920</strong><span
                         th:if="${p.camaraElegidaEn != null}"
-                        th:text="|, elegida el ${#temporals.format(p.camaraElegidaEn, 'dd/MM/yy HH:mm')}|">, elegida el 01/09/26</span>.
+                        th:text="|, elegida el ${#temporals.format(p.camaraElegidaEn, 'dd/MM/yyyy HH:mm')}|">, elegida el 01/09/2026</span>.
                 </p>
 
                 <form th:action="@{/puestos/{id}/camara(id=${p.id})}" method="post" id="form-camara"

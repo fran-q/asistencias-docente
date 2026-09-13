@@ -30,7 +30,7 @@
         'asistencia': { etiqueta: 'Asistencias',        grupo: 'Asistencias', clave: 'asistencia' },
         'reportes':   { etiqueta: 'Reportes',           grupo: 'Asistencias', clave: 'asistencia' },
         'docentes':   { etiqueta: 'Docentes',           grupo: 'Personal',    clave: 'personal' },
-        'usuarios':   { etiqueta: 'Usuarios',           grupo: 'Personal',    clave: 'personal' },
+        'usuarios':   { etiqueta: 'Usuarios del sistema', grupo: 'Personal',    clave: 'personal' },
         'mi-institucion': { etiqueta: 'Mi institución', grupo: 'Personal',    clave: 'personal' },
         'puestos':    { etiqueta: 'Puestos de captura', grupo: 'Personal',    clave: 'personal' },
         // A esta no se llega por el menu sino chocandose con el bloqueo, asi que no
@@ -75,6 +75,13 @@
             li.classList.add('migas__item--grupo');
         }
         return li;
+    }
+
+    // El titulo de la pantalla, para cuando la ruta no alcanza para nombrarla.
+    function tituloDeLaPantalla() {
+        var h1 = document.querySelector('#contenido h1');
+        var texto = h1 ? h1.textContent.replace(/\s+/g, ' ').trim() : '';
+        return texto || null;
     }
 
     function construir() {
@@ -127,10 +134,19 @@
             items.push(crumb(ACCIONES[t], null, i === restantes.length - 1));
         });
 
-        // Si no hubo ninguna accion, el ultimo que quedo es la pagina actual.
+        // Sin ninguna accion hay dos casos. Con la seccion sola (/docentes), la seccion es
+        // la pagina actual. Con algo mas en la ruta que el mapa no nombra --un registro,
+        // /ciclos/5, o una pantalla propia, /asistencias/bloques/pendientes-- la pagina
+        // actual es otra, y la ruta sola no sabe como se llama: se toma del titulo de la
+        // pantalla. Antes la miga terminaba en la seccion y decia "estas en Ciclos
+        // lectivos" con el ciclo 2026 abierto.
         if (restantes.length === 0) {
-            var ult = items[items.length - 1];
-            ult.setAttribute('aria-current', 'page');
+            var titulo = partes.length > 1 ? tituloDeLaPantalla() : null;
+            if (titulo) {
+                items.push(crumb(titulo, null, true));
+            } else {
+                items[items.length - 1].setAttribute('aria-current', 'page');
+            }
         }
 
         items.forEach(function (li) { cont.appendChild(li); });

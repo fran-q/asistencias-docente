@@ -21,7 +21,7 @@
                 <strong th:text="${puesto.nombre}">Secretaría PC-1</strong>
                 <span class="text-muted"
                       th:text="${puesto.ultimoUsoEn != null}
-                               ? '· último uso ' + ${#temporals.format(puesto.ultimoUsoEn, 'dd/MM/yy HH:mm')}
+                               ? '· último uso ' + ${#temporals.format(puesto.ultimoUsoEn, 'dd/MM/yyyy HH:mm')}
                                : '· nunca se usó'">·</span>
             </p>
 
@@ -36,7 +36,7 @@
             </p>
 
             <form th:action="@{/puestos/{id}/revocar/codigo(id=${puesto.id})}" method="post">
-                <button type="submit" class="btn btn--secondary"
+                <button type="submit" class="btn btn--primary"
                         data-texto-enviando="Enviando...">Enviarme el código</button>
             </form>
         </div>
@@ -45,7 +45,7 @@
             <h2>Confirmar</h2>
             <form th:action="@{/puestos/{id}/revocar/confirmar(id=${puesto.id})}" method="post"
                   novalidate
-                  data-confirm="¿Revocar este puesto?"
+                  th:data-confirm="|¿Revocar el puesto ${puesto.nombre}?|"
                   data-confirm-detail="Después de esto nadie va a poder tomar asistencia hasta que autorices un equipo nuevo."
                   data-confirm-action="Revocar"
                   data-confirm-style="danger">
@@ -64,7 +64,7 @@
                         Vence a los pocos minutos y se puede usar una sola vez.
                     </small>
                 </div>
-                <button type="submit" class="btn btn--primary btn--danger"
+                <button type="submit" class="btn btn--danger-solid"
                         data-texto-enviando="Revocando...">Revocar el puesto</button>
             </form>
         </div>

@@ -72,7 +72,7 @@
                 <a th:href="@{/horarios/nuevo}">Cargá su primera franja</a>.
             </p>
 
-            <div class="table-scroll" th:unless="${#lists.isEmpty(horariosPorComision.get(c.id))}">
+            <div class="table-wrap table-wrap--libre" th:unless="${#lists.isEmpty(horariosPorComision.get(c.id))}">
                 <table class="table">
                     <thead>
                         <tr>

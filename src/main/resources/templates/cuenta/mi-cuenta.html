@@ -75,16 +75,27 @@
 
             <hr>
 
-            <form th:action="@{/mi-cuenta/verificar}" th:object="${form}" method="post" novalidate>
+            <form th:action="@{/mi-cuenta/verificar}" th:object="${form}" method="post" novalidate data-codigo-form>
                 <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
                     <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
                 </div>
 
                 <div class="form-group">
-                    <label for="codigo">Código recibido</label>
-                    <input type="text" id="codigo" th:field="*{codigo}"
-                           inputmode="numeric" autocomplete="one-time-code" maxlength="10"
-                           th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
+                    <label id="codigo-etiqueta">Código recibido</label>
+                    <!-- Las seis casillas, igual que al recuperar el acceso y al dar de alta la
+                         institución: es el mismo código de seis dígitos que llega por correo, y
+                         acá se escribía en un campo común. Lo que viaja sigue siendo el campo
+                         oculto; las casillas son la parte visible (codigo-input.js). -->
+                    <input type="hidden" th:field="*{codigo}" data-codigo-valor>
+                    <div class="codigo-input" role="group" aria-labelledby="codigo-etiqueta"
+                         data-codigo-casillas>
+                        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 2" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 3" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 4" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 5" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
+                    </div>
                     <span class="form-error" th:if="${#fields.hasErrors('codigo')}"
                           th:errors="*{codigo}">Error</span>
                 </div>
@@ -134,13 +145,19 @@
                     <p th:text="${errorCodigoPassword}">Error</p>
                 </div>
 
-                <form th:action="@{/mi-cuenta/password/verificar}" method="post" novalidate>
+                <form th:action="@{/mi-cuenta/password/verificar}" method="post" novalidate data-codigo-form>
                     <div class="form-group">
-                        <label for="codigoPassword">Código <span class="required">*</span></label>
-                        <input type="text" id="codigoPassword" name="codigo" required
-                               inputmode="numeric" pattern="[0-9]{6}" maxlength="6"
-                               autocomplete="one-time-code" class="input--codigo">
-                        <small class="form-hint">Seis dígitos.</small>
+                        <label id="codigo-password-etiqueta">Código <span class="required">*</span></label>
+                        <input type="hidden" name="codigo" data-codigo-valor>
+                        <div class="codigo-input" role="group" aria-labelledby="codigo-password-etiqueta"
+                             data-codigo-casillas>
+                            <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1" placeholder=" ">
+                            <input inputmode="numeric" maxlength="1" aria-label="Dígito 2" placeholder=" ">
+                            <input inputmode="numeric" maxlength="1" aria-label="Dígito 3" placeholder=" ">
+                            <input inputmode="numeric" maxlength="1" aria-label="Dígito 4" placeholder=" ">
+                            <input inputmode="numeric" maxlength="1" aria-label="Dígito 5" placeholder=" ">
+                            <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn--primary" data-texto-enviando="Verificando...">Verificar código</button>
@@ -195,6 +212,7 @@
             </div>
         </div>
 
+        <script th:src="@{/js/comun/codigo-input.js}" defer></script>
     </section>
 </body>
 </html>

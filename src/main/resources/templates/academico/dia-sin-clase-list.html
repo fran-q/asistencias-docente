@@ -68,7 +68,7 @@
                             <td class="table__actions">
                                 <form th:action="@{/dias-sin-clase/{id}/borrar(id=${d.id})}"
                                       method="post" class="inline-form"
-                                      data-confirm="¿Borrar este día?"
+                                      th:data-confirm="|¿Borrar el día ${#temporals.format(d.fecha, 'dd/MM/yyyy')}?|"
                                       data-confirm-detail="Las ausencias que no se generaron ese día no se generan ahora por borrarlo. De acá en adelante, ese día vuelve a contar como día de clase."
                                       data-confirm-action="Borrar"
                                       data-confirm-style="danger">

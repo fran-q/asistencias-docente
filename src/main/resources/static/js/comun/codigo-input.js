@@ -19,69 +19,75 @@
  *  Si el JavaScript no corre, las casillas siguen siendo inputs de un carácter y
  *  el hidden queda vacío: por eso el formulario valida el código en el servidor
  *  igual que antes.
+ *
+ *  Puede haber más de un formulario con casillas en la misma pantalla: Mi cuenta
+ *  tiene el de verificar el correo y el de cambiar la contraseña. Cada uno
+ *  maneja las suyas.
  * ========================================================================== */
 (function () {
     'use strict';
 
-    var form = document.querySelector('[data-codigo-form]');
-    if (!form) return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-codigo-form]'), iniciar);
 
-    var grupo  = form.querySelector('[data-codigo-casillas]');
-    var oculto = form.querySelector('[data-codigo-valor]');
-    if (!grupo || !oculto) return;
+    function iniciar(form) {
+        var grupo  = form.querySelector('[data-codigo-casillas]');
+        var oculto = form.querySelector('[data-codigo-valor]');
+        if (!grupo || !oculto) return;
 
-    var casillas = Array.prototype.slice.call(grupo.querySelectorAll('input'));
+        var casillas = Array.prototype.slice.call(grupo.querySelectorAll('input'));
 
-    function sincronizar() {
-        oculto.value = casillas.map(function (c) { return c.value; }).join('');
-    }
-
-    function repartir(texto, desde) {
-        var digitos = (texto || '').replace(/\D/g, '').split('');
-        for (var i = desde; i < casillas.length && digitos.length; i++) {
-            casillas[i].value = digitos.shift();
+        function sincronizar() {
+            oculto.value = casillas.map(function (c) { return c.value; }).join('');
         }
-        sincronizar();
-        /* El foco va a la primera vacía, o a la última si se completó: dejarlo
-           donde estaba obliga a buscar a mano dónde seguir. */
-        var vacia = casillas.find(function (c) { return !c.value; });
-        (vacia || casillas[casillas.length - 1]).focus();
 
-        /* Completo el código, el botón de enviar es el próximo paso lógico. No se
-           envía solo: el formulario también pide la contraseña nueva. */
-    }
-
-    casillas.forEach(function (casilla, i) {
-        casilla.addEventListener('input', function () {
-            /* Si el navegador metió más de un carácter (autocompletado del SMS,
-               teclado predictivo), se reparte en vez de recortarse. */
-            if (casilla.value.length > 1) { repartir(casilla.value, i); return; }
-
-            casilla.value = casilla.value.replace(/\D/g, '');
-            sincronizar();
-            if (casilla.value && i < casillas.length - 1) casillas[i + 1].focus();
-        });
-
-        casilla.addEventListener('keydown', function (e) {
-            if (e.key === 'Backspace' && !casilla.value && i > 0) {
-                e.preventDefault();
-                casillas[i - 1].value = '';
-                sincronizar();
-                casillas[i - 1].focus();
+        function repartir(texto, desde) {
+            var digitos = (texto || '').replace(/\D/g, '').split('');
+            for (var i = desde; i < casillas.length && digitos.length; i++) {
+                casillas[i].value = digitos.shift();
             }
-            if (e.key === 'ArrowLeft'  && i > 0)                   casillas[i - 1].focus();
-            if (e.key === 'ArrowRight' && i < casillas.length - 1) casillas[i + 1].focus();
+            sincronizar();
+            /* El foco va a la primera vacía, o a la última si se completó: dejarlo
+               donde estaba obliga a buscar a mano dónde seguir. */
+            var vacia = casillas.find(function (c) { return !c.value; });
+            (vacia || casillas[casillas.length - 1]).focus();
+
+            /* Completo el código, el botón de enviar es el próximo paso lógico. No se
+               envía solo: el formulario puede pedir algo más, como la contraseña nueva
+               al recuperar el acceso. */
+        }
+
+        casillas.forEach(function (casilla, i) {
+            casilla.addEventListener('input', function () {
+                /* Si el navegador metió más de un carácter (autocompletado del SMS,
+                   teclado predictivo), se reparte en vez de recortarse. */
+                if (casilla.value.length > 1) { repartir(casilla.value, i); return; }
+
+                casilla.value = casilla.value.replace(/\D/g, '');
+                sincronizar();
+                if (casilla.value && i < casillas.length - 1) casillas[i + 1].focus();
+            });
+
+            casilla.addEventListener('keydown', function (e) {
+                if (e.key === 'Backspace' && !casilla.value && i > 0) {
+                    e.preventDefault();
+                    casillas[i - 1].value = '';
+                    sincronizar();
+                    casillas[i - 1].focus();
+                }
+                if (e.key === 'ArrowLeft'  && i > 0)                   casillas[i - 1].focus();
+                if (e.key === 'ArrowRight' && i < casillas.length - 1) casillas[i + 1].focus();
+            });
+
+            casilla.addEventListener('paste', function (e) {
+                e.preventDefault();
+                repartir((e.clipboardData || window.clipboardData).getData('text'), i);
+            });
+
+            /* Al enfocar se selecciona lo que hay: escribir encima reemplaza en vez
+               de quedar bloqueado por el maxlength. */
+            casilla.addEventListener('focus', function () { casilla.select(); });
         });
 
-        casilla.addEventListener('paste', function (e) {
-            e.preventDefault();
-            repartir((e.clipboardData || window.clipboardData).getData('text'), i);
-        });
-
-        /* Al enfocar se selecciona lo que hay: escribir encima reemplaza en vez
-           de quedar bloqueado por el maxlength. */
-        casilla.addEventListener('focus', function () { casilla.select(); });
-    });
-
-    sincronizar();
+        sincronizar();
+    }
 })();

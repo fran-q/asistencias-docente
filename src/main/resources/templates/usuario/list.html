@@ -3,13 +3,13 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Usuarios - Visum</title>
+    <title>Usuarios del sistema - Visum</title>
 </head>
 <body>
     <section class="usuarios-list">
         <header class="page-header page-header--with-action">
             <div>
-                <h1>Usuarios de la institución</h1>
+                <h1>Usuarios del sistema</h1>
                 <p class="page-header__subtitle">
                     Cuentas que administran el sistema en tu institución. Solo la cuenta
                     institucional puede darlas de alta y de baja.
@@ -114,7 +114,7 @@
                         </td>
                         <td>
                             <span th:if="${u.ultimoLogin}"
-                                  th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yy HH:mm')}">-</span>
+                                  th:text="${#temporals.format(u.ultimoLogin, 'dd/MM/yyyy HH:mm')}">-</span>
                             <span th:unless="${u.ultimoLogin}" class="text-muted">Nunca</span>
                         </td>
                         <!-- La contraseña de otra cuenta sigue sin poder cambiarse desde

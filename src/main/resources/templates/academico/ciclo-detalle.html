@@ -2,7 +2,7 @@
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Ciclo lectivo - Visum</title>
+    <title th:text="|Ciclo lectivo ${ciclo.anio} - Visum|">Ciclo lectivo - Visum</title>
 </head>
 <body>
     <!-- La pantalla de un ciclo (V027). Hasta aca todo vivia en el listado, que despues del alta
@@ -211,7 +211,7 @@
                 </div>
                 <small class="form-hint">Tiene que caer dentro del ciclo. Se suma al final de la lista.</small>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn--secondary"
+                    <button type="submit" class="btn btn--primary"
                             data-texto-enviando="Agregando...">Agregar período</button>
                 </div>
             </form>
@@ -252,7 +252,7 @@
                 <form th:if="${enPreparacion}"
                       th:action="@{/ciclos/{id}/activar(id=${ciclo.id})}" method="post"
                       class="inline-form"
-                      data-confirm="¿Activar este ciclo?"
+                      th:data-confirm="|¿Activar el ciclo ${ciclo.anio}?|"
                       data-confirm-detail="Desde ese momento se toma asistencia contra su oferta y se generan sus ausencias. Solo puede haber un ciclo activo a la vez."
                       data-confirm-action="Activar">
                     <input type="hidden" name="volver" value="detalle">
@@ -261,7 +261,7 @@
                 <form th:unless="${cerrado}"
                       th:action="@{/ciclos/{id}/cerrar(id=${ciclo.id})}" method="post"
                       class="inline-form"
-                      data-confirm="¿Cerrar el ciclo?"
+                      th:data-confirm="|¿Cerrar el ciclo ${ciclo.anio}?|"
                       data-confirm-detail="Su oferta queda congelada: no se van a poder editar sus fechas, sus períodos, sus comisiones ni sus horarios. Las asistencias de ese año sí se van a poder seguir corrigiendo. Si fue un error, se puede reabrir mientras no haya otro ciclo activo."
                       data-confirm-action="Cerrar"
                       data-confirm-style="danger">
@@ -271,15 +271,15 @@
                 <form th:if="${detalle.sePuedeReabrir()}"
                       th:action="@{/ciclos/{id}/reabrir(id=${ciclo.id})}" method="post"
                       class="inline-form"
-                      data-confirm="¿Reabrir el ciclo?"
+                      th:data-confirm="|¿Reabrir el ciclo ${ciclo.anio}?|"
                       data-confirm-detail="Vuelve a quedar en preparación y su oferta se puede editar otra vez. Para tomar asistencia contra ella hay que activarlo. Queda registrado quién lo reabrió."
                       data-confirm-action="Reabrir">
-                    <button type="submit" class="btn btn--secondary">Reabrir</button>
+                    <button type="submit" class="btn btn--ghost">Reabrir</button>
                 </form>
                 <form th:if="${detalle.sePuedeBorrar()}"
                       th:action="@{/ciclos/{id}/borrar(id=${ciclo.id})}" method="post"
                       class="inline-form"
-                      data-confirm="¿Borrar este ciclo?"
+                      th:data-confirm="|¿Borrar el ciclo ${ciclo.anio}?|"
                       data-confirm-detail="Se borra de verdad, con sus períodos. No tiene ninguna comisión, así que no se pierde historial."
                       data-confirm-action="Borrar"
                       data-confirm-style="danger">

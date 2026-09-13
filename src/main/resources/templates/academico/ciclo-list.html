@@ -72,7 +72,7 @@
                                 <form th:if="${c.estado.name() == 'PREPARACION'}"
                                       th:action="@{/ciclos/{id}/activar(id=${c.id})}" method="post"
                                       class="inline-form"
-                                      data-confirm="¿Activar este ciclo?"
+                                      th:data-confirm="|¿Activar el ciclo ${c.anio}?|"
                                       data-confirm-detail="Desde ese momento se toma asistencia contra su oferta y se generan sus ausencias. Solo puede haber un ciclo activo a la vez."
                                       data-confirm-action="Activar">
                                     <button type="submit" class="btn btn--ghost btn--sm">Activar</button>
@@ -80,7 +80,7 @@
                                 <form th:if="${c.estado.name() != 'CERRADO'}"
                                       th:action="@{/ciclos/{id}/cerrar(id=${c.id})}" method="post"
                                       class="inline-form"
-                                      data-confirm="¿Cerrar el ciclo?"
+                                      th:data-confirm="|¿Cerrar el ciclo ${c.anio}?|"
                                       data-confirm-detail="Su oferta queda congelada: no se van a poder editar sus fechas, sus períodos, sus comisiones ni sus horarios. Las asistencias de ese año sí se van a poder seguir corrigiendo. Si fue un error, se puede reabrir mientras no haya otro ciclo activo."
                                       data-confirm-action="Cerrar"
                                       data-confirm-style="danger">
@@ -138,17 +138,17 @@
                 <div id="periodos">
                     <div class="form-row periodo-fila">
                         <div class="form-group">
-                            <label>Nombre</label>
-                            <input type="text" name="periodoNombre" maxlength="60" value="Anual"
+                            <label for="periodo-nombre-0">Nombre</label>
+                            <input type="text" id="periodo-nombre-0" name="periodoNombre" maxlength="60" value="Anual"
                                    placeholder="Anual, 1er cuatrimestre...">
                         </div>
                         <div class="form-group">
-                            <label>Desde</label>
-                            <input type="date" name="periodoInicio">
+                            <label for="periodo-inicio-0">Desde</label>
+                            <input type="date" id="periodo-inicio-0" name="periodoInicio">
                         </div>
                         <div class="form-group">
-                            <label>Hasta</label>
-                            <input type="date" name="periodoFin">
+                            <label for="periodo-fin-0">Hasta</label>
+                            <input type="date" id="periodo-fin-0" name="periodoFin">
                         </div>
                     </div>
                 </div>
@@ -157,7 +157,7 @@
                     + Agregar período
                 </button>
 
-                <div class="form-acciones">
+                <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
                             data-texto-enviando="Creando...">Crear ciclo</button>
                 </div>
@@ -201,8 +201,10 @@
                         <small class="form-hint">Un ciclo cerrado no puede recibir oferta.</small>
                     </div>
                 </div>
-                <button type="submit" class="btn btn--secondary"
-                        data-texto-enviando="Copiando...">Copiar oferta</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary"
+                            data-texto-enviando="Copiando...">Copiar oferta</button>
+                </div>
             </form>
         </div>
 
@@ -216,6 +218,11 @@
                 var contenedor = document.getElementById('periodos');
                 var copia = contenedor.querySelector('.periodo-fila').cloneNode(true);
                 copia.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+                // Cada copia lleva su propio numero: con el id repetido, tocar la etiqueta
+                // "Desde" de la tercera fila enfocaba el campo de la primera.
+                var n = contenedor.querySelectorAll('.periodo-fila').length;
+                copia.querySelectorAll('[id]').forEach(function (e) { e.id = e.id.replace(/-\d+$/, '-' + n); });
+                copia.querySelectorAll('label[for]').forEach(function (l) { l.htmlFor = l.htmlFor.replace(/-\d+$/, '-' + n); });
                 contenedor.appendChild(copia);
             });
         </script>

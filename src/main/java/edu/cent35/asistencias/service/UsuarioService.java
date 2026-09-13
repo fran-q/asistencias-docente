@@ -86,10 +86,10 @@ public class UsuarioService {
         Long tenantId = TenantContext.getRequired();
 
         if (usuarioRepository.existsByUsernameAndInstitucionId(username, tenantId)) {
-            throw new IllegalArgumentException("El username '" + username + "' ya existe en esta institucion");
+            throw new IllegalArgumentException("Ya hay un usuario '" + username + "' en esta institución");
         }
         if (usuarioRepository.existsByEmailAndInstitucionId(email, tenantId)) {
-            throw new IllegalArgumentException("El email '" + email + "' ya existe en esta institucion");
+            throw new IllegalArgumentException("El correo '" + email + "' ya está en uso en esta institución");
         }
 
         Rol rol = rolRepository.findByCodigo(RolCodigo.ADMIN.name())
@@ -166,7 +166,7 @@ public class UsuarioService {
         boolean cambioElCorreo = !emailNuevo.equalsIgnoreCase(u.getEmail());
         if (cambioElCorreo
                 && usuarioRepository.existsByEmailAndInstitucionId(emailNuevo, u.getInstitucionId())) {
-            throw new IllegalArgumentException("El email '" + emailNuevo + "' ya existe en esta institucion");
+            throw new IllegalArgumentException("El correo '" + emailNuevo + "' ya está en uso en esta institución");
         }
 
         // La cuenta de la institucion no se da de baja desde la administracion de usuarios.

@@ -7,14 +7,14 @@
 <body>
     <section class="asistencia-manual">
         <header class="page-header">
-            <h1>Cargar asistencia manual</h1>
+            <h1>Carga manual de asistencia</h1>
             <p class="page-header__subtitle">
                 Para cuando el reconocimiento falló o el docente no estaba registrado.
                 Quedará identificada como <code>MANUAL</code> con el motivo elegido.
             </p>
         </header>
 
-        <div class="card" style="max-width: 720px;">
+        <div class="card form-max">
             <form th:action="@{/asistencias/manual/nueva}" th:object="${form}" method="post" novalidate>
 
                 <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
@@ -50,7 +50,7 @@
                             <option th:each="h : ${horarios}"
                                     th:value="${h.id}"
                                     th:attr="data-docente=${h.comision.docenteAsignado != null ? h.comision.docenteAsignado.id : ''}"
-                                    th:text="|${h.comision.materia.nombre} — Comisión ${h.comision.codigo} · ${h.dia} ${#temporals.format(h.horaInicio,'HH:mm')}-${#temporals.format(h.horaFin,'HH:mm')}|">
+                                    th:text="|${h.comision.materia.nombre} — Comisión ${h.comision.codigo} · ${h.dia.etiqueta} ${#temporals.format(h.horaInicio,'HH:mm')}-${#temporals.format(h.horaFin,'HH:mm')}|">
                                 Matemática — Comisión A · Lunes 18:00-20:00
                             </option>
                         </select>

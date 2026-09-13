@@ -103,7 +103,7 @@ class UsuarioServiceTest {
 
         assertThatThrownBy(() -> service.crear("dup", "x@x.com", "pass1234", "P", "P"))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("username");
+            .hasMessageContaining("Ya hay un usuario");
         verify(usuarioRepository, never()).save(any());
     }
 
@@ -115,7 +115,7 @@ class UsuarioServiceTest {
 
         assertThatThrownBy(() -> service.crear("u", "dup@x.com", "pass1234", "P", "P"))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessageContaining("email");
+            .hasMessageContaining("ya está en uso");
         verify(usuarioRepository, never()).save(any());
     }
 

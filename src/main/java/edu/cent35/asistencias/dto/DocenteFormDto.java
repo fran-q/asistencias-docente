@@ -26,7 +26,7 @@ public class DocenteFormDto {
     @Size(max = 15)
     private String dni;
 
-    @Size(max = 30, message = "El legajo no puede superar 30 caracteres")
+    @Size(max = 30, message = "El legajo no puede superar los 30 caracteres")
     private String legajo;
 
     @NotBlank(message = "El nombre es obligatorio")
@@ -37,7 +37,7 @@ public class DocenteFormDto {
     @Size(max = 80)
     private String apellido;
 
-    @Email(message = "El email debe ser válido")
+    @Email(message = "El correo debe ser válido")
     @Size(max = 120)
     private String email;
 

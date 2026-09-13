@@ -1082,6 +1082,31 @@ input, select, button, textarea { font-family: inherit; }
 .checkbox-label input[type="checkbox"] {
     width: 18px; height: 18px; accent-color: var(--primary-solid); cursor: pointer;
 }
+/* Casilla con un texto largo al lado (las del consentimiento): va a la altura de la
+   primera línea y no centrada contra un párrafo de tres. */
+.checkbox-label--texto { align-items: flex-start; }
+.checkbox-label--texto input[type="checkbox"] { margin-top: 2px; flex-shrink: 0; }
+
+/* Texto legal del consentimiento. Se lee entero antes de firmar, así que va con la letra
+   del cuerpo y no con la de código que un <pre> trae por defecto; conserva los saltos de
+   línea del texto versionado. Antes el borde salía de un token que ya no existe y caía
+   en un gris fijo que en tema claro se veía negro. */
+.consentimiento__texto {
+    white-space: pre-wrap; max-height: 360px; overflow-y: auto; margin: 0;
+    padding: var(--space); border: 1px solid var(--border); border-radius: var(--r);
+    background: var(--surface-2); font-family: inherit; font-size: .9rem; line-height: 1.55;
+}
+
+/* Derechos ARCO de la ficha: cada uno con su explicación a la izquierda y su acción a la
+   derecha, separados por una línea como las filas de una tabla. Sin esto se veían como
+   una lista con viñetas y el botón debajo del texto. */
+.arco__derechos { list-style: none; margin: var(--space) 0 0; padding: 0; }
+.arco__derechos li {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--space-sm) var(--space); padding: var(--space-sm) 0;
+    border-top: 1px solid var(--border);
+}
+.arco__derechos li > div { display: flex; flex-direction: column; gap: 2px; flex: 1 1 280px; min-width: 0; }
 
 /* ---- Campo de contraseña con botón ojo ---- */
 .password-input { position: relative; display: flex; align-items: stretch; }
@@ -1371,6 +1396,30 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
                                        border: 2px solid transparent; background-clip: content-box; }
 .table-wrap::-webkit-scrollbar-track { background: transparent; }
 .table-wrap .table { min-width: 760px; }
+
+/* Tablas cortas dentro de una tarjeta (las materias de cada año, los horarios de cada
+   comisión): conservan el desplazamiento de costado, pero no el alto fijo ni el mínimo,
+   que son del listado principal. Con ellos cada tarjeta quedaba con un hueco debajo de
+   sus dos o tres filas. */
+.table-wrap--libre { max-height: none; min-height: 0; }
+
+/* Aviso de que la tabla sigue hacia un costado: el borde que corta se desvanece. Las
+   clases las pone table-scroll.js según dónde esté el desplazamiento; hasta ahora no
+   tenían estilo y el aviso nunca aparecía. Es una máscara y no una sombra porque una
+   sombra interna queda tapada por el fondo de las celdas. El negro no es un color que
+   se vea: en una máscara solo dice qué parte queda visible. */
+.table-wrap--mas-der {
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 32px);
+            mask-image: linear-gradient(to left, transparent, #000 32px);
+}
+.table-wrap--mas-izq {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 32px);
+            mask-image: linear-gradient(to right, transparent, #000 32px);
+}
+.table-wrap--mas-izq.table-wrap--mas-der {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+            mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+}
 
 /* ---- Columna de acciones fija ----
    En una tabla ancha, la columna de acciones se iba de la vista justo cuando
