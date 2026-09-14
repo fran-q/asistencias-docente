@@ -1843,6 +1843,16 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .auth__pie p { margin: 0; font-size: .86rem; color: var(--text-muted); }
 
+/* La vuelta al kiosco (volver-al-kiosco.js): arriba del formulario, a la vista de quien
+   llego tocando la marca sin querer. */
+.auth__kiosco {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 0 0 22px; padding: 10px 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .86rem; color: var(--text-muted);
+}
+.auth__kiosco strong { color: var(--text); font-variant-numeric: tabular-nums; }
+
 .auth__nota {
     margin: 22px 0 0; padding: 12px 14px;
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
@@ -2527,6 +2537,10 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .kiosco__entrar { opacity: .55; transition: opacity var(--t-fast) var(--ease); }
 .kiosco__entrar:hover,
 .kiosco__entrar:focus-visible { opacity: 1; }
+/* La marca es un enlace al login (kiosco.html): sin subrayado ni azul, que en un mostrador
+   la harian parecer un boton puesto para tocar. El foco se ve igual. */
+a.kiosco__marca { text-decoration: none; border-radius: var(--r); }
+a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
 
 .kiosco__marco {
     width: min(1100px, 96vw);

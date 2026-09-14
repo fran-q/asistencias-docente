@@ -36,6 +36,10 @@ public class HomeController {
                 session.removeAttribute("ULTIMO_USUARIO_LOGIN");
             }
         }
+        // Se llego tocando la marca del kiosco: el login ofrece volver, y vuelve solo si nadie
+        // lo usa (volver-al-kiosco.js). Solo se reconoce este valor y el destino es fijo, asi
+        // que el parametro no puede mandar a nadie a otra parte.
+        model.addAttribute("desdeKiosco", "kiosco".equals(request.getParameter("desde")));
         return "auth/login";
     }
 

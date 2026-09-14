@@ -25,7 +25,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -145,6 +148,49 @@ class KioscoPantallaIT {
 
         assertThat(respuesta.getStatus()).isEqualTo(302);
         assertThat(respuesta.getRedirectedUrl()).containsIgnoringCase("login");
+    }
+
+    @Test
+    @DisplayName("La marca lleva al login, y el login ofrece volver al kiosco")
+    void laMarcaLlevaAlLoginYSeVuelve() throws Exception {
+        String token = kioscoHabilitado();
+
+        String kiosco = mockMvc.perform(get("/kiosco").cookie(new Cookie(CookiePuesto.NOMBRE, token)))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(kiosco)
+            .as("la marca es un enlace al login, que avisa de donde se viene")
+            .contains("href=\"/login?desde=kiosco\" class=\"kiosco__marca\"");
+
+        String login = mockMvc.perform(get("/login").param("desde", "kiosco"))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(login)
+            .contains("Volver al kiosco")
+            .contains("data-volver-al-kiosco=\"/kiosco\"")
+            .contains("/js/facial/volver-al-kiosco.js")
+            .as("el formulario lleva la marca, para que un ingreso fallido no pierda la vuelta")
+            .contains("name=\"desde\" value=\"kiosco\"");
+
+        String loginComun = mockMvc.perform(get("/login"))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(loginComun)
+            .as("a quien entra al login por su cuenta no se lo manda a ningun kiosco")
+            .doesNotContain("Volver al kiosco")
+            .doesNotContain("volver-al-kiosco.js");
+    }
+
+    @Test
+    @DisplayName("Un ingreso fallido desde el kiosco sigue ofreciendo volver")
+    void unIngresoFallidoNoPierdeLaVuelta() throws Exception {
+        mockMvc.perform(post("/login").with(csrf())
+                .param("username", "nadie").param("password", "equivocada").param("desde", "kiosco"))
+            .andExpect(redirectedUrl("/login?error&desde=kiosco"));
+
+        mockMvc.perform(post("/login").with(csrf())
+                .param("username", "nadie").param("password", "equivocada"))
+            .andExpect(redirectedUrl("/login?error"));
     }
 
     // ------------------------------------------------------------------------

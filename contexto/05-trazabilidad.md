@@ -199,6 +199,13 @@ abierto en una máquina que nadie vigila, que es *peor* que la práctica de la s
 el kiosco viene a reemplazar. `KioscoPantallaIT` verifica que el HTML no contenga ninguno de
 esos enlaces ni el de cerrar sesión.
 
+**La única salida es el login, y vuelve sola.** La marca y "Iniciar sesión" llevan a
+`/login?desde=kiosco`, que pide las credenciales como siempre. Como la marca se toca sin
+querer, el login ofrece volver al kiosco y vuelve solo tras un minuto sin que nadie escriba ni
+toque nada (`volver-al-kiosco.js`); un ingreso fallido conserva la vuelta (`failureHandler` de
+`SecurityConfig`). Sin eso, un toque de más dejaba el equipo sin tomar asistencia hasta que
+alguien lo notara.
+
 **Agujero encontrado y cerrado el 2026-09-07.** `PuestoCapturaInterceptor` dejaba pasar la
 petición cuando no había tenant en contexto —"lo resuelve la cadena de seguridad, que para
 estas rutas ya exige sesión"—. Eso era cierto hasta que `/kiosco` pasó a `permitAll`: desde

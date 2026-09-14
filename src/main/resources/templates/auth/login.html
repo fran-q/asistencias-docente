@@ -60,6 +60,15 @@
                 <h1>Iniciar sesión</h1>
                 <p>Ingresá con tu cuenta institucional.</p>
 
+                <!-- Se llegó tocando la marca del kiosco (HomeController.login). La marca es
+                     grande y se toca sin querer, y un kiosco que quedó en esta pantalla deja de
+                     tomar asistencia: se ofrece volver, y vuelve solo si nadie la usa. -->
+                <div th:if="${desdeKiosco}" class="auth__kiosco"
+                     th:data-volver-al-kiosco="@{/kiosco}" data-segundos="60">
+                    <a th:href="@{/kiosco}" class="btn btn--ghost btn--sm">← Volver al kiosco</a>
+                    <span>Si nadie ingresa, vuelve solo en <strong data-cuenta>60</strong> s.</span>
+                </div>
+
                 <!-- Llegar al login sin haber pedido salir desconcierta: la persona estaba
                      trabajando y de golpe está afuera. Decir por qué es lo que evita que lo
                      tome por un error del sistema. Lo pide SecurityConfig.alLogin. -->
@@ -69,6 +78,9 @@
                 </div>
 
                 <form th:action="@{/login}" method="post">
+                    <!-- Viaja con el intento: si falla, el login vuelve con la misma vuelta al
+                         kiosco (SecurityConfig, failureHandler). -->
+                    <input type="hidden" name="desde" value="kiosco" th:if="${desdeKiosco}">
                     <div class="auth__campos">
                         <div class="form-group" style="margin:0">
                             <label for="username">Usuario</label>
@@ -127,5 +139,6 @@
 <script th:src="@{/js/comun/toast.js}" defer></script>
 <script th:src="@{/js/comun/envio-form.js}" defer></script>
 <script th:src="@{/js/comun/password-ui.js}" defer></script>
+<script th:if="${desdeKiosco}" th:src="@{/js/facial/volver-al-kiosco.js}" defer></script>
 </body>
 </html>

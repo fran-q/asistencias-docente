@@ -116,7 +116,11 @@ public class SecurityConfig {
                     if (usuario != null && !usuario.isBlank()) {
                         request.getSession().setAttribute("ULTIMO_USUARIO_LOGIN", usuario);
                     }
-                    response.sendRedirect(request.getContextPath() + "/login?error");
+                    // Quien vino desde el kiosco y se equivoco de clave conserva la vuelta: sin
+                    // esto el reintento caia en un login comun, y el equipo podia quedar ahi.
+                    boolean desdeKiosco = "kiosco".equals(request.getParameter("desde"));
+                    response.sendRedirect(request.getContextPath() + "/login?error"
+                        + (desdeKiosco ? "&desde=kiosco" : ""));
                 })
                 .permitAll()
             )

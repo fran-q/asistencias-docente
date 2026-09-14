@@ -56,14 +56,19 @@
       cerrándola--; el formulario de ingreso no es eso. Pide las credenciales igual que
       siempre, y a /login se llega tecleando la dirección de todos modos. Lo que se gana es
       que quien tiene que volver a operar el sistema no tenga que saber eso.
+
+      La marca lleva al mismo lugar, como el logo de casi cualquier sistema. Es lo más grande
+      de la barra y se toca sin querer, así que los dos enlaces avisan de dónde vienen
+      (?desde=kiosco): el login ofrece volver, y vuelve solo si nadie lo usa en un minuto
+      (volver-al-kiosco.js). Sin eso, un toque de más dejaba el equipo sin tomar asistencia.
     -->
     <header class="kiosco__barra">
-        <span class="kiosco__marca">
+        <a th:href="@{/login(desde='kiosco')}" class="kiosco__marca" aria-label="Visum: iniciar sesión">
             <span class="kiosco__logo" aria-hidden="true">V</span>
             <span>Visum</span>
-        </span>
+        </a>
 
-        <a th:href="@{/login}" class="btn btn--ghost btn--sm kiosco__entrar">Iniciar sesión</a>
+        <a th:href="@{/login(desde='kiosco')}" class="btn btn--ghost btn--sm kiosco__entrar">Iniciar sesión</a>
     </header>
 
     <main class="kiosco__marco">
