@@ -103,7 +103,7 @@
         <!-- ================= Alta ================= -->
         <div class="card">
             <h2>Nuevo ciclo lectivo</h2>
-            <form th:action="@{/ciclos}" method="post" novalidate id="form-ciclo">
+            <form th:action="@{/ciclos}" method="post" novalidate id="form-ciclo" data-fechas-del-anio>
                 <!-- El rechazo del alta se muestra aca, junto a lo que se cargo. Estaba ademas
                      arriba de todo, y salia dos veces. -->
                 <div th:if="${error}" class="alert alert--error" role="alert">
@@ -129,17 +129,28 @@
 
                 <h3 class="form-seccion">Períodos</h3>
                 <p class="form-hint form-hint--seccion">
-                    En qué tramos se divide el año. Si no dividís, cargá uno solo llamado
-                    "Anual" que cubra el ciclo entero. Los nombres son los que emparejan un año
-                    con el siguiente cuando se copia la oferta, así que conviene repetirlos tal
-                    cual de un ciclo al otro.
+                    Elegí cómo se divide el año: las fechas se reparten solas y después se
+                    pueden ajustar. Conviene repetir los mismos nombres de un año al otro,
+                    porque son los que emparejan los períodos cuando se copia la oferta.
                 </p>
+
+                <div class="form-group">
+                    <label for="estructura">Cómo se divide el año</label>
+                    <!-- Sin name: no viaja al servidor. Solo arma las filas de abajo, que son
+                         las que se envían (ciclo-periodos.js). -->
+                    <select id="estructura" data-menu>
+                        <option value="1">Anual</option>
+                        <option value="2">Dos cuatrimestres</option>
+                        <option value="3">Tres trimestres</option>
+                        <option value="personalizada">Personalizada</option>
+                    </select>
+                </div>
 
                 <div id="periodos">
                     <div class="form-row form-row--3 periodo-fila">
                         <div class="form-group">
                             <label for="periodo-nombre-0">Nombre</label>
-                            <input type="text" id="periodo-nombre-0" name="periodoNombre" maxlength="60" value="Anual"
+                            <input type="text" id="periodo-nombre-0" name="periodoNombre" maxlength="60" value="Anual" list="periodos-comunes"
                                    placeholder="Anual, 1er cuatrimestre...">
                         </div>
                         <div class="form-group">
@@ -152,6 +163,16 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Los nombres más comunes, como sugerencia al escribir. -->
+                <datalist id="periodos-comunes">
+                    <option value="Anual"></option>
+                    <option value="1er cuatrimestre"></option>
+                    <option value="2do cuatrimestre"></option>
+                    <option value="1er trimestre"></option>
+                    <option value="2do trimestre"></option>
+                    <option value="3er trimestre"></option>
+                </datalist>
 
                 <button type="button" class="btn btn--ghost btn--sm btn--success periodo-agregar" id="agregar-periodo">
                     + Agregar período
@@ -209,23 +230,8 @@
         </div>
 
         <!-- El script va ADENTRO de la section: la plantilla se inserta en el layout
-             por su <section>, y todo lo que quede afuera se descarta. Estuvo afuera
-             desde V023 y el boton de agregar periodo no hacia nada. -->
-        <script th:inline="javascript">
-            // Agrega una fila de periodo vacia. Se clona la primera para no repetir el markup:
-            // si cambian las clases o los names, cambian en un solo lugar.
-            document.getElementById('agregar-periodo')?.addEventListener('click', function () {
-                var contenedor = document.getElementById('periodos');
-                var copia = contenedor.querySelector('.periodo-fila').cloneNode(true);
-                copia.querySelectorAll('input').forEach(function (i) { i.value = ''; });
-                // Cada copia lleva su propio numero: con el id repetido, tocar la etiqueta
-                // "Desde" de la tercera fila enfocaba el campo de la primera.
-                var n = contenedor.querySelectorAll('.periodo-fila').length;
-                copia.querySelectorAll('[id]').forEach(function (e) { e.id = e.id.replace(/-\d+$/, '-' + n); });
-                copia.querySelectorAll('label[for]').forEach(function (l) { l.htmlFor = l.htmlFor.replace(/-\d+$/, '-' + n); });
-                contenedor.appendChild(copia);
-            });
-        </script>
+             por su <section>, y todo lo que quede afuera se descarta. -->
+        <script th:src="@{/js/academico/ciclo-periodos.js}" defer></script>
     </section>
 
 </body>

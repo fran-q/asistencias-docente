@@ -18,6 +18,10 @@
     'use strict';
 
     // Traduce el motivo del navegador a algo que se entienda sin saber HTML.
+    function comoFecha(iso) {
+        return iso.split('-').reverse().join('/');
+    }
+
     function mensaje(campo) {
         var v = campo.validity;
         if (v.valueMissing)  return 'Este campo es obligatorio.';
@@ -26,8 +30,13 @@
         if (v.patternMismatch) return 'El formato no es válido.';
         if (v.tooShort)      return 'Tiene que tener al menos ' + campo.minLength + ' caracteres.';
         if (v.tooLong)       return 'No puede pasar de ' + campo.maxLength + ' caracteres.';
-        if (v.rangeUnderflow) return 'Tiene que ser ' + campo.min + ' o mayor.';
-        if (v.rangeOverflow)  return 'No puede pasar de ' + campo.max + '.';
+        // En una fecha el limite viene como 2027-01-01: se muestra como se escribe aca.
+        if (v.rangeUnderflow) return campo.type === 'date'
+            ? 'Tiene que ser el ' + comoFecha(campo.min) + ' o después.'
+            : 'Tiene que ser ' + campo.min + ' o mayor.';
+        if (v.rangeOverflow) return campo.type === 'date'
+            ? 'No puede pasar del ' + comoFecha(campo.max) + '.'
+            : 'No puede pasar de ' + campo.max + '.';
         if (v.stepMismatch)  return 'El valor no es válido.';
         return 'Revisá este campo.';
     }

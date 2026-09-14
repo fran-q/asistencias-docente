@@ -432,15 +432,34 @@ class CiclosLectivosIT {
             .as("un ciclo que ya corrio tiene asistencias de ese ano")
             .hasMessageContaining("preparación");
 
-        // Un tipeo al crear el del ano que viene: queria 2027 y puso 2028.
+        // Un tipeo al crear el del ano que viene: queria 2027 y puso 2028. Las fechas del
+        // ciclo se corrigen a mano; su periodo se corre solo, porque no puede quedar afuera.
         CicloLectivo mal = cicloCon(2028, "Anual");
         enPreparacion(mal);
-        cicloService.actualizar(mal.getId(), (short) 2027, mal.getFechaInicio(), mal.getFechaFin());
+        cicloService.actualizar(mal.getId(), (short) 2027,
+            LocalDate.of(2027, 1, 1), LocalDate.of(2027, 12, 31));
         assertThat(cicloRepository.findById(mal.getId()).get().getAnio()).isEqualTo((short) 2027);
+        PeriodoLectivo movido = cicloService.buscarPorId(mal.getId()).getPeriodos().get(0);
+        assertThat(movido.getFechaInicio()).isEqualTo(LocalDate.of(2027, 1, 1));
+        assertThat(movido.getFechaFin()).isEqualTo(LocalDate.of(2027, 12, 31));
 
         assertThatThrownBy(() -> cicloService.actualizar(mal.getId(), (short) 2026,
-                mal.getFechaInicio(), mal.getFechaFin()))
+                LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31)))
             .hasMessageContaining("Ya existe un ciclo lectivo 2026");
+    }
+
+    @Test
+    @DisplayName("Si con el ano nuevo un periodo queda fuera del ciclo, se dice cual")
+    void elPeriodoCorridoTieneQueEntrar() {
+        CicloLectivo ciclo = cicloCon(2035, "Anual");
+        enPreparacion(ciclo);
+
+        assertThatThrownBy(() -> cicloService.actualizar(ciclo.getId(), (short) 2036,
+                LocalDate.of(2036, 3, 1), LocalDate.of(2036, 12, 15)))
+            .hasMessageContaining("\"Anual\" pasaría a ir del 01/01/2036 al 31/12/2036");
+        assertThat(cicloRepository.findById(ciclo.getId()).get().getAnio())
+            .as("rechazado, no cambia nada")
+            .isEqualTo((short) 2035);
     }
 
     @Test
@@ -628,7 +647,7 @@ class CiclosLectivosIT {
         assertThat(html)
             .as("el script del boton de agregar periodo tiene que llegar a la pagina: estuvo "
                 + "afuera de la section y el layout lo descartaba sin avisar")
-            .contains("getElementById('agregar-periodo')");
+            .contains("/js/academico/ciclo-periodos.js");
     }
 
     @Test
@@ -693,6 +712,58 @@ class CiclosLectivosIT {
         assertThat(html)
             .as("es el ultimo cerrado y no hay otro activo: se puede reabrir")
             .contains("/ciclos/" + ciclo.getId() + "/reabrir");
+    }
+
+    @Test
+    @DisplayName("Un ciclo no se crea con fechas fuera de su año, y el error dice cuáles")
+    void elAltaExigeFechasDentroDelAnio() throws Exception {
+        mockMvc.perform(post("/ciclos")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("anio", "2031")
+                .param("fechaInicio", "2030-02-09")
+                .param("fechaFin", "2031-12-18")
+                .param("periodoNombre", "Anual")
+                .param("periodoInicio", "2030-02-09")
+                .param("periodoFin", "2031-12-18"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("error",
+                org.hamcrest.Matchers.containsString("tienen que caer dentro de 2031")));
+
+        assertThat(cicloRepository.findByInstitucionIdAndAnio(tenantId, (short) 2031)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cambiar el año de un ciclo no mueve sus fechas: pide corregirlas")
+    void cambiarElAnioPideCorregirLasFechas() throws Exception {
+        CicloLectivo ciclo = cicloCon(2032, "Anual");
+        enPreparacion(ciclo);
+
+        mockMvc.perform(post("/ciclos/" + ciclo.getId() + "/datos")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("anio", "2033")
+                .param("fechaInicio", "2032-01-01")
+                .param("fechaFin", "2032-12-31"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("error",
+                org.hamcrest.Matchers.containsString("tienen que caer dentro de 2033")));
+
+        assertThat(cicloRepository.findById(ciclo.getId()).orElseThrow().getAnio())
+            .as("el año no cambia si sus fechas quedan afuera")
+            .isEqualTo((short) 2032);
+    }
+
+    @Test
+    @DisplayName("El detalle avisa si un ciclo viejo tiene fechas fuera de su año")
+    void elDetalleAvisaFechasFueraDelAnio() throws Exception {
+        CicloLectivo ciclo = cicloCon(2034, "Anual");
+        ciclo.setFechaInicio(LocalDate.of(2033, 2, 1));
+        cicloRepository.save(ciclo);
+
+        String html = mockMvc.perform(get("/ciclos/" + ciclo.getId())
+                .with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(html).contains("no caen dentro de");
     }
 
     @Test

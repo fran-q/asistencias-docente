@@ -193,6 +193,7 @@ public class CicloLectivoService {
         Long tenantId = TenantContext.getRequired();
         validarAnio(anio);
         validarRango(inicio, fin);
+        validarDentroDelAnio(anio, inicio, fin);
 
         if (cicloRepository.findByInstitucionIdAndAnio(tenantId, anio).isPresent()) {
             throw new IllegalArgumentException(
@@ -232,6 +233,12 @@ public class CicloLectivoService {
      * mal cargado es un error de tipeo, y sin esto la única salida sería borrarlo. {@code null}
      * deja el que estaba: la pantalla no lo manda cuando el campo va deshabilitado.
      *
+     * <p>Si el año cambia, las fechas del ciclo se corrigen a mano --tienen que caer en el año
+     * nuevo--, pero sus períodos se corren solos la misma cantidad de años. No hay otra forma:
+     * un período no puede quedar fuera de su ciclo, así que no se lo puede mover antes de
+     * cambiar el año ni dejarlo atrás después. Un 29 de febrero que no existe en el año nuevo
+     * queda en el 28.
+     *
      * <p><b>Las fechas, mientras no esté cerrado</b>, con dos límites: sus períodos tienen que
      * seguir cayendo adentro, y el rango nuevo no puede dejar afuera días que ya tienen
      * asistencias. Mover fechas no crea ni borra nada hacia atrás —el job de ausencias trabaja
@@ -258,11 +265,21 @@ public class CicloLectivoService {
             }
         }
 
+        // Las fechas del ciclo, a mano: tienen que caer en su año, el nuevo si cambió.
+        validarDentroDelAnio(cambiaElAnio ? anio : ciclo.getAnio(), inicio, fin);
+        // Los periodos, en cambio, se corren con el año: no se los puede mover antes (quedarian
+        // fuera del ciclo viejo) ni despues (quedarian fuera del nuevo).
+        int corrimiento = cambiaElAnio ? anio - ciclo.getAnio() : 0;
         for (PeriodoLectivo p : ciclo.getPeriodos()) {
-            if (p.getFechaInicio().isBefore(inicio) || p.getFechaFin().isAfter(fin)) {
-                throw new IllegalArgumentException(
-                    "El período \"" + p.getNombre() + "\" (" + fecha(p.getFechaInicio()) + " al "
-                    + fecha(p.getFechaFin()) + ") quedaría fuera del ciclo. Ajustalo primero.");
+            LocalDate desde = p.getFechaInicio().plusYears(corrimiento);
+            LocalDate hasta = p.getFechaFin().plusYears(corrimiento);
+            if (desde.isBefore(inicio) || hasta.isAfter(fin)) {
+                throw new IllegalArgumentException(corrimiento == 0
+                    ? "El período \"" + p.getNombre() + "\" (" + fecha(desde) + " al "
+                      + fecha(hasta) + ") quedaría fuera del ciclo. Ajustalo primero."
+                    : "Con el año nuevo, el período \"" + p.getNombre() + "\" pasaría a ir del "
+                      + fecha(desde) + " al " + fecha(hasta) + " y quedaría fuera de las fechas "
+                      + "del ciclo. Ampliá las fechas del ciclo para que lo contengan.");
             }
         }
         // Con los periodos adentro, esto solo puede saltar por una asistencia que ya estaba
@@ -275,6 +292,10 @@ public class CicloLectivoService {
         Short anioAnterior = ciclo.getAnio();
         if (cambiaElAnio) {
             ciclo.setAnio(anio);
+            for (PeriodoLectivo p : ciclo.getPeriodos()) {
+                p.setFechaInicio(p.getFechaInicio().plusYears(corrimiento));
+                p.setFechaFin(p.getFechaFin().plusYears(corrimiento));
+            }
         }
         ciclo.setFechaInicio(inicio);
         ciclo.setFechaFin(fin);
@@ -728,6 +749,23 @@ public class CicloLectivoService {
         if (anio == null || anio < 2000 || anio > 2200) {
             throw new IllegalArgumentException(
                 "El año tiene que ser un año calendario, entre 2000 y 2200.");
+        }
+    }
+
+    /**
+     * Las dos fechas del ciclo caen dentro de su año.
+     *
+     * <p>Un ciclo es el año calendario de cursada, y sus períodos --anual, cuatrimestres,
+     * trimestres-- van adentro. Un ciclo 2027 que empezara en 2026 se superpondría con el
+     * 2026, y el listado, que ordena por año, lo mostraría en un lugar con las fechas de otro.
+     * Al corregir el año de un ciclo en preparación, las fechas no se mueven solas: se piden
+     * corregir, y el mensaje dice cuáles quedaron afuera.
+     */
+    private void validarDentroDelAnio(Short anio, LocalDate inicio, LocalDate fin) {
+        if (inicio.getYear() != anio || fin.getYear() != anio) {
+            throw new IllegalArgumentException(
+                "El ciclo es de " + anio + " y las fechas van del " + fecha(inicio) + " al "
+                + fecha(fin) + ". Las dos tienen que caer dentro de " + anio + ".");
         }
     }
 
