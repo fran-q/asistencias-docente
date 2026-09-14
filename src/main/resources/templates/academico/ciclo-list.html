@@ -10,13 +10,25 @@
             <div>
                 <h1>Ciclos lectivos</h1>
                 <p class="page-header__subtitle">
-                    El año calendario de cursada. Cada comisión pertenece a un período de un
-                    ciclo, y eso es lo que permite dictar la misma materia todos los años sin
-                    que cada oferta pise a la anterior. Entrá a un año para ver qué tiene y
-                    corregir sus fechas o sus períodos.
+                    Los años de cursada. Entrá a uno para ver qué tiene y corregir sus fechas
+                    o sus períodos.
                 </p>
             </div>
         </header>
+
+        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del titulo
+             (ayuda.js). -->
+        <aside class="ayuda" data-ayuda="ciclos" aria-label="Cómo funcionan los ciclos lectivos">
+            <p>
+                Cada comisión pertenece a un período de un ciclo: así la misma materia se dicta
+                todos los años sin que una oferta pise a la anterior.
+            </p>
+            <p>
+                Un ciclo nace <strong>en preparación</strong>, se <strong>activa</strong> para
+                tomar asistencia —solo uno a la vez— y se <strong>cierra</strong> a mano cuando
+                termina el año.
+            </p>
+        </aside>
 
         <!-- ================= Listado ================= -->
         <div class="card card--no-padding" th:if="${!#lists.isEmpty(ciclos)}">
@@ -129,9 +141,8 @@
 
                 <h3 class="form-seccion">Períodos</h3>
                 <p class="form-hint form-hint--seccion">
-                    Elegí cómo se divide el año: las fechas se reparten solas y después se
-                    pueden ajustar. Conviene repetir los mismos nombres de un año al otro,
-                    porque son los que emparejan los períodos cuando se copia la oferta.
+                    Las fechas se reparten solas y después se ajustan. Repetí los nombres de un
+                    año al otro: con ellos se empareja la oferta al copiarla.
                 </p>
 
                 <div class="form-group">
@@ -190,8 +201,8 @@
             <h2>Copiar la oferta de un año a otro</h2>
             <p>
                 Copia las comisiones activas y sus horarios, emparejando los períodos
-                <strong>por nombre</strong>. No copia asistencias ni nada del historial: eso
-                pertenece al año en que ocurrió. Se puede correr más de una vez sin duplicar.
+                <strong>por nombre</strong>. No copia asistencias, y correrlo dos veces no
+                duplica nada.
             </p>
             <form th:action="@{/ciclos/{id}/copiar-desde(id=${ciclos[0].id})}" method="post"
                   id="form-copiar"

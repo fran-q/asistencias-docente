@@ -89,8 +89,8 @@
                     </div>
                 </div>
                 <small class="form-hint">
-                    Mover las fechas no crea ni borra nada hacia atrás. Lo que no se puede es
-                    dejar afuera a un período, ni a un día que ya tiene asistencias.
+                    Mover las fechas no genera ni borra nada hacia atrás, pero no pueden dejar
+                    afuera a un período ni a un día con asistencias.
                 </small>
                 <div class="form-actions">
                     <button type="submit" class="btn btn--primary"
@@ -134,9 +134,8 @@
         <div class="card">
             <h2>Períodos</h2>
             <p class="form-hint" th:unless="${cerrado}">
-                Los nombres son los que emparejan un año con el siguiente cuando se copia la
-                oferta: si renombrás uno, conviene que el ciclo del año que viene lo repita igual.
-                Un período se puede quitar solo si no tiene ninguna comisión.
+                Con los nombres se empareja la oferta al copiarla a otro año: si renombrás uno,
+                repetilo igual el año que viene. Solo se quita un período sin comisiones.
             </p>
 
             <!-- Una fila por periodo, cada una con su formulario. Quitar va en un formulario

@@ -155,6 +155,27 @@ class CorreccionesPantallasIT {
     }
 
     // ========================================================================
+    //  Explicaciones que se cierran y se vuelven a abrir
+    // ========================================================================
+
+    @Test
+    @DisplayName("Las explicaciones largas vienen en un cuadro que se cierra y se vuelve a abrir")
+    void lasExplicacionesSeCierran() throws Exception {
+        String[] pantallas = { "/ciclos", "/dias-sin-clase", "/asistencias/bloques/pendientes", "/usuarios/nuevo" };
+        for (String ruta : pantallas) {
+            String html = mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+            assertThat(html)
+                .as(ruta + ": el cuadro trae su clave, que es lo que se recuerda al cerrarlo")
+                .containsPattern("<aside class=\"ayuda\" data-ayuda=\"[a-z-]+\"");
+            assertThat(html)
+                .as(ruta + ": sin el script no hay cruz ni \"i\", y el cuadro queda siempre abierto")
+                .contains("/js/comun/ayuda.js");
+        }
+    }
+
+    // ========================================================================
     //  Usuarios: el rol dejo de elegirse y de editarse
     // ========================================================================
 

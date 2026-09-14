@@ -44,6 +44,20 @@
             raiz.setAttribute('data-densidad', leer('densidad') || 'equilibrada');
             raiz.setAttribute('data-lateral', leer('lateral') || 'abierto');
             raiz.setAttribute('data-cajon', 'cerrado');
+
+            // Las explicaciones que ya se cerraron (ayuda.js) se ocultan antes del primer
+            // paint: si no, alcanzaban a verse y desaparecian al terminar de cargar.
+            var cerradas = (leer('ayudas-cerradas') || '').split(' ').filter(function (c) {
+                return /^[a-z0-9-]+$/.test(c);
+            });
+            if (cerradas.length) {
+                var estilo = document.createElement('style');
+                estilo.id = 'ayudas-cerradas';
+                estilo.textContent = cerradas.map(function (c) {
+                    return '.ayuda[data-ayuda="' + c + '"]';
+                }).join(',') + '{display:none}';
+                document.head.appendChild(estilo);
+            }
         })();
     </script>
 
@@ -274,6 +288,7 @@
          antes que el del modal de confirmación. -->
     <script th:src="@{/js/comun/sesion.js}" defer sec:authorize="isAuthenticated()"></script>
     <script th:src="@{/js/comun/migas.js}" defer></script>
+    <script th:src="@{/js/comun/ayuda.js}" defer></script>
     <script th:src="@{/js/comun/tema.js}" defer></script>
     <script th:src="@{/js/comun/lateral.js}" defer></script>
     <script th:src="@{/js/comun/reloj.js}" defer></script>

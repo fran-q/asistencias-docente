@@ -9,9 +9,7 @@
         <header class="page-header">
             <h1 th:text="${modo == 'crear'} ? 'Nuevo horario' : 'Editar horario'">Horario</h1>
             <p class="page-header__subtitle">
-                Una franja semanal: día + hora inicio + hora fin. La tolerancia (en
-                minutos) define cuántos minutos después del inicio se considera
-                "Presente" antes de pasar a "Tarde".
+                Una franja semanal de una comisión: el día, la hora de inicio y la de fin.
             </p>
         </header>
 
@@ -91,7 +89,14 @@
                         <input type="number" id="toleranciaMin" th:field="*{toleranciaMin}"
                                min="0" max="30" required
                                th:classappend="${#fields.hasErrors('toleranciaMin')} ? 'is-invalid'">
-                        <small class="form-hint">Cuántos minutos <strong>antes</strong> del inicio se permite marcar. Por defecto 15; el máximo es 30 y nunca puede superar la duración de la clase.</small>
+                        <!-- Desde ADR-0018 la tolerancia perdona igual hacia los dos lados. Esta
+                             ayuda seguia con la regla vieja, "minutos antes del inicio", y
+                             contradecia al subtitulo, que hablaba de llegar tarde. -->
+                        <small class="form-hint">
+                            El margen alrededor de la clase, igual de los dos lados: con 15, quien
+                            llega hasta 15 minutos tarde queda <strong>Presente</strong>, y la salida
+                            vale desde 15 minutos antes del fin. Por defecto 15; el máximo es 30.
+                        </small>
                         <span class="form-error" th:if="${#fields.hasErrors('toleranciaMin')}" th:errors="*{toleranciaMin}">err</span>
                     </div>
                 </div>

@@ -9,12 +9,24 @@
         <header class="page-header">
             <h1>Salidas pendientes</h1>
             <p class="page-header__subtitle">
-                Jornadas en las que el docente registró su entrada pero nadie registró la
-                salida. El sistema completó la hora con el fin de la última clase para no
-                dejarlo sin asistencia, pero <strong>esa hora no la observó nadie</strong>:
-                hasta que se confirme, el registro queda marcado como pendiente.
+                Jornadas con la entrada registrada y sin salida. Confirmá a qué hora se fue
+                cada docente.
             </p>
         </header>
+
+        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del titulo
+             (ayuda.js). -->
+        <aside class="ayuda" data-ayuda="salidas-pendientes" aria-label="Por qué hay salidas pendientes">
+            <p>
+                El sistema completó la salida con el fin de la última clase para no dejar al
+                docente sin asistencia, pero <strong>esa hora no la vio nadie</strong>: queda
+                pendiente hasta que se confirme.
+            </p>
+            <p>
+                Confirmarla deja asentado quién lo hizo y por qué. Si ponés una hora anterior a
+                la presumida, las clases que queden afuera se revisan en el listado del día.
+            </p>
+        </aside>
 
         <div th:if="${flashMensaje}" class="alert alert--success" role="alert">
             <p th:text="${flashMensaje}">ok</p>
@@ -82,12 +94,6 @@
             </tbody>
         </table>
 
-        <p class="form-hint" th:unless="${#lists.isEmpty(pendientes)}">
-            Confirmar la salida deja asentado <strong>quién</strong> lo hizo y <strong>por
-            qué</strong>. Si la hora que ponés es anterior a la presumida, las clases que
-            queden fuera de ese rango siguen marcadas y hay que revisarlas en el listado del
-            día: quitar una asistencia es otra operación.
-        </p>
     </section>
 </body>
 </html>

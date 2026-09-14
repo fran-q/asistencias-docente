@@ -1262,6 +1262,50 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .alert--info    { background: var(--t-info);    border-color: var(--primary-ring);  color: var(--on-info); }
 
 /* ============================================================================
+ *  AYUDA DE PANTALLA (ayuda.js)
+ *  Como funciona una pantalla: se lee una vez, se cierra con la cruz y se vuelve
+ *  a abrir con la "i" del titulo. Del azul de un aviso informativo, pero con el
+ *  texto en el color de lectura: son dos o tres lineas, y en azul costaban mas
+ *  que un aviso de una sola.
+ * ========================================================================== */
+.ayuda {
+    position: relative; max-width: 78ch;
+    margin: 0 0 var(--space-lg); padding: 12px 44px 12px 16px;
+    background: var(--t-info); border: 1px solid var(--primary-ring); border-radius: var(--r);
+    color: var(--text); font-size: .88rem; line-height: 1.55; text-wrap: pretty;
+}
+.ayuda p { margin: 0; }
+.ayuda p + p { margin-top: 6px; }
+.ayuda--abriendo { animation: v-in 260ms var(--ease) both; }
+.ayuda__cerrar {
+    position: absolute; top: 8px; right: 8px;
+    width: 26px; height: 26px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 50%; background: transparent;
+    color: var(--text-dim); font-size: 1.1rem; line-height: 1; cursor: pointer;
+    transition: color var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+.ayuda__cerrar:hover { color: var(--text); background: var(--surface-2); }
+
+/* La "i" junto al titulo. Discreta a proposito: la explicacion ya se leyo, y esta
+   para cuando haga falta releerla. La letra va por CSS (ver ayuda.js). */
+.ayuda-boton {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; margin-left: 10px; padding: 0;
+    position: relative; top: -3px; vertical-align: middle;
+    border: 1px solid var(--border-strong); border-radius: 50%;
+    background: transparent; color: var(--text-dim);
+    font: italic 600 .78rem/1 Georgia, 'Times New Roman', serif;
+    cursor: pointer;
+    transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+                background var(--t-fast) var(--ease);
+}
+.ayuda-boton::before { content: 'i'; }
+.ayuda-boton:hover,
+.ayuda-boton[aria-expanded="true"] { color: var(--on-info); border-color: var(--primary-ring); background: var(--t-info); }
+@media (prefers-reduced-motion: reduce) { .ayuda--abriendo { animation: none; } }
+
+/* ============================================================================
  *  TOASTS
  *  Arriba a la derecha, no abajo: es donde queda la vista después de apretar un
  *  botón o guardar un formulario, así que el aviso aparece donde ya se está
