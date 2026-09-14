@@ -2,6 +2,7 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.DiaNoLaborable;
+import edu.cent35.asistencias.model.TipoDiaNoLaborable;
 import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -10,8 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Los días de adentro del ciclo en los que no se dicta clase: feriados, receso, jornadas
@@ -26,7 +32,18 @@ import java.util.Optional;
 @Slf4j
 public class DiaNoLaborableService {
 
+    /**
+     * Un rango más largo que esto es casi seguro un error de tipeo en el año: 2062 en vez de
+     * 2026 marcaría miles de días. El receso de invierno son dos semanas.
+     */
+    static final int DIAS_MAXIMOS_POR_RANGO = 60;
+
+    private static final DateTimeFormatter FORMATO = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final DiaNoLaborableRepository repository;
+
+    /** Cuántos días se marcaron y cuántos ya estaban, para decírselo a quien cargó el rango. */
+    public record Resultado(int marcados, int yaEstaban) {}
 
     /**
      * Si ese día está marcado como sin clases.
@@ -65,18 +82,31 @@ public class DiaNoLaborableService {
     }
 
     /**
-     * Marca un día como sin clases.
+     * Marca como sin clases un día, o todos los de un rango: el receso son dos semanas, y
+     * cargarlas de a una era catorce veces el mismo formulario.
      *
-     * <p>Se valida acá además de en el índice único de la base: un {@code Duplicate entry} no le
-     * dice nada a quien está cargando feriados, y el mensaje tiene que explicar que ese día ya
-     * estaba.
+     * <p>Cada día queda como una fila, con el mismo tipo y el mismo motivo: el job de ausencias
+     * y el pase preguntan por una fecha, no por un rango. Los fines de semana entran también
+     * —hay institutos con clases los sábados—, y los días que ya estaban marcados se saltean en
+     * vez de rechazar el rango entero, así un feriado cargado antes no traba el receso que lo
+     * contiene. Tampoco se pisa: conserva su tipo y su motivo.
+     *
+     * <p>Un solo día que ya estaba sí se rechaza, y se valida acá además del índice único: un
+     * {@code Duplicate entry} no le dice nada a quien está cargando feriados.
+     *
+     * @param hasta el último día del rango, o null para marcar solo {@code desde}
      */
     @Transactional
-    public DiaNoLaborable crear(LocalDate fecha, String motivo, Long usuarioActualId) {
+    public Resultado marcar(LocalDate desde, LocalDate hasta, TipoDiaNoLaborable tipo,
+                            String motivo, Long usuarioActualId) {
         Long tenantId = TenantContext.getRequired();
 
-        if (fecha == null) {
+        if (desde == null) {
             throw new IllegalArgumentException("Elegí la fecha del día sin clases.");
+        }
+        if (tipo == null) {
+            throw new IllegalArgumentException(
+                "Elegí el tipo: feriado nacional o provincial, institucional, receso u otro.");
         }
         String limpio = motivo == null ? "" : motivo.trim();
         if (limpio.isEmpty()) {
@@ -84,21 +114,43 @@ public class DiaNoLaborableService {
                 "Poné el motivo. Dentro de un año nadie va a acordarse de por qué ese día "
                 + "estaba marcado.");
         }
-        if (repository.existsByInstitucionIdAndFecha(tenantId, fecha)) {
-            throw new IllegalArgumentException("Ese día ya está cargado como sin clases.");
+        LocalDate ultimo = hasta == null ? desde : hasta;
+        if (ultimo.isBefore(desde)) {
+            throw new IllegalArgumentException("El rango termina el " + ultimo.format(FORMATO)
+                + ", antes de empezar el " + desde.format(FORMATO) + ".");
+        }
+        long dias = ChronoUnit.DAYS.between(desde, ultimo) + 1;
+        if (dias > DIAS_MAXIMOS_POR_RANGO) {
+            throw new IllegalArgumentException("Son " + dias + " días seguidos, y el máximo por vez es "
+                + DIAS_MAXIMOS_POR_RANGO + ". Revisá el año de las fechas; si de verdad son tantos, "
+                + "cargalos en tramos.");
         }
 
-        DiaNoLaborable dia = DiaNoLaborable.builder()
-            .fecha(fecha)
-            .motivo(limpio)
-            .creadoPor(usuarioActualId)
-            .build();
-        dia.setInstitucionId(tenantId);
+        Set<LocalDate> yaMarcados = repository.entreFechas(tenantId, desde, ultimo).stream()
+            .map(DiaNoLaborable::getFecha)
+            .collect(Collectors.toSet());
+        if (yaMarcados.size() == dias) {
+            throw new IllegalArgumentException(dias == 1
+                ? "Ese día ya está cargado como sin clases."
+                : "Todos esos días ya estaban cargados como sin clases.");
+        }
 
-        DiaNoLaborable guardado = repository.save(dia);
-        log.info("Dia sin clases cargado: {}, motivo='{}', institucion={}",
-                 fecha, limpio, tenantId);
-        return guardado;
+        List<DiaNoLaborable> nuevos = new ArrayList<>();
+        for (LocalDate f = desde; !f.isAfter(ultimo); f = f.plusDays(1)) {
+            if (yaMarcados.contains(f)) continue;
+            DiaNoLaborable dia = DiaNoLaborable.builder()
+                .fecha(f)
+                .tipo(tipo)
+                .motivo(limpio)
+                .creadoPor(usuarioActualId)
+                .build();
+            dia.setInstitucionId(tenantId);
+            nuevos.add(dia);
+        }
+        repository.saveAll(nuevos);
+        log.info("Dias sin clases cargados: {} a {}, tipo={}, motivo='{}', marcados={}, ya estaban={}, "
+                 + "institucion={}", desde, ultimo, tipo, limpio, nuevos.size(), yaMarcados.size(), tenantId);
+        return new Resultado(nuevos.size(), yaMarcados.size());
     }
 
     /**

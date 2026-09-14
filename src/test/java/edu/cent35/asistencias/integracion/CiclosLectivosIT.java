@@ -11,6 +11,8 @@ import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.model.DiaNoLaborable;
+import edu.cent35.asistencias.model.TipoDiaNoLaborable;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
@@ -310,7 +312,7 @@ class CiclosLectivosIT {
         CicloLectivo ciclo = cicloCon(2026, "Anual");
         horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
 
-        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+        diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.NACIONAL, "Feriado de prueba", null);
         int creadas = generador.generarParaInstitucion(tenantId, MARTES_2026, LocalTime.of(23, 0));
 
         assertThat(creadas)
@@ -348,7 +350,7 @@ class CiclosLectivosIT {
         // afirmaba que se dicto una clase que la institucion habia cancelado.
         CicloLectivo ciclo = cicloCon(2026, "Anual");
         horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
-        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+        diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.NACIONAL, "Feriado de prueba", null);
         conConsentimientoVigente();
 
         BloquePresenciaService.ResultadoPresencia r = bloqueService.registrar(
@@ -363,6 +365,88 @@ class CiclosLectivosIT {
         assertThat(asistenciaRepository.findDelDia(tenantId, MARTES_2026))
             .as("ni una marca ese dia, ni presencia ni ausencia")
             .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Un rango marca cada dia una vez, con su tipo, y saltea los que ya estaban")
+    void unRangoMarcaCadaDia() {
+        // El 9 de julio cae adentro del receso: cargado antes como feriado, no traba el rango
+        // ni se pisa con el tipo del receso.
+        diaService.marcar(LocalDate.of(2026, 7, 9), null, TipoDiaNoLaborable.NACIONAL,
+            "Día de la Independencia", null);
+
+        DiaNoLaborableService.Resultado r = diaService.marcar(LocalDate.of(2026, 7, 6),
+            LocalDate.of(2026, 7, 17), TipoDiaNoLaborable.RECESO, "Receso de invierno", null);
+
+        assertThat(r.marcados())
+            .as("doce dias, fines de semana incluidos, menos el que ya estaba")
+            .isEqualTo(11);
+        assertThat(r.yaEstaban()).isEqualTo(1);
+        List<DiaNoLaborable> dias = diaService.listarDelAnio(2026);
+        assertThat(dias).hasSize(12);
+        assertThat(dias).filteredOn(d -> d.getFecha().equals(LocalDate.of(2026, 7, 9)))
+            .extracting(DiaNoLaborable::getTipo)
+            .containsExactly(TipoDiaNoLaborable.NACIONAL);
+
+        assertThatThrownBy(() -> diaService.marcar(LocalDate.of(2026, 7, 6),
+                LocalDate.of(2026, 7, 17), TipoDiaNoLaborable.RECESO, "Receso de invierno", null))
+            .as("cargarlo dos veces no suma nada: se dice, en vez de marcar cero en silencio")
+            .hasMessageContaining("Todos esos días ya estaban");
+    }
+
+    @Test
+    @DisplayName("Sin tipo no se marca, ni con un rango al reves o de mas de 60 dias")
+    void marcarPideTipoYUnRangoRazonable() {
+        assertThatThrownBy(() -> diaService.marcar(MARTES_2026, null, null, "Feriado", null))
+            .hasMessageContaining("Elegí el tipo");
+        assertThatThrownBy(() -> diaService.marcar(LocalDate.of(2026, 7, 17),
+                LocalDate.of(2026, 7, 6), TipoDiaNoLaborable.RECESO, "Receso", null))
+            .hasMessageContaining("antes de empezar");
+        assertThatThrownBy(() -> diaService.marcar(LocalDate.of(2026, 7, 6),
+                LocalDate.of(2062, 7, 17), TipoDiaNoLaborable.RECESO, "Receso", null))
+            .as("2062 por 2026 marcaria miles de dias")
+            .hasMessageContaining("el máximo por vez es 60");
+        assertThat(diaService.listarDelAnio(2026)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("El listado muestra el tipo y lo filtra; el alta pide tipo y admite un rango")
+    void elListadoFiltraPorTipo() throws Exception {
+        diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.PROVINCIAL, "Feriado de prueba", null);
+
+        String html = mockMvc.perform(
+                get("/dias-sin-clase").param("anio", "2026").with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("Feriado provincial")
+            .as("la fila lleva su tipo, que es contra lo que compara el filtro")
+            .contains("data-estado=\"PROVINCIAL\"")
+            .contains("data-filtro-tabla=\"#tabla-dias\"")
+            .contains("name=\"tipo\"")
+            .contains("name=\"hasta\"");
+    }
+
+    @Test
+    @DisplayName("Marcar un receso desde la pantalla dice cuantos dias se marcaron")
+    void marcarUnRangoDesdeLaPantalla() throws Exception {
+        mockMvc.perform(post("/dias-sin-clase")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("fecha", "2026-07-13")
+                .param("hasta", "2026-07-17")
+                .param("tipo", "RECESO")
+                .param("motivo", "Receso de invierno"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("flashMensaje",
+                org.hamcrest.Matchers.containsString("Se marcaron 5 días")));
+
+        // La peticion limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
+        TenantContext.set(tenantId);
+        assertThat(diaService.listarDelAnio(2026))
+            .extracting(DiaNoLaborable::getTipo)
+            .hasSize(5)
+            .containsOnly(TipoDiaNoLaborable.RECESO);
     }
 
     // ========================================================================
@@ -653,7 +737,7 @@ class CiclosLectivosIT {
     @Test
     @DisplayName("La pantalla de dias sin clase renderiza y aclara que apaga tambien el pase")
     void laPantallaDeDiasRenderiza() throws Exception {
-        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+        diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.NACIONAL, "Feriado de prueba", null);
 
         String html = mockMvc.perform(
                 get("/dias-sin-clase").param("anio", "2026").with(user(principalInstitucional())))
@@ -673,7 +757,7 @@ class CiclosLectivosIT {
     void elDetalleRenderiza() throws Exception {
         CicloLectivo ciclo = cicloCon(2026, "Anual");
         comisionEn(ciclo, "A");
-        diaService.crear(MARTES_2026, "Feriado de prueba", null);
+        diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.NACIONAL, "Feriado de prueba", null);
 
         String html = mockMvc.perform(get("/ciclos/" + ciclo.getId())
                 .with(user(principalInstitucional())))

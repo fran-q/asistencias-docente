@@ -34,33 +34,52 @@
             <p th:text="${error}">Error</p>
         </div>
 
-        <!-- ================= Selector de año ================= -->
-        <form th:action="@{/dias-sin-clase}" method="get" class="filtro">
-            <div class="form-group">
+        <!-- ================= Filtros ================= -->
+        <!-- El año va al servidor: decide qué días se traen. El tipo y el texto filtran en el
+             navegador lo que ya vino, al instante (filtro-tabla.js): un año son decenas de
+             filas, no miles. El tipo usa la clase filtro__estado porque es la que filtro-tabla.js
+             compara contra el data-estado de cada fila. -->
+        <div class="filtro" data-filtro-tabla="#tabla-dias">
+            <form th:action="@{/dias-sin-clase}" method="get" class="filtro__anio">
                 <label for="anio">Año</label>
                 <input type="number" id="anio" name="anio" min="2000" max="2200"
                        th:value="${anioSeleccionado}"
                        onchange="this.form.submit()">
-            </div>
-        </form>
+            </form>
+            <th:block th:unless="${#lists.isEmpty(dias)}">
+                <div class="filtro__buscador">
+                    <svg th:replace="~{layout/iconos :: lupa}"></svg>
+                    <input type="search" class="filtro__texto" aria-label="Buscar en el listado"
+                           placeholder="Buscar por motivo o fecha..." autocomplete="off">
+                </div>
+                <select class="filtro__estado" data-menu aria-label="Filtrar por tipo">
+                    <option value="">Todos los tipos</option>
+                    <option th:each="t : ${tipos}" th:value="${t.name()}"
+                            th:text="${t.etiqueta}">Feriado nacional</option>
+                </select>
+                <span class="filtro__resultado"></span>
+            </th:block>
+        </div>
 
         <!-- ================= Listado ================= -->
         <div class="card card--no-padding" th:if="${!#lists.isEmpty(dias)}">
             <div class="table-wrap">
-                <table class="table">
+                <table class="table" id="tabla-dias">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Día</th>
+                            <th>Tipo</th>
                             <th>Motivo</th>
                             <th class="table__actions">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="d : ${dias}">
+                        <tr th:each="d : ${dias}" data-fila th:attr="data-estado=${d.tipo.name()}">
                             <td th:text="${#temporals.format(d.fecha, 'dd/MM/yyyy')}">25/05/2026</td>
                             <td class="text-muted"
                                 th:text="${#temporals.dayOfWeekName(d.fecha)}">lunes</td>
+                            <td><span class="badge badge--neutral" th:text="${d.tipo.etiqueta}">Feriado nacional</span></td>
                             <td th:text="${d.motivo}">Revolución de Mayo</td>
                             <td class="table__actions">
                                 <form th:action="@{/dias-sin-clase/{id}/borrar(id=${d.id})}"
@@ -74,6 +93,17 @@
                                         Borrar
                                     </button>
                                 </form>
+                            </td>
+                        </tr>
+
+                        <!-- La muestra filtro-tabla.js cuando el filtro no deja ninguna fila:
+                             distinta de "no hay nada cargado", que es la tarjeta de abajo. -->
+                        <tr class="table__empty-fila" hidden>
+                            <td colspan="5" class="table__empty">
+                                <svg th:replace="~{layout/iconos :: lupa}"
+                                     width="34" height="34" stroke-width="1.4"></svg>
+                                <strong>Ningún día coincide con el filtro</strong>
+                                Probá con otro texto, o elegí "Todos los tipos".
                             </td>
                         </tr>
                     </tbody>
@@ -91,25 +121,39 @@
 
         <!-- ================= Alta ================= -->
         <div class="card">
-            <h2>Marcar un día</h2>
+            <h2>Marcar días sin clase</h2>
             <form th:action="@{/dias-sin-clase}" method="post" novalidate>
-                <div class="form-row">
+                <div class="form-row form-row--3">
+                    <div class="form-group">
+                        <label for="tipo">Tipo <span class="required">*</span></label>
+                        <select id="tipo" name="tipo" required data-menu>
+                            <option value="">Elegí el tipo</option>
+                            <option th:each="t : ${tipos}" th:value="${t.name()}"
+                                    th:text="${t.etiqueta}">Feriado nacional</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="fecha">Fecha <span class="required">*</span></label>
                         <input type="date" id="fecha" name="fecha" required>
                     </div>
+                    <!-- Un receso son dos semanas: con "hasta" se marcan todas de una vez,
+                         cada día como una fila. Los que ya estaban no se tocan. -->
                     <div class="form-group">
-                        <label for="motivo">Motivo <span class="required">*</span></label>
-                        <input type="text" id="motivo" name="motivo" required maxlength="120"
-                               placeholder="Feriado nacional, receso de invierno, jornada...">
-                        <small class="form-hint">
-                            Dentro de un año nadie va a acordarse de por qué ese día estaba
-                            marcado.
-                        </small>
+                        <label for="hasta">Hasta</label>
+                        <input type="date" id="hasta" name="hasta">
+                        <small class="form-hint">Para un receso. Vacío, se marca solo la fecha.</small>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="motivo">Motivo <span class="required">*</span></label>
+                    <input type="text" id="motivo" name="motivo" required maxlength="120"
+                           placeholder="Revolución de Mayo, receso de invierno, jornada institucional...">
+                    <small class="form-hint">
+                        Dentro de un año nadie va a acordarse de por qué ese día estaba marcado.
+                    </small>
+                </div>
                 <button type="submit" class="btn btn--primary"
-                        data-texto-enviando="Guardando...">Marcar día</button>
+                        data-texto-enviando="Guardando...">Marcar</button>
             </form>
         </div>
 

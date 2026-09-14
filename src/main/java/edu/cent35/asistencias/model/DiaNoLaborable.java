@@ -2,6 +2,8 @@ package edu.cent35.asistencias.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -58,7 +60,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ToString(of = {"id", "fecha", "motivo"})
+@ToString(of = {"id", "fecha", "tipo", "motivo"})
 public class DiaNoLaborable extends BaseTenantEntity {
 
     @Id
@@ -67,6 +69,12 @@ public class DiaNoLaborable extends BaseTenantEntity {
 
     @Column(nullable = false)
     private LocalDate fecha;
+
+    // Por lo que se filtra el listado (V028). Los cargados antes de la columna quedaron OTRO.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private TipoDiaNoLaborable tipo = TipoDiaNoLaborable.OTRO;
 
     @Column(nullable = false, length = 120)
     private String motivo;

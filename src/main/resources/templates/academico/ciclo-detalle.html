@@ -239,6 +239,7 @@
             <ul class="lista-plana" th:unless="${#lists.isEmpty(detalle.diasSinClase())}">
                 <li th:each="d : ${detalle.diasSinClase()}">
                     <strong th:text="${#temporals.format(d.fecha, 'dd/MM/yyyy')}">25/05/2026</strong>
+                    <span class="badge badge--neutral" th:text="${d.tipo.etiqueta}">Feriado nacional</span>
                     <span class="text-muted" th:text="${d.motivo}">Revolución de Mayo</span>
                 </li>
             </ul>

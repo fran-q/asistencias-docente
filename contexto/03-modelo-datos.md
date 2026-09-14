@@ -42,7 +42,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 |---|---|---|
 | `ciclos_lectivos` | El año calendario de cursada: 2026, 2027. Con su estado y sus fechas (V023). | Sí |
 | `periodos_lectivos` | Tramo del ciclo en que corre una comisión: anual, cuatrimestral (V023). | Sí (denormalizado) |
-| `dias_no_laborables` | Feriados y receso. El job de ausencias los saltea (V024). | Sí |
+| `dias_no_laborables` | Feriados, receso y jornadas, con su tipo (V024, V028). El job de ausencias los saltea. | Sí |
 | `carreras` | Programas académicos. Código único por institución. | Sí |
 | `materias` | Asociadas a carrera y opcionalmente a docente titular. | Sí (denormalizado) |
 | `comisiones` | Varias por materia, cada una con su docente asignado. Desde V023 pertenece a un período, y por él a un año. | Vía materia |
@@ -210,6 +210,20 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V025__modo_kiosco` | `puestos_captura.kiosco_habilitado` (+ quién y cuándo) y `puesto_id` en `asistencias` y `bloques_presencia` (ADR-0019) |
 | `V026__camara_del_puesto` | `puestos_captura.camara_dispositivo_id`, `camara_etiqueta` y `camara_elegida_en`: con qué cámara captura cada puesto |
 | `V027__reabrir_ciclo_lectivo` | `ciclos_lectivos.reabierto_en` y `reabierto_por`: el último ciclo cerrado se puede reabrir, y el cierre anterior se conserva |
+| `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
+
+### Invariantes que agregó V028
+
+**El tipo clasifica y el motivo describe.** `tipo` es un CHECK sobre cinco valores —`NACIONAL`,
+`PROVINCIAL`, `INSTITUCIONAL`, `RECESO`, `OTRO`— y no cambia lo que el día hace: cualquiera
+saltea las ausencias y apaga el pase. Los días cargados antes de V028 quedaron `OTRO` en vez de
+clasificarse leyendo el motivo: un día mal clasificado por la migración sería peor que uno sin
+clasificar.
+
+**Un rango son filas sueltas.** Marcar un receso crea una fila por día, fines de semana
+incluidos, porque el job y el pase preguntan por una fecha y no por un rango. Los días que ya
+estaban se saltean y conservan su tipo y su motivo. Un rango de más de 60 días se rechaza: casi
+seguro es un error de tipeo en el año.
 
 ### Invariantes que agregó V027
 

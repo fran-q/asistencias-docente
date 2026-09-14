@@ -1070,7 +1070,13 @@ input, select, button, textarea { font-family: inherit; }
 }
 /* Tres campos que van juntos (año, desde, hasta; nombre, desde, hasta). En la grilla de
    dos columnas el tercero caía solo en una fila nueva y la fila se leía rota. */
-.form-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: var(--space); }
+/* Cada campo traia su margen y el ultimo de la fila no: al pasar a una columna quedaban
+   separados de mas entre si y pegados al campo que sigue. El espacio lo pone el gap. */
+.form-row--3 > .form-group { margin-bottom: 0; }
+/* El menu propio (select-menu.js) mide lo que su texto: en una columna de la grilla ocupa el
+   ancho, como las fechas de al lado. */
+.form-row > .form-group > .menu { display: block; }
 @media (max-width: 1000px) { .form-row--3 { grid-template-columns: 1fr; } }
 /* Agregar otra fila: separado de la última fila y del botón que envía el formulario. */
 .periodo-agregar { margin: var(--space-sm) 0 var(--space); }
@@ -1100,6 +1106,9 @@ input, select, button, textarea { font-family: inherit; }
     border-color: var(--danger);
 }
 .form-group input.is-invalid:focus { box-shadow: 0 0 0 3px var(--t-danger); }
+/* El aviso marca el select, que el menu propio (select-menu.js) guarda oculto adentro:
+   el borde rojo va al boton, que es lo que se ve. */
+.menu:has(> select.is-invalid) > .menu__boton { border-color: var(--danger); }
 
 .required { color: var(--danger); margin-left: 2px; }
 
@@ -2613,6 +2622,19 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 /* El filtro por ano de Comisiones va en su propio form GET; display: contents lo deja ser un
    control mas de la barra de filtros en vez de una caja aparte. */
 .filtro__ciclo { display: contents; }
+/* El año de los dias sin clase: va al servidor, al lado de los filtros del navegador. */
+.filtro__anio { display: flex; align-items: center; gap: 8px; margin: 0; }
+.filtro__anio label { margin: 0; color: var(--text-muted); font-size: .85rem; }
+.filtro__anio input {
+    width: 6.5rem; height: var(--h-ctl); padding: 0 10px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--r);
+    font-size: .88rem; -moz-appearance: textfield; appearance: textfield;
+}
+.filtro__anio input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.filtro__anio input:focus-visible {
+    border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); outline: none;
+}
 /* Lista sin viñetas: los periodos en el listado de ciclos, los dias sin clase en el detalle. */
 .lista-plana { list-style: none; margin: 0; padding: 0; }
 .lista-plana li + li { margin-top: 4px; }

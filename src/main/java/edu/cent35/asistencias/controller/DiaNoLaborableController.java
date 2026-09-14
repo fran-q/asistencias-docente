@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.controller;
 
+import edu.cent35.asistencias.model.TipoDiaNoLaborable;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.DiaNoLaborableService;
 import jakarta.persistence.EntityNotFoundException;
@@ -40,7 +41,8 @@ public class DiaNoLaborableController {
      * El listado de un año.
      *
      * <p>Por año y no completo porque los feriados se cargan y se revisan por año: mostrar
-     * todos juntos convertiría la pantalla en una lista que crece para siempre.
+     * todos juntos convertiría la pantalla en una lista que crece para siempre. El tipo y la
+     * búsqueda filtran en el navegador lo que ya vino (V028).
      */
     @GetMapping
     public String listar(@RequestParam(name = "anio", required = false) Integer anio,
@@ -49,22 +51,44 @@ public class DiaNoLaborableController {
         model.addAttribute("anioSeleccionado", elegido);
         model.addAttribute("dias", service.listarDelAnio(elegido));
         model.addAttribute("anioActual", LocalDate.now().getYear());
+        model.addAttribute("tipos", TipoDiaNoLaborable.values());
         return "academico/dia-sin-clase-list";
     }
 
+    /**
+     * Marca un día, o todos los de un rango si viene "hasta".
+     *
+     * <p>El tipo es opcional para Spring a propósito: sin elegir llega vacío, se convierte en
+     * null y el servicio lo pide con un mensaje, en vez de un 400 sin explicación.
+     */
     @PostMapping
     public String crear(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+                        @RequestParam(required = false)
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+                        @RequestParam(required = false) TipoDiaNoLaborable tipo,
                         @RequestParam String motivo,
                         @AuthenticationPrincipal UsuarioAutenticado principal,
                         RedirectAttributes redirect) {
         try {
-            service.crear(fecha, motivo, principal == null ? null : principal.getUsuarioId());
-            redirect.addFlashAttribute("flashMensaje",
-                "Listo. Ese día no va a generar ausencias automáticas.");
+            DiaNoLaborableService.Resultado r = service.marcar(fecha, hasta, tipo, motivo,
+                principal == null ? null : principal.getUsuarioId());
+            redirect.addFlashAttribute("flashMensaje", mensaje(r));
         } catch (IllegalArgumentException ex) {
             redirect.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/dias-sin-clase?anio=" + fecha.getYear();
+    }
+
+    // Lo que se marco y lo que se salteo porque ya estaba: si no se dice, quien cargo un receso
+    // de doce dias y ve once filas nuevas no sabe si se perdio uno.
+    private static String mensaje(DiaNoLaborableService.Resultado r) {
+        String listo = r.marcados() == 1
+            ? "Listo. Ese día no va a generar ausencias automáticas."
+            : "Listo. Se marcaron " + r.marcados() + " días: no van a generar ausencias automáticas.";
+        if (r.yaEstaban() == 0) return listo;
+        return listo + (r.yaEstaban() == 1
+            ? " Uno ya estaba cargado y quedó como estaba."
+            : " " + r.yaEstaban() + " ya estaban cargados y quedaron como estaban.");
     }
 
     // Borrado fisico: no hay nada que dependa de esta fila. Ver DiaNoLaborableService.
