@@ -91,6 +91,8 @@ class AutorizacionPorRolIT {
     void adminNoAccedeAMiInstitucion() throws Exception {
         mockMvc.perform(get("/mi-institucion").with(user(principal("ADMIN"))))
             .andExpect(status().isForbidden());
+        mockMvc.perform(get("/mi-institucion/editar").with(user(principal("ADMIN"))))
+            .andExpect(status().isForbidden());
     }
 
     @Test

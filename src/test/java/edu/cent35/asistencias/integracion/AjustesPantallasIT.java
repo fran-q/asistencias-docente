@@ -134,7 +134,7 @@ class AjustesPantallasIT {
     void sinIdsALaVista() throws Exception {
         String[] pantallas = {
             "/carreras/1/editar", "/materias/1/editar", "/comisiones/1/editar",
-            "/horarios/" + horarioId + "/editar", "/docentes/1/editar", "/mi-institucion"
+            "/horarios/" + horarioId + "/editar", "/docentes/1/editar", "/mi-institucion", "/mi-institucion/editar"
         };
         for (String ruta : pantallas) {
             MvcResult r = mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
@@ -268,7 +268,7 @@ class AjustesPantallasIT {
     @Test
     @DisplayName("Todas las pantallas de edición muestran el mismo bloque de datos del sistema")
     void bloqueDeDatosUniforme() throws Exception {
-        String[] pantallas = { "/horarios/" + horarioId + "/editar", "/mi-institucion" };
+        String[] pantallas = { "/horarios/" + horarioId + "/editar", "/mi-institucion", "/mi-institucion/editar" };
         for (String ruta : pantallas) {
             mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
                 .andExpect(status().isOk())
@@ -918,9 +918,25 @@ class AjustesPantallasIT {
     // ========================================================================
 
     @Test
+    @DisplayName("Mi institución se abre para leer, y la edición es un paso aparte")
+    void miInstitucionSeAbreParaLeer() throws Exception {
+        String html = mockMvc.perform(get("/mi-institucion").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(html)
+            .as("los datos se consultan sin quedar parado sobre campos que cambian la institución")
+            .contains("60 minutos")
+            .doesNotContain("name=\"umbralSeparacionMin\"")
+            .doesNotContain("Guardar cambios");
+        assertThat(html)
+            .as("editar se pide a propósito, desde la ficha")
+            .contains("href=\"/mi-institucion/editar\"");
+    }
+
+    @Test
     @DisplayName("Mi institución deja configurar el umbral de separación y lo muestra")
     void miInstitucionMuestraElUmbral() throws Exception {
-        MvcResult r = mockMvc.perform(get("/mi-institucion").with(user(principal("INSTITUCION"))))
+        MvcResult r = mockMvc.perform(get("/mi-institucion/editar").with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -939,7 +955,7 @@ class AjustesPantallasIT {
     void guardarElUmbralLoPersiste() throws Exception {
         Institucion antes = institucionRepository.findById(tenantId).orElseThrow();
 
-        mockMvc.perform(post("/mi-institucion")
+        mockMvc.perform(post("/mi-institucion/editar")
                 .with(user(principal("INSTITUCION"))).with(csrf())
                 .param("nombre", antes.getNombre())
                 .param("cuit", "")
@@ -960,7 +976,7 @@ class AjustesPantallasIT {
         // integridad ilegible en vez de un mensaje al lado del campo.
         Institucion antes = institucionRepository.findById(tenantId).orElseThrow();
 
-        mockMvc.perform(post("/mi-institucion")
+        mockMvc.perform(post("/mi-institucion/editar")
                 .with(user(principal("INSTITUCION"))).with(csrf())
                 .param("nombre", antes.getNombre())
                 .param("cuit", "")

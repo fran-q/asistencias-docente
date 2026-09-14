@@ -1,111 +1,72 @@
 <!DOCTYPE html>
 <html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+      xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Mi institución - Visum</title>
 </head>
 <body>
+    <!--
+      Primero se lee, después se edita. La pantalla abría directo en el formulario: quien
+      entraba a consultar el CUIT o el teléfono quedaba parado sobre campos que cambian los
+      datos de toda la institución, y un tipeo sin querer más un Enter los guardaba. La
+      edición vive en /mi-institucion/editar, igual que la ficha del docente y su edición.
+    -->
     <section class="mi-institucion">
 
-        <header class="page-header">
-            <h1>Mi institución</h1>
-            <p class="page-header__subtitle">
-                Editás los datos de la institución a la que pertenece tu cuenta.
-                Los cambios afectan a todos los usuarios de la institución.
-            </p>
+        <!-- Del ancho de las tarjetas: el botón queda sobre ellas y no en el otro extremo
+             de la pantalla, lejos de los datos que edita. -->
+        <header class="page-header page-header--with-action form-max">
+            <div>
+                <h1>Mi institución</h1>
+                <p class="page-header__subtitle">
+                    Los datos de la institución a la que pertenece tu cuenta.
+                </p>
+            </div>
+            <a th:href="@{/mi-institucion/editar}" class="btn btn--primary">Editar datos</a>
         </header>
 
-        <div class="card">
-            <form th:action="@{/mi-institucion}" th:object="${form}" method="post" novalidate>
+        <div class="card card--form">
+            <h2>Datos de la institución</h2>
+            <dl class="kv">
+                <dt>Nombre</dt>
+                <dd th:text="${institucion.nombre}">Instituto</dd>
 
-                <!-- Errores globales (ej: nombre duplicado) - dentro del form para que #fields aplique -->
-                <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
-                    <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error global</p>
-                </div>
+                <dt>CUIT</dt>
+                <dd>
+                    <span th:if="${institucion.cuit}" th:text="${institucion.cuit}">30-12345678-1</span>
+                    <span th:unless="${institucion.cuit}" class="text-muted">Sin cargar</span>
+                </dd>
 
-                <div class="form-group">
-                    <label for="nombre">Nombre de la institución <span class="required">*</span></label>
-                    <input type="text" id="nombre" th:field="*{nombre}"
-                           required maxlength="150"
-                           th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid'">
-                    <span class="form-error" th:if="${#fields.hasErrors('nombre')}"
-                          th:errors="*{nombre}">Error nombre</span>
-                </div>
+                <dt>Dirección</dt>
+                <dd>
+                    <span th:if="${institucion.direccion}" th:text="${institucion.direccion}">Calle 123</span>
+                    <span th:unless="${institucion.direccion}" class="text-muted">Sin cargar</span>
+                </dd>
 
-                <div class="form-group">
-                    <label for="cuit">CUIT</label>
-                    <input type="text" id="cuit" th:field="*{cuit}"
-                           placeholder="30-12345678-1" maxlength="13"
-                           th:classappend="${#fields.hasErrors('cuit')} ? 'is-invalid'">
-                    <small class="form-hint">Con guiones o de corrido. Se comprueba el dígito verificador.</small>
-                    <span class="form-error" th:if="${#fields.hasErrors('cuit')}"
-                          th:errors="*{cuit}">Error CUIT</span>
-                </div>
+                <dt>Correo de contacto</dt>
+                <dd>
+                    <span th:if="${institucion.emailContacto}" th:text="${institucion.emailContacto}">contacto@ejemplo.com</span>
+                    <span th:unless="${institucion.emailContacto}" class="text-muted">Sin cargar</span>
+                </dd>
 
-                <div class="form-group">
-                    <label for="direccion">Dirección</label>
-                    <input type="text" id="direccion" th:field="*{direccion}" maxlength="200"
-                           th:classappend="${#fields.hasErrors('direccion')} ? 'is-invalid'">
-                    <span class="form-error" th:if="${#fields.hasErrors('direccion')}"
-                          th:errors="*{direccion}">Error direccion</span>
-                </div>
+                <dt>Teléfono de contacto</dt>
+                <dd>
+                    <span th:if="${institucion.telefonoContacto}" th:text="${institucion.telefonoContacto}">000</span>
+                    <span th:unless="${institucion.telefonoContacto}" class="text-muted">Sin cargar</span>
+                </dd>
+            </dl>
+        </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="emailContacto">Correo de contacto</label>
-                        <input type="email" id="emailContacto" th:field="*{emailContacto}" maxlength="120"
-                               th:classappend="${#fields.hasErrors('emailContacto')} ? 'is-invalid'">
-                        <span class="form-error" th:if="${#fields.hasErrors('emailContacto')}"
-                              th:errors="*{emailContacto}">Error email</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="telefonoContacto">Teléfono de contacto</label>
-                        <input type="text" id="telefonoContacto" th:field="*{telefonoContacto}" maxlength="30"
-                               th:classappend="${#fields.hasErrors('telefonoContacto')} ? 'is-invalid'">
-                        <span class="form-error" th:if="${#fields.hasErrors('telefonoContacto')}"
-                              th:errors="*{telefonoContacto}">Error telefono</span>
-                    </div>
-                </div>
-
-                <hr class="separador">
-                <h2 class="form-seccion">Registro de presencia</h2>
-
-                <div class="form-group">
-                    <label for="umbralSeparacionMin">
-                        Umbral de separación entre clases (minutos) <span class="required">*</span>
-                    </label>
-                    <input type="number" id="umbralSeparacionMin" th:field="*{umbralSeparacionMin}"
-                           min="0" max="240" step="1" required
-                           th:classappend="${#fields.hasErrors('umbralSeparacionMin')} ? 'is-invalid'">
-                    <small class="form-hint">
-                        Cuánto hueco puede haber entre dos clases seguidas del mismo docente para que
-                        sigan contando como una sola permanencia. Con <strong>60</strong>, quien da
-                        clase de 18 a 20 y de 21 a 23 marca una entrada y una salida; con
-                        <strong>30</strong>, marca dos de cada una.
-                    </small>
-                    <small class="form-hint">
-                        Se mide sobre los <strong>horarios de la grilla</strong>, no sobre las pasadas
-                        frente a la cámara. Un valor alto encadena clases que no tienen relación: con
-                        240, quien da a las 08 y vuelve a las 14 queda acreditado como presente todo
-                        el mediodía. El máximo son 240 minutos por esa razón.
-                    </small>
-                    <small class="form-hint">
-                        El cambio rige desde que lo guardás y alcanza a toda la institución. Los
-                        bloques ya cerrados no se recalculan; los que estén abiertos en este momento
-                        se van a cerrar con el umbral nuevo, así que conviene cambiarlo fuera del
-                        horario de clase.
-                    </small>
-                    <span class="form-error" th:if="${#fields.hasErrors('umbralSeparacionMin')}"
-                          th:errors="*{umbralSeparacionMin}">Error umbral</span>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn--primary" data-texto-enviando="Guardando...">Guardar cambios</button>
-                    <a th:href="@{/}" class="btn btn--ghost">Cancelar</a>
-                </div>
-            </form>
+        <div class="card card--form">
+            <h2>Registro de presencia</h2>
+            <dl class="kv">
+                <dt>Umbral de separación entre clases</dt>
+                <dd th:text="|${institucion.umbralSeparacionMin} minutos|">60 minutos</dd>
+            </dl>
+            <p class="form-hint">
+                Dos clases seguidas del mismo docente, con un hueco menor a este, cuentan como una
+                sola permanencia: una entrada y una salida.
+            </p>
         </div>
 
         <div th:replace="~{layout/fragmentos :: datosDelSistema(
