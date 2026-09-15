@@ -25,8 +25,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -113,6 +120,36 @@ class VerificacionObligatoriaIT {
 
         mockMvc.perform(get("/docentes").with(user(principal)))
             .andExpect(status().isOk());
+    }
+
+    // ========================================================================
+    //  Entrar con el usuario o con el correo
+    // ========================================================================
+
+    @Test
+    @DisplayName("Se entra con el usuario o con el correo, sin importar las mayúsculas del correo")
+    void seEntraConUsuarioOCorreo() throws Exception {
+        cuenta("ana.perez", LocalDateTime.now());
+
+        mockMvc.perform(get("/login"))
+            .andExpect(content().string(containsString("Usuario o correo")));
+
+        mockMvc.perform(post("/login").with(csrf())
+                .param("username", "ana.perez").param("password", "Clave12345"))
+            .andExpect(redirectedUrl("/"))
+            .andExpect(authenticated().withUsername("ana.perez"));
+
+        // La sesion queda a nombre del usuario aunque se haya entrado con el correo: es lo que
+        // se muestra y lo que queda en el historial de lo que hizo.
+        mockMvc.perform(post("/login").with(csrf())
+                .param("username", "Ana.Perez@Ejemplo.edu.ar").param("password", "Clave12345"))
+            .andExpect(redirectedUrl("/"))
+            .andExpect(authenticated().withUsername("ana.perez"));
+
+        mockMvc.perform(post("/login").with(csrf())
+                .param("username", "ana.perez@ejemplo.edu.ar").param("password", "equivocada"))
+            .andExpect(redirectedUrl("/login?error"))
+            .andExpect(unauthenticated());
     }
 
     // ========================================================================

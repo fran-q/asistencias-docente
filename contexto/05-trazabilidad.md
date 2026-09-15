@@ -35,7 +35,7 @@
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-01 | Inicio de sesión | ✅ | `config/SecurityConfig`, `seguridad/CargadorDeUsuarios`, `HomeController` → `/login` |
+| RF-01 | Inicio de sesión | ✅ | `config/SecurityConfig`, `seguridad/CargadorDeUsuarios`, `HomeController` → `/login`. Con el usuario o con el correo: se distinguen por la "@", que un usuario no puede llevar (`UsuarioValido`) |
 | RF-02 | Gestión de contraseñas | ✅ | `CuentaController` → `/mi-cuenta/password`; `RecuperacionController` → `/recuperar/codigo` |
 | RF-03 | Control de acceso por rol | ✅ | `SecurityConfig`, `model/Rol`, `seguridad/UsuarioAutenticado` |
 | RF-04 | Aislamiento multi-tenant | ✅ | `TenantContext`, `TenantInterceptor`, `TenantFilterAspect`, `BaseTenantEntity` |

@@ -83,9 +83,13 @@
                     <input type="hidden" name="desde" value="kiosco" th:if="${desdeKiosco}">
                     <div class="auth__campos">
                         <div class="form-group" style="margin:0">
-                            <label for="username">Usuario</label>
+                            <!-- El usuario o el correo: CargadorDeUsuarios los distingue por el
+                                 "@", que un usuario no puede llevar. Sin mayúscula automática ni
+                                 corrector: el teclado del celular capitaliza la primera letra y
+                                 subraya "cent35" como si estuviera mal escrito. -->
+                            <label for="username">Usuario o correo</label>
                             <input type="text" id="username" name="username" required
-                                   autocomplete="username"
+                                   autocomplete="username" autocapitalize="none" spellcheck="false"
                                    th:value="${ultimoUsuario}"
                                    th:attr="autofocus=${ultimoUsuario == null ? 'autofocus' : null}">
                         </div>
