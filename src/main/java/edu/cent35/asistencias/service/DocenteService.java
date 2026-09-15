@@ -78,6 +78,9 @@ public class DocenteService {
 
         String dniNorm    = blankToNull(dni);
         String legajoNorm = blankToNull(legajo);
+        // Con mayúscula inicial, se hayan tipeado como se hayan tipeado (NombrePropio).
+        String nombreNorm   = NombrePropio.normalizar(nombre);
+        String apellidoNorm = NombrePropio.normalizar(apellido);
 
         if (dniNorm == null) throw new IllegalArgumentException("El DNI es obligatorio.");
         if (legajoNorm != null && docenteRepository.existeLegajoVigente(tenantId, legajoNorm)) {
@@ -99,14 +102,14 @@ public class DocenteService {
             // una tecla— eso le cambiaba el nombre a otra, y nadie se enteraba. Ahora se
             // pregunta, y hasta que alguien confirme no se toca nada.
             if (!confirmado) {
-                String propuesto = apellido.trim() + ", " + nombre.trim();
+                String propuesto = apellidoNorm + ", " + nombreNorm;
                 throw new ConfirmacionRequeridaException(
                     personaService.impactoDeAlta(persona, propuesto));
             }
 
             InstantaneaIdentidad antes = InstantaneaIdentidad.de(persona);
-            persona.setNombre(nombre.trim());
-            persona.setApellido(apellido.trim());
+            persona.setNombre(nombreNorm);
+            persona.setApellido(apellidoNorm);
             persona.setEmail(blankToNull(email));
             persona.setTelefono(blankToNull(telefono));
             personaRepository.save(persona);
@@ -118,8 +121,8 @@ public class DocenteService {
         } else {
             persona = Persona.builder()
                 .dni(dniNorm)
-                .nombre(nombre.trim())
-                .apellido(apellido.trim())
+                .nombre(nombreNorm)
+                .apellido(apellidoNorm)
                 .email(blankToNull(email))
                 .telefono(blankToNull(telefono))
                 .build();
@@ -162,6 +165,8 @@ public class DocenteService {
 
         String dniNuevo    = blankToNull(dni);
         String legajoNuevo = blankToNull(legajo);
+        String nombreNuevo   = NombrePropio.normalizar(nombre);
+        String apellidoNuevo = NombrePropio.normalizar(apellido);
 
         if (dniNuevo == null) throw new IllegalArgumentException("El DNI es obligatorio.");
         if (personaRepository.existeDniEnOtra(tenantId, dniNuevo, persona.getId())) {
@@ -179,7 +184,7 @@ public class DocenteService {
         // Si esta persona ademas tiene cuenta en el sistema, el cambio de nombre se ve tambien
         // ahi. Quien edita esta mirando la pantalla de docentes y no tiene por que saberlo.
         if (!confirmado && personaService.edicionRequiereConfirmacion(persona)) {
-            String propuesto = apellido.trim() + ", " + nombre.trim();
+            String propuesto = apellidoNuevo + ", " + nombreNuevo;
             throw new ConfirmacionRequeridaException(
                 personaService.impactoDeEdicion(persona, propuesto));
         }
@@ -193,8 +198,8 @@ public class DocenteService {
         InstantaneaIdentidad antes = InstantaneaIdentidad.de(persona);
 
         persona.setDni(dniNuevo);
-        persona.setNombre(nombre.trim());
-        persona.setApellido(apellido.trim());
+        persona.setNombre(nombreNuevo);
+        persona.setApellido(apellidoNuevo);
         persona.setEmail(blankToNull(email));
         persona.setTelefono(blankToNull(telefono));
         personaRepository.save(persona);

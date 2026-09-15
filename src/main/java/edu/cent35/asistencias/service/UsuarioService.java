@@ -99,7 +99,7 @@ public class UsuarioService {
         // intenta reutilizar una existente: acá no se pide el DNI, así que cruzar por nombre
         // sería adivinar. Unificar dos personas que son la misma es una acción deliberada.
         Persona persona = Persona.builder()
-            .nombre(nombre.trim())
+            .nombre(NombrePropio.normalizar(nombre))
             .apellido(normalizarApellido(apellido))
             .email(email.trim())
             .build();
@@ -124,8 +124,9 @@ public class UsuarioService {
 
     // Un apellido en blanco se guarda como NULL: "no corresponde" y "cadena vacia" no son
     // lo mismo, y dejar '' obligaria a cada consulta a distinguirlos. Ver migracion V014.
+    // El que viene, con mayuscula inicial como el nombre (NombrePropio).
     private static String normalizarApellido(String apellido) {
-        return (apellido == null || apellido.isBlank()) ? null : apellido.trim();
+        return (apellido == null || apellido.isBlank()) ? null : NombrePropio.normalizar(apellido);
     }
 
     /**
@@ -184,6 +185,10 @@ public class UsuarioService {
                 "No podés desactivarte a vos mismo. Pedíselo a otra cuenta con permisos.");
         }
 
+        // Lo que se va a guardar, que es tambien lo que se muestra si hay que confirmar.
+        String nombreNuevo   = NombrePropio.normalizar(nombre);
+        String apellidoNuevo = normalizarApellido(apellido);
+
         // La confirmacion va DESPUES de validar: preguntar "seguro que querés cambiarlo en todos
         // sus roles" para despues rechazar el formulario por un correo repetido seria hacer
         // decidir sobre algo que no se iba a guardar igual.
@@ -191,8 +196,7 @@ public class UsuarioService {
         // Si esta persona ademas da clases, el cambio de nombre se ve en la ficha del docente y
         // en los listados de asistencia.
         if (!confirmado && personaService.edicionRequiereConfirmacion(u.getPersona())) {
-            String propuesto = (apellido == null || apellido.isBlank())
-                ? nombre.trim() : apellido.trim() + ", " + nombre.trim();
+            String propuesto = apellidoNuevo == null ? nombreNuevo : apellidoNuevo + ", " + nombreNuevo;
             throw new ConfirmacionRequeridaException(
                 personaService.impactoDeEdicion(u.getPersona(), propuesto));
         }
@@ -205,8 +209,8 @@ public class UsuarioService {
         Persona persona = u.getPersona();
         if (persona != null) {
             InstantaneaIdentidad antes = InstantaneaIdentidad.de(persona);
-            persona.setNombre(nombre.trim());
-            persona.setApellido(normalizarApellido(apellido));
+            persona.setNombre(nombreNuevo);
+            persona.setApellido(apellidoNuevo);
             personaRepository.save(persona);
             personaService.registrarCambios(persona, antes, usuarioActualId, "USUARIO");
         }

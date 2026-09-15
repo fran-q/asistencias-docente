@@ -83,6 +83,7 @@ class CorreccionesPantallasIT {
     private Long carreraId;
     private Long materiaId;
     private Long docenteId;
+    private String dniDocente;
     private Long usuarioInstitucionId;
     private Long usuarioAdminId;
 
@@ -96,7 +97,8 @@ class CorreccionesPantallasIT {
 
         TenantContext.set(tenantId);
 
-        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni("4011122" + n, "Ana", "Pérez")).fechaAlta(LocalDate.now()).activo(true).build();
+        dniDocente = "4011122" + n;
+        Docente d = Docente.builder().persona(DatosDePrueba.personaConDni(dniDocente, "Ana", "Pérez")).fechaAlta(LocalDate.now()).activo(true).build();
         d.setInstitucionId(tenantId);
         docenteId = docenteRepository.save(d).getId();
 
@@ -350,6 +352,75 @@ class CorreccionesPantallasIT {
             .andExpect(content().string(containsString("derechos ARCO")))
             .andExpect(content().string(containsString("/docentes/" + docenteId + "/ficha")))
             .andExpect(content().string(containsString("Ficha y estado del docente")));
+    }
+
+    // ========================================================================
+    //  Nombres: mayuscula inicial, se tipeen como se tipeen
+    // ========================================================================
+
+    @Test
+    @DisplayName("Nombre y apellido se guardan con mayúscula inicial, en docentes y en usuarios")
+    void nombresConMayusculaInicial() throws Exception {
+        String alta = mockMvc.perform(get("/docentes/nuevo").with(user(principal("ADMIN"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(alta)
+            .as("el navegador corrige al salir del campo, con la misma regla que el servidor")
+            .containsPattern("id=\"apellido\"[^>]*data-nombre-propio")
+            .containsPattern("id=\"nombre\"[^>]*data-nombre-propio")
+            .contains("/js/comun/nombre-propio.js");
+
+        String dni = "3222333" + SEC.incrementAndGet();
+        mockMvc.perform(post("/docentes/nuevo").with(user(principal("ADMIN"))).with(csrf())
+                .param("dni", dni)
+                .param("nombre", "maría de los ángeles")
+                .param("apellido", "GONZÁLEZ DE LA VEGA"))
+            .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/docentes/" + docenteId + "/editar").with(user(principal("ADMIN"))).with(csrf())
+                .param("dni", dniDocente)
+                .param("nombre", "ana")
+                .param("apellido", "pérez-gómez"))
+            .andExpect(status().is3xxRedirection());
+
+        // Lo que ya trae mayúsculas elegidas no se toca, y el resto del campo sí se corrige.
+        String username = "ronald" + SEC.incrementAndGet();
+        mockMvc.perform(post("/usuarios/nuevo").with(user(principal("INSTITUCION"))).with(csrf())
+                .param("username", username)
+                .param("email", username + "@x.test")
+                .param("nombre", "  ronald  ")
+                .param("apellido", "McDonald")
+                .param("password", "Clave123")
+                .param("confirmacion", "Clave123"))
+            .andExpect(status().is3xxRedirection());
+
+        Usuario creado = usuarioRepository.findAll().stream()
+            .filter(u -> username.equals(u.getUsername())).findFirst().orElseThrow();
+        try {
+            assertThat(creado.getPersona().getNombreCompleto()).isEqualTo("McDonald, Ronald");
+            assertThat(personaRepository.buscarPorDni(tenantId, dni).orElseThrow().getNombreCompleto())
+                .isEqualTo("González de la Vega, María de los Ángeles");
+            assertThat(personaRepository.buscarPorDni(tenantId, dniDocente).orElseThrow().getNombreCompleto())
+                .isEqualTo("Pérez-Gómez, Ana");
+        } finally {
+            // La cuenta apunta a la institucion, y limpiar() la borra al final.
+            usuarioRepository.delete(creado);
+        }
+    }
+
+    @Test
+    @DisplayName("Solo los campos de una persona llevan la mayúscula inicial")
+    void nombrePropioSoloEnPersonas() throws Exception {
+        mockMvc.perform(get("/usuarios/" + usuarioAdminId + "/editar")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("data-nombre-propio")));
+
+        // El nombre de un establecimiento lleva siglas: la regla haría "Cent 35" de "CENT 35".
+        mockMvc.perform(get("/usuarios/" + usuarioInstitucionId + "/editar")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(not(containsString("data-nombre-propio"))));
     }
 
     // ========================================================================

@@ -45,13 +45,13 @@
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
 | RF-05 | Alta de institución | ✅ | `AltaInstitucionController`, `AltaInstitucionService` (ADR-0010) |
-| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService` |
+| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`) |
 
 ## Gestión de docentes
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-07 | CRUD de docentes | ✅ | `DocenteController` → `/docentes`, `FichaDocenteController` |
+| RF-07 | CRUD de docentes | ✅ | `DocenteController` → `/docentes`, `FichaDocenteController`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`) |
 | RF-08 | Registro del modelo facial | ⚠ | `RegistroFacialController` → `/docentes/{id}/rostro/registrar`, `ModeloFacialService`, `CifradoBiometricoService` |
 | RF-09 | Re-registro facial | ✅ | `ModeloFacialService.registrar` (registra y re-registra); `modelos_faciales.activo` / `fecha_baja` |
 | RF-10 | Consentimiento informado | ✅ | `ConsentimientoController`, `ConsentimientoBiometricoService`, `TextoConsentimiento` |
