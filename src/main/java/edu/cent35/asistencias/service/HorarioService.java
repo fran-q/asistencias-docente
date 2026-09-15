@@ -85,6 +85,8 @@ public class HorarioService {
         if (h.getComision().getMateria().getCarrera() != null) {
             h.getComision().getMateria().getCarrera().getCodigo();
         }
+        // Y su periodo con el ano: la edicion muestra la comision fija con ellos.
+        if (h.getComision().getPeriodo() != null) h.getComision().getPeriodo().getCiclo().getAnio();
         return h;
     }
 

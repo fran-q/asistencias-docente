@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -93,8 +94,20 @@ public class MateriaService {
         // sesion se cierra al salir de aca, asi que la plantilla no podria leerlo despues.
         for (Comision c : comisiones) {
             if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getNombreCompleto();
+            // El periodo con su ano: dos comisiones de la materia pueden llevar el mismo codigo
+            // en periodos distintos (V023), y la pantalla los muestra para distinguirlas.
+            if (c.getPeriodo() != null) c.getPeriodo().getCiclo().getAnio();
         }
-        return comisiones;
+        // Del ano mas nuevo al mas viejo y, dentro del ano, en el orden de sus periodos: dos
+        // comisiones con el mismo codigo quedan juntas y en un orden que se entiende.
+        return comisiones.stream()
+            .sorted(Comparator
+                .comparing((Comision c) -> c.getPeriodo() == null
+                                           ? Short.MIN_VALUE : c.getPeriodo().getCiclo().getAnio(),
+                           Comparator.reverseOrder())
+                .thenComparing(c -> c.getPeriodo() == null ? Short.MAX_VALUE : c.getPeriodo().getOrden())
+                .thenComparing(Comision::getCodigo))
+            .toList();
     }
 
     @Transactional

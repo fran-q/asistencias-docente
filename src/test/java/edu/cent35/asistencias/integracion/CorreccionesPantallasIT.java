@@ -378,6 +378,25 @@ class CorreccionesPantallasIT {
     }
 
     @Test
+    @DisplayName("Cada comisión muestra su año y su período, en la materia y al cargar un horario")
+    void comisionConAnioYPeriodo() throws Exception {
+        String materia = mockMvc.perform(get("/materias/" + materiaId + "/comisiones")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(materia)
+            .as("dos comisiones con el mismo código en períodos distintos se veían iguales")
+            .containsPattern("class=\"badge badge--neutral\">\\d{4} · [^<]+</span>");
+
+        String horario = mockMvc.perform(get("/horarios/nuevo").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(horario)
+            .as("el desplegable de comisión también: si no, se carga la franja en la que no es")
+            .containsPattern("— Comisión A · [^<]+ \\d{4}\\s*</option>");
+    }
+
+    @Test
     @DisplayName("El listado de materias ya no muestra la última actualización")
     void materiasSinUltimaActualizacion() throws Exception {
         mockMvc.perform(get("/materias").with(user(principal("INSTITUCION"))))

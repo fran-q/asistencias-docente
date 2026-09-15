@@ -50,6 +50,10 @@
              th:classappend="${!c.activo} ? 'row--inactive'">
             <h2>
                 Comisión <span th:text="${c.codigo}">A</span>
+                <!-- El año y el período: dos comisiones de una materia pueden llevar el mismo
+                     código si son de períodos distintos (V023), y sin esto se veían iguales. -->
+                <span class="badge badge--neutral" th:if="${c.periodo != null}"
+                      th:text="|${c.periodo.ciclo.anio} · ${c.periodo.nombre}|">2026 · Anual</span>
                 <span th:if="${c.activo}" class="badge badge--success">Activa</span>
                 <span th:unless="${c.activo}" class="badge badge--danger">Inactiva</span>
             </h2>

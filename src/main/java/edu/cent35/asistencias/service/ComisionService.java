@@ -120,6 +120,9 @@ public class ComisionService {
                 c.getMateria().getCodigo();
                 if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
             }
+            // El periodo y su ano van en la opcion: dos comisiones de una materia pueden llevar
+            // el mismo codigo en periodos distintos, y sin eso el combo mostraba dos iguales.
+            if (c.getPeriodo() != null) c.getPeriodo().getCiclo().getAnio();
         });
         return cs;
     }

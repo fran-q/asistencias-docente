@@ -46,10 +46,13 @@
                              "TUP-003 — A" no dice nada, y elegir la comision equivocada
                              recien se nota cuando alguien marca asistencia en la clase de
                              otro. -->
+                        <!-- Y el período con su año: dos comisiones de una materia pueden llevar
+                             el mismo código en períodos distintos (V023), y sin esto el
+                             desplegable mostraba dos opciones idénticas. -->
                         <option th:each="c : ${comisiones}"
                                 th:value="${c.id}"
-                                th:text="|${c.materia.codigo} ${c.materia.nombre} — Comisión ${c.codigo}|">
-                            MAT-001 Matemática — Comisión A
+                                th:text="|${c.materia.codigo} ${c.materia.nombre} — Comisión ${c.codigo}${c.periodo != null ? ' · ' + c.periodo.nombre + ' ' + c.periodo.ciclo.anio : ''}|">
+                            MAT-001 Matemática — Comisión A · Anual 2026
                         </option>
                     </select>
                     <!-- Repite la materia debajo del campo, en chico. Lo llena academico-form.js
@@ -59,7 +62,7 @@
 
                     <th:block th:unless="${modo == 'crear'}">
                         <p class="campo-fijo"
-                           th:text="|${horario.comision.materia.codigo} — ${horario.comision.codigo}|">MAT — A</p>
+                           th:text="|${horario.comision.materia.codigo} — ${horario.comision.codigo}${horario.comision.periodo != null ? ' · ' + horario.comision.periodo.nombre + ' ' + horario.comision.periodo.ciclo.anio : ''}|">MAT — A · Anual 2026</p>
                         <!-- Viaja igual, porque el servicio lo compara contra el guardado. -->
                         <input type="hidden" th:field="*{comisionId}">
                         <small class="form-hint">
