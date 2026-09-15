@@ -216,6 +216,35 @@ class CorreccionesPantallasIT {
     }
 
     @Test
+    @DisplayName("El código de una comisión admite hasta 30 caracteres, lo que ya permitía la base")
+    void codigoDeComisionLargo() throws Exception {
+        String formulario = mockMvc.perform(get("/comisiones/nueva").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(formulario).containsPattern("id=\"codigo\"[^>]*maxlength=\"30\"");
+
+        Long periodoId = periodoLectivoRepository.findAll().stream()
+            .filter(p -> tenantId.equals(p.getInstitucionId()))
+            .findFirst().orElseThrow().getId();
+
+        mockMvc.perform(post("/comisiones/nueva").with(user(principal("INSTITUCION"))).with(csrf())
+                .param("codigo", "Turno noche B")
+                .param("materiaId", materiaId.toString())
+                .param("periodoId", periodoId.toString()))
+            .andExpect(status().is3xxRedirection());
+        assertThat(comisionRepository.findAll())
+            .as("antes el formulario cortaba en 8: 'Turno noche B' no entraba")
+            .anyMatch(c -> "Turno noche B".equals(c.getCodigo()));
+
+        mockMvc.perform(post("/comisiones/nueva").with(user(principal("INSTITUCION"))).with(csrf())
+                .param("codigo", "x".repeat(31))
+                .param("materiaId", materiaId.toString())
+                .param("periodoId", periodoId.toString()))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("entre 1 y 30 caracteres")));
+    }
+
+    @Test
     @DisplayName("La edición de usuario no ofrece cambiar el rol")
     void edicionSinSelectorDeRol() throws Exception {
         mockMvc.perform(get("/usuarios/" + usuarioAdminId + "/editar")

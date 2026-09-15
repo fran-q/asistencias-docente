@@ -63,7 +63,8 @@ public class Comision {
     @JoinColumn(name = "materia_id", nullable = false)
     private Materia materia;
 
-    @Column(nullable = false, length = 8)
+    // varchar(30) en la base desde V001; la entidad decía 8, y era lo que cortaba el formulario.
+    @Column(nullable = false, length = 30)
     private String codigo;
 
     @ManyToOne(fetch = FetchType.LAZY)
