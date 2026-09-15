@@ -119,14 +119,19 @@
                          el campo el formulario no valida nunca: username es obligatorio. -->
                     <div class="form-group">
                         <label for="username">Nombre corto o siglas <span class="required">*</span></label>
+                        <!-- La regla es la de UsuarioValido, no otra: el patrón y el aviso son sus
+                             constantes PATRON_HTML y AVISO, y UsuarioValidoTest comprueba que esta
+                             plantilla las repita tal cual. -->
                         <input type="text" id="username" th:field="*{username}" required maxlength="60"
                                autocomplete="username"
+                               pattern="(?=(?:[^A-Za-z]*[A-Za-z]){3})[A-Za-z0-9._\-]{3,60}"
+                               data-error-patron="Tiene que tener al menos 3 letras, y solo letras sin tilde, números, punto, guion y guion bajo."
                                data-sugerir-desde="nombreInstitucion"
                                th:errorclass="is-invalid">
                         <span class="form-hint">
                             Es con lo que vas a entrar al sistema, así que conviene algo corto:
-                            las siglas del establecimiento, o el nombre resumido. Solo letras,
-                            números, punto, guion y guion bajo.
+                            las siglas del establecimiento, o el nombre resumido. Al menos 3
+                            letras; también números, punto, guion y guion bajo.
                         </span>
                         <span class="form-error" th:if="${#fields.hasErrors('username')}"
                               th:errors="*{username}">Error</span>

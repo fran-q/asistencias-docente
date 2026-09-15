@@ -37,10 +37,15 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="username">Nombre de usuario <span class="required">*</span></label>
+                        <!-- La regla es la de UsuarioValido, no otra: el patrón y el aviso son sus
+                             constantes PATRON_HTML y AVISO, y UsuarioValidoTest comprueba que esta
+                             plantilla las repita tal cual. -->
                         <input type="text" id="username" th:field="*{username}" required
-                               minlength="3" maxlength="60" autocomplete="off"
+                               maxlength="60" autocomplete="off"
+                               pattern="(?=(?:[^A-Za-z]*[A-Za-z]){3})[A-Za-z0-9._\-]{3,60}"
+                               data-error-patron="Tiene que tener al menos 3 letras, y solo letras sin tilde, números, punto, guion y guion bajo."
                                th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
-                        <small class="form-hint">Letras, números, puntos, guiones y guión bajo. Después no se puede cambiar.</small>
+                        <small class="form-hint">Al menos 3 letras. También números, punto, guion y guion bajo; sin tildes, eñes ni @. Después no se puede cambiar.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}">err</span>
                     </div>
                     <div class="form-group">

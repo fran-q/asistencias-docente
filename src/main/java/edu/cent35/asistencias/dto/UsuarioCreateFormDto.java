@@ -3,10 +3,10 @@ import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.RolCodigo;
 import edu.cent35.asistencias.validacion.PasswordSegura;
+import edu.cent35.asistencias.validacion.UsuarioValido;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,12 +23,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UsuarioCreateFormDto {
 
+    // La regla es la misma que en el alta de institución: vive en UsuarioValido.
     @NotBlank(message = "El usuario es obligatorio")
-    @Size(min = 3, max = 60, message = "El usuario debe tener entre 3 y 60 caracteres")
-    @Pattern(
-        regexp = "^[a-zA-Z0-9._-]+$",
-        message = "El usuario solo puede contener letras, números, puntos, guiones y guion bajo"
-    )
+    @UsuarioValido
     private String username;
 
     @NotBlank(message = "El correo es obligatorio")

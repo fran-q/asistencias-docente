@@ -27,7 +27,8 @@
         if (v.valueMissing)  return 'Este campo es obligatorio.';
         if (v.typeMismatch)  return campo.type === 'email'
             ? 'Escribí un correo válido.' : 'El formato no es válido.';
-        if (v.patternMismatch) return 'El formato no es válido.';
+        // El campo puede traer su propio aviso: "el formato no es válido" no dice qué cambiar.
+        if (v.patternMismatch) return campo.getAttribute('data-error-patron') || 'El formato no es válido.';
         if (v.tooShort)      return 'Tiene que tener al menos ' + campo.minLength + ' caracteres.';
         if (v.tooLong)       return 'No puede pasar de ' + campo.maxLength + ' caracteres.';
         // En una fecha el limite viene como 2027-01-01: se muestra como se escribe aca.

@@ -34,14 +34,19 @@
     // caracteres para tipear todos los dias. Lo que importa es cuanto se escribe.
     var LARGO_ACEPTABLE = 16;
 
+    // Las palabras que cuentan de una parte del nombre: sin las vacias, salvo que no quede
+    // ninguna ("De la Plata" sigue siendo algo).
+    function utilesDe(parte) {
+        var palabras = parte.split(/[^a-z0-9]+/).filter(function (p) { return p.length > 0; });
+        var utiles = palabras.filter(function (p) { return VACIAS.indexOf(p) === -1; });
+        return utiles.length > 0 ? utiles : palabras;
+    }
+
     // Reduce una parte del nombre: entera si es corta, siglas si no. Con forzarSiglas
     // en true no consulta el largo y siempre devuelve las iniciales.
     function abreviar(parte, forzarSiglas) {
-        var palabras = parte.split(/[^a-z0-9]+/).filter(function (p) { return p.length > 0; });
-        if (palabras.length === 0) return '';
-
-        var utiles = palabras.filter(function (p) { return VACIAS.indexOf(p) === -1; });
-        if (utiles.length === 0) utiles = palabras;
+        var utiles = utilesDe(parte);
+        if (utiles.length === 0) return '';
 
         var entero = utiles.join('-');
         if (!forzarSiglas && entero.length <= LARGO_ACEPTABLE) return entero;
@@ -52,6 +57,12 @@
         return utiles.map(function (p) {
             return /^[0-9]+$/.test(p) ? p : p.charAt(0);
         }).join('');
+    }
+
+    // El usuario pide al menos tres letras (UsuarioValido): una propuesta que no llega no sirve.
+    var MIN_LETRAS = 3;
+    function letras(texto) {
+        return (texto.match(/[a-z]/g) || []).length;
     }
 
     /**
@@ -80,10 +91,18 @@
         // cuenta, pero juntas daban veintiseis caracteres. Si el resultado sigue siendo
         // largo, se abrevian las dos a siglas.
         var suave = unir(false);
-        if (suave.length <= LARGO_ACEPTABLE) return suave.slice(0, 60);
+        var propuesta = suave.length <= LARGO_ACEPTABLE ? suave : (unir(true) || suave);
 
-        var duro = unir(true);
-        return (duro || suave).slice(0, 60);   // el campo admite 60
+        // Las siglas pueden quedarse sin letras: "Escuela Primaria 12" da "ep12", y el usuario
+        // pide al menos tres. Entonces va el nombre sin abreviar: es mas para tipear, pero entra.
+        if (letras(propuesta) < MIN_LETRAS) {
+            var entero = partes
+                .map(function (p) { return utilesDe(p).join('-'); })
+                .filter(function (p) { return p.length > 0; })
+                .join('-');
+            if (letras(entero) >= MIN_LETRAS) propuesta = entero;
+        }
+        return propuesta.slice(0, 60);   // el campo admite 60
     }
 
     document.addEventListener('DOMContentLoaded', function () {

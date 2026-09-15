@@ -2,6 +2,7 @@ package edu.cent35.asistencias.dto;
 
 import edu.cent35.asistencias.validacion.CuitValido;
 import edu.cent35.asistencias.validacion.PasswordSegura;
+import edu.cent35.asistencias.validacion.UsuarioValido;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -37,10 +38,9 @@ public class AltaInstitucionFormDto {
 
     // ---- Primera cuenta (rol INSTITUCION) ----
 
+    // La regla es la misma que al crear un usuario desde adentro: vive en UsuarioValido.
     @NotBlank(message = "El usuario es obligatorio")
-    @Size(min = 3, max = 60, message = "El usuario debe tener entre 3 y 60 caracteres")
-    @Pattern(regexp = "^[a-zA-Z0-9._-]+$",
-             message = "El usuario solo admite letras, números, punto, guion y guion bajo")
+    @UsuarioValido
     private String username;
 
     @NotBlank(message = "El correo es obligatorio")

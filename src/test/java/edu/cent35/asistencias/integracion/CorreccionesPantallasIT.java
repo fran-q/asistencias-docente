@@ -44,8 +44,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -187,6 +189,30 @@ class CorreccionesPantallasIT {
             .andExpect(content().string(not(containsString("id=\"rol\""))))
             .andExpect(content().string(containsString("id=\"confirmacion\"")))
             .andExpect(content().string(containsString("Repetir la contraseña")));
+    }
+
+    @Test
+    @DisplayName("Un usuario nuevo necesita al menos 3 letras: '...' ya no pasa")
+    void usuarioConTresLetras() throws Exception {
+        mockMvc.perform(get("/usuarios/nuevo").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            // El navegador avisa antes de enviar, con la misma regla que el servidor.
+            .andExpect(content().string(containsString(
+                "data-error-patron=\"Tiene que tener al menos 3 letras")));
+
+        mockMvc.perform(post("/usuarios/nuevo").with(user(principal("INSTITUCION"))).with(csrf())
+                .param("username", "...")
+                .param("email", "puntos@x.test")
+                .param("nombre", "Tres")
+                .param("apellido", "Puntos")
+                .param("password", "Clave123")
+                .param("confirmacion", "Clave123"))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Tiene que tener al menos 3 letras.")));
+
+        assertThat(usuarioRepository.findAll())
+            .as("rechazado en el formulario: la cuenta no se crea")
+            .noneMatch(u -> "...".equals(u.getUsername()));
     }
 
     @Test
