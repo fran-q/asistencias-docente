@@ -104,6 +104,11 @@ public class CicloLectivoController {
             // La plantilla lo mostraba dos veces --arriba de todo y dentro del formulario--;
             // quedo solo el del formulario, junto a lo que se cargo.
             redirect.addFlashAttribute("error", ex.getMessage());
+            // El ano ya tenia ciclo: la pantalla ofrece entrar a ese, que es donde se suman
+            // periodos. Casi siempre era eso lo que se queria.
+            if (ex instanceof CicloLectivoService.CicloDelAnioExistente yaExiste) {
+                redirect.addFlashAttribute("cicloExistenteId", yaExiste.getCicloId());
+            }
         }
         return "redirect:/ciclos";
     }

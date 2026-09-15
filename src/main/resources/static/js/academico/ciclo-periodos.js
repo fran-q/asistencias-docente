@@ -8,9 +8,10 @@
  *     navegador no ofrece dias de otro anio, y form-validacion.js lo avisa antes
  *     de enviar. Sirve en el alta y en "Datos del ciclo" (form[data-fechas-del-anio]).
  *
- *  2. En el alta, "Como se divide el anio": anual, dos cuatrimestres o tres
- *     trimestres arman las filas de periodos con sus nombres y reparten las fechas
- *     del ciclo en partes iguales. Despues se ajustan a mano. En cuanto se toca una
+ *  2. En el alta, "Como se divide el anio": anual, dos cuatrimestres, anual y dos
+ *     cuatrimestres, o tres trimestres arman las filas de periodos con sus nombres y
+ *     reparten las fechas del ciclo en partes iguales; el Anual, si lo hay, lo cubre
+ *     entero. Despues se ajustan a mano. En cuanto se toca una
  *     fila, o se agrega otra, la division pasa a "Personalizada" y ya no se
  *     recalcula sola: si no, el proximo cambio de fechas del ciclo pisaria el ajuste.
  *
@@ -21,10 +22,14 @@
     'use strict';
 
     var DIA = 24 * 60 * 60 * 1000;
-    var NOMBRES = {
-        '1': ['Anual'],
-        '2': ['1er cuatrimestre', '2do cuatrimestre'],
-        '3': ['1er trimestre', '2do trimestre', '3er trimestre']
+    // Cada division: los periodos que reparten el ciclo en partes iguales y, si lleva, un
+    // Anual que lo cubre entero. Con "Anual y dos cuatrimestres" los periodos se superponen a
+    // proposito: una materia anual y una cuatrimestral conviven en el mismo ciclo.
+    var ESTRUCTURAS = {
+        '1': { partes: ['Anual'] },
+        '2': { partes: ['1er cuatrimestre', '2do cuatrimestre'] },
+        'anual+2': { anual: true, partes: ['1er cuatrimestre', '2do cuatrimestre'] },
+        '3': { partes: ['1er trimestre', '2do trimestre', '3er trimestre'] }
     };
 
     // ---- 1. Fechas dentro del anio ------------------------------------------------
@@ -106,10 +111,13 @@
     }
 
     function armar() {
-        var nombres = NOMBRES[estructura.value];
-        if (!nombres) return;                       // personalizada: se deja como esta
+        var e = ESTRUCTURAS[estructura.value];
+        if (!e) return;                             // personalizada: se deja como esta
+        var nombres = (e.anual ? ['Anual'] : []).concat(e.partes);
         var conFechas = inicio.value && fin.value && inicio.value <= fin.value;
-        var tramos = conFechas ? repartir(inicio.value, fin.value, nombres.length) : [];
+        var tramos = !conFechas ? []
+            : (e.anual ? [[inicio.value, fin.value]] : [])
+                .concat(repartir(inicio.value, fin.value, e.partes.length));
         contenedor.innerHTML = '';
         nombres.forEach(function (nombre, i) {
             var f = fila(i);

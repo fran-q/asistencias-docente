@@ -28,6 +28,11 @@
                 tomar asistencia —solo uno a la vez— y se <strong>cierra</strong> a mano cuando
                 termina el año.
             </p>
+            <p>
+                Por eso hay un solo ciclo por año, y sus períodos pueden superponerse: un
+                <strong>Anual</strong> y dos cuatrimestres conviven en el mismo ciclo, para
+                materias anuales y cuatrimestrales.
+            </p>
         </aside>
 
         <!-- ================= Listado ================= -->
@@ -119,7 +124,16 @@
                 <!-- El rechazo del alta se muestra aca, junto a lo que se cargo. Estaba ademas
                      arriba de todo, y salia dos veces. -->
                 <div th:if="${error}" class="alert alert--error" role="alert">
-                    <p th:text="${error}">Error</p>
+                    <div class="alert__cuerpo">
+                        <p th:text="${error}">Error</p>
+                        <!-- El año ya tenía ciclo: lo que casi siempre se quería era sumarle un
+                             período (un Anual junto a los cuatrimestres), y eso se hace adentro. -->
+                        <p th:if="${cicloExistenteId}">
+                            Para sumarle un período —por ejemplo un Anual junto a los cuatrimestres—,
+                            <a th:href="@{/ciclos/{id}(id=${cicloExistenteId})}">entrá a ese ciclo</a>
+                            y usá "Agregar un período".
+                        </p>
+                    </div>
                 </div>
 
                 <div class="form-row form-row--3">
@@ -152,6 +166,7 @@
                     <select id="estructura" data-menu>
                         <option value="1">Anual</option>
                         <option value="2">Dos cuatrimestres</option>
+                        <option value="anual+2">Anual y dos cuatrimestres</option>
                         <option value="3">Tres trimestres</option>
                         <option value="personalizada">Personalizada</option>
                     </select>

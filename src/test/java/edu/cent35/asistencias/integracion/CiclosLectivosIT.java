@@ -851,6 +851,64 @@ class CiclosLectivosIT {
     }
 
     @Test
+    @DisplayName("El alta de un año que ya tiene ciclo ofrece entrar a ese, que es donde se suman períodos")
+    void elAltaDeUnAnioRepetidoOfreceEntrar() throws Exception {
+        CicloLectivo existente = cicloCon(2036, "1er cuatrimestre");
+
+        mockMvc.perform(post("/ciclos")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("anio", "2036")
+                .param("fechaInicio", "2036-03-01")
+                .param("fechaFin", "2036-12-15")
+                .param("periodoNombre", "Anual")
+                .param("periodoInicio", "2036-03-01")
+                .param("periodoFin", "2036-12-15"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("error",
+                org.hamcrest.Matchers.containsString("Ya existe un ciclo lectivo 2036")))
+            .andExpect(flash().attribute("cicloExistenteId", existente.getId()));
+
+        String html = mockMvc.perform(get("/ciclos")
+                .with(user(principalInstitucional()))
+                .flashAttr("error", "Ya existe un ciclo lectivo 2036 en esta institución.")
+                .flashAttr("cicloExistenteId", existente.getId()))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(html)
+            .as("el enlace lleva al ciclo que ya existe, no a uno cualquiera de la lista")
+            .contains("href=\"/ciclos/" + existente.getId() + "\">entrá a ese ciclo</a>");
+    }
+
+    @Test
+    @DisplayName("Un ciclo se crea con un Anual y dos cuatrimestres que se superponen")
+    void unCicloConAnualYCuatrimestres() throws Exception {
+        String alta = mockMvc.perform(get("/ciclos").with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(alta).contains("value=\"anual+2\"");
+
+        mockMvc.perform(post("/ciclos")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("anio", "2037")
+                .param("fechaInicio", "2037-03-01")
+                .param("fechaFin", "2037-12-15")
+                .param("periodoNombre", "Anual", "1er cuatrimestre", "2do cuatrimestre")
+                .param("periodoInicio", "2037-03-01", "2037-03-01", "2037-07-24")
+                .param("periodoFin", "2037-12-15", "2037-07-23", "2037-12-15"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("flashMensaje", "Ciclo lectivo 2037 creado."));
+
+        // La peticion limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
+        TenantContext.set(tenantId);
+        CicloLectivo creado = cicloRepository.findByInstitucionIdAndAnio(tenantId, (short) 2037)
+            .orElseThrow();
+        assertThat(cicloService.buscarPorId(creado.getId()).getPeriodos())
+            .extracting(PeriodoLectivo::getNombre)
+            .as("materias anuales y cuatrimestrales en el mismo año, sin un segundo ciclo")
+            .containsExactlyInAnyOrder("Anual", "1er cuatrimestre", "2do cuatrimestre");
+    }
+
+    @Test
     @DisplayName("Un periodo mal cargado vuelve al detalle con el error a la vista, no en un aviso que se va")
     void elErrorDeUnPeriodoQuedaEnLaPantalla() throws Exception {
         CicloLectivo ciclo = cicloCon(2026, "Anual");

@@ -1265,6 +1265,8 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     font-size: .89rem;
 }
 .alert p { margin: 0; }
+/* Mas de un parrafo: van envueltos, porque la alerta es flex y los pondria uno al lado del otro. */
+.alert__cuerpo p + p { margin-top: 6px; }
 .alert--error   { background: var(--t-danger);  border-color: var(--borde-danger);  color: var(--on-danger); }
 .alert--success { background: var(--t-success); border-color: var(--borde-success); color: var(--on-success); }
 .alert--warning { background: var(--t-warning); border-color: rgba(224,168,58,.35); color: var(--on-warning); }

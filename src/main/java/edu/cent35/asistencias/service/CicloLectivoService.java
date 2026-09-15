@@ -181,11 +181,33 @@ public class CicloLectivoService {
     // ========================================================================
 
     /**
+     * El año ya tiene su ciclo. Lleva el id de ese ciclo porque casi siempre lo que se quería
+     * era sumarle un período —un Anual junto a los cuatrimestres—, y eso se hace adentro de él:
+     * la pantalla ofrece el enlace en vez de quedarse en el "ya existe".
+     */
+    public static class CicloDelAnioExistente extends IllegalArgumentException {
+        private final Long cicloId;
+
+        CicloDelAnioExistente(Short anio, Long cicloId) {
+            super("Ya existe un ciclo lectivo " + anio + " en esta institución.");
+            this.cicloId = cicloId;
+        }
+
+        public Long getCicloId() {
+            return cicloId;
+        }
+    }
+
+    /**
      * Crea el ciclo de un año con sus períodos.
      *
      * <p>Los períodos vienen en la misma operación y no aparte porque un ciclo sin ninguno no
      * sirve para nada: no se le puede colgar una comisión, así que quedaría como una fila que
      * hay que acordarse de completar después.
+     *
+     * <p>Un solo ciclo por año: solo uno puede estar activo, porque el pase tiene que saber contra
+     * qué oferta registra. Las materias anuales y cuatrimestrales conviven en el mismo ciclo, con
+     * períodos que se superponen.
      */
     @Transactional
     public CicloLectivo crear(Short anio, LocalDate inicio, LocalDate fin,
@@ -195,9 +217,9 @@ public class CicloLectivoService {
         validarRango(inicio, fin);
         validarDentroDelAnio(anio, inicio, fin);
 
-        if (cicloRepository.findByInstitucionIdAndAnio(tenantId, anio).isPresent()) {
-            throw new IllegalArgumentException(
-                "Ya existe un ciclo lectivo " + anio + " en esta institución.");
+        Optional<CicloLectivo> existente = cicloRepository.findByInstitucionIdAndAnio(tenantId, anio);
+        if (existente.isPresent()) {
+            throw new CicloDelAnioExistente(anio, existente.get().getId());
         }
         if (periodos == null || periodos.isEmpty()) {
             throw new IllegalArgumentException(
