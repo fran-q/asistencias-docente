@@ -7,13 +7,30 @@
 </head>
 <body>
     <section class="mi-cuenta">
-        <header class="page-header">
-            <h1>Mi cuenta</h1>
-            <p class="page-header__subtitle">
-                Confirmá que el correo de tu cuenta es tuyo. Es lo que te va a permitir recuperar
-                el acceso por tus propios medios si olvidás la contraseña.
-            </p>
+        <!-- Primero se lee y despues se edita, igual que Mi institucion: el boton lleva al
+             formulario y esta pantalla se queda mostrando lo que hay. -->
+        <header class="page-header page-header--with-action">
+            <div>
+                <h1>Mi cuenta</h1>
+                <p class="page-header__subtitle" th:if="${verificado}">
+                    Los datos con los que entrás al sistema. Si alguno quedó mal escrito,
+                    corregilo desde "Editar datos".
+                </p>
+                <p class="page-header__subtitle" th:unless="${verificado}">
+                    Confirmá que el correo de tu cuenta es tuyo. Es lo que te va a permitir recuperar
+                    el acceso por tus propios medios si olvidás la contraseña.
+                </p>
+            </div>
+            <!-- Solo con el correo confirmado: sin confirmarlo, la cuenta no puede salir de esta
+                 pantalla (VerificacionInterceptor) y el botón la traería de vuelta acá. -->
+            <a th:if="${verificado}" th:href="@{/mi-cuenta/editar}" class="btn btn--primary">Editar datos</a>
         </header>
+
+        <div th:if="${cambioDeCorreo != null}" class="alert alert--info" role="status">
+            Tenés un cambio de correo sin terminar, a
+            <strong th:text="${cambioDeCorreo.correoNuevo}">nuevo@ejemplo.com</strong>.
+            <a th:href="@{/mi-cuenta/correo}">Seguir con el cambio</a>
+        </div>
 
         <div class="card">
             <dl class="kv">
@@ -72,6 +89,10 @@
                 Te mandamos un código de 6 dígitos a
                 <strong th:text="${usuario.email}">correo@ejemplo.com</strong>.
                 Vence a los pocos minutos y se usa una sola vez.
+            </p>
+            <p class="form-hint">
+                ¿La dirección está mal escrita? Pedile a la institución que la corrija desde
+                Usuarios del sistema. Tus datos los vas a poder editar vos una vez que la confirmes.
             </p>
 
             <form th:action="@{/mi-cuenta/enviar-codigo}" method="post" class="form-inline">

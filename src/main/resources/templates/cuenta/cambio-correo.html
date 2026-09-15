@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Cambiar el correo - Visum</title>
+</head>
+<body>
+    <!--
+      Los dos pasos del cambio de correo, de a uno. Cuál se ve lo decide el cambio guardado en
+      la sesión: sin el correo actual confirmado va el primero, con él el segundo.
+
+      Hasta que entra el segundo código la cuenta sigue con su correo de siempre, así que salir
+      de acá no rompe nada: un correo mal tipeado no deja a nadie sin poder recuperar la cuenta.
+    -->
+    <section class="mi-cuenta" th:with="segundo=${cambio.estaAutorizado()}">
+        <header class="page-header">
+            <h1>Cambiar el correo</h1>
+            <p class="page-header__subtitle">
+                De <strong th:text="${correoActual}">actual@ejemplo.com</strong> a
+                <strong th:text="${cambio.correoNuevo}">nuevo@ejemplo.com</strong>.
+            </p>
+        </header>
+
+        <div class="card card--form">
+            <div class="pasos" role="group"
+                 th:attr="aria-label=${segundo} ? 'Paso 2 de 2' : 'Paso 1 de 2'">
+                <span class="pasos__tramo pasos__tramo--hecho"></span>
+                <span class="pasos__tramo" th:classappend="${segundo} ? 'pasos__tramo--hecho'"></span>
+                <span class="pasos__texto" th:text="${segundo} ? '2 de 2' : '1 de 2'">1 de 2</span>
+            </div>
+
+            <th:block th:unless="${segundo}">
+                <h2>Confirmá que sos vos</h2>
+                <div th:if="${cambio.autorizacionVencida()}" class="alert alert--warning" role="alert">
+                    Pasaron más de diez minutos desde que confirmaste tu correo actual, así que la
+                    autorización venció. Pedí un código nuevo y empezá otra vez.
+                </div>
+                <p class="text-muted">
+                    Escribí el código que te mandamos a
+                    <strong th:text="${correoActual}">actual@ejemplo.com</strong>. Es el mismo
+                    control que pide el cambio de contraseña: el correo es por donde se recupera
+                    la cuenta, así que cambiarlo tiene que probar que sos vos.
+                </p>
+            </th:block>
+
+            <th:block th:if="${segundo}">
+                <h2>Confirmá el correo nuevo</h2>
+                <p class="text-muted">
+                    Escribí el código que te mandamos a
+                    <strong th:text="${cambio.correoNuevo}">nuevo@ejemplo.com</strong>. Si no
+                    llega, revisá que la dirección esté bien escrita: mientras tanto tu cuenta
+                    sigue con el correo de antes.
+                </p>
+            </th:block>
+
+            <!-- El codigo equivocado no es el error de un campo: llega como atributo suelto
+                 desde el controlador, que es la otra forma que admite la convencion. -->
+            <div th:if="${error}" class="alert alert--error" role="alert">
+                <p th:text="${error}">Error</p>
+            </div>
+
+            <!-- Las seis casillas, igual que en el resto de los códigos del sistema. Lo que
+                 viaja es el campo oculto; las casillas son la parte visible (codigo-input.js). -->
+            <form th:action="${segundo} ? @{/mi-cuenta/correo/nuevo} : @{/mi-cuenta/correo/actual}"
+                  method="post" novalidate data-codigo-form>
+                <div class="form-group">
+                    <label id="codigo-correo-etiqueta">Código <span class="required">*</span></label>
+                    <input type="hidden" name="codigo" data-codigo-valor>
+                    <div class="codigo-input" role="group" aria-labelledby="codigo-correo-etiqueta"
+                         data-codigo-casillas>
+                        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 2" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 3" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 4" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 5" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary" data-texto-enviando="Verificando...">Verificar código</button>
+                </div>
+            </form>
+
+            <div class="form-actions">
+                <form th:action="@{/mi-cuenta/correo/reenviar}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn--ghost btn--sm" data-texto-enviando="Enviando...">Enviarme otro código</button>
+                </form>
+                <form th:action="@{/mi-cuenta/correo/cancelar}" method="post" class="inline-form">
+                    <button type="submit" class="btn btn--ghost btn--sm btn--danger" data-texto-enviando="Cancelando...">Cancelar el cambio</button>
+                </form>
+            </div>
+        </div>
+
+        <script th:src="@{/js/comun/codigo-input.js}" defer></script>
+    </section>
+</body>
+</html>

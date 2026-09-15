@@ -243,6 +243,42 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
+    //  ACTUALIZAR LA PROPIA CUENTA
+    // ====================================================================
+
+    @Test
+    @DisplayName("actualizarPropia: un usuario que ya usa otra institucion se rechaza")
+    void actualizarPropia_usuarioTomado() {
+        // Repetirlo dejaria ambiguo el ingreso con usuario para las dos cuentas.
+        Usuario u = usuarioActivo(7L, RolCodigo.ADMIN);
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(u));
+        when(usuarioRepository.contarUsernameEnOtrasCuentas("admin.utn", 7L)).thenReturn(1L);
+
+        assertThatThrownBy(() -> service.actualizarPropia(7L, "admin.utn", "N", "A", false))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("otra cuenta");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("actualizarPropia: si solo cambia el usuario, no pregunta ni toca la persona")
+    void actualizarPropia_soloElUsuario() {
+        // El nombre viaja con otras mayusculas, pero NombrePropio lo deja igual al guardado:
+        // como no cambia, no hay nada que advertirle a nadie.
+        Usuario u = usuarioActivo(8L, RolCodigo.ADMIN);
+        when(usuarioRepository.findById(8L)).thenReturn(Optional.of(u));
+        when(usuarioRepository.contarUsernameEnOtrasCuentas("nombre.nuevo", 8L)).thenReturn(0L);
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario guardado = service.actualizarPropia(8L, "nombre.nuevo", "n", "a", false);
+
+        assertThat(guardado.getUsername()).isEqualTo("nombre.nuevo");
+        verify(personaService, never()).edicionRequiereConfirmacion(any());
+        verify(personaRepository, never()).save(any());
+    }
+
+    // ====================================================================
     //  AISLAMIENTO MULTI-TENANT
     // ====================================================================
 

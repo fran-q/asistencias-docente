@@ -120,6 +120,113 @@ public class VerificacionCuentaService {
     }
 
     // ========================================================================
+    //  Cambio del propio correo: un codigo al actual y otro al nuevo
+    // ========================================================================
+
+    /**
+     * Por qué ese correo no le sirve a esta cuenta, o {@code null} si le sirve.
+     *
+     * <p>Devuelve el texto y no un booleano por el mismo motivo que
+     * {@code motivoQueImpideCambiarPassword}: el mensaje es la mitad de la función. Se consulta
+     * antes de mandar nada, para que el rechazo llegue con el formulario todavía en pantalla.
+     */
+    @Transactional(readOnly = true)
+    public String problemaConCorreoNuevo(Long usuarioId, String correoNuevo) {
+        Usuario usuario = cargar(usuarioId);
+        String nuevo = correoNuevo == null ? "" : correoNuevo.trim();
+
+        if (nuevo.equalsIgnoreCase(usuario.getEmail())) {
+            return "Ese ya es el correo de tu cuenta.";
+        }
+        if (usuarioRepository.existsByEmailAndInstitucionId(nuevo, usuario.getInstitucionId())) {
+            return "Ese correo ya lo usa otra cuenta de esta institución.";
+        }
+        return null;
+    }
+
+    /**
+     * Paso 1: manda un código al correo que la cuenta tiene <b>hoy</b>.
+     *
+     * <p><b>Por qué al actual y no solo al nuevo.</b> El correo es por donde se recupera la
+     * contraseña. Si alcanzara con confirmar la dirección nueva, quien encuentra una sesión
+     * abierta pondría la suya, la confirmaría con su propio buzón y después usaría la
+     * recuperación para quedarse con la cuenta: la protección del cambio de contraseña quedaría
+     * salteada por el costado.
+     */
+    @Transactional
+    public void iniciarCambioDeCorreo(Long usuarioId, String correoNuevo, String ip) {
+        Usuario usuario = cargar(usuarioId);
+        String problema = problemaConCorreoNuevo(usuarioId, correoNuevo);
+        if (problema != null) {
+            throw new IllegalArgumentException(problema);
+        }
+
+        String codigo = codigoService.emitir(
+            usuario, PropositoCodigo.CAMBIO_EMAIL, usuario.getEmail(), ip);
+        notificador.enviarCodigo(usuario, PropositoCodigo.CAMBIO_EMAIL, usuario.getEmail(), codigo);
+        log.info("Cambio de correo iniciado por el propio usuario: {}", usuarioId);
+    }
+
+    // Paso 2: comprueba el codigo que llego al correo actual. No cambia nada por si solo.
+    @Transactional
+    public CodigoVerificacionService.Resultado validarCodigoDelCorreoActual(Long usuarioId,
+                                                                           String codigoIngresado) {
+        return codigoService.validar(usuarioId, PropositoCodigo.CAMBIO_EMAIL, codigoIngresado);
+    }
+
+    // Paso 3: manda un codigo al correo NUEVO. El codigo queda atado a esa direccion.
+    @Transactional
+    public void enviarCodigoAlCorreoNuevo(Long usuarioId, String correoNuevo, String ip) {
+        Usuario usuario = cargar(usuarioId);
+        String problema = problemaConCorreoNuevo(usuarioId, correoNuevo);
+        if (problema != null) {
+            throw new IllegalArgumentException(problema);
+        }
+
+        String nuevo = correoNuevo.trim();
+        String codigo = codigoService.emitir(usuario, PropositoCodigo.EMAIL_NUEVO, nuevo, ip);
+        notificador.enviarCodigo(usuario, PropositoCodigo.EMAIL_NUEVO, nuevo, codigo);
+    }
+
+    /**
+     * Paso 4: si el código del correo nuevo es correcto, la cuenta pasa a ese correo y queda
+     * verificada, porque el código que acaba de entrar llegó justamente ahí.
+     *
+     * <p>La dirección sale del código guardado y no de lo que diga quien llama: es la que
+     * efectivamente lo recibió. Y se vuelve a comprobar que siga libre, porque entre el primer
+     * código y este pasaron minutos en los que otra cuenta pudo haberla tomado.
+     */
+    @Transactional
+    public CodigoVerificacionService.Resultado confirmarCorreoNuevo(Long usuarioId,
+                                                                    String correoNuevo,
+                                                                    String codigoIngresado) {
+        CodigoVerificacionService.Resultado resultado =
+            codigoService.validar(usuarioId, PropositoCodigo.EMAIL_NUEVO, codigoIngresado);
+        if (resultado != CodigoVerificacionService.Resultado.OK) {
+            return resultado;
+        }
+
+        String destino = codigoService
+            .emailDelUltimoCodigo(usuarioId, PropositoCodigo.EMAIL_NUEVO).orElse("");
+        if (!destino.equalsIgnoreCase(correoNuevo == null ? "" : correoNuevo.trim())) {
+            log.warn("El codigo del correo nuevo no corresponde al cambio en curso: usuario={}", usuarioId);
+            return CodigoVerificacionService.Resultado.INEXISTENTE;
+        }
+
+        String problema = problemaConCorreoNuevo(usuarioId, destino);
+        if (problema != null) {
+            throw new IllegalArgumentException(problema);
+        }
+
+        Usuario usuario = cargar(usuarioId);
+        usuario.setEmail(destino);
+        usuario.setEmailVerificadoEn(LocalDateTime.now());
+        usuarioRepository.save(usuario);
+        log.info("Correo cambiado por su titular: usuario={}", usuarioId);
+        return resultado;
+    }
+
+    // ========================================================================
     //  Recuperacion de contrasena (sin sesion)
     // ========================================================================
 
@@ -204,6 +311,12 @@ public class VerificacionCuentaService {
     // ========================================================================
     //  helpers
     // ========================================================================
+
+    // La cuenta por id, sin pasar por el tenant: el id sale siempre del principal.
+    private Usuario cargar(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+            .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + usuarioId));
+    }
 
     /**
      * Lo que dio buscar la cuenta a recuperar: o hay una, o hay un motivo por el cual no.

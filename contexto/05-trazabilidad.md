@@ -45,7 +45,7 @@
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
 | RF-05 | Alta de institución | ✅ | `AltaInstitucionController`, `AltaInstitucionService` (ADR-0010) |
-| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`) |
+| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`). Cada cuenta corrige su usuario, su nombre y su correo desde Mi cuenta (`DatosCuentaController`): el correo cambia recién con un código al actual y otro al nuevo |
 
 ## Gestión de docentes
 

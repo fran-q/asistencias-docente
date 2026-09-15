@@ -27,9 +27,11 @@ import java.time.LocalDateTime;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * Pantalla de la propia cuenta, donde cada persona confirma que controla el correo que tiene
- * declarado. Está abierta a cualquier rol autenticado porque siempre opera sobre la cuenta
- * logueada: el id sale del principal y nunca de un parámetro, así que nadie puede tocar otra.
+ * Pantalla de la propia cuenta: sus datos, la confirmación del correo y el cambio de contraseña.
+ * Está abierta a cualquier rol autenticado porque siempre opera sobre la cuenta logueada: el id
+ * sale del principal y nunca de un parámetro, así que nadie puede tocar otra.
+ *
+ * <p>La edición de esos datos vive aparte, en {@link DatosCuentaController}.
  */
 @Controller
 @RequestMapping("/mi-cuenta")
@@ -41,10 +43,13 @@ public class CuentaController {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
 
-    // Muestra el correo de la cuenta y si ya fue confirmado.
+    // Muestra los datos de la cuenta y si el correo ya fue confirmado.
     @GetMapping
-    public String ver(@AuthenticationPrincipal UsuarioAutenticado principal, Model model) {
+    public String ver(@AuthenticationPrincipal UsuarioAutenticado principal, HttpSession sesion,
+                      Model model) {
         prepararModelo(principal, model);
+        // Un cambio de correo a mitad de camino: la pantalla ofrece retomarlo.
+        model.addAttribute("cambioDeCorreo", DatosCuentaController.pendienteDe(principal, sesion));
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", new CodigoFormDto());
         }

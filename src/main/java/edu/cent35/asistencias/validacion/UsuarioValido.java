@@ -21,8 +21,9 @@ import java.lang.annotation.Target;
  * y guion bajo, y al menos 3 letras. Sin {@code @} a propósito: es lo que permite distinguir, en
  * un mismo campo, un usuario de un correo.
  *
- * <p><b>Rige para las cuentas nuevas.</b> Las que ya existen siguen entrando como están: el
- * ingreso no valida el formato, y el usuario no se cambia desde ningún formulario.
+ * <p><b>Rige para los usuarios que se escriben de nuevo:</b> el alta y el cambio que cada
+ * persona hace del suyo desde Mi cuenta. Las cuentas anteriores siguen entrando como están —el
+ * ingreso no valida el formato— y pueden guardar sus otros datos sin tocar el usuario viejo.
  */
 @Documented
 @Constraint(validatedBy = UsuarioValidoValidator.class)

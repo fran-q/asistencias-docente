@@ -38,6 +38,18 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     // Indica si el username ya está tomado en esa institución.
     boolean existsByUsernameAndInstitucionId(String username, Long institucionId);
 
+    /**
+     * Cuántas cuentas usan ese nombre de usuario en <b>cualquier</b> institución, sin contar una.
+     *
+     * <p>Nativa a propósito: el filtro de tenant la limitaría a la institución actual, y el login
+     * busca el usuario en todas ({@code CargadorDeUsuarios}). Sin JOIN no hay nada más que
+     * filtrar, así que la regla de oro del multi-tenant no aplica acá.
+     */
+    @Query(value = "SELECT COUNT(*) FROM usuarios WHERE username = :username AND id <> :excepto",
+           nativeQuery = true)
+    long contarUsernameEnOtrasCuentas(@Param("username") String username,
+                                      @Param("excepto") Long excepto);
+
     // Indica si el email ya está tomado en esa institución.
     boolean existsByEmailAndInstitucionId(String email, Long institucionId);
 

@@ -21,9 +21,11 @@ public class UsuarioAutenticado implements UserDetails {
 
     private final Long usuarioId;
     private final Long institucionId;
-    private final String username;
+    // El usuario y el nombre no son final: la persona los puede cambiar desde Mi cuenta, y la
+    // sesion en curso tiene que mostrarlos nuevos sin obligarla a volver a entrar.
+    private String username;
     private final String passwordHash;
-    private final String nombreCompleto;
+    private String nombreCompleto;
     private final boolean activo;
     private final Collection<? extends GrantedAuthority> authorities;
 
@@ -53,6 +55,14 @@ public class UsuarioAutenticado implements UserDetails {
     // La marca como verificada en la sesion en curso, tras confirmarlo contra la base.
     public void marcarEmailVerificado() {
         this.emailVerificado = true;
+    }
+
+    // Refresca el usuario y el nombre despues de que su titular los edito en Mi cuenta. Mismo
+    // criterio que marcarEmailVerificado: el principal vive en la sesion, y sin esto la barra
+    // seguiria mostrando el usuario viejo hasta el proximo ingreso.
+    public void actualizarDatos(Usuario usuario) {
+        this.username = usuario.getUsername();
+        this.nombreCompleto = usuario.getNombreParaMostrar();
     }
 
     // Spring Security compara contra este hash BCrypt al autenticar.

@@ -25,7 +25,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 | `instituciones` | Tenant root. Nombre, CUIT, contacto. | — (es la raíz) |
 | `roles` | Catálogo global: `INSTITUCION`, `ADMIN`. | No |
 | `usuarios` | Login del sistema. Solo institución y admins. **El docente no es usuario.** | Sí |
-| `codigos_verificacion` | Códigos de un solo uso para verificar correo y recuperar contraseña. | Vía usuario |
+| `codigos_verificacion` | Códigos de un solo uso: verificar el correo, recuperar la contraseña, revocar el puesto y cambiar el correo (uno al actual y otro al nuevo). `proposito` no tiene CHECK: los valores los fija `PropositoCodigo`. | Vía usuario |
 | `puestos_captura` | Equipos autorizados a capturar datos biométricos. Guarda el hash del token, no el token. Desde V025 puede habilitarse para operar **sin sesión** (ADR-0019). Ver ADR-0015. | Sí |
 
 ### Personas

@@ -13,8 +13,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Form para edicion de un usuario existente. NO incluye username
- * (inmutable) ni password (se cambia con un flujo aparte).
+ * Form para edicion de un usuario existente. NO incluye username --lo cambia solo su titular,
+ * desde Mi cuenta-- ni password, que se cambia con un flujo aparte.
  */
 @Data
 @NoArgsConstructor

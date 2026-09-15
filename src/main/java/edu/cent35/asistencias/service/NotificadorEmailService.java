@@ -62,6 +62,8 @@ public class NotificadorEmailService implements CanalDeCodigos {
             case VERIFICACION_EMAIL -> "Confirmá tu correo - Asistencias";
             case RECUPERACION_PASSWORD -> "Código para recuperar tu contraseña - Asistencias";
             case REVOCACION_PUESTO -> "Código para revocar el puesto de captura - Asistencias";
+            case CAMBIO_EMAIL -> "Código para cambiar tu correo - Asistencias";
+            case EMAIL_NUEVO -> "Confirmá tu correo nuevo - Asistencias";
         };
     }
 
@@ -73,6 +75,13 @@ public class NotificadorEmailService implements CanalDeCodigos {
                 "Pediste recuperar la contraseña de tu cuenta.";
             case REVOCACION_PUESTO ->
                 "Pediste revocar el equipo autorizado a tomar asistencia desde otra máquina.";
+            case CAMBIO_EMAIL ->
+                "Pediste cambiar el correo de tu cuenta. Este código confirma que sos vos; "
+                + "después te va a llegar otro a la dirección nueva. Si no lo pediste vos, "
+                + "alguien está usando una sesión abierta con tu cuenta: cambiá tu contraseña.";
+            case EMAIL_NUEVO ->
+                "Pediste usar esta dirección como el correo de tu cuenta. Con este código la "
+                + "confirmás, y desde ese momento la cuenta pasa a usarla.";
         };
 
         return """

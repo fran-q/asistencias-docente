@@ -9,6 +9,7 @@ import edu.cent35.asistencias.model.RolCodigo;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.validacion.UsuarioValidoValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Operaciones sobre los usuarios (admins) de la institucion del tenant
@@ -236,6 +238,82 @@ public class UsuarioService {
         return saved;
     }
 
+
+    /**
+     * Edita los datos de la propia cuenta desde Mi cuenta: el usuario y, si la cuenta es de una
+     * persona, su nombre. El correo no pasa por acá: cambia recién con un código al correo
+     * actual y otro al nuevo ({@code VerificacionCuentaService}).
+     *
+     * <p><b>El usuario se puede cambiar, pero solo su titular.</b> Es lo que esa persona teclea
+     * cada vez que entra, y si quedó mal escrito tiene que poder corregirlo. La institución, en
+     * cambio, no puede cambiarle el usuario a otra cuenta: le cambiaría a alguien cómo entra sin
+     * que se entere. Lo ya registrado no se pierde, porque el historial apunta a la cuenta y no
+     * al texto del usuario; lo único que conserva el nombre viejo es un PDF ya descargado.
+     *
+     * <p><b>Único entre todas las instituciones, no solo en esta.</b> El login busca el usuario
+     * en todas ({@code CargadorDeUsuarios}): si otra institución ya lo usa, el ingreso con
+     * usuario queda ambiguo para las dos cuentas, y la otra persona deja de poder entrar con el
+     * suyo sin haber tocado nada.
+     *
+     * <p><b>El nombre pide confirmación solo si cambia</b> y esa persona además da clases, igual
+     * que en la edición de usuarios. Si lo único que cambió es el usuario no se pregunta nada:
+     * preguntar por lo que no cambió entrena a aceptar sin leer.
+     */
+    @Transactional
+    public Usuario actualizarPropia(Long usuarioId, String username, String nombre,
+                                    String apellido, boolean confirmado) {
+
+        Usuario u = buscarPorId(usuarioId);
+
+        String usuarioNuevo = username == null ? "" : username.trim();
+        boolean cambiaElUsuario = !usuarioNuevo.equals(u.getUsername());
+        if (cambiaElUsuario) {
+            String problema = usuarioNuevo.isEmpty()
+                ? "El usuario es obligatorio." : UsuarioValidoValidator.problema(usuarioNuevo);
+            if (problema != null) {
+                throw new IllegalArgumentException(problema);
+            }
+            if (usuarioRepository.contarUsernameEnOtrasCuentas(usuarioNuevo, u.getId()) > 0) {
+                throw new IllegalArgumentException("Ese usuario ya lo usa otra cuenta. Elegí otro.");
+            }
+        }
+
+        // La cuenta institucional no tiene persona (V018): su nombre es el del establecimiento y
+        // se cambia desde Mi institución, que es donde se cambian los datos del establecimiento.
+        Persona persona = u.getPersona();
+        if (persona != null) {
+            String nombreNuevo   = NombrePropio.normalizar(nombre);
+            String apellidoNuevo = normalizarApellido(apellido);
+            if (nombreNuevo == null || nombreNuevo.isEmpty()) {
+                throw new IllegalArgumentException("El nombre es obligatorio.");
+            }
+            boolean cambiaElNombre = !nombreNuevo.equals(persona.getNombre())
+                || !Objects.equals(apellidoNuevo, persona.getApellido());
+
+            if (cambiaElNombre) {
+                if (!confirmado && personaService.edicionRequiereConfirmacion(persona)) {
+                    String propuesto = apellidoNuevo == null
+                        ? nombreNuevo : apellidoNuevo + ", " + nombreNuevo;
+                    throw new ConfirmacionRequeridaException(
+                        personaService.impactoDeEdicion(persona, propuesto));
+                }
+                InstantaneaIdentidad antes = InstantaneaIdentidad.de(persona);
+                persona.setNombre(nombreNuevo);
+                persona.setApellido(apellidoNuevo);
+                personaRepository.save(persona);
+                // Origen USUARIO: el cambio entra por la cuenta. Que lo hizo la propia persona lo
+                // dice usuario_id, que es el de esa misma cuenta.
+                personaService.registrarCambios(persona, antes, usuarioId, "USUARIO");
+            }
+        }
+
+        if (cambiaElUsuario) {
+            log.info("Usuario cambiado por su titular: id={}, antes='{}', ahora='{}'",
+                     u.getId(), u.getUsername(), usuarioNuevo);
+            u.setUsername(usuarioNuevo);
+        }
+        return usuarioRepository.save(u);
+    }
 
     // Verifica que el usuario pertenezca al tenant actual; defensa en profundidad.
     private void ensureMismoTenant(Usuario u) {
