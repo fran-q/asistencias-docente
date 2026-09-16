@@ -62,6 +62,23 @@ public class PaseAsistenciaController {
         return "asistencia/pase :: clases";
     }
 
+    /**
+     * El pase en una ventana propia, chica y sin el resto del sistema alrededor.
+     *
+     * <p>Existe porque la cámara se suelta apenas la página se recarga: con el pase en la
+     * pestaña de siempre, ir a cualquier otra pantalla lo apagaba. Con esta ventana aparte
+     * quien administra sigue trabajando y el pase sigue marcando; lo que va pasando se ve en
+     * las demás ventanas por el punto del menú y los avisos ({@code pase-estado.js}).
+     *
+     * <p>Cae bajo {@code /asistencia/pase/**}, así que exige equipo autorizado igual que la
+     * pantalla completa: es captura, y ADR-0015 no distingue por el tamaño de la ventana.
+     */
+    @GetMapping("/ventana")
+    public String ventana(HttpServletRequest request, Model model) {
+        model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
+        return "asistencia/pase-ventana";
+    }
+
     // Nombre del atributo de sesion donde vive la racha de confirmacion del pase.
     private static final String RACHA = "paseConfirmacionIdentidad";
 

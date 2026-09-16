@@ -102,7 +102,7 @@ class PuestoCapturaIT {
     // ========================================================================
 
     @ParameterizedTest(name = "sin puesto no entra a {0}")
-    @ValueSource(strings = {"/asistencia/pase", "/docentes/1/rostro/registrar"})
+    @ValueSource(strings = {"/asistencia/pase", "/asistencia/pase/ventana", "/docentes/1/rostro/registrar"})
     @DisplayName("Sin cookie de puesto, las pantallas de captura mandan a la explicacion")
     void sinPuestoNoEntraALasPantallas(String ruta) throws Exception {
         var respuesta = mockMvc.perform(get(ruta).with(user(new UsuarioAutenticado(cuentaA))))
@@ -219,6 +219,39 @@ class PuestoCapturaIT {
                 .with(user(new UsuarioAutenticado(cuentaA)))
                 .cookie(new Cookie(CookiePuesto.NOMBRE, token)))
             .andExpect(status().isOk());
+    }
+
+    /**
+     * El pase también vive en una ventana propia, para seguir trabajando en el resto del sistema
+     * mientras toma asistencia (docx 13).
+     *
+     * <p>Que exija el mismo equipo autorizado lo cubre el caso de arriba, con la ruta en la
+     * lista. Acá se mira que la ventana traiga lo suyo: sin el token CSRF o sin su script se
+     * abriría igual, con la cámara prendida, y no marcaría nada.
+     */
+    @Test
+    @DisplayName("La ventana del pase abre con el puesto y trae la cámara, el token y sus scripts")
+    void laVentanaDelPaseTraeLoSuyo() throws Exception {
+        Cookie cookie = new Cookie(CookiePuesto.NOMBRE, designarEn(institucionA));
+
+        String ventana = mockMvc.perform(get("/asistencia/pase/ventana")
+                .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(ventana)
+            .contains("data-pase-ventana=\"1\"")
+            .contains("id=\"pa-video\"")
+            .contains("name=\"_csrf\"")
+            .contains("/js/facial/pase-estado.js")
+            .contains("/js/facial/pase-asistencia.js");
+
+        String pantalla = mockMvc.perform(get("/asistencia/pase")
+                .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(pantalla)
+            .as("desde la pantalla completa se le cede el pase a esa ventana")
+            .contains("id=\"pa-btn-ventana\"");
     }
 
     /**

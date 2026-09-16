@@ -423,6 +423,20 @@ class CorreccionesPantallasIT {
             .andExpect(content().string(not(containsString("data-nombre-propio"))));
     }
 
+    @Test
+    @DisplayName("El menú puede avisar que el pase está andando en otra ventana")
+    void elMenuTieneElPuntoDelPase() throws Exception {
+        // El punto y sus dos scripts viven en el layout: alcanza con mirar una pantalla
+        // cualquiera, porque si faltaran faltarían en todas.
+        String html = mockMvc.perform(get("/docentes").with(user(principal("ADMIN"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(html)
+            .contains("data-punto-pase")
+            .contains("/js/facial/pase-estado.js")
+            .contains("/js/comun/pase-aviso.js");
+    }
+
     // ========================================================================
     //  Academico: ver materias, ver comisiones, grilla por anio
     // ========================================================================

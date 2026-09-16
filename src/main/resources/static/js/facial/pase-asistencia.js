@@ -51,6 +51,20 @@
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
+    // La ventana chica del pase (/asistencia/pase/ventana) es esta misma pantalla sin el
+    // sistema alrededor. Se reconoce por el body y no por la URL.
+    const esVentana = document.body.dataset.paseVentana === '1';
+    // Mientras esta pantalla le cede el pase a esa ventana deja de publicar: si no, su
+    // "apagado" pisaria el "andando" que la otra acaba de publicar.
+    let cediendo = false;
+    // Si hay otra ventana tomando asistencia, esta no puede: la camara es una sola.
+    let bloqueadoPorOtra = false;
+
+    // El estado que ven las otras ventanas (facial/pase-estado.js). Se pide en cada uso y no
+    // se guarda al cargar: este archivo se ejecuta antes que el del layout.
+    function estado() { return cediendo ? null : window.PaseEstado; }
+    function publicar(que) { const e = estado(); if (e) e.publicar(que); }
+
     let stream = null;
     let loopId = null;
     let enVuelo = false;
@@ -123,6 +137,7 @@
         btnCamara.hidden = true;
         mostrarMensaje('Cámara apagada', 'info');
         claseEl.textContent = '';
+        publicar('apagado');
     }
 
     // ---- Pase: toggle -----------------------------------------------------
@@ -152,6 +167,7 @@
         paseActivo = true;
         btnPase.textContent = 'Detener pase';
         mostrarMensaje('Buscando rostros…', 'info');
+        publicar('andando');
         marcarFrame();
         loopId = setInterval(marcarFrame, INTERVALO_MS);
         refrescarClases();
@@ -170,6 +186,9 @@
         ocultarProgreso();
         if (refrescoClasesId) { clearInterval(refrescoClasesId); refrescoClasesId = null; }
         btnPase.textContent = 'Iniciar pase';
+        // Con la camara todavia prendida el pase esta quieto, no apagado: son dos estados
+        // distintos y el punto del menu los muestra distinto. Apagar la camara publica lo suyo.
+        if (stream) publicar('quieto');
     }
 
     /**
@@ -309,6 +328,7 @@
             ocultarProgreso();
             mensajeParaLeer(data.mensaje, 'error');
             claseEl.textContent = '';
+            avisarAlResto('error', data.mensaje);
             return;
         }
 
@@ -320,6 +340,9 @@
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#00acc1', null);
             var faltan = Math.max(0, Math.ceil((data.objetivoMs - data.progresoMs) / 1000));
             mostrarProgreso(data.progresoMs / data.objetivoMs, false);
+            // Las otras ventanas ven el mismo avance, en una barra con forma de aviso.
+            const e = estado();
+            if (e) e.progreso(data.progresoMs / data.objetivoMs);
             mostrarMensaje('Sostené la posición… ' + faltan + ' s', 'info');
             claseEl.textContent = '';
             return;
@@ -339,6 +362,7 @@
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, color, etiqueta);
             mostrarProgreso(1, true);
             mostrarMensaje(data.mensaje, esSalida ? 'info' : 'success');
+            avisarAlResto(esSalida ? 'info' : 'success', data.mensaje, data.claseLabel);
             refrescarClases();
             claseEl.textContent = data.claseLabel || '';
             // Pausa breve para no bombardear el server con frames del mismo
@@ -356,6 +380,13 @@
         ocultarProgreso();
         mensajeParaLeer(data.mensaje, 'warn');
         claseEl.textContent = '';
+        avisarAlResto('warning', data.mensaje);
+    }
+
+    // El resultado del reconocimiento, para las ventanas que no estan mirando la camara.
+    function avisarAlResto(clase, mensaje, detalle) {
+        const e = estado();
+        if (e) e.resultado(clase, mensaje, detalle);
     }
 
     // ---- Overlay ----------------------------------------------------------
@@ -453,6 +484,8 @@
         btnCamara.hidden = true;
         mostrarMensaje('Se perdió la cámara: se desconectó o la está usando otra aplicación.', 'error');
         claseEl.textContent = 'Revisá que esté conectada y apretá "Iniciar pase" para seguir.';
+        publicar('apagado');
+        avisarAlResto('error', 'Se perdió la cámara del pase.', 'Revisá que esté conectada.');
     }
 
     // Pausa: la camara sigue abierta pero no manda imagen. Se deja de enviar --llegarian
@@ -540,5 +573,65 @@
 
     btnCamara.addEventListener('click', apagarCamara);
     btnPase.addEventListener('click', togglePase);
-    window.addEventListener('pagehide', apagarCamara);
+    window.addEventListener('pagehide', function () {
+        apagarCamara();
+        // La ventana se va: el punto del menu se apaga ya, sin esperar a que el ultimo
+        // estado publicado envejezca.
+        publicar('cerrado');
+    });
+
+    // ---- La ventana aparte -------------------------------------------------
+
+    // La ventana lleva nombre: abrirla dos veces trae la que ya esta, en vez de dejar dos
+    // camaras peleandose por el mismo dispositivo.
+    const VENTANA = 'visum-pase';
+    const btnVentana = document.getElementById('pa-btn-ventana');
+
+    if (btnVentana) {
+        btnVentana.addEventListener('click', function () {
+            const abierta = window.open('/asistencia/pase/ventana', VENTANA,
+                                        'width=430,height=660,menubar=no,toolbar=no,location=no');
+            if (!abierta) {
+                mostrarMensaje('El navegador bloqueó la ventana del pase. Permitila y probá de nuevo.', 'error');
+                return;
+            }
+            abierta.focus();
+            if (bloqueadoPorOtra) return;        // ya estaba andando ahi: solo se la trae al frente
+            // Esta pantalla le cede la camara: deja de publicar, la suelta y se va al inicio.
+            cediendo = true;
+            apagarCamara();
+            window.location.href = '/';
+        });
+    }
+
+    /*
+     * Dos pases a la vez no pueden andar: la camara es una sola, y el segundo en pedirla no la
+     * consigue. Si ya hay uno en otra ventana, esta pantalla lo dice en vez de dejar apretar
+     * "Iniciar pase" para que falle. Se revisa cada tanto y no una sola vez al cargar, porque
+     * la otra ventana se puede cerrar en cualquier momento.
+     */
+    function revisarOtraVentana() {
+        if (esVentana || stream || paseActivo) return;     // esta pantalla ya esta usando la camara
+        const hayOtra = !!(window.PaseEstado && window.PaseEstado.leer());
+        if (hayOtra === bloqueadoPorOtra) return;
+
+        bloqueadoPorOtra = hayOtra;
+        btnPase.disabled = hayOtra;
+        if (hayOtra) {
+            mostrarMensaje('El pase ya está andando en otra ventana.', 'info');
+            claseEl.textContent = 'Traela al frente para verlo, o cerrala para tomar asistencia desde acá.';
+            if (btnVentana) btnVentana.textContent = 'Traer la ventana del pase al frente';
+        } else {
+            mostrarMensaje('Cámara apagada', 'info');
+            claseEl.textContent = '';
+            if (btnVentana) btnVentana.textContent = 'Seguir trabajando en otra pantalla';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        revisarOtraVentana();
+        setInterval(revisarOtraVentana, 2000);
+        // La ventana chica se abre para tomar asistencia: arranca sola, sin pedir otro clic.
+        if (document.body.dataset.autoIniciar === '1') togglePase();
+    });
 })();

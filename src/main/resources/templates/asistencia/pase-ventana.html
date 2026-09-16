@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<!--
+  El pase en su propia ventana.
+
+  No extiende el layout a propósito: no lleva barra lateral, ni migas, ni buscador. No es
+  una pantalla para navegar; es la cámara y su estado, para dejarla en un costado mientras
+  se usa el resto del sistema en la ventana principal. Cada navegación suelta la cámara,
+  así que la única forma de que el pase siga andando es que viva en una ventana que no
+  navega a ningún lado.
+
+  Comparte los ids con la pantalla completa (pa-video, pa-estado-mensaje, pa-btn-pase…):
+  el que maneja las dos es el mismo archivo, pase-asistencia.js.
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- El loop del pase manda cada cuadro por fetch POST: necesita el token. -->
+    <meta name="_csrf" th:content="${_csrf?.token}">
+    <meta name="_csrf_header" th:content="${_csrf?.headerName}">
+    <title>Pase de asistencia - Visum</title>
+
+    <!-- El tema, antes de la hoja de estilos, igual que en el layout: si no, la ventana
+         aparece clara un instante y salta a oscura. Acá solo se aplica; cambiarlo se sigue
+         haciendo desde la ventana principal. -->
+    <script>
+        (function () {
+            var tema;
+            try { tema = localStorage.getItem('tema'); } catch (e) { tema = null; }
+            if (!tema) {
+                tema = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            document.documentElement.setAttribute('data-tema', tema);
+            document.documentElement.setAttribute('data-densidad', 'equilibrada');
+        })();
+    </script>
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="pase-ventana" data-pase-ventana="1" data-auto-iniciar="1">
+
+    <header class="pase-ventana__barra">
+        <span class="pase-ventana__marca">
+            <span class="barra-sup__logo" aria-hidden="true">V</span>
+            <span>Pase de asistencia</span>
+        </span>
+        <span class="barra-sup__reloj" id="reloj" aria-label="Hora actual">--:--</span>
+    </header>
+
+    <div class="camara-caja">
+        <video id="pa-video" class="camara-video" autoplay playsinline muted
+               th:attr="data-camara=${camaraDelPuesto}"></video>
+        <canvas id="pa-overlay" class="camara-overlay"></canvas>
+        <canvas id="pa-canvas" hidden></canvas>
+    </div>
+
+    <div id="pa-estado-box" class="pase__estado pase-ventana__estado">
+        <p id="pa-estado-mensaje" class="pase__mensaje">Encendiendo la cámara…</p>
+        <div id="pa-progreso" class="progreso" role="progressbar"
+             aria-label="Confirmación de la identidad"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden>
+            <div class="progreso__barra"></div>
+        </div>
+        <p id="pa-clase" class="pase__clase"></p>
+    </div>
+
+    <div class="pase__acciones">
+        <button type="button" id="pa-btn-pase" class="btn btn--primary">Iniciar pase</button>
+        <button type="button" id="pa-btn-camara" class="btn btn--ghost btn--danger" hidden>
+            Apagar cámara
+        </button>
+    </div>
+
+    <p class="pase__ayuda">
+        Dejá esta ventana abierta: mientras esté, el pase sigue tomando asistencia. En la
+        ventana principal vas a ver el punto verde al lado de "Pase de asistencia" y el aviso
+        de cada reconocimiento. Si la cerrás, la cámara se apaga.
+    </p>
+
+    <script th:src="@{/js/comun/reloj.js}" defer></script>
+    <script th:src="@{/js/facial/camara.js}" defer></script>
+    <script th:src="@{/js/facial/pase-estado.js}" defer></script>
+    <script th:src="@{/js/facial/pase-asistencia.js}" defer></script>
+</body>
+</html>

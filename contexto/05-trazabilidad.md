@@ -81,7 +81,7 @@ en ADR-0007.
 | RF-17 | Registro automático de asistencia | ✅ | `PaseAsistenciaController` → `POST /asistencia/pase/marcar`, `PaseAsistenciaService` |
 | RF-18 | Determinación automática de materia y horario | ✅ | `PaseAsistenciaService` |
 | RF-19 | Clasificación del estado | ✅ | `AsistenciaService.calcularEstado`, `Horario.llegadaEnHora`, `GeneradorAusenciasService`. Segundo desvío cerrado por ADR-0018 |
-| RF-20 | Retroalimentación visual | ✅ | `templates/asistencia/pase.html` + `facial/pase-asistencia.js`: entrada en verde con «ENTRA · Nombre», salida en azul con «SALE · Nombre». El azul quedó libre al desaparecer «ya estaba marcado» del flujo normal |
+| RF-20 | Retroalimentación visual | ✅ | `templates/asistencia/pase.html` + `facial/pase-asistencia.js`: entrada en verde con «ENTRA · Nombre», salida en azul con «SALE · Nombre». El azul quedó libre al desaparecer «ya estaba marcado» del flujo normal. Con el pase en su propia ventana (`/asistencia/pase/ventana`), el resto del sistema muestra el punto del menú y el avance de cada reconocimiento: `facial/pase-estado.js` publica y `comun/pase-aviso.js` lo muestra |
 | RF-21 | Registro de metadatos | ✅ | Tabla `asistencias` |
 
 **Desvío RF-19.** El requerimiento fija una tolerancia global de 15 minutos. La

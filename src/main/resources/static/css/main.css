@@ -2254,6 +2254,39 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .pase__ayuda { margin: 0; color: var(--text-dim); font-size: .82rem;
                line-height: 1.55; text-wrap: pretty; }
 
+/* ---- El pase en su propia ventana ----
+   La ventana chica: la misma pantalla sin el sistema alrededor. No lleva barra lateral ni
+   migas porque no es para navegar, es para dejarla en un costado mientras se trabaja. */
+.pase-ventana {
+    max-width: 460px; margin: 0 auto; padding: 14px;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.pase-ventana__barra { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pase-ventana__marca { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.pase-ventana .camara-caja { border-radius: var(--r); overflow: hidden; }
+.pase-ventana__estado { min-height: 4.5rem; }
+
+/* El punto del menú: si hay un pase andando en otra ventana. Va posicionado y no al final
+   de la fila porque con el menú colapsado el texto se esconde y el punto se iría con él;
+   así queda a la vista sobre el ícono. El texto vive adentro para el lector de pantalla y
+   se oculta con font-size, que --a diferencia de display:none-- no lo calla. */
+.lateral__link:has(> .lateral__punto) { position: relative; }
+.lateral__punto {
+    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%;
+    font-size: 0; background: var(--text-dim);
+}
+.lateral__punto--andando { background: var(--success); animation: v-pulse 1400ms var(--ease) infinite; }
+.lateral__punto--quieto  { background: var(--danger); }
+
+/* El avance del reconocimiento, con forma de aviso: es el mismo toast del resto del
+   sistema, con la barra adentro. Las dos partes van en bloque porque adentro del texto del
+   aviso son <span>: en linea, el relleno con height 100% no mide nada y la barra se veia
+   gris entera, sin avance. */
+.toast--pase .progreso,
+.toast--pase .progreso__barra { display: block; }
+.toast--pase .progreso { margin-top: 7px; }
+
 /* Últimas marcas: confirma que el sistema viene registrando y permite ver de un
    vistazo si alguien quedó afuera. */
 .pase__marcas { list-style: none; margin: 0; padding: 0;

@@ -147,9 +147,13 @@
                     <a th:href="@{__${destinoAsistencia}__}" class="lateral__grupo"
                        th:title="|Ver todo: Asistencias|">Asistencias</a>
 
+                    <!-- El punto dice si el pase está andando en su propia ventana: verde
+                         mientras marca, rojo si esa ventana está abierta y la cámara no. Lo
+                         pinta comun/pase-aviso.js; sin ninguna ventana del pase no se ve. -->
                     <a th:href="@{/asistencia/pase}" class="lateral__link">
                         <svg th:replace="~{layout/iconos :: rostro}"></svg>
                         <span class="lateral__texto">Pase de asistencia</span>
+                        <span class="lateral__punto" data-punto-pase hidden></span>
                     </a>
                     <a th:href="@{/asistencias}" class="lateral__link">
                         <svg th:replace="~{layout/iconos :: lista}"></svg>
@@ -298,6 +302,10 @@
     <script th:src="@{/js/comun/nombre-propio.js}" defer></script>
     <script th:src="@{/js/comun/envio-form.js}" defer></script>
     <script th:src="@{/js/comun/toast.js}" defer></script>
+    <!-- El pase puede estar andando en otra ventana: el primero publica su estado y el
+         segundo lo muestra acá, con el punto del menú y el aviso de cada reconocimiento. -->
+    <script th:src="@{/js/facial/pase-estado.js}" defer sec:authorize="isAuthenticated()"></script>
+    <script th:src="@{/js/comun/pase-aviso.js}" defer sec:authorize="isAuthenticated()"></script>
     <script th:src="@{/js/comun/password-ui.js}" defer></script>
     <script th:src="@{/js/comun/table-scroll.js}" defer></script>
     <script th:src="@{/js/comun/confirm-modal.js}" defer></script>
