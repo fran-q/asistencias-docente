@@ -211,6 +211,25 @@ public class BloquePresenciaService {
         }
 
         LocalTime horaEntrada = instante.toLocalTime().withNano(0);
+
+        // De todas las clases del bloque, solo la que está corriendo ahora.
+        Optional<Horario> claseActual = enCurso.get().horarios().stream()
+            .filter(h -> h.estaEnCurso(horaEntrada))
+            .min(Comparator.comparing(Horario::getHoraInicio).thenComparing(Horario::getId));
+
+        Optional<BloquePresencia> yaCerrada =
+            jornadaYaCerradaDe(docente.getId(), instante.toLocalDate(), claseActual);
+        if (yaCerrada.isPresent()) {
+            BloquePresencia previa = yaCerrada.get();
+            log.info("Entrada rechazada: docente {} ya cerro la jornada de {} a {} sobre la "
+                     + "clase {}", docente.getId(), previa.getHoraEntrada(),
+                     previa.getHoraSalida(), claseActual.get().getId());
+            return ResultadoPresencia.rechazada(
+                "Tu entrada y tu salida de esta clase ya quedaron registradas ("
+                + previa.getHoraEntrada().format(HM) + " a " + previa.getHoraSalida().format(HM)
+                + "). Si tenés otra clase más tarde, vas a poder marcar cuando empiece.");
+        }
+
         ModeloFacial modelo = (modeloFacialId == null) ? null
             : modeloFacialRepository.findById(modeloFacialId).orElse(null);
 
@@ -242,11 +261,6 @@ public class BloquePresenciaService {
                 .orElseThrow(() -> ex);
         }
 
-        // De todas las clases del bloque, solo la que está corriendo ahora.
-        Optional<Horario> claseActual = enCurso.get().horarios().stream()
-            .filter(h -> h.estaEnCurso(horaEntrada))
-            .min(Comparator.comparing(Horario::getHoraInicio).thenComparing(Horario::getId));
-
         int imputadas = 0;
         Asistencia marcada = null;
         if (claseActual.isPresent()) {
@@ -258,6 +272,46 @@ public class BloquePresenciaService {
                  guardado.getId(), docente.getId(), guardado.getFecha(), horaEntrada,
                  enCurso.get().cantidadDeClases());
         return ResultadoPresencia.entrada(guardado, imputadas, marcada);
+    }
+
+    /**
+     * La jornada que el docente ya cerró hoy sobre esta misma clase, si la hay.
+     *
+     * <p><b>Qué evita.</b> Registrada la salida, el bloque deja de estar abierto, así que la
+     * pasada siguiente vuelve a ser una entrada. Y el pase reanuda el envío de imágenes a los
+     * pocos segundos: quedarse parado frente a la cámara después de salir abría una jornada
+     * nueva de la misma clase, que nadie empezó. La asistencia no se duplicaba —esa se
+     * reutiliza— pero quedaba una salida pendiente que el job después cerraba con una hora
+     * presumida, y en pantalla se leía "entrada registrada" de una clase ya registrada.
+     *
+     * <p><b>Solo esa clase.</b> Si más tarde empieza otra, se puede volver a marcar con
+     * normalidad: es el caso del docente que se fue antes y vuelve para la clase siguiente, y
+     * el del que tiene dos bloques separados en el día.
+     *
+     * <p>Además se exige que la clase ya tenga su asistencia. Si la jornada anterior terminó
+     * sin alcanzar a imputarla —una entrada en la ventana previa, cerrada antes de que la
+     * clase empezara—, volver a entrar es exactamente lo que corresponde.
+     */
+    private Optional<BloquePresencia> jornadaYaCerradaDe(Long docenteId, LocalDate fecha,
+                                                         Optional<Horario> claseActual) {
+        if (claseActual.isEmpty()) {
+            return Optional.empty();
+        }
+        Horario clase = claseActual.get();
+
+        Optional<BloquePresencia> cerrada = bloqueRepository
+            .findByDocenteIdAndFechaOrderByHoraEntradaAsc(docenteId, fecha).stream()
+            .filter(b -> b.getHoraSalida() != null)
+            // Se solapa con la clase: la cubrió, entera o en parte.
+            .filter(b -> b.getHoraSalida().isAfter(clase.getHoraInicio())
+                      && b.getHoraEntrada().isBefore(clase.getHoraFin()))
+            .reduce((primera, ultima) -> ultima);      // la más reciente, que es la que se cita
+
+        return cerrada.isEmpty()
+            ? Optional.empty()
+            : asistenciaRepository
+                .findByDocenteIdAndHorarioIdAndFecha(docenteId, clase.getId(), fecha)
+                .map(marcada -> cerrada.get());
     }
 
     /**

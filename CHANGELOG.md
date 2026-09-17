@@ -7,6 +7,29 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Pase de asistencia
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **Volver a pasar la cara después de salir abría una jornada nueva.** Registrada la salida, el
+  bloque deja de estar abierto, así que la pasada siguiente volvía a ser una entrada; y como el
+  pase reanuda el envío de imágenes a los cuatro segundos —seis en el kiosco—, bastaba con
+  quedarse parado frente a la cámara. No duplicaba la asistencia, porque la de esa clase ya
+  existía y se reutiliza, pero dejaba una salida pendiente que el job después cerraba con una
+  hora presumida, y en pantalla decía "entrada registrada" de una clase ya registrada.
+
+  Ahora esa pasada se rechaza diciendo entre qué horas quedó registrada la clase. Se bloquea
+  solo esa clase: el docente que se fue antes y vuelve para la siguiente, o el que tiene dos
+  bloques separados en el día, marca como siempre.
+
+- **Lo que ya funcionaba bien y ahora tiene test de punta a punta:** no se puede registrar dos
+  veces la entrada —con la jornada abierta, la pasada siguiente es una salida—, ni dos veces la
+  salida, y una salida antes de los diez minutos se rechaza explicando que falta tiempo.
+
+---
+
 ## Gestión de ciclos lectivos
 
 **Período:** septiembre de 2026.

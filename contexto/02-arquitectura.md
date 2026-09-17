@@ -238,6 +238,12 @@ Tres reglas que no son obvias:
   como pendiente. Lo que queda sin resolver es la hora, no la asistencia.
 - **Sin consentimiento vigente no se abre ni se cierra un bloque.** La entrada ya
   registrada se conserva: era lícita cuando ocurrió.
+- **Una misma clase no se registra dos veces.** Cerrada la jornada, la pasada siguiente
+  vuelve a ser una entrada —el bloque ya no está abierto— y el pase reanuda el envío de
+  imágenes a los pocos segundos: quedarse frente a la cámara después de salir abría una
+  jornada nueva de la clase que ya se había registrado. Se rechaza cuando existe una jornada
+  cerrada que cubre la clase en curso y esa clase ya tiene su asistencia. Se bloquea solo esa
+  clase: volver para una posterior abre jornada con normalidad.
 
 **Cache:** `ConcurrentHashMap<Long, LBPHFaceRecognizer>` en memoria, con **barrido por
 inactividad**: `descartarModelosInactivos` es un `@Scheduled` que suelta los modelos que
