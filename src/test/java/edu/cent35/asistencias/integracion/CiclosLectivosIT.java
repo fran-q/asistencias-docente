@@ -57,6 +57,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -410,7 +411,7 @@ class CiclosLectivosIT {
     }
 
     @Test
-    @DisplayName("El listado muestra el tipo y lo filtra; el alta pide tipo y admite un rango")
+    @DisplayName("El listado muestra el tipo y lo filtra; el alta va en su propia pantalla")
     void elListadoFiltraPorTipo() throws Exception {
         diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.PROVINCIAL, "Feriado de prueba", null);
 
@@ -424,20 +425,65 @@ class CiclosLectivosIT {
             .as("la fila lleva su tipo, que es contra lo que compara el filtro")
             .contains("data-estado=\"PROVINCIAL\"")
             .contains("data-filtro-tabla=\"#tabla-dias\"")
+            .as("el boton de arriba lleva al alta con el año del listado, para volver a ese")
+            .contains("/dias-sin-clase/nuevo?anio=2026");
+        assertThat(html)
+            .as("el formulario de alta ya no vive debajo del listado")
+            .doesNotContain("name=\"motivo\"");
+    }
+
+    @Test
+    @DisplayName("El alta de dias sin clase pide tipo, admite un rango y Cancelar vuelve al año")
+    void elAltaDeDiasEnSuPantalla() throws Exception {
+        String html = mockMvc.perform(
+                get("/dias-sin-clase/nuevo").param("anio", "2027").with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("action=\"/dias-sin-clase/nuevo\"")
             .contains("name=\"tipo\"")
-            .contains("name=\"hasta\"");
+            .contains("name=\"hasta\"")
+            .contains("name=\"motivo\"")
+            .as("Cancelar vuelve al año del listado del que se vino")
+            .contains("href=\"/dias-sin-clase?anio=2027\"");
+    }
+
+    @Test
+    @DisplayName("Un alta de dias rechazada vuelve a su pantalla con lo que se habia cargado")
+    void elAltaDeDiasRechazadaConservaLoCargado() throws Exception {
+        String html = mockMvc.perform(post("/dias-sin-clase/nuevo")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("fecha", "2026-07-13")
+                .param("hasta", "2026-07-17")
+                .param("tipo", "")
+                .param("motivo", "Receso de invierno")
+                .param("anio", "2026"))
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("error",
+                org.hamcrest.Matchers.containsString("Elegí el tipo")))
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("sin redirigir: la fecha, el rango y el motivo siguen cargados")
+            .contains("value=\"2026-07-13\"")
+            .contains("value=\"2026-07-17\"")
+            .contains("value=\"Receso de invierno\"");
+        TenantContext.set(tenantId);
+        assertThat(diaService.listarDelAnio(2026)).isEmpty();
     }
 
     @Test
     @DisplayName("Marcar un receso desde la pantalla dice cuantos dias se marcaron")
     void marcarUnRangoDesdeLaPantalla() throws Exception {
-        mockMvc.perform(post("/dias-sin-clase")
+        mockMvc.perform(post("/dias-sin-clase/nuevo")
                 .with(user(principalInstitucional())).with(csrf())
                 .param("fecha", "2026-07-13")
                 .param("hasta", "2026-07-17")
                 .param("tipo", "RECESO")
                 .param("motivo", "Receso de invierno"))
             .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/dias-sin-clase?anio=2026"))
             .andExpect(flash().attribute("flashMensaje",
                 org.hamcrest.Matchers.containsString("Se marcaron 5 días")));
 
@@ -727,12 +773,52 @@ class CiclosLectivosIT {
             .contains("2026")
             .contains("1er cuatrimestre")
             .as("un ciclo activo tiene que poder cerrarse desde la pantalla")
-            .contains("Cerrar");
+            .contains("Cerrar")
+            .as("el boton de arriba lleva al alta")
+            .contains("href=\"/ciclos/nuevo\"");
         assertThat(html)
+            .as("el formulario de alta ya no vive debajo del listado")
+            .doesNotContain("id=\"form-ciclo\"");
+    }
+
+    @Test
+    @DisplayName("El alta de ciclo va en su propia pantalla, con su script y el año que viene")
+    void elAltaDeCicloEnSuPantalla() throws Exception {
+        String html = mockMvc.perform(get("/ciclos/nuevo").with(user(principalInstitucional())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("id=\"form-ciclo\"")
+            .contains("action=\"/ciclos/nuevo\"")
+            .contains("value=\"" + (LocalDate.now().getYear() + 1) + "\"")
             .as("el script del boton de agregar periodo tiene que llegar a la pagina: estuvo "
                 + "afuera de la section y el layout lo descartaba sin avisar")
             .contains("/js/academico/ciclo-periodos.js");
     }
+
+    @Test
+    @DisplayName("Crear un ciclo desde su pantalla vuelve al listado; una fila sin nombre no cuenta")
+    void crearCicloDesdeSuPantalla() throws Exception {
+        mockMvc.perform(post("/ciclos/nuevo")
+                .with(user(principalInstitucional())).with(csrf())
+                .param("anio", "2035")
+                .param("fechaInicio", "2035-02-01")
+                .param("fechaFin", "2035-12-15")
+                .param("periodoNombre", "Anual", "")
+                .param("periodoInicio", "2035-02-01", "")
+                .param("periodoFin", "2035-12-15", ""))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/ciclos"))
+            .andExpect(flash().attribute("flashMensaje", "Ciclo lectivo 2035 creado."));
+
+        assertThat(cicloRepository.findByInstitucionIdAndAnio(tenantId, (short) 2035)).isPresent();
+        assertThat(periodoLectivoRepository.findAll().stream()
+                .filter(p -> tenantId.equals(p.getInstitucionId())))
+            .extracting(PeriodoLectivo::getNombre)
+            .containsExactly("Anual");
+    }
+
 
     @Test
     @DisplayName("La pantalla de dias sin clase renderiza y aclara que apaga tambien el pase")
@@ -801,7 +887,7 @@ class CiclosLectivosIT {
     @Test
     @DisplayName("Un ciclo no se crea con fechas fuera de su año, y el error dice cuáles")
     void elAltaExigeFechasDentroDelAnio() throws Exception {
-        mockMvc.perform(post("/ciclos")
+        String html = mockMvc.perform(post("/ciclos/nuevo")
                 .with(user(principalInstitucional())).with(csrf())
                 .param("anio", "2031")
                 .param("fechaInicio", "2030-02-09")
@@ -809,11 +895,20 @@ class CiclosLectivosIT {
                 .param("periodoNombre", "Anual")
                 .param("periodoInicio", "2030-02-09")
                 .param("periodoFin", "2031-12-18"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(flash().attribute("error",
-                org.hamcrest.Matchers.containsString("tienen que caer dentro de 2031")));
+            .andExpect(status().isOk())
+            .andExpect(model().attribute("error",
+                org.hamcrest.Matchers.containsString("tienen que caer dentro de 2031")))
+            .andReturn().getResponse().getContentAsString();
 
         assertThat(cicloRepository.findByInstitucionIdAndAnio(tenantId, (short) 2031)).isEmpty();
+        assertThat(html)
+            .as("vuelve al alta con lo que se habia cargado, para corregir y no para repetir")
+            .contains("value=\"2031\"")
+            .contains("value=\"2030-02-09\"")
+            .contains("value=\"Anual\"")
+            .as("con las filas como llegaron, la division queda en Personalizada: otra las "
+                + "volveria a repartir")
+            .containsPattern("<option value=\"personalizada\"\\s+selected");
     }
 
     @Test
@@ -855,7 +950,7 @@ class CiclosLectivosIT {
     void elAltaDeUnAnioRepetidoOfreceEntrar() throws Exception {
         CicloLectivo existente = cicloCon(2036, "1er cuatrimestre");
 
-        mockMvc.perform(post("/ciclos")
+        String html = mockMvc.perform(post("/ciclos/nuevo")
                 .with(user(principalInstitucional())).with(csrf())
                 .param("anio", "2036")
                 .param("fechaInicio", "2036-03-01")
@@ -863,31 +958,28 @@ class CiclosLectivosIT {
                 .param("periodoNombre", "Anual")
                 .param("periodoInicio", "2036-03-01")
                 .param("periodoFin", "2036-12-15"))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(flash().attribute("error",
-                org.hamcrest.Matchers.containsString("Ya existe un ciclo lectivo 2036")))
-            .andExpect(flash().attribute("cicloExistenteId", existente.getId()));
-
-        String html = mockMvc.perform(get("/ciclos")
-                .with(user(principalInstitucional()))
-                .flashAttr("error", "Ya existe un ciclo lectivo 2036 en esta institución.")
-                .flashAttr("cicloExistenteId", existente.getId()))
             .andExpect(status().isOk())
+            .andExpect(model().attribute("error",
+                org.hamcrest.Matchers.containsString("Ya existe un ciclo lectivo 2036")))
+            .andExpect(model().attribute("cicloExistenteId", existente.getId()))
             .andReturn().getResponse().getContentAsString();
+
         assertThat(html)
             .as("el enlace lleva al ciclo que ya existe, no a uno cualquiera de la lista")
-            .contains("href=\"/ciclos/" + existente.getId() + "\">entrá a ese ciclo</a>");
+            .contains("href=\"/ciclos/" + existente.getId() + "\">entrá a ese ciclo</a>")
+            .as("vuelve al alta con lo que se habia cargado")
+            .contains("value=\"2036-12-15\"");
     }
 
     @Test
     @DisplayName("Un ciclo se crea con un Anual y dos cuatrimestres que se superponen")
     void unCicloConAnualYCuatrimestres() throws Exception {
-        String alta = mockMvc.perform(get("/ciclos").with(user(principalInstitucional())))
+        String alta = mockMvc.perform(get("/ciclos/nuevo").with(user(principalInstitucional())))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
         assertThat(alta).contains("value=\"anual+2\"");
 
-        mockMvc.perform(post("/ciclos")
+        mockMvc.perform(post("/ciclos/nuevo")
                 .with(user(principalInstitucional())).with(csrf())
                 .param("anio", "2037")
                 .param("fechaInicio", "2037-03-01")

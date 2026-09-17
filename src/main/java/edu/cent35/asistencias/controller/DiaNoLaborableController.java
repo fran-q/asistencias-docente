@@ -23,7 +23,8 @@ import java.time.LocalDate;
 
 /**
  * Los días de adentro del ciclo en los que no se dicta clase (V024): feriados, receso, jornadas
- * institucionales. El job de ausencias los saltea.
+ * institucionales. El job de ausencias los saltea. Se marcan en su propia pantalla, como el resto
+ * de las altas, y si el alta se rechaza esa pantalla vuelve con lo que se había cargado.
  *
  * <p>Rol institucional, igual que los ciclos: es la otra mitad de la misma decisión —cuándo hay
  * clases— y marcar un día de más silencia las ausencias de toda la institución.
@@ -55,28 +56,50 @@ public class DiaNoLaborableController {
         return "academico/dia-sin-clase-list";
     }
 
+    // El alta, en su propia pantalla. Recibe el ano del listado del que se vino, para que
+    // Cancelar vuelva a ese.
+    @GetMapping("/nuevo")
+    public String formNuevo(@RequestParam(name = "anio", required = false) Integer anio,
+                            Model model) {
+        model.addAttribute("anio", anio != null ? anio : LocalDate.now().getYear());
+        model.addAttribute("tipos", TipoDiaNoLaborable.values());
+        return "academico/dia-sin-clase-form";
+    }
+
     /**
      * Marca un día, o todos los de un rango si viene "hasta".
      *
-     * <p>El tipo es opcional para Spring a propósito: sin elegir llega vacío, se convierte en
-     * null y el servicio lo pide con un mensaje, en vez de un 400 sin explicación.
+     * <p>Todo es opcional para Spring a propósito: sin elegir el tipo, o con la fecha o el
+     * motivo vacíos, llega null y el servicio lo pide con un mensaje, en vez de un 400 sin
+     * explicación.
      */
-    @PostMapping
-    public String crear(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+    @PostMapping("/nuevo")
+    public String crear(@RequestParam(required = false)
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
                         @RequestParam(required = false)
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
                         @RequestParam(required = false) TipoDiaNoLaborable tipo,
-                        @RequestParam String motivo,
+                        @RequestParam(required = false) String motivo,
+                        @RequestParam(name = "anio", required = false) Integer anio,
                         @AuthenticationPrincipal UsuarioAutenticado principal,
+                        Model model,
                         RedirectAttributes redirect) {
         try {
             DiaNoLaborableService.Resultado r = service.marcar(fecha, hasta, tipo, motivo,
                 principal == null ? null : principal.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje", mensaje(r));
+            // Al listado del ano de lo que se marco, que es donde se ve.
+            return "redirect:/dias-sin-clase?anio=" + fecha.getYear();
         } catch (IllegalArgumentException ex) {
-            redirect.addFlashAttribute("error", ex.getMessage());
+            model.addAttribute("error", ex.getMessage());
+            model.addAttribute("fecha", fecha);
+            model.addAttribute("hasta", hasta);
+            model.addAttribute("tipo", tipo);
+            model.addAttribute("motivo", motivo);
+            model.addAttribute("anio", anio != null ? anio : LocalDate.now().getYear());
+            model.addAttribute("tipos", TipoDiaNoLaborable.values());
+            return "academico/dia-sin-clase-form";
         }
-        return "redirect:/dias-sin-clase?anio=" + fecha.getYear();
     }
 
     // Lo que se marco y lo que se salteo porque ya estaba: si no se dice, quien cargo un receso

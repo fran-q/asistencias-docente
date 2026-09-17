@@ -6,7 +6,7 @@
 </head>
 <body>
     <section class="ciclos-list">
-        <header class="page-header">
+        <header class="page-header page-header--with-action">
             <div>
                 <h1>Ciclos lectivos</h1>
                 <p class="page-header__subtitle">
@@ -14,6 +14,8 @@
                     o sus períodos.
                 </p>
             </div>
+            <!-- El alta va en su propia pantalla, como en Carreras y el resto de las altas. -->
+            <a th:href="@{/ciclos/nuevo}" class="btn btn--primary">+ Nuevo ciclo</a>
         </header>
 
         <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del titulo
@@ -114,101 +116,8 @@
             <p>
                 Todavía no hay ningún ciclo lectivo. Hasta que crees uno no vas a poder cargar
                 comisiones, porque cada comisión tiene que pertenecer a un año.
+                <a th:href="@{/ciclos/nuevo}">Crear el primero</a>.
             </p>
-        </div>
-
-        <!-- ================= Alta ================= -->
-        <div class="card">
-            <h2>Nuevo ciclo lectivo</h2>
-            <form th:action="@{/ciclos}" method="post" novalidate id="form-ciclo" data-fechas-del-anio>
-                <!-- El rechazo del alta se muestra aca, junto a lo que se cargo. Estaba ademas
-                     arriba de todo, y salia dos veces. -->
-                <div th:if="${error}" class="alert alert--error" role="alert">
-                    <div class="alert__cuerpo">
-                        <p th:text="${error}">Error</p>
-                        <!-- El año ya tenía ciclo: lo que casi siempre se quería era sumarle un
-                             período (un Anual junto a los cuatrimestres), y eso se hace adentro. -->
-                        <p th:if="${cicloExistenteId}">
-                            Para sumarle un período —por ejemplo un Anual junto a los cuatrimestres—,
-                            <a th:href="@{/ciclos/{id}(id=${cicloExistenteId})}">entrá a ese ciclo</a>
-                            y usá "Agregar un período".
-                        </p>
-                    </div>
-                </div>
-
-                <div class="form-row form-row--3">
-                    <div class="form-group">
-                        <label for="anio">Año <span class="required">*</span></label>
-                        <input type="number" id="anio" name="anio" required min="2000" max="2200"
-                               th:value="${#temporals.format(hoy, 'yyyy')} + 1">
-                        <small class="form-hint">El año calendario: 2026, 2027.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="fechaInicio">Desde <span class="required">*</span></label>
-                        <input type="date" id="fechaInicio" name="fechaInicio" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="fechaFin">Hasta <span class="required">*</span></label>
-                        <input type="date" id="fechaFin" name="fechaFin" required>
-                    </div>
-                </div>
-
-                <h3 class="form-seccion">Períodos</h3>
-                <p class="form-hint form-hint--seccion">
-                    Las fechas se reparten solas y después se ajustan. Repetí los nombres de un
-                    año al otro: con ellos se empareja la oferta al copiarla.
-                </p>
-
-                <div class="form-group">
-                    <label for="estructura">Cómo se divide el año</label>
-                    <!-- Sin name: no viaja al servidor. Solo arma las filas de abajo, que son
-                         las que se envían (ciclo-periodos.js). -->
-                    <select id="estructura" data-menu>
-                        <option value="1">Anual</option>
-                        <option value="2">Dos cuatrimestres</option>
-                        <option value="anual+2">Anual y dos cuatrimestres</option>
-                        <option value="3">Tres trimestres</option>
-                        <option value="personalizada">Personalizada</option>
-                    </select>
-                </div>
-
-                <div id="periodos">
-                    <div class="form-row form-row--3 periodo-fila">
-                        <div class="form-group">
-                            <label for="periodo-nombre-0">Nombre</label>
-                            <input type="text" id="periodo-nombre-0" name="periodoNombre" maxlength="60" value="Anual" list="periodos-comunes"
-                                   placeholder="Anual, 1er cuatrimestre...">
-                        </div>
-                        <div class="form-group">
-                            <label for="periodo-inicio-0">Desde</label>
-                            <input type="date" id="periodo-inicio-0" name="periodoInicio">
-                        </div>
-                        <div class="form-group">
-                            <label for="periodo-fin-0">Hasta</label>
-                            <input type="date" id="periodo-fin-0" name="periodoFin">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Los nombres más comunes, como sugerencia al escribir. -->
-                <datalist id="periodos-comunes">
-                    <option value="Anual"></option>
-                    <option value="1er cuatrimestre"></option>
-                    <option value="2do cuatrimestre"></option>
-                    <option value="1er trimestre"></option>
-                    <option value="2do trimestre"></option>
-                    <option value="3er trimestre"></option>
-                </datalist>
-
-                <button type="button" class="btn btn--ghost btn--sm btn--success periodo-agregar" id="agregar-periodo">
-                    + Agregar período
-                </button>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn--primary"
-                            data-texto-enviando="Creando...">Crear ciclo</button>
-                </div>
-            </form>
         </div>
 
         <!-- ================= Copiar la oferta ================= -->
@@ -255,9 +164,6 @@
             </form>
         </div>
 
-        <!-- El script va ADENTRO de la section: la plantilla se inserta en el layout
-             por su <section>, y todo lo que quede afuera se descarta. -->
-        <script th:src="@{/js/academico/ciclo-periodos.js}" defer></script>
     </section>
 
 </body>

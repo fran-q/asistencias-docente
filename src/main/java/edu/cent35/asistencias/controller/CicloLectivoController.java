@@ -26,8 +26,9 @@ import java.util.List;
 
 /**
  * Los ciclos lectivos y sus períodos: el año calendario de cursada (V023). Desde el listado se
- * abre el año que viene, se copia la oferta del anterior y se cierra el que terminó; desde la
- * pantalla de cada ciclo (V027) se ve qué tiene y se corrige su calendario.
+ * copia la oferta del anterior y se cierra el que terminó; el año que viene se abre en su propia
+ * pantalla, como el resto de las altas; desde la pantalla de cada ciclo (V027) se ve qué tiene y
+ * se corrige su calendario.
  *
  * <p>Rol institucional en todo: definir el calendario académico decide cuándo el sistema toma
  * asistencia y cuándo genera ausencias, que no es una tarea administrativa del día a día.
@@ -38,8 +39,10 @@ import java.util.List;
  * <p><b>Dos canales para los rechazos.</b> Los de un formulario —alta, datos del ciclo,
  * períodos— vuelven como {@code error} y la plantilla los muestra en la pantalla: son errores
  * de lo que se cargó, y un "dejaría afuera el 07/04/2026" tiene que quedar a la vista mientras
- * se corrige, no en un aviso que se va solo. Los de una acción —activar, cerrar, reabrir,
- * borrar, quitar un período— van como {@code flashError}, igual que en el resto del sistema.
+ * se corrige, no en un aviso que se va solo. El del alta, además, vuelve sin redirigir: la
+ * pantalla se arma otra vez con lo que se había cargado, períodos incluidos. Los de una acción
+ * —activar, cerrar, reabrir, borrar, quitar un período— van como {@code flashError}, igual que
+ * en el resto del sistema.
  */
 @Controller
 @RequestMapping("/ciclos")
@@ -79,6 +82,15 @@ public class CicloLectivoController {
         return "academico/ciclo-detalle";
     }
 
+    // El alta, en su propia pantalla. Propone el ano que viene, que es el que se abre casi
+    // siempre: el en curso ya tiene su ciclo desde marzo.
+    @GetMapping("/nuevo")
+    public String formNuevo(Model model) {
+        model.addAttribute("anio", LocalDate.now().getYear() + 1);
+        model.addAttribute("periodos", List.of());
+        return "academico/ciclo-form";
+    }
+
     /**
      * Crea el ciclo con sus períodos.
      *
@@ -86,31 +98,43 @@ public class CicloLectivoController {
      * formulario los agrega dinámicamente y no se sabe cuántos van a venir. Se recorren por
      * índice y se cortan por el más corto: un envío manipulado con listas de distinto largo
      * produciría períodos a medio armar.
+     *
+     * <p>El año y las fechas llegan como opcionales, igual que en el resto de los formularios:
+     * un campo vacío vuelve con el mensaje del servicio y no con un error 400.
      */
-    @PostMapping
-    public String crear(@RequestParam Short anio,
-                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+    @PostMapping("/nuevo")
+    public String crear(@RequestParam(required = false) Short anio,
+                        @RequestParam(required = false)
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+                        @RequestParam(required = false)
+                        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
                         @RequestParam(name = "periodoNombre", required = false) List<String> nombres,
                         @RequestParam(name = "periodoInicio", required = false)
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) List<LocalDate> inicios,
                         @RequestParam(name = "periodoFin", required = false)
                         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) List<LocalDate> fines,
+                        Model model,
                         RedirectAttributes redirect) {
+        List<PeriodoLectivo> filas = filasDelFormulario(nombres, inicios, fines);
         try {
-            service.crear(anio, fechaInicio, fechaFin, armarPeriodos(nombres, inicios, fines));
+            service.crear(anio, fechaInicio, fechaFin, conNombre(filas));
             redirect.addFlashAttribute("flashMensaje", "Ciclo lectivo " + anio + " creado.");
+            return "redirect:/ciclos";
         } catch (IllegalArgumentException ex) {
-            // La plantilla lo mostraba dos veces --arriba de todo y dentro del formulario--;
-            // quedo solo el del formulario, junto a lo que se cargo.
-            redirect.addFlashAttribute("error", ex.getMessage());
+            model.addAttribute("error", ex.getMessage());
             // El ano ya tenia ciclo: la pantalla ofrece entrar a ese, que es donde se suman
             // periodos. Casi siempre era eso lo que se queria.
             if (ex instanceof CicloLectivoService.CicloDelAnioExistente yaExiste) {
-                redirect.addFlashAttribute("cicloExistenteId", yaExiste.getCicloId());
+                model.addAttribute("cicloExistenteId", yaExiste.getCicloId());
             }
+            // Vuelve todo lo que se habia cargado, tambien las filas sin nombre: con una
+            // redireccion se perdia, y habia que volver a repartir los periodos a mano.
+            model.addAttribute("anio", anio);
+            model.addAttribute("fechaInicio", fechaInicio);
+            model.addAttribute("fechaFin", fechaFin);
+            model.addAttribute("periodos", filas);
+            return "academico/ciclo-form";
         }
-        return "redirect:/ciclos";
     }
 
     // Corrige el ano y las fechas. El ano llega solo si el ciclo esta en preparacion: en otro
@@ -290,25 +314,28 @@ public class CicloLectivoController {
         return VOLVER_AL_DETALLE.equals(volver) ? alDetalle(id) : "redirect:/ciclos";
     }
 
-    // Junta las tres listas paralelas del formulario en periodos, cortando por la mas corta.
-    private List<PeriodoLectivo> armarPeriodos(List<String> nombres, List<LocalDate> inicios,
-                                               List<LocalDate> fines) {
-        List<PeriodoLectivo> periodos = new ArrayList<>();
+    // Junta las tres listas paralelas del formulario en filas, cortando por la mas corta. Son
+    // todas, con nombre o sin el: si el alta se rechaza, la pantalla las vuelve a mostrar.
+    private List<PeriodoLectivo> filasDelFormulario(List<String> nombres, List<LocalDate> inicios,
+                                                    List<LocalDate> fines) {
+        List<PeriodoLectivo> filas = new ArrayList<>();
         if (nombres == null || inicios == null || fines == null) {
-            return periodos;
+            return filas;
         }
         int cuantos = Math.min(nombres.size(), Math.min(inicios.size(), fines.size()));
         for (int i = 0; i < cuantos; i++) {
-            if (nombres.get(i) == null || nombres.get(i).isBlank()) {
-                continue;                       // una fila vacia del formulario no es un periodo
-            }
-            periodos.add(PeriodoLectivo.builder()
-                .nombre(nombres.get(i).trim())
+            filas.add(PeriodoLectivo.builder()
+                .nombre(nombres.get(i) == null ? "" : nombres.get(i).trim())
                 .fechaInicio(inicios.get(i))
                 .fechaFin(fines.get(i))
                 .orden((short) (i + 1))
                 .build());
         }
-        return periodos;
+        return filas;
+    }
+
+    // Los periodos que se crean: una fila vacia del formulario no es un periodo.
+    private static List<PeriodoLectivo> conNombre(List<PeriodoLectivo> filas) {
+        return filas.stream().filter(p -> !p.getNombre().isEmpty()).toList();
     }
 }
