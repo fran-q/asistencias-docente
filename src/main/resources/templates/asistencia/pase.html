@@ -73,12 +73,24 @@
                 <!-- A quién está esperando el pase (heurística 6). Es el mismo cálculo que el
                      inicio (PanelInicioService.clasesDeAhora) y la misma lista, para que las
                      dos pantallas muestren lo mismo del mismo modo. La pantalla la vuelve a
-                     pedir al marcar y cada minuto mientras el pase está andando. -->
-                <div class="card" id="pa-clases" th:fragment="clases" data-clases-de-ahora>
+                     pedir al marcar y cada minuto mientras el pase está andando.
+
+                     Con las clases viene lo que impide marcar: por qué no hay ninguna y lo que
+                     falta cargar. Van en el mismo fragmento para refrescarse juntos: si no, al
+                     activar el ciclo la tarjeta mostraría la clase y el aviso seguiría diciendo
+                     que no hay ciclo. El contenedor no dibuja caja propia (display: contents),
+                     así las dos tarjetas quedan separadas como las demás de la columna. -->
+                <div class="pase__panel" id="pa-clases" th:fragment="clases" data-clases-de-ahora>
+                <div class="card">
                     <h2 class="home__titulo">Clases de ahora</h2>
-                    <p class="home__vacio" th:if="${clases.nadaMasHoy()}">
-                        No hay clases en curso ni por venir hoy.
-                    </p>
+                    <th:block th:if="${clases.nadaMasHoy()}">
+                        <th:block th:if="${clases.motivoSinClases() != null}">
+                            <p th:replace="~{layout/fragmentos :: motivoSinClases(${clases.motivoSinClases()})}"></p>
+                        </th:block>
+                        <p class="home__vacio" th:if="${clases.motivoSinClases() == null}">
+                            No hay clases en curso ni por venir hoy.
+                        </p>
+                    </th:block>
                     <div th:if="${clases.sinClasesAhora() and !clases.nadaMasHoy()}">
                         <p class="home__vacio home__proximas-titulo">Nada en curso. Lo que sigue:</p>
                         <ul class="home__clases">
@@ -112,6 +124,15 @@
                             </span>
                         </li>
                     </ul>
+                </div>
+
+                <!-- Lo que falta cargar para que el pase reconozca a alguien y le impute su
+                     clase: sin esto, "No reconocido" no dice que a ese docente le falta el
+                     rostro. -->
+                <div class="card" th:if="${clases.hayAvisos()}">
+                    <h2 class="home__titulo">Requiere atención</h2>
+                    <ul th:replace="~{layout/fragmentos :: pendientes(${clases.avisos()})}"></ul>
+                </div>
                 </div>
 
                 <p class="pase__ayuda">

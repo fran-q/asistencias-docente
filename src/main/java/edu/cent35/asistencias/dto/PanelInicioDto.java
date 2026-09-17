@@ -10,16 +10,18 @@ import java.util.List;
  * que contesta aca es que esta pasando ahora y que necesita que alguien haga algo, que es
  * lo unico que justifica una pantalla de inicio propia.
  *
- * @param enCurso    clases con la ventana horaria abierta en este momento
- * @param proximas   las que arrancan mas tarde hoy; solo importan si no hay ninguna en curso
- * @param resumen    como viene el dia en numeros
- * @param pendientes cosas cargadas a medias que impiden que el sistema funcione
+ * @param enCurso         clases con la ventana horaria abierta en este momento
+ * @param proximas        las que arrancan mas tarde hoy; solo importan si no hay ninguna en curso
+ * @param resumen         como viene el dia en numeros
+ * @param pendientes      cosas cargadas a medias que impiden que el sistema funcione
+ * @param motivoSinClases por que no hay nada en curso ni por venir; null si hay algo
  */
 public record PanelInicioDto(
     List<ClaseEnCurso> enCurso,
     List<ProximaClase> proximas,
     ResumenDelDia resumen,
-    List<Pendiente> pendientes
+    List<Pendiente> pendientes,
+    MotivoSinClases motivoSinClases
 ) {
 
     // true si no hay ninguna clase corriendo ahora mismo.
@@ -113,7 +115,50 @@ public record PanelInicioDto(
     /**
      * Algo que falta cargar y que impide que el sistema funcione.
      *
-     * @param url a donde se va a resolverlo
+     * @param cantidad        cuántos casos hay; null cuando no se cuentan: un ciclo sin activar
+     *                        es uno solo, y un "1" adelante no dice nada
+     * @param url             a donde se va a resolverlo
+     * @param soloInstitucion si esa pantalla es solo de la cuenta de la institución. Para otro
+     *                        rol el pendiente se muestra sin enlace: un enlace a un acceso
+     *                        denegado no ayuda a resolver nada, y decir quién lo resuelve sí
+     * @param cuales          los casos por nombre --docentes, comisiones--: el listado al que
+     *                        lleva el enlace no los distingue, y había que revisarlo fila por fila
      */
-    public record Pendiente(long cantidad, String titulo, String detalle, String url) {}
+    public record Pendiente(Long cantidad, String titulo, String detalle, String url,
+                            boolean soloInstitucion, List<String> cuales) {
+
+        // Cuantos casos se nombran; el resto se resume en "y N mas".
+        private static final int NOMBRADOS = 3;
+
+        public Pendiente(long cantidad, String titulo, String detalle, String url) {
+            this(cantidad, titulo, detalle, url, false, List.of());
+        }
+
+        // Los primeros casos por nombre, o null si no hay nombres que mostrar.
+        public String cualesResumidos() {
+            if (cuales == null || cuales.isEmpty()) return null;
+            String primeros = String.join(" · ", cuales.subList(0, Math.min(NOMBRADOS, cuales.size())));
+            int resto = cuales.size() - NOMBRADOS;
+            return resto > 0 ? primeros + " y " + resto + " más" : primeros;
+        }
+    }
+
+    /**
+     * Por qué no hay ninguna clase en curso ni por venir hoy.
+     *
+     * <p>"No hay clases" era la respuesta a todo: a un feriado, a un día que ya terminó y a un
+     * ciclo sin activar, que en pantalla se veían iguales y se resuelven de formas muy
+     * distintas. Sin la causa, quien toma asistencia tenía que revisar el calendario entero.
+     *
+     * @param problema        si hay algo que resolver, y se destaca, o es solo cómo viene el día
+     * @param enlace          el texto del enlace a donde se resuelve; null si no hay nada que hacer
+     * @param soloInstitucion ver {@link Pendiente}
+     */
+    public record MotivoSinClases(String texto, boolean problema, String enlace, String url,
+                                  boolean soloInstitucion) {
+
+        public static MotivoSinClases informativo(String texto) {
+            return new MotivoSinClases(texto, false, null, null, false);
+        }
+    }
 }

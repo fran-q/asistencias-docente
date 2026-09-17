@@ -100,6 +100,37 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
         @Param("tenantId") Long tenantId);
 
     /**
+     * Cuántas clases de ese día quedan sin docente: las que la consulta de arriba deja afuera
+     * sin avisar.
+     *
+     * <p>Existe para explicar un día sin clases. Con todo lo demás cargado, una comisión sin
+     * docente asignado saca sus horarios del pase, del inicio y del job de ausencias, y la
+     * pantalla solo podía decir "no hay clases" mientras la grilla semanal las mostraba.
+     *
+     * <p>Las mismas condiciones de calendario que {@link #findActivosDelDiaConDocente}, con el
+     * WHERE del tenant en cada entidad del JOIN: materia, período y ciclo (TD-003).
+     */
+    @Query("""
+        SELECT COUNT(h) FROM Horario h
+        JOIN h.comision c
+        JOIN c.materia m
+        JOIN c.periodo p
+        JOIN p.ciclo cl
+        WHERE c.docenteAsignado IS NULL
+          AND h.diaSemana = :dia
+          AND h.activo    = true
+          AND c.activo    = true
+          AND m.institucionId  = :tenantId
+          AND p.institucionId  = :tenantId
+          AND cl.institucionId = :tenantId
+          AND cl.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND :fecha BETWEEN p.fechaInicio AND p.fechaFin
+        """)
+    long contarDelDiaSinDocente(@Param("dia") Byte diaSemana,
+                                @Param("fecha") LocalDate fecha,
+                                @Param("tenantId") Long tenantId);
+
+    /**
      * Clases de hoy del docente. Si está corriendo o no se decide en Java, porque la tolerancia
      * es propia de cada horario y no un valor global.
      *

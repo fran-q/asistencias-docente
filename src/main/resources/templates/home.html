@@ -52,10 +52,17 @@
             <h2 class="home__titulo">Ahora mismo</h2>
 
             <!-- Sin nada en curso, el bloque anticipa lo que sigue en vez de quedarse
-                 diciendo que no hay nada: es la mayor parte del día. -->
-            <p class="home__vacio" th:if="${panel.nadaMasHoy()}">
-                No hay clases en curso ni por venir hoy.
-            </p>
+                 diciendo que no hay nada: es la mayor parte del día. Y sin nada más hoy, dice
+                 por qué. El th:if va en un bloque de afuera porque th:replace le gana a th:if
+                 sobre el mismo elemento, y el fragmento se evaluaría sin motivo. -->
+            <th:block th:if="${panel.nadaMasHoy()}">
+                <th:block th:if="${panel.motivoSinClases() != null}">
+                    <p th:replace="~{layout/fragmentos :: motivoSinClases(${panel.motivoSinClases()})}"></p>
+                </th:block>
+                <p class="home__vacio" th:if="${panel.motivoSinClases() == null}">
+                    No hay clases en curso ni por venir hoy.
+                </p>
+            </th:block>
 
             <div th:if="${panel.hayProximas() and panel.sinClasesAhora()}">
                 <p class="home__vacio home__proximas-titulo">
@@ -165,22 +172,15 @@
             <h2 class="home__titulo">Requiere atención</h2>
 
             <p class="home__vacio" th:if="${panel.todoEnOrden()}">
-                No falta cargar nada: los docentes activos tienen consentimiento y rostro
-                registrado, y las comisiones tienen docente y horarios.
+                No falta cargar nada: hay un ciclo activo y un equipo autorizado, los docentes
+                activos tienen consentimiento y rostro registrado, y las comisiones tienen
+                docente y horarios.
             </p>
 
-            <ul class="home__pendientes" th:unless="${panel.todoEnOrden()}">
-                <li th:each="p : ${panel.pendientes()}">
-                    <a th:href="@{${p.url()}}" class="home__pendiente">
-                        <span class="home__pendiente-cantidad" th:text="${p.cantidad()}">0</span>
-                        <span class="home__pendiente-texto">
-                            <strong th:text="${p.titulo()}">Título</strong>
-                            <span class="text-muted" th:text="${p.detalle()}">Detalle</span>
-                        </span>
-                        <svg th:replace="~{layout/iconos :: flechaDer}"></svg>
-                    </a>
-                </li>
-            </ul>
+            <!-- La misma lista que el pase muestra al lado de la cámara. -->
+            <th:block th:unless="${panel.todoEnOrden()}">
+                <ul th:replace="~{layout/fragmentos :: pendientes(${panel.pendientes()})}"></ul>
+            </th:block>
         </div>
 
         </div><!-- /home__paneles -->

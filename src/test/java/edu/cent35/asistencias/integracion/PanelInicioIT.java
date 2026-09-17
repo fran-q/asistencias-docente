@@ -11,6 +11,7 @@ import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
@@ -37,6 +38,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -70,6 +72,9 @@ class PanelInicioIT {
 
     private Long tenantId;
 
+    // La institucion ajena de los tests de aislamiento; null en los demas.
+    private Long otroTenantId;
+
     @BeforeEach
     void sembrar() {
         TenantContext.clear();
@@ -91,6 +96,9 @@ class PanelInicioIT {
         docenteRepository.deleteAll();
         TenantContext.clear();
         institucionRepository.deleteById(tenantId);
+        if (otroTenantId != null) {
+            institucionRepository.deleteById(otroTenantId);
+        }
     }
 
     @Test
@@ -110,16 +118,81 @@ class PanelInicioIT {
     }
 
     @Test
-    @DisplayName("Con la institución recién creada dice que no hay nada, sin romperse")
+    @DisplayName("Con la institución recién creada dice por qué no hay clases, sin romperse")
     void institucionVacia() throws Exception {
-        mockMvc.perform(get("/").with(user(principal())))
+        String html = mockMvc.perform(get("/").with(user(principal())))
             .andExpect(status().isOk())
-            // Sin clases en curso NI por venir. El bloque ya no dice solo "no hay nada":
-            // cuando hay algo mas tarde, lo anticipa (RF-65).
-            .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                "No hay clases en curso ni por venir hoy")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                "Hoy no hay clases programadas")));
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            // Sin clases en curso NI por venir, el bloque ya no dice solo "no hay clases":
+            // dice por que, que es lo que hace falta para resolverlo.
+            .contains("No hay ningún ciclo lectivo activo")
+            .contains("Hoy no hay clases programadas")
+            .as("sin un equipo autorizado no hay pase posible")
+            .contains("Ningún equipo está autorizado para tomar asistencia")
+            .as("el administrativo no abre Ciclos lectivos: se le dice quien lo resuelve, "
+                + "en vez de un enlace a un acceso denegado")
+            .contains("Lo resuelve la cuenta de la institución.")
+            .doesNotContain("Ir a Ciclos lectivos");
+    }
+
+    @Test
+    @DisplayName("Un ciclo del año en preparación se avisa, y a la institución la lleva a activarlo")
+    void cicloEnPreparacionLlevaAActivarlo() throws Exception {
+        TenantContext.set(tenantId);
+        CicloLectivo ciclo = DatosDePrueba.cicloAnualDelTenant(tenantId, LocalDate.now().getYear());
+        ciclo.setEstado(EstadoCiclo.PREPARACION);
+        cicloLectivoRepository.save(ciclo);
+        TenantContext.clear();
+
+        String html = mockMvc.perform(get("/").with(user(principalConRol("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .contains("El ciclo lectivo " + LocalDate.now().getYear() + " está en preparación")
+            .contains("Ir a Ciclos lectivos")
+            .doesNotContain("Lo resuelve la cuenta de la institución.");
+    }
+
+    @Test
+    @DisplayName("Las clases de hoy sin docente explican el día vacío; las de otra institución no")
+    void clasesDeHoySinDocente() throws Exception {
+        // La institucion de la sesion, con su ciclo activo y nada mas.
+        TenantContext.set(tenantId);
+        periodoDe(tenantId);
+        TenantContext.clear();
+
+        // Otra con una clase de hoy sin docente: si la consulta perdiera el WHERE del tenant
+        // en algun JOIN, se contaria en la de la sesion (TD-003).
+        otroTenantId = institucionRepository.save(Institucion.builder()
+            .nombre("Instituto ajeno " + SECUENCIA.incrementAndGet())
+            .activo(true).build()).getId();
+        TenantContext.set(otroTenantId);
+        claseDeHoySinDocente(otroTenantId, "AJENA");
+        TenantContext.clear();
+
+        String sinLasPropias = mockMvc.perform(get("/").with(user(principal())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(sinLasPropias)
+            .contains("no hay clases cargadas")
+            .doesNotContain("sin docente asignado")
+            .doesNotContain("AJENA");
+
+        TenantContext.set(tenantId);
+        claseDeHoySinDocente(tenantId, "PROPIA");
+        TenantContext.clear();
+
+        String conLasPropias = mockMvc.perform(get("/").with(user(principal())))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(conLasPropias)
+            .contains("Hoy hay 1 clase en comisiones sin docente asignado")
+            .contains("Asignar docentes en Comisiones")
+            .as("Requiere atención nombra la comision, no solo la cuenta")
+            .contains("PROPIA");
     }
 
     @Test
@@ -228,14 +301,39 @@ class PanelInicioIT {
 
     // Principal de la aplicacion: el TenantInterceptor lo necesita para publicar el tenant.
     private UsuarioAutenticado principal() {
+        return principalConRol("ADMIN");
+    }
+
+    private UsuarioAutenticado principalConRol(String codigo) {
         Rol r = new Rol();
         r.setId((short) 1);
-        r.setCodigo("ADMIN");
-        r.setDescripcion("ADMIN");
+        r.setCodigo(codigo);
+        r.setDescripcion(codigo);
 
         Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Test", "Inicio")).id(99L).username("test.inicio").passwordHash("no-se-usa").activo(true).rol(r).emailVerificadoEn(LocalDateTime.now()).build();
         u.setInstitucionId(tenantId);
         return new UsuarioAutenticado(u);
+    }
+
+    // Una comision sin docente con una clase hoy, en el ciclo activo de esa institucion.
+    private void claseDeHoySinDocente(Long institucionId, String codigo) {
+        Carrera c = Carrera.builder().codigo("CAR-" + codigo).nombre("Carrera").activo(true).build();
+        c.setInstitucionId(institucionId);
+        carreraRepository.save(c);
+        Materia m = Materia.builder()
+            .codigo("MAT-" + codigo).nombre("Materia").carrera(c).activo(true).build();
+        m.setInstitucionId(institucionId);
+        materiaRepository.save(m);
+        Comision com = comisionRepository.save(Comision.builder()
+            .codigo(codigo).materia(m).docenteAsignado(null).activo(true)
+            .periodo(periodoDe(institucionId)).build());
+        horarioRepository.save(Horario.builder()
+            .comision(com)
+            .diaSemana((byte) LocalDate.now().getDayOfWeek().getValue())
+            .horaInicio(LocalTime.of(8, 0))
+            .horaFin(LocalTime.of(9, 0))
+            .toleranciaMin((short) 0)
+            .activo(true).build());
     }
 
     // ------------------------------------------------------------------------

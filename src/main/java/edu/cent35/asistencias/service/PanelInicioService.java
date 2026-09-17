@@ -4,18 +4,23 @@ import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.ClasesDeAhoraDto;
 import edu.cent35.asistencias.dto.PanelInicioDto;
 import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.Comision;
+import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoAsistencia;
+import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.ModeloFacial;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
+import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
+import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,12 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -37,6 +44,10 @@ import java.util.Set;
  * <p>Todo sale de consultas que ya existian para otras pantallas; lo unico que se agrega es
  * cruzarlas. Se resuelve entero en una sola transaccion de lectura porque es lo primero que
  * ve el operador al entrar y no puede costar mas que la pantalla que va a abrir despues.
+ *
+ * <p>Tambien explica por que no se esta tomando asistencia, para el inicio y para el pase: un
+ * ciclo sin activar, un dia sin clases, una comision sin docente. Antes las dos pantallas decian
+ * "no hay clases" en todos los casos, y encontrar la causa exigia revisar el calendario entero.
  */
 @Service
 @RequiredArgsConstructor
@@ -49,6 +60,9 @@ public class PanelInicioService {
     private final ModeloFacialRepository modeloFacialRepository;
     private final ComisionRepository comisionRepository;
     private final BloquePresenciaRepository bloquePresenciaRepository;
+    private final CicloLectivoRepository cicloRepository;
+    private final PuestoCapturaRepository puestoRepository;
+    private final DiaNoLaborableService diaNoLaborableService;
 
     // Cuantas clases en curso se muestran como maximo, para que el panel no crezca sin limite.
     private static final int MAX_EN_CURSO = 6;
@@ -56,6 +70,11 @@ public class PanelInicioService {
     // Cuantas clases por venir se anticipan. Mas de tres deja de ser "que sigue" y pasa a
     // ser la grilla del dia, que ya tiene su propia pantalla.
     private static final int MAX_PROXIMAS = 3;
+
+    private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // Solo la cuenta de la institucion abre esta pantalla: para otro rol el aviso va sin enlace.
+    private static final String CICLOS = "/ciclos";
 
     // Reloj inyectable: todo el panel se define contra "ahora", asi que sin poder fijarlo
     // los tests dependerian de la hora a la que se corren.
@@ -75,12 +94,18 @@ public class PanelInicioService {
         List<Horario> clasesDeHoy = horarioRepository.findActivosDelDiaConDocente(
             (byte) hoy.getDayOfWeek().getValue(), hoy, tenantId);
         List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(TenantContext.getRequired(), hoy);
+        List<PanelInicioDto.ClaseEnCurso> enCurso = clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora);
+        List<PanelInicioDto.ProximaClase> proximas = proximasClases(clasesDeHoy, ahora);
+        List<CicloLectivo> ciclos = cicloRepository.listarDelTenant(tenantId);
 
         return new PanelInicioDto(
-            clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora),
-            proximasClases(clasesDeHoy, ahora),
+            enCurso,
+            proximas,
             resumenDelDia(clasesDeHoy, marcasDeHoy, ahora),
-            pendientes(tenantId));
+            pendientes(tenantId, hoy, ciclos),
+            enCurso.isEmpty() && proximas.isEmpty()
+                ? motivoSinClases(tenantId, hoy, clasesDeHoy, ciclos)
+                : null);
     }
 
     /**
@@ -90,6 +115,9 @@ public class PanelInicioService {
      * correspondia y a quien estaba esperando (heuristica 6: reconocer antes que recordar). Es
      * el mismo calculo que el inicio y no uno parecido: si el pase mostrara como en curso algo
      * que el inicio no, las dos pantallas se contradirian sobre lo mismo.
+     *
+     * <p>Con las clases viaja lo que impide marcar: por que no hay ninguna, si no hay, y lo que
+     * falta cargar para que el pase reconozca a alguien y le impute su clase.
      */
     @Transactional(readOnly = true)
     public ClasesDeAhoraDto clasesDeAhora() {
@@ -99,9 +127,16 @@ public class PanelInicioService {
         List<Horario> clasesDeHoy = horarioRepository.findActivosDelDiaConDocente(
             (byte) hoy.getDayOfWeek().getValue(), hoy, tenantId);
         List<Asistencia> marcasDeHoy = asistenciaRepository.findDelDia(tenantId, hoy);
-        return new ClasesDeAhoraDto(
-            clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora),
-            proximasClases(clasesDeHoy, ahora));
+        List<PanelInicioDto.ClaseEnCurso> enCurso = clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora);
+        List<PanelInicioDto.ProximaClase> proximas = proximasClases(clasesDeHoy, ahora);
+
+        // Los ciclos se piden solo si hace falta explicar un dia vacio: el pase refresca esta
+        // tarjeta cada minuto, y con clases en curso no hay nada que explicar.
+        PanelInicioDto.MotivoSinClases motivo = enCurso.isEmpty() && proximas.isEmpty()
+            ? motivoSinClases(tenantId, hoy, clasesDeHoy, cicloRepository.listarDelTenant(tenantId))
+            : null;
+
+        return new ClasesDeAhoraDto(enCurso, proximas, motivo, pendientesDeCarga(tenantId, hoy));
     }
 
     // ------------------------------------------------------------------------
@@ -165,6 +200,122 @@ public class PanelInicioService {
             .toList();
     }
 
+    /**
+     * Por qué no hay nada en curso ni por venir hoy, de lo que explica más a lo que explica
+     * menos.
+     *
+     * <p>El orden importa: un feriado explica el día entero aunque el calendario esté mal
+     * cargado, y un ciclo sin activar explica por qué no aparece ninguna clase aunque haya
+     * horarios de sobra. Recién con el calendario en orden tiene sentido mirar las clases.
+     */
+    private PanelInicioDto.MotivoSinClases motivoSinClases(Long tenantId, LocalDate hoy,
+                                                           List<Horario> clasesDeHoy,
+                                                           List<CicloLectivo> ciclos) {
+        Optional<String> feriado = diaNoLaborableService.motivoSinClases(tenantId, hoy);
+        if (feriado.isPresent()) {
+            return PanelInicioDto.MotivoSinClases.informativo(
+                "Hoy no hay clases: " + feriado.get() + ".");
+        }
+
+        Optional<ProblemaDelCiclo> delCiclo = problemaDelCiclo(ciclos, hoy);
+        if (delCiclo.isPresent()) {
+            ProblemaDelCiclo p = delCiclo.get();
+            String texto = p.titulo() + ". " + p.detalle();
+            return p.requiereAtencion()
+                ? new PanelInicioDto.MotivoSinClases(texto, true, "Ir a Ciclos lectivos", CICLOS, true)
+                : PanelInicioDto.MotivoSinClases.informativo(texto);
+        }
+
+        if (!clasesDeHoy.isEmpty()) {
+            // Habia clases, y ninguna esta en curso ni por venir: terminaron todas.
+            return PanelInicioDto.MotivoSinClases.informativo("Las clases de hoy ya terminaron.");
+        }
+
+        // La grilla semanal muestra estas clases, y el pase no: sin docente no hay a quien
+        // imputarselas. Es la otra causa que no se ve desde los horarios.
+        long sinDocente = horarioRepository.contarDelDiaSinDocente(
+            (byte) hoy.getDayOfWeek().getValue(), hoy, tenantId);
+        if (sinDocente > 0) {
+            return new PanelInicioDto.MotivoSinClases(
+                (sinDocente == 1 ? "Hoy hay 1 clase" : "Hoy hay " + sinDocente + " clases")
+                + " en comisiones sin docente asignado, y una clase sin docente no se le puede "
+                + "marcar a nadie.",
+                true, "Asignar docentes en Comisiones", "/comisiones", false);
+        }
+
+        // Dentro del ciclo pero entre periodos, como el receso entre cuatrimestres: no es un
+        // error, pero sin decirlo parece que se perdieron los horarios.
+        Optional<CicloLectivo> activo = cicloActivo(ciclos);
+        if (activo.isPresent() && activo.get().getPeriodos().stream()
+                .noneMatch(p -> !hoy.isBefore(p.getFechaInicio()) && !hoy.isAfter(p.getFechaFin()))) {
+            return PanelInicioDto.MotivoSinClases.informativo(
+                "Hoy no cae dentro de ningún período del ciclo " + activo.get().getAnio() + ".");
+        }
+
+        // "Los lunes", pero "los sábados": solo los dos del fin de semana cambian en plural.
+        String dia = DiaSemana.deLaFecha(hoy).getEtiqueta().toLowerCase();
+        return PanelInicioDto.MotivoSinClases.informativo(
+            "Los " + (dia.endsWith("s") ? dia : dia + "s") + " no hay clases cargadas.");
+    }
+
+    /**
+     * Lo que le pasa al calendario, si le pasa algo.
+     *
+     * <p>Sin un ciclo activo que incluya el día de hoy, ni el pase ni el inicio ven ninguna
+     * clase. Es la causa más común de "no me toma la asistencia" y la más difícil de encontrar:
+     * la grilla semanal y los horarios no miran el estado del ciclo, así que desde ahí todo
+     * parece cargado.
+     *
+     * @param requiereAtencion si hay algo que hacer --va a "Requiere atención"-- o es solo cómo
+     *                         viene el calendario, como un ciclo que todavía no empezó
+     */
+    private record ProblemaDelCiclo(String titulo, String detalle, boolean requiereAtencion) {}
+
+    private Optional<ProblemaDelCiclo> problemaDelCiclo(List<CicloLectivo> ciclos, LocalDate hoy) {
+        Optional<CicloLectivo> activo = cicloActivo(ciclos);
+        if (activo.isPresent()) {
+            CicloLectivo c = activo.get();
+            // No se cierra solo a proposito --cerrar es una decision--, pero terminado y activo
+            // no ve ninguna clase, y el año siguiente tampoco hasta que se active.
+            if (hoy.isAfter(c.getFechaFin())) {
+                return Optional.of(new ProblemaDelCiclo(
+                    "El ciclo lectivo " + c.getAnio() + " terminó el "
+                        + c.getFechaFin().format(FECHA) + " y sigue activo",
+                    "Mientras tanto el pase no ve ninguna clase. Cerralo y activá el del año "
+                        + "siguiente.",
+                    true));
+            }
+            if (hoy.isBefore(c.getFechaInicio())) {
+                return Optional.of(new ProblemaDelCiclo(
+                    "El ciclo lectivo " + c.getAnio() + " empieza el "
+                        + c.getFechaInicio().format(FECHA),
+                    "Hasta ese día no hay clases que marcar.",
+                    false));
+            }
+            return Optional.empty();
+        }
+
+        // Sin ciclo activo. El que casi siempre falta activar es el de este año.
+        Optional<CicloLectivo> enPreparacion = ciclos.stream()
+            .filter(c -> c.getEstado() == EstadoCiclo.PREPARACION)
+            .filter(c -> c.getAnio() != null && c.getAnio().intValue() == hoy.getYear())
+            .findFirst();
+        if (enPreparacion.isPresent()) {
+            return Optional.of(new ProblemaDelCiclo(
+                "El ciclo lectivo " + enPreparacion.get().getAnio() + " está en preparación",
+                "Hasta que lo actives, el pase no ve ninguna clase y no se toma asistencia.",
+                true));
+        }
+        return Optional.of(new ProblemaDelCiclo(
+            "No hay ningún ciclo lectivo activo",
+            "Sin un ciclo activo el pase no ve ninguna clase. Creá el del año y activalo.",
+            true));
+    }
+
+    private static Optional<CicloLectivo> cicloActivo(List<CicloLectivo> ciclos) {
+        return ciclos.stream().filter(c -> c.getEstado() == EstadoCiclo.ACTIVO).findFirst();
+    }
+
     // ------------------------------------------------------------------------
     //  Bloque 2: el dia en numeros
     // ------------------------------------------------------------------------
@@ -224,17 +375,34 @@ public class PanelInicioService {
 
     /**
      * Cosas cargadas a medias que hoy solo se descubren entrando ficha por ficha, y que
-     * explican la mayoria de los "no me anda": un docente sin consentimiento no puede tener
-     * rostro registrado, uno sin modelo nunca va a marcar solo, y una comision sin docente o
-     * sin horarios no genera asistencia aunque todo lo demas este bien.
+     * explican la mayoria de los "no me anda".
+     *
+     * <p>Primero lo que deja sin asistencia a la institucion entera --el calendario y el
+     * equipo autorizado--, despues lo que hay que resolver hoy y al final lo que le falta a
+     * cada docente o comision.
      */
-    private List<PanelInicioDto.Pendiente> pendientes(Long tenantId) {
+    private List<PanelInicioDto.Pendiente> pendientes(Long tenantId, LocalDate hoy,
+                                                      List<CicloLectivo> ciclos) {
         List<PanelInicioDto.Pendiente> lista = new ArrayList<>();
 
-        // Va primero porque es lo unico de esta lista que hay que resolver HOY: los demas son
-        // cargas incompletas de configuracion, y esto es una jornada ya ocurrida cuyo registro
-        // dice una hora que nadie observo. La salida es obligatoria (RF-79), asi que su falta
-        // no se descarta en silencio.
+        problemaDelCiclo(ciclos, hoy)
+            .filter(ProblemaDelCiclo::requiereAtencion)
+            .ifPresent(p -> lista.add(new PanelInicioDto.Pendiente(
+                null, p.titulo(), p.detalle(), CICLOS, true, List.of())));
+
+        // Sin un equipo autorizado no hay pase ni registro de rostro posible (ADR-0015). Lleva
+        // al pase porque es ahi, desde la computadora que se va a usar, donde se autoriza.
+        if (puestoRepository.contarHabilitados(tenantId) == 0) {
+            lista.add(new PanelInicioDto.Pendiente(null,
+                "Ningún equipo está autorizado para tomar asistencia",
+                "El pase y el registro del rostro solo andan en un equipo autorizado. Abrí el "
+                + "pase desde la computadora que se va a usar y autorizala ahí.",
+                "/asistencia/pase", true, List.of()));
+        }
+
+        // Va antes que las cargas incompletas porque es lo unico que hay que resolver HOY: es
+        // una jornada ya ocurrida cuyo registro dice una hora que nadie observo. La salida es
+        // obligatoria (RF-79), asi que su falta no se descarta en silencio.
         long salidasPendientes = bloquePresenciaRepository.countPendientesDeCierre(tenantId);
         if (salidasPendientes > 0) {
             lista.add(new PanelInicioDto.Pendiente(salidasPendientes,
@@ -244,7 +412,23 @@ public class PanelInicioService {
                 "/asistencias/bloques/pendientes"));
         }
 
-        List<Docente> activos = docenteRepository.listarVigentesDelTenant(TenantContext.getRequired());
+        lista.addAll(pendientesDeCarga(tenantId, hoy));
+        return lista;
+    }
+
+    /**
+     * Lo que le falta a cada docente o comisión para que el pase reconozca a alguien y le impute
+     * su clase: un docente sin consentimiento no puede tener rostro registrado, uno sin modelo
+     * nunca va a marcar solo, y una comision sin docente o sin horarios no genera asistencia
+     * aunque todo lo demas este bien.
+     *
+     * <p>Cada uno nombra sus casos: el listado de docentes no dice a quién le falta el rostro,
+     * y con solo la cantidad había que abrir las fichas una por una.
+     */
+    private List<PanelInicioDto.Pendiente> pendientesDeCarga(Long tenantId, LocalDate hoy) {
+        List<PanelInicioDto.Pendiente> lista = new ArrayList<>();
+
+        List<Docente> activos = docenteRepository.listarVigentesDelTenant(tenantId);
 
         Set<Long> conConsentimiento = new HashSet<>();
         consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(tenantId).forEach(v -> {
@@ -256,55 +440,68 @@ public class PanelInicioService {
             conModelo.add(m.getDocente().getId());
         }
 
-        long sinConsentimiento = activos.stream()
+        List<Docente> sinConsentimiento = activos.stream()
             .filter(d -> !conConsentimiento.contains(d.getId()))
-            .count();
-        if (sinConsentimiento > 0) {
-            lista.add(new PanelInicioDto.Pendiente(sinConsentimiento,
+            .toList();
+        if (!sinConsentimiento.isEmpty()) {
+            lista.add(new PanelInicioDto.Pendiente((long) sinConsentimiento.size(),
                 "docentes sin consentimiento vigente",
                 "Sin el consentimiento firmado no se les puede registrar el rostro.",
-                "/docentes"));
+                aDocentes(sinConsentimiento), false, nombres(sinConsentimiento)));
         }
 
         // Solo cuenta a los que ya tienen consentimiento: a los otros les falta el paso previo
         // y aparecerian en las dos filas diciendo lo mismo dos veces.
-        long sinModelo = activos.stream()
+        List<Docente> sinModelo = activos.stream()
             .filter(d -> conConsentimiento.contains(d.getId()))
             .filter(d -> !conModelo.contains(d.getId()))
-            .count();
-        if (sinModelo > 0) {
-            lista.add(new PanelInicioDto.Pendiente(sinModelo,
+            .toList();
+        if (!sinModelo.isEmpty()) {
+            lista.add(new PanelInicioDto.Pendiente((long) sinModelo.size(),
                 "docentes sin rostro registrado",
                 "Tienen el consentimiento, pero hasta registrarles el rostro no pueden "
                 + "marcar por cámara.",
-                "/docentes"));
+                aDocentes(sinModelo), false, nombres(sinModelo)));
         }
 
         // Las del ciclo que corre hoy: contar las de un ano cerrado como "sin docente"
         // pondria en el panel un pendiente que ya no existe.
-        List<Comision> comisiones =
-            comisionRepository.findActivasEnFecha(LocalDate.now(clock), tenantId);
+        List<Comision> comisiones = comisionRepository.findActivasEnFecha(hoy, tenantId);
 
-        long sinDocente = comisiones.stream()
+        List<String> sinDocente = comisiones.stream()
             .filter(c -> c.getDocenteAsignado() == null)
-            .count();
-        if (sinDocente > 0) {
-            lista.add(new PanelInicioDto.Pendiente(sinDocente,
+            .map(Comision::getCodigo)
+            .toList();
+        if (!sinDocente.isEmpty()) {
+            lista.add(new PanelInicioDto.Pendiente((long) sinDocente.size(),
                 "comisiones sin docente asignado",
                 "Sus clases no se le pueden imputar a nadie.",
-                "/comisiones"));
+                "/comisiones", false, sinDocente));
         }
 
-        long sinHorarios = comisiones.stream()
+        List<String> sinHorarios = comisiones.stream()
             .filter(c -> horarioRepository.countByComisionIdAndActivoTrue(c.getId()) == 0)
-            .count();
-        if (sinHorarios > 0) {
-            lista.add(new PanelInicioDto.Pendiente(sinHorarios,
+            .map(Comision::getCodigo)
+            .toList();
+        if (!sinHorarios.isEmpty()) {
+            lista.add(new PanelInicioDto.Pendiente((long) sinHorarios.size(),
                 "comisiones sin horarios cargados",
                 "Sin franja horaria nunca hay una clase en curso contra la cual marcar.",
-                "/horarios"));
+                "/horarios", false, sinHorarios));
         }
 
         return lista;
+    }
+
+    // Con un solo docente se va derecho a su ficha, que es donde se otorga el consentimiento y
+    // se registra el rostro; con varios, al listado.
+    private static String aDocentes(List<Docente> docentes) {
+        return docentes.size() == 1
+            ? "/docentes/" + docentes.get(0).getId() + "/ficha"
+            : "/docentes";
+    }
+
+    private static List<String> nombres(List<Docente> docentes) {
+        return docentes.stream().map(Docente::getNombreCompleto).toList();
     }
 }

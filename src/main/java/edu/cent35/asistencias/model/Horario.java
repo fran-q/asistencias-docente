@@ -123,8 +123,19 @@ public class Horario {
      */
     public boolean estaEnCurso(LocalTime ahora) {
         if (ahora == null || horaInicio == null || horaFin == null) return false;
-        return !ahora.isBefore(sinDarLaVuelta(horaInicio, -toleranciaEfectiva()))
+        return !ahora.isBefore(abreLaVentana())
             && !ahora.isAfter(horaFin);
+    }
+
+    /**
+     * Desde qué hora acepta el pase la entrada a esta clase: {@code hora_inicio - tolerancia}.
+     *
+     * <p>Es el borde de abajo de {@link #estaEnCurso}, y se publica para que el pase le pueda
+     * decir a quien llegó temprano desde cuándo marcar. Con la cuenta hecha de nuevo en otro
+     * lado, el aviso y la ventana podrían no coincidir.
+     */
+    public LocalTime abreLaVentana() {
+        return sinDarLaVuelta(horaInicio, -toleranciaEfectiva());
     }
 
     /**

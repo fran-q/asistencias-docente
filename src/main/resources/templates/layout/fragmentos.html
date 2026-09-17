@@ -51,5 +51,62 @@
     </dl>
 </div>
 
+<!--
+  Lo que falta cargar para que el sistema tome asistencia. Lo muestran el inicio, en
+  "Requiere atención", y el pase, al lado de la cámara: es el mismo fragmento para que las dos
+  pantallas digan lo mismo del mismo modo.
+
+  Un pendiente cuya pantalla es solo de la cuenta de la institución --ciclos, equipos-- va sin
+  enlace para los demás roles: un enlace a un acceso denegado no ayuda a resolver nada, y decir
+  quién lo resuelve sí.
+
+  @param lista los PanelInicioDto.Pendiente
+-->
+<ul th:fragment="pendientes(lista)" class="home__pendientes"
+    th:with="esInstitucion=${#authorization.expression('hasRole(''INSTITUCION'')')}">
+    <li th:each="p : ${lista}" th:with="conEnlace=${esInstitucion or !p.soloInstitucion()}">
+        <a th:if="${conEnlace}" th:href="@{${p.url()}}" class="home__pendiente">
+            <th:block th:replace="~{layout/fragmentos :: pendienteCuerpo(${p}, false)}"></th:block>
+            <svg th:replace="~{layout/iconos :: flechaDer}"></svg>
+        </a>
+        <div th:unless="${conEnlace}" class="home__pendiente home__pendiente--sin-enlace">
+            <th:block th:replace="~{layout/fragmentos :: pendienteCuerpo(${p}, true)}"></th:block>
+        </div>
+    </li>
+</ul>
+
+<!-- Lo de adentro de un pendiente, con enlace o sin él. Sin cantidad --un ciclo sin activar es
+     uno solo-- va un signo de alerta en su lugar, para que la columna no quede con un hueco. -->
+<th:block th:fragment="pendienteCuerpo(p, sinEnlace)">
+    <span th:if="${p.cantidad() != null}" class="home__pendiente-cantidad"
+          th:text="${p.cantidad()}">0</span>
+    <span th:unless="${p.cantidad() != null}"
+          class="home__pendiente-cantidad home__pendiente-cantidad--alerta" aria-hidden="true">!</span>
+    <span class="home__pendiente-texto">
+        <strong th:text="${p.titulo()}">Título</strong>
+        <span th:text="${p.detalle()}">Detalle</span>
+        <span th:if="${p.cualesResumidos() != null}" class="home__pendiente-cuales"
+              th:text="${p.cualesResumidos()}">Pérez, Ana · Gómez, Luis</span>
+        <span th:if="${sinEnlace}">Lo resuelve la cuenta de la institución.</span>
+    </span>
+</th:block>
+
+<!--
+  Por qué no hay ninguna clase en curso ni por venir hoy. Lo muestran "Ahora mismo" en el inicio
+  y "Clases de ahora" en el pase, en lugar del "no hay clases" que antes decían en todos los
+  casos. Si hay algo que resolver --un ciclo sin activar, clases sin docente-- se destaca y
+  lleva a donde se resuelve.
+
+  @param motivo el PanelInicioDto.MotivoSinClases
+-->
+<p th:fragment="motivoSinClases(motivo)" class="home__vacio"
+   th:classappend="${motivo.problema()} ? 'home__vacio--problema'"
+   th:with="conEnlace=${motivo.url() != null and (!motivo.soloInstitucion() or #authorization.expression('hasRole(''INSTITUCION'')'))}">
+    <span th:text="${motivo.texto()}">Hoy no hay clases.</span>
+    <a th:if="${conEnlace}" th:href="@{${motivo.url()}}" class="home__vacio-enlace"
+       th:text="${motivo.enlace()}">Ir a Ciclos lectivos</a>
+    <span th:if="${motivo.url() != null and !conEnlace}">Lo resuelve la cuenta de la institución.</span>
+</p>
+
 </body>
 </html>

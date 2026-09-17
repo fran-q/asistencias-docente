@@ -18,6 +18,7 @@ import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
+import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
@@ -33,6 +34,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -66,6 +68,14 @@ public class BloquePresenciaService {
     private final AsistenciaRepository asistenciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final MotivoCargaManualRepository motivoCargaManualRepository;
+    // Solo para explicar un rechazo: sin ciclo activo, "no tenes clases" culparia al docente
+    // de algo que es del calendario.
+    private final CicloLectivoRepository cicloRepository;
+
+    private static final DateTimeFormatter HM = DateTimeFormatter.ofPattern("HH:mm");
+
+    // Lo que dice siempre un rechazo por falta de clase; despues de los dos puntos va el porque.
+    private static final String SIN_CLASE = "No hay clase en este momento: ";
 
     // Minutos que tienen que pasar desde la entrada para aceptar una salida (RF-77).
     @Value("${app.asistencia.permanencia-minima-min}")
@@ -197,7 +207,7 @@ public class BloquePresenciaService {
             log.info("Entrada rechazada: docente {} no tiene clase en ventana a las {}",
                      docente.getId(), instante.toLocalTime());
             return ResultadoPresencia.rechazada(
-                "No hay clase en este momento.");
+                motivoSinClaseAhora(docente.getId(), tenantId, instante));
         }
 
         LocalTime horaEntrada = instante.toLocalTime().withNano(0);
@@ -248,6 +258,52 @@ public class BloquePresenciaService {
                  guardado.getId(), docente.getId(), guardado.getFecha(), horaEntrada,
                  enCurso.get().cantidadDeClases());
         return ResultadoPresencia.entrada(guardado, imputadas, marcada);
+    }
+
+    /**
+     * Por qué no hay una clase en curso a la que imputarle la entrada.
+     *
+     * <p>Era siempre "No hay clase en este momento", y así no se distinguía a quien llegó
+     * temprano de quien no tiene clases hoy, ni de un calendario sin activar: tres situaciones
+     * que se resuelven distinto --esperar, cargar la asistencia a mano, activar el ciclo-- y que
+     * en pantalla se veían iguales.
+     *
+     * <p>Como todo motivo, no nombra a nadie (RF-87): el kiosco lo muestra tal cual. Sí dice la
+     * hora de la próxima clase, que es de quien está frente a la cámara y es lo que necesita
+     * saber para volver a pasar.
+     *
+     * <p>Corre solo al rechazar, así que la segunda consulta de las clases del día no la paga
+     * ninguna entrada que se registra.
+     */
+    private String motivoSinClaseAhora(Long docenteId, Long tenantId, LocalDateTime instante) {
+        LocalDate fecha = instante.toLocalDate();
+        LocalTime hora = instante.toLocalTime();
+        List<Horario> deHoy = resolutor.bloquesDelDia(docenteId, fecha).stream()
+            .flatMap(b -> b.horarios().stream())
+            .toList();
+
+        if (deHoy.isEmpty()) {
+            // Las clases del dia existen solo dentro de un ciclo activo.
+            return cicloRepository.activoEnFecha(tenantId, fecha).isEmpty()
+                ? SIN_CLASE + "no hay un ciclo lectivo activo que incluya el día de hoy."
+                : SIN_CLASE + "hoy no tenés clases asignadas.";
+        }
+
+        // Ninguna esta en ventana: las que no terminaron todavia no la abrieron.
+        Optional<Horario> proxima = deHoy.stream()
+            .filter(h -> h.getHoraInicio().isAfter(hora))
+            .min(Comparator.comparing(Horario::getHoraInicio));
+        if (proxima.isPresent()) {
+            Horario h = proxima.get();
+            return SIN_CLASE + "tu próxima clase empieza a las " + h.getHoraInicio().format(HM)
+                + " y podés marcar desde las " + h.abreLaVentana().format(HM) + ".";
+        }
+
+        LocalTime ultimoFin = deHoy.stream()
+            .map(Horario::getHoraFin)
+            .max(Comparator.naturalOrder())
+            .orElseThrow();
+        return SIN_CLASE + "tus clases de hoy terminaron a las " + ultimoFin.format(HM) + ".";
     }
 
     // ------------------------------------------------------------------------

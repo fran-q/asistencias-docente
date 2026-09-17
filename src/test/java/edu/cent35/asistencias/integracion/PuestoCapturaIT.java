@@ -282,6 +282,11 @@ class PuestoCapturaIT {
             .contains("data-clases-de-ahora")
             .contains("Clases de ahora")
             .doesNotContain("<html");
+        assertThat(tarjeta)
+            .as("sin ciclo activo no dice solo 'no hay clases': dice por que, y a la cuenta de "
+                + "la institucion la lleva a resolverlo")
+            .contains("No hay ningún ciclo lectivo activo")
+            .contains("Ir a Ciclos lectivos");
     }
 
     // ========================================================================

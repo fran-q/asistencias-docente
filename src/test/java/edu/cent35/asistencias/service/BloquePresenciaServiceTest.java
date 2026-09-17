@@ -4,6 +4,7 @@ import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.BloqueDeHorarios;
 import edu.cent35.asistencias.model.BloquePresencia;
+import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoCierre;
@@ -77,6 +78,7 @@ class BloquePresenciaServiceTest {
     @Mock private edu.cent35.asistencias.repository.AsistenciaRepository asistenciaRepository;
     @Mock private edu.cent35.asistencias.repository.UsuarioRepository usuarioRepository;
     @Mock private edu.cent35.asistencias.repository.MotivoCargaManualRepository motivoCargaManualRepository;
+    @Mock private edu.cent35.asistencias.repository.CicloLectivoRepository cicloRepository;
 
     @InjectMocks private BloquePresenciaService service;
 
@@ -664,21 +666,105 @@ class BloquePresenciaServiceTest {
             assertThat(r.motivo()).contains("10 minutos");
             noNombraANadie(r.motivo());
         }
+    }
 
-        // El docente de las fixtures es "Perez, Juana": ninguna de las dos partes puede
-        // aparecer en el texto. El apellido tampoco: en el kiosco viaja por su propio campo,
-        // y repetirlo en el mensaje es como se veia duplicado en pantalla.
-        private void noNombraANadie(String motivo) {
-            assertThat(motivo)
-                .as("el motivo describe la situacion; la identidad va por su propio campo")
-                .doesNotContain("Juana")
-                .doesNotContain("Pérez");
+    // ========================================================================
+    //  Por que no hay clase
+    // ========================================================================
+
+    /**
+     * "No hay clase en este momento" era la respuesta a todo: a quien llegó temprano, a quien
+     * no tiene clases hoy y a un calendario sin activar, que se resuelven distinto. Cada caso
+     * dice ahora su causa, sin nombrar a nadie (RF-87): el kiosco muestra el motivo tal cual.
+     */
+    @Nested
+    @DisplayName("por qué no hay clase")
+    class PorQueNoHayClase {
+
+        @BeforeEach
+        void sinClaseEnVentana() {
+            docenteDelTenant();
+            consentimientoActivo();
+            sinBloqueAbierto();
+            when(resolutor.bloqueEnCurso(eq(DOCENTE_ID), any())).thenReturn(Optional.empty());
+        }
+
+        @Test
+        @DisplayName("sin ciclo activo culpa al calendario, no al docente")
+        void sinCicloActivo() {
+            when(cicloRepository.activoEnFecha(TENANT_A, UN_LUNES)).thenReturn(Optional.empty());
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 0), null);
+
+            assertThat(r.motivo()).isEqualTo("No hay clase en este momento: no hay un ciclo "
+                + "lectivo activo que incluya el día de hoy.");
+            noNombraANadie(r.motivo());
+        }
+
+        @Test
+        @DisplayName("con el ciclo activo y sin clases hoy, lo dice")
+        void sinClasesHoy() {
+            when(cicloRepository.activoEnFecha(TENANT_A, UN_LUNES))
+                .thenReturn(Optional.of(new CicloLectivo()));
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(18, 0), null);
+
+            assertThat(r.motivo())
+                .isEqualTo("No hay clase en este momento: hoy no tenés clases asignadas.");
+            noNombraANadie(r.motivo());
+        }
+
+        @Test
+        @DisplayName("temprano: dice cuándo empieza la próxima y desde cuándo se puede marcar")
+        void llegoTemprano() {
+            franjaDelDia(LocalTime.of(18, 0), LocalTime.of(22, 0),
+                clase(1L, 18, 0, 20, 0), clase(2L, 20, 0, 22, 0));
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(15, 0), null);
+
+            assertThat(r.motivo()).isEqualTo("No hay clase en este momento: tu próxima clase "
+                + "empieza a las 18:00 y podés marcar desde las 17:45.");
+            noNombraANadie(r.motivo());
+            verify(bloqueRepository, never()).saveAndFlush(any());
+        }
+
+        @Test
+        @DisplayName("tarde: dice a qué hora terminaron sus clases")
+        void clasesTerminadas() {
+            franjaDelDia(LocalTime.of(18, 0), LocalTime.of(22, 0),
+                clase(1L, 18, 0, 20, 0), clase(2L, 20, 0, 22, 0));
+
+            var r = service.registrar(DOCENTE_ID, null, 40.0, UN_LUNES.atTime(23, 0), null);
+
+            assertThat(r.motivo())
+                .isEqualTo("No hay clase en este momento: tus clases de hoy terminaron a las 22:00.");
+            noNombraANadie(r.motivo());
+        }
+
+        // Una clase del lunes con 15 minutos de tolerancia.
+        private Horario clase(Long id, int hi, int mi, int hf, int mf) {
+            return Horario.builder()
+                .id(id).diaSemana((byte) 1)
+                .horaInicio(LocalTime.of(hi, mi)).horaFin(LocalTime.of(hf, mf))
+                .toleranciaMin((short) 15).activo(true)
+                .build();
         }
     }
 
     // ========================================================================
     //  Fixtures
     // ========================================================================
+
+    // El docente de las fixtures es "Perez, Juana": ninguna de las dos partes puede aparecer en
+    // el motivo. El apellido tampoco: en el kiosco viaja por su propio campo, y repetirlo en el
+    // mensaje es como se veia duplicado en pantalla. Vive aca y no en su clase anidada porque
+    // lo usan las dos que miran el motivo.
+    private void noNombraANadie(String motivo) {
+        assertThat(motivo)
+            .as("el motivo describe la situacion; la identidad va por su propio campo")
+            .doesNotContain("Juana")
+            .doesNotContain("Pérez");
+    }
 
     private Docente docenteDelTenant() {
         Docente d = Docente.builder()

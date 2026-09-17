@@ -1639,6 +1639,11 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 /* Los estados vacíos son buenas noticias, no errores: van en tono normal. */
 .home__vacio { margin: 0; color: var(--text-muted); }
+/* Un día sin clases por algo que hay que resolver --un ciclo sin activar, clases sin docente--
+   se destaca y lleva a donde se resuelve; un feriado o un día que ya terminó queda apagado. */
+.home__vacio--problema { color: var(--warning); }
+/* En su propio renglón: pegado al texto, en una columna angosta bajaba solo y quedaba corrido. */
+.home__vacio-enlace { display: block; width: fit-content; margin-top: 6px; font-weight: 500; }
 
 .home__clases { list-style: none; margin: 0; padding: 0; }
 /* Flex y no grid: dentro de una columna angosta el estado tiene que poder bajar
@@ -1724,6 +1729,12 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .home__pendiente-texto strong { font-weight: 500; }
 .home__pendiente-texto span   { font-size: .82rem; color: var(--text-muted); }
 .home__pendiente svg { flex-shrink: 0; color: var(--text-dim); }
+/* Sin cantidad que contar --un ciclo sin activar es uno solo-- va el signo en su lugar. */
+.home__pendiente-cantidad--alerta { font-weight: 700; }
+/* Los casos por nombre: es lo que se va a buscar, así que no va tan apagado como el detalle. */
+.home__pendiente-texto .home__pendiente-cuales { color: var(--text); }
+/* Para un rol que no puede abrir esa pantalla: el mismo renglón, sin aspecto de enlace. */
+.home__pendiente--sin-enlace:hover { background: none; }
 
 @media (max-width: 620px) { .home__pase { width: 100%; } }
 
@@ -2114,6 +2125,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .camara-layout__principal { min-width: 0; }
 .camara-layout__lateral   { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+/* Las clases de ahora y lo que falta cargar se refrescan juntas, en un contenedor que no dibuja
+   caja propia: así las dos tarjetas quedan separadas por el mismo gap que las demás. */
+.pase__panel { display: contents; }
 
 /* El panel lateral acompaña a la cámara al hacer scroll en pantallas altas: si
    el video queda arriba y el mensaje se va de vista, no sirve de nada. */
