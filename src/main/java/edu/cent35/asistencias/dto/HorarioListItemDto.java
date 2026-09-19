@@ -26,7 +26,11 @@ public class HorarioListItemDto {
     String comisionCodigo;
     String materiaCodigo;
     String materiaNombre;
+    // El anio del plan y la carrera no son columnas del listado: los usan los filtros, que
+    // comparan contra el data-* de la fila.
+    Short materiaAnio;
     String carreraCodigo;
+    String carreraNombre;
     boolean activo;
     boolean comisionActiva;
 
@@ -44,8 +48,11 @@ public class HorarioListItemDto {
             .comisionCodigo(h.getComision().getCodigo())
             .materiaCodigo(h.getComision().getMateria().getCodigo())
             .materiaNombre(h.getComision().getMateria().getNombre())
+            .materiaAnio(h.getComision().getMateria().getAnio())
             .carreraCodigo(h.getComision().getMateria().getCarrera() != null
                            ? h.getComision().getMateria().getCarrera().getCodigo() : null)
+            .carreraNombre(h.getComision().getMateria().getCarrera() != null
+                           ? h.getComision().getMateria().getCarrera().getNombre() : null)
             .activo(Boolean.TRUE.equals(h.getActivo()))
             .comisionActiva(Boolean.TRUE.equals(h.getComision().getActivo()))
             .build();

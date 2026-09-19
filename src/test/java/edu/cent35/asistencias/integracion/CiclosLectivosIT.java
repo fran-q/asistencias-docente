@@ -425,6 +425,10 @@ class CiclosLectivosIT {
             .as("la fila lleva su tipo, que es contra lo que compara el filtro")
             .contains("data-estado=\"PROVINCIAL\"")
             .contains("data-filtro-tabla=\"#tabla-dias\"")
+            .as("el dia de la semana sale de la fecha, y se puede filtrar por el")
+            .contains("data-filtro=\"dia\"")
+            .contains("data-dia=\"Martes\"")
+            .contains("data-dia-orden=\"2\"")
             .as("el boton de arriba lleva al alta con el año del listado, para volver a ese")
             .contains("/dias-sin-clase/nuevo?anio=2026");
         assertThat(html)

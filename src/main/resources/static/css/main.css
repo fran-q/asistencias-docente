@@ -1588,11 +1588,18 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     font-size: .88rem;
     transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
 }
-.filtro__estado {
+/* Los dos son lo mismo para el ojo: un desplegable que acota el listado. El de estado
+   escribe sus opciones en la plantilla; los de columna las reciben de las filas. */
+.filtro__estado, .filtro__campo {
     height: var(--h-ctl); padding: 0 10px;
     background: var(--surface); color: var(--text);
     border: 1px solid var(--border); border-radius: var(--r);
     font-size: .88rem; cursor: pointer;
+}
+/* El boton de un filtro por columna esta topeado (data-menu-ancho-max), pero su lista no:
+   para elegir hay que poder leer el nombre entero de la carrera o del docente. */
+.filtro .menu:has(> select.filtro__campo) > .buscable__lista {
+    right: auto; min-width: 100%; width: max-content; max-width: min(88vw, 24rem);
 }
 .filtro__resultado {
     margin-left: auto; color: var(--text-muted); font-size: .83rem;

@@ -36,6 +36,13 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+            <!-- Filtros por columna. Las opciones las arma filtro-tabla.js con los valores
+                 que traen las filas: asi el desplegable ofrece exactamente lo que hay en la
+                 tabla, y sumar el filtro no obliga a pasarle el catalogo desde el controlador. -->
+            <select class="filtro__campo" data-filtro="duracion" data-menu
+                    aria-label="Filtrar por duración">
+                <option value="">Todas las duraciones</option>
+            </select>
             <!-- Mismo selector de densidad que el resto de los listados. La preferencia es
                  global --la guarda densidad.js-- pero el control conviene tenerlo en cada
                  listado, que es donde el alto de fila cambia algo. -->
@@ -79,7 +86,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="c : ${carreras}" data-fila th:attr="data-estado=${c.activo} ? 'activo' : 'inactivo'"
+                        <tr th:each="c : ${carreras}" data-fila
+                            th:attr="data-estado=${c.activo} ? 'activo' : 'inactivo',
+                                     data-duracion=|${c.duracionAnios} año${c.duracionAnios == 1 ? '' : 's'}|,
+                                     data-duracion-orden=${c.duracionAnios}"
                             th:classappend="${!c.activo} ? 'row--inactive'">
                             <td>
                                 <code th:text="${c.codigo}">COD</code>

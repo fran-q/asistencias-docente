@@ -21,12 +21,31 @@
  *          <option value="activo">Activos</option>
  *          <option value="inactivo">Inactivos</option>
  *      </select>
+ *      <select class="filtro__campo" data-filtro="carrera">
+ *          <option value="">Todas las carreras</option>
+ *      </select>
  *      <span class="filtro__resultado"></span>
  *  </div>
  *
  *  Las filas filtrables se marcan con data-fila, y las que tengan estado con
  *  data-estado="activo|inactivo". El data-fila hace falta para no esconder la
  *  fila de "todavía no cargaste nada", que no es un resultado de la búsqueda.
+ *
+ *  ----------------------------------------------------------------------------
+ *  Filtros por columna. Un <select data-filtro="carrera"> compara su valor
+ *  contra el data-carrera de cada fila, y se combina con la búsqueda y con los
+ *  demás: la fila se muestra si cumple todos.
+ *
+ *  Sus opciones NO se escriben en la plantilla: las arma este script con los
+ *  valores que traen las filas. Así el desplegable ofrece exactamente lo que
+ *  hay en la tabla --sin carreras que no aparecen en ninguna fila, que solo
+ *  llevan a una lista vacía--, y sumar el filtro a una pantalla no obliga a
+ *  pasarle el catálogo entero desde el controlador. Si ningún valor aparece,
+ *  el select se esconde: un filtro con una sola opción no filtra nada.
+ *
+ *  El orden de las opciones es alfabético salvo que las filas traigan
+ *  data-<campo>-orden, que es lo que pone los días en el orden de la semana en
+ *  vez de "Jueves, Lunes, Martes".
  * ========================================================================== */
 
 (function (document) {
@@ -46,16 +65,73 @@
             .replace(DIACRITICOS, '');
     }
 
+    // Los selects que acotan por una columna. El de estado es el mismo mecanismo con el
+    // nombre viejo: sus opciones son siempre las mismas dos y las escribe la plantilla.
+    function camposDe(caja) {
+        var campos = [];
+        var estado = caja.querySelector('.filtro__estado');
+        if (estado) campos.push({ select: estado, campo: 'estado', desdeLasFilas: false });
+        [].forEach.call(caja.querySelectorAll('select[data-filtro]'), function (select) {
+            campos.push({ select: select, campo: select.dataset.filtro, desdeLasFilas: true });
+        });
+        return campos;
+    }
+
+    // Ancho maximo del desplegable de un filtro, en pixeles. Los valores salen de las filas
+    // --el nombre de una carrera, el de un docente-- y sin tope el control mide lo que el mas
+    // largo y se lleva la barra entera.
+    var ANCHO_MAXIMO = 240;
+
+    // Llena el desplegable con los valores distintos que traen las filas.
+    function llenarDesdeLasFilas(campo, filas) {
+        var orden = Object.create(null);
+        filas.forEach(function (fila) {
+            var valor = fila.dataset[campo.campo];
+            if (!valor || valor in orden) return;
+            var clave = fila.dataset[campo.campo + 'Orden'];
+            orden[valor] = clave === undefined ? null : Number(clave);
+        });
+
+        var valores = Object.keys(orden).sort(function (a, b) {
+            if (orden[a] !== null && orden[b] !== null && orden[a] !== orden[b]) {
+                return orden[a] - orden[b];
+            }
+            // numeric: "10° año" va despues de "2° año" y no antes.
+            return a.localeCompare(b, 'es', { numeric: true });
+        });
+
+        campo.select.dataset.menuAnchoMax = String(ANCHO_MAXIMO);
+
+        valores.forEach(function (valor) {
+            var opcion = document.createElement('option');
+            opcion.value = valor;
+            opcion.textContent = valor;
+            campo.select.appendChild(opcion);
+        });
+
+        if (!valores.length) {
+            // Sin valores no hay nada que elegir. Se le saca el data-menu antes de que
+            // select-menu.js lo lea: si no, dibujaria su desplegable propio al lado de un
+            // select escondido. Este script corre primero, que es lo que lo hace posible.
+            campo.select.hidden = true;
+            campo.select.removeAttribute('data-menu');
+        }
+    }
+
     // Engancha una caja de filtro con su tabla y deja todo listo para filtrar.
     function conectar(caja) {
         var tabla = document.querySelector(caja.dataset.filtroTabla);
         if (!tabla) return;
 
         var texto  = caja.querySelector('.filtro__texto');
-        var estado = caja.querySelector('.filtro__estado');
         var salida = caja.querySelector('.filtro__resultado');
         var filas  = [].slice.call(tabla.querySelectorAll('tbody tr[data-fila]'));
         var vacia  = tabla.querySelector('tbody tr.table__empty-fila');
+        var campos = camposDe(caja);
+
+        campos.forEach(function (campo) {
+            if (campo.desdeLasFilas) llenarDesdeLasFilas(campo, filas);
+        });
 
         // El texto de cada fila se calcula una sola vez: no cambia mientras se filtra.
         var textoDeFila = filas.map(function (f) { return normalizar(f.textContent); });
@@ -63,13 +139,14 @@
         // Esconde las filas que no coinciden y actualiza el contador de resultados.
         function aplicar() {
             var buscado = texto ? normalizar(texto.value.trim()) : '';
-            var estadoBuscado = estado ? estado.value : '';
             var visibles = 0;
 
             filas.forEach(function (fila, i) {
                 var coincideTexto = !buscado || textoDeFila[i].indexOf(buscado) !== -1;
-                var coincideEstado = !estadoBuscado || fila.dataset.estado === estadoBuscado;
-                var mostrar = coincideTexto && coincideEstado;
+                var coincidenCampos = campos.every(function (campo) {
+                    return !campo.select.value || fila.dataset[campo.campo] === campo.select.value;
+                });
+                var mostrar = coincideTexto && coincidenCampos;
                 fila.hidden = !mostrar;
                 if (mostrar) visibles++;
             });
@@ -84,8 +161,8 @@
             if (vacia) vacia.hidden = visibles > 0 || filas.length === 0;
         }
 
-        if (texto)  texto.addEventListener('input', aplicar);
-        if (estado) estado.addEventListener('change', aplicar);
+        if (texto) texto.addEventListener('input', aplicar);
+        campos.forEach(function (campo) { campo.select.addEventListener('change', aplicar); });
         aplicar();
     }
 

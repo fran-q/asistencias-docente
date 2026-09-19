@@ -499,6 +499,65 @@ class CorreccionesPantallasIT {
             .andExpect(content().string(containsString("Ver materias")));
     }
 
+    /**
+     * Los filtros por columna de los cuatro catálogos.
+     *
+     * <p>Las opciones de cada desplegable las arma el navegador con los valores que traen las
+     * filas, así que lo que el servidor tiene que poner es el select vacío y el data-* de cada
+     * fila. Si falta cualquiera de los dos el filtro no rompe nada: simplemente no filtra, y
+     * eso no se nota mirando la pantalla.
+     */
+    @Test
+    @DisplayName("Horarios, comisiones, materias y carreras filtran por columna")
+    void losCatalogosFiltranPorColumna() throws Exception {
+        String horarios = pantalla("/horarios");
+        assertThat(horarios)
+            .contains("data-filtro=\"dia\"")
+            .contains("data-filtro=\"carrera\"")
+            .contains("data-filtro=\"anio\"")
+            .as("el dia se ordena por su numero, o el desplegable diria Jueves, Lunes, Martes")
+            .contains("data-dia=\"Lunes\"")
+            .contains("data-dia-orden=\"1\"")
+            .as("ni la carrera ni el año son columnas del listado: viajan para el filtro")
+            .contains("data-carrera=\"Carrera de correcciones\"")
+            .contains("data-anio=\"2° año\"");
+
+        assertThat(pantalla("/comisiones"))
+            .contains("data-filtro=\"carrera\"")
+            .contains("data-filtro=\"anio\"")
+            .contains("data-filtro=\"docente\"")
+            .contains("data-docente=\"Pérez, Ana\"")
+            .contains("data-anio=\"2° año\"");
+
+        assertThat(pantalla("/materias"))
+            .contains("data-filtro=\"carrera\"")
+            .contains("data-filtro=\"anio\"")
+            .contains("data-filtro=\"docente\"")
+            .contains("data-carrera=\"Carrera de correcciones\"")
+            .contains("data-docente=\"Pérez, Ana\"");
+
+        assertThat(pantalla("/carreras"))
+            .contains("data-filtro=\"duracion\"")
+            .contains("data-duracion=\"3 años\"")
+            .contains("data-duracion-orden=\"3\"");
+    }
+
+    @Test
+    @DisplayName("Una comisión sin docente se puede filtrar igual, como \"Sin asignar\"")
+    void loQueFaltaTambienSeFiltra() throws Exception {
+        TenantContext.set(tenantId);
+        comisionRepository.save(Comision.builder()
+            .codigo("B").materia(materiaRepository.findById(materiaId).orElseThrow())
+            .docenteAsignado(null).activo(true)
+            .periodo(periodoDe(tenantId)).build());
+        TenantContext.clear();
+
+        assertThat(pantalla("/comisiones"))
+            .as("sin valor la fila no entraria en ninguna opcion, y buscar las que faltan "
+                + "docente es justamente para lo que sirve el filtro")
+            .contains("data-docente=\"Sin asignar\"");
+    }
+
     @Test
     @DisplayName("La grilla muestra un año por vez, arranca en 1° y no ofrece \"Todos\"")
     void grillaFiltraPorAnio() throws Exception {
@@ -522,6 +581,13 @@ class CorreccionesPantallasIT {
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("MCOR")));
+    }
+
+    // El HTML de una pantalla, como la ve la cuenta de la institucion.
+    private String pantalla(String ruta) throws Exception {
+        return mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
     }
 
     // Principal apuntando a una cuenta que existe en la base. Lo necesitan las pantallas

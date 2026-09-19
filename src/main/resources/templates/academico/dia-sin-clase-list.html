@@ -57,6 +57,12 @@
                     <option th:each="t : ${tipos}" th:value="${t.name()}"
                             th:text="${t.etiqueta}">Feriado nacional</option>
                 </select>
+                <!-- El dia de la semana sale de la fecha de cada fila, y sus opciones las arma
+                     filtro-tabla.js: un año tiene feriados en cinco dias distintos, no en siete. -->
+                <select class="filtro__campo" data-filtro="dia" data-menu
+                        aria-label="Filtrar por día de la semana">
+                    <option value="">Todos los días</option>
+                </select>
                 <span class="filtro__resultado"></span>
             </th:block>
         </div>
@@ -75,7 +81,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="d : ${dias}" data-fila th:attr="data-estado=${d.tipo.name()}">
+                        <tr th:each="d : ${dias}" data-fila
+                            th:attr="data-estado=${d.tipo.name()},
+                                     data-dia=${#strings.capitalize(#temporals.dayOfWeekName(d.fecha))},
+                                     data-dia-orden=${#temporals.dayOfWeek(d.fecha)}">
                             <td th:text="${#temporals.format(d.fecha, 'dd/MM/yyyy')}">25/05/2026</td>
                             <td class="text-muted"
                                 th:text="${#temporals.dayOfWeekName(d.fecha)}">lunes</td>

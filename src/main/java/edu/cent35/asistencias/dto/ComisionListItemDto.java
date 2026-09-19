@@ -19,6 +19,8 @@ public class ComisionListItemDto {
     Long materiaId;
     String materiaCodigo;
     String materiaNombre;
+    // No es columna del listado: lo usa el filtro por anio del plan.
+    Short materiaAnio;
     String carreraCodigo;
     // La pantalla muestra el nombre; el codigo queda para uso interno.
     String carreraNombre;
@@ -41,6 +43,7 @@ public class ComisionListItemDto {
             .materiaId(c.getMateria().getId())
             .materiaCodigo(c.getMateria().getCodigo())
             .materiaNombre(c.getMateria().getNombre())
+            .materiaAnio(c.getMateria().getAnio())
             .carreraCodigo(c.getMateria().getCarrera() != null ? c.getMateria().getCarrera().getCodigo() : null)
             .carreraNombre(c.getMateria().getCarrera() != null ? c.getMateria().getCarrera().getNombre() : null)
             .docenteNombre(c.getDocenteAsignado() != null ? c.getDocenteAsignado().getNombreCompleto() : null)

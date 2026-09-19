@@ -35,6 +35,21 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+            <!-- Filtros por columna. Las opciones las arma filtro-tabla.js con los valores
+                 que traen las filas: asi el desplegable ofrece exactamente lo que hay en la
+                 tabla, y sumar el filtro no obliga a pasarle el catalogo desde el controlador. -->
+            <select class="filtro__campo" data-filtro="dia" data-menu
+                    aria-label="Filtrar por día">
+                <option value="">Todos los días</option>
+            </select>
+            <select class="filtro__campo" data-filtro="carrera" data-menu
+                    aria-label="Filtrar por carrera">
+                <option value="">Todas las carreras</option>
+            </select>
+            <select class="filtro__campo" data-filtro="anio" data-menu
+                    aria-label="Filtrar por año del plan">
+                <option value="">Todos los años</option>
+            </select>
             <!-- Mismo selector de densidad que el listado de docentes. La preferencia es
                  global --la guarda densidad.js-- pero el control conviene tenerlo en los
                  cuatro catalogos, que es donde el alto de fila cambia algo. -->
@@ -88,7 +103,13 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="h : ${horarios}" data-fila th:attr="data-estado=${h.activo} ? 'activo' : 'inactivo'"
+                        <tr th:each="h : ${horarios}" data-fila
+                            th:attr="data-estado=${h.activo} ? 'activo' : 'inactivo',
+                                     data-dia=${h.diaEtiqueta},
+                                     data-dia-orden=${h.diaSemanaNum},
+                                     data-carrera=${h.carreraNombre} ?: 'Sin carrera',
+                                     data-anio=${h.materiaAnio != null} ? |${h.materiaAnio}° año| : 'Sin año',
+                                     data-anio-orden=${h.materiaAnio}"
                             th:classappend="${!h.activo} ? 'row--inactive'">
                             <td th:attr="data-valor=${h.diaSemanaNum}"><strong th:text="${h.diaEtiqueta}">Día</strong></td>
                             <td>

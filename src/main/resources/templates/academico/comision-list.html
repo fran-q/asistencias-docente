@@ -35,6 +35,21 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
+            <!-- Filtros por columna. Las opciones las arma filtro-tabla.js con los valores
+                 que traen las filas: asi el desplegable ofrece exactamente lo que hay en la
+                 tabla, y sumar el filtro no obliga a pasarle el catalogo desde el controlador. -->
+            <select class="filtro__campo" data-filtro="carrera" data-menu
+                    aria-label="Filtrar por carrera">
+                <option value="">Todas las carreras</option>
+            </select>
+            <select class="filtro__campo" data-filtro="anio" data-menu
+                    aria-label="Filtrar por año del plan">
+                <option value="">Todos los años</option>
+            </select>
+            <select class="filtro__campo" data-filtro="docente" data-menu
+                    aria-label="Filtrar por docente">
+                <option value="">Todos los docentes</option>
+            </select>
             <!-- El ano va al servidor y no se filtra en el navegador como el texto y el estado:
                  el detalle de un ciclo enlaza aca con ?ciclo=, y el enlace tiene que llegar ya
                  filtrado sin depender de un script. select-menu.js dispara el change del
@@ -98,7 +113,12 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="c : ${comisiones}" data-fila th:attr="data-estado=${c.activo} ? 'activo' : 'inactivo'"
+                        <tr th:each="c : ${comisiones}" data-fila
+                            th:attr="data-estado=${c.activo} ? 'activo' : 'inactivo',
+                                     data-carrera=${c.carreraNombre} ?: 'Sin carrera',
+                                     data-anio=${c.materiaAnio != null} ? |${c.materiaAnio}° año| : 'Sin año',
+                                     data-anio-orden=${c.materiaAnio},
+                                     data-docente=${c.docenteNombre} ?: 'Sin asignar'"
                             th:classappend="${!c.activo} ? 'row--inactive'">
                             <td>
                                 <strong th:text="${c.cicloAnio}">2026</strong>
