@@ -2,6 +2,7 @@ package edu.cent35.asistencias.config;
 import edu.cent35.asistencias.interceptor.VerificacionInterceptor;
 import edu.cent35.asistencias.interceptor.KioscoTenantInterceptor;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.interceptor.SesionPorConfirmarInterceptor;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.repository.*;
 
@@ -71,6 +72,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final TenantInterceptor tenantInterceptor;
     private final VerificacionInterceptor verificacionInterceptor;
+    private final SesionPorConfirmarInterceptor sesionPorConfirmarInterceptor;
     private final PuestoCapturaInterceptor puestoCapturaInterceptor;
     private final KioscoTenantInterceptor kioscoTenantInterceptor;
 
@@ -91,14 +93,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(kioscoTenantInterceptor)
                 .addPathPatterns(PUEDEN_SIN_SESION)
                 .order(0);
-        registry.addInterceptor(tenantInterceptor)
+        // Primero de todos los que miran al usuario: una sesion que todavia no dijo que hacer
+        // con la que ya estaba abierta no tiene por que llegar a publicar el tenant ni a que le
+        // revisen el correo. Se saltea /sesion/**, que es donde vive ese paso.
+        registry.addInterceptor(sesionPorConfirmarInterceptor)
                 .excludePathPatterns(SIN_INTERCEPTAR)
                 .order(1);
-        registry.addInterceptor(verificacionInterceptor)
+        registry.addInterceptor(tenantInterceptor)
                 .excludePathPatterns(SIN_INTERCEPTAR)
                 .order(2);
+        registry.addInterceptor(verificacionInterceptor)
+                .excludePathPatterns(SIN_INTERCEPTAR)
+                .order(3);
         registry.addInterceptor(puestoCapturaInterceptor)
                 .addPathPatterns(SOLO_EN_PUESTO)
-                .order(3);
+                .order(4);
     }
 }

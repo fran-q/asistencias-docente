@@ -77,6 +77,15 @@
                     Volvé a entrar para seguir.
                 </div>
 
+                <!-- Alguien entró con esta misma cuenta desde otro equipo y eligió continuar
+                     ahí. Sin decirlo, en este equipo parece que el sistema se cayó solo; y si
+                     era el que tomaba asistencia, conviene que quien lo mira sepa que dejó de
+                     hacerlo. -->
+                <div th:if="${param.desplazada}" class="alert alert--warning" role="status">
+                    Se cerró tu sesión porque se entró con esta cuenta desde otro equipo.
+                    Si este equipo estaba tomando asistencia, el pase dejó de registrar.
+                </div>
+
                 <form th:action="@{/login}" method="post">
                     <!-- Viaja con el intento: si falla, el login vuelve con la misma vuelta al
                          kiosco (SecurityConfig, failureHandler). -->

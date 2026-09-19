@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!--
+  El paso entre el ingreso y el sistema, cuando esa cuenta ya está abierta en otro equipo.
+
+  No usa el layout a propósito: hasta que no se decida, esta sesión no llega a ninguna
+  pantalla, así que mostrar el menú alrededor ofrecería destinos que el interceptor va a
+  rebotar. Se parece a la pantalla de ingreso porque es parte de entrar.
+
+  Las dos salidas están a la misma vista y dicen qué hacen. La de continuar es la destacada
+  --es a lo que vino quien está acá-- pero el texto aclara qué se lleva puesto, porque la
+  sesión de al lado puede ser el equipo que está tomando asistencia.
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sesión abierta en otro equipo - Visum</title>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
+            if (!t) {
+                t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            document.documentElement.setAttribute('data-tema', t);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="auth">
+
+    <aside th:replace="~{auth/marca :: panel}"></aside>
+
+    <main class="auth__panel">
+        <div class="auth__centro">
+            <div class="auth__form">
+
+                <div class="auth__logo auth__logo--movil">
+                    <span class="auth__logo-marca" aria-hidden="true">V</span>
+                    <span class="auth__logo-texto">Visum</span>
+                </div>
+
+                <h1>Ya hay una sesión abierta</h1>
+                <!-- El punto va adentro de cada rama: afuera queda un espacio colgando entre
+                     el texto y el punto, porque las ramas son dos elementos. -->
+                <p>
+                    La cuenta <strong th:text="${usuario}">cuenta</strong> está siendo usada en
+                    <span th:if="${cuantas == 1}">otro equipo.</span>
+                    <span th:unless="${cuantas == 1}"
+                          th:text="|${cuantas} equipos.|">2 equipos.</span>
+                </p>
+
+                <!-- El cuerpo va envuelto: el aviso es una caja flex --le reserva lugar al
+                     icono-- y dos párrafos sueltos se reparten en dos columnas. -->
+                <div class="alert alert--warning" role="status">
+                    <div class="alert__cuerpo">
+                        <p>
+                            Última actividad:
+                            <strong th:text="${#temporals.format(ultimoUso, 'dd/MM/yyyy HH:mm')}">
+                                18/09/2026 21:40</strong>.
+                        </p>
+                        <p>
+                            Si continuás acá, esa sesión se cierra. Si era el equipo que toma
+                            asistencia, <strong>el pase deja de registrar</strong> hasta que
+                            alguien vuelva a iniciarlo ahí.
+                        </p>
+                    </div>
+                </div>
+
+                <form th:action="@{/sesion/otra-abierta/continuar}" method="post">
+                    <button type="submit" class="btn btn--primary btn--lg btn--full"
+                            data-texto-enviando="Cerrando la otra...">
+                        Continuar acá y cerrar la otra
+                    </button>
+                </form>
+
+                <!-- Salir es cerrar esta sesión, no la otra: quien prefiere no interrumpir a
+                     nadie vuelve al ingreso y la de allá sigue trabajando. -->
+                <form th:action="@{/logout}" method="post" style="margin-top:10px">
+                    <button type="submit" class="btn btn--ghost btn--full">
+                        Salir y dejar la otra abierta
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+<script th:src="@{/js/comun/tema.js}" defer></script>
+<script th:src="@{/js/comun/envio-form.js}" defer></script>
+</body>
+</html>

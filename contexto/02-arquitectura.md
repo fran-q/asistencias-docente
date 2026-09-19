@@ -284,7 +284,7 @@ verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/
 `./gradlew build --no-daemon` sobre H2. Sube el reporte si falla. Ese `build` corre las
 dos suites —unitarios e integración— porque `check` depende de ambas; ver `04-convenciones.md`.
 
-## Los 18 ADR
+## Los 20 ADR
 
 Viven en `Documentacion/4-arquitectura/adr/`. Un ADR dice **por qué** se decidió algo y
 qué se descartó.
@@ -309,3 +309,5 @@ qué se descartó.
 | 0016 | Persona separada de usuario y de vínculo docente | Propuesta |
 | 0017 | Marca de salida y bloque de presencia | Vigente |
 | 0018 | La tolerancia es simétrica y bidireccional | Vigente — reemplaza la decisión 1 de ADR-0008 |
+| 0019 | Modo kiosco: tomar asistencia sin sesión abierta | Propuesta |
+| 0020 | Una sesión por cuenta, y la desplaza quien entra | Propuesta |

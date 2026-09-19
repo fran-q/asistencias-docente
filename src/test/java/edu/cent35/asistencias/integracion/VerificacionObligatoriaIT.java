@@ -18,6 +18,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,6 +53,7 @@ class VerificacionObligatoriaIT {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private RolRepository rolRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private SessionRegistry sessionRegistry;
 
     private Long institucionId;
     private Rol rolInstitucion;
@@ -139,6 +142,13 @@ class VerificacionObligatoriaIT {
             .andExpect(redirectedUrl("/"))
             .andExpect(authenticated().withUsername("ana.perez"));
 
+        // Entre un ingreso y el otro, este test simula a la misma persona entrando de nuevo, no
+        // a dos equipos a la vez: se olvida la sesion anterior. En el servidor la olvida el
+        // contenedor al destruirla; MockMvc no destruye ninguna, asi que la de arriba seguiria
+        // contando y el segundo ingreso terminaria en el paso de "ya hay una sesion abierta"
+        // (ADR-0020), que es de lo que se ocupa SesionUnicaIT.
+        olvidarLasSesiones();
+
         // La sesion queda a nombre del usuario aunque se haya entrado con el correo: es lo que
         // se muestra y lo que queda en el historial de lo que hizo.
         mockMvc.perform(post("/login").with(csrf())
@@ -155,6 +165,15 @@ class VerificacionObligatoriaIT {
     // ========================================================================
     //  helpers
     // ========================================================================
+
+    // Vacia el registro de sesiones abiertas, que vive en el contexto que los tests comparten.
+    private void olvidarLasSesiones() {
+        sessionRegistry.getAllPrincipals().stream()
+            .flatMap(p -> sessionRegistry.getAllSessions(p, true).stream())
+            .map(SessionInformation::getSessionId)
+            .toList()
+            .forEach(sessionRegistry::removeSessionInformation);
+    }
 
     private Usuario cuenta(String username, LocalDateTime verificadoEn) {
         Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Cuenta", "Prueba")).username(username).email(username + "@ejemplo.edu.ar").passwordHash(passwordEncoder.encode("Clave12345")).rol(rolInstitucion).activo(true).emailVerificadoEn(verificadoEn).build();

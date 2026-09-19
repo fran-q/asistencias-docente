@@ -50,6 +50,8 @@ class UsuarioServiceTest {
     @Mock private PersonaRepository personaRepository;
     @Mock private PersonaService personaService;
     @Mock private PasswordEncoder passwordEncoder;
+    // La baja cierra la sesion que la cuenta tuviera abierta; aca solo hace falta que exista.
+    @Mock private edu.cent35.asistencias.seguridad.SesionesActivasService sesionesActivas;
 
     @InjectMocks private UsuarioService service;
 

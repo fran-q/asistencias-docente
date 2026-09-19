@@ -48,6 +48,8 @@ public class UsuarioService {
     private final PersonaRepository personaRepository;
     private final PersonaService personaService;
     private final PasswordEncoder passwordEncoder;
+    // Para cortarle la sesion a una cuenta que se da de baja.
+    private final edu.cent35.asistencias.seguridad.SesionesActivasService sesionesActivas;
 
     // Horas entre una contrasena nueva y la siguiente. En cero, sin limite.
     @Value("${app.password.horas-entre-cambios}")
@@ -251,8 +253,14 @@ public class UsuarioService {
         u.setActivo(false);
         u.setDadoDeBajaPor(usuarioActualId);
         Usuario guardado = usuarioRepository.save(u);
-        log.info("Usuario dado de baja: id={}, username={}, por={}",
-                 guardado.getId(), guardado.getUsername(), usuarioActualId);
+
+        // La cuenta ya no puede entrar, pero la sesion que tenia abierta seguiria andando
+        // hasta vencer: media hora de alguien operando con una cuenta que la institucion
+        // acaba de dar de baja. Se la cierra en el acto.
+        int cerradas = sesionesActivas.cerrarTodasDe(guardado.getUsername());
+
+        log.info("Usuario dado de baja: id={}, username={}, por={}, sesiones cerradas={}",
+                 guardado.getId(), guardado.getUsername(), usuarioActualId, cerradas);
         return guardado;
     }
 

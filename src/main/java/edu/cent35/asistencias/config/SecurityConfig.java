@@ -12,6 +12,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import edu.cent35.asistencias.seguridad.SesionesActivasService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -81,7 +86,9 @@ public class SecurityConfig {
     // Arma la cadena de filtros: qué es público, cómo se entra y cómo se sale.
     @Bean
     @Order(2)
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                          SessionRegistry sessionRegistry,
+                                          SesionesActivasService sesionesActivas) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
                 // /recuperar/** va abierto por necesidad: quien perdio la contrasena no puede
@@ -106,7 +113,7 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .defaultSuccessUrl("/", true)
+                .successHandler(despuesDeEntrar(sesionesActivas))
                 // Tras un login fallido preservamos SOLO el usuario intentado
                 // (nunca la contrasenia) para reponerlo en el formulario. Mejora
                 // la usabilidad (RNF-21/24) sin exponer credenciales: la
@@ -139,6 +146,22 @@ public class SecurityConfig {
             // Sin esto, una sesion vencida contesta el POST de fetch con la redireccion al
             // login. Ver el javadoc de sesionVencidaEnApi.
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entradaDeAutenticacion()))
+            /*
+              Una cuenta se usa en un equipo por vez.
+
+              El tope NO lo aplica Spring (maximumSessions queda sin limite): si lo aplicara,
+              el ingreso nuevo desplazaria al anterior de una, sin que quien entra sepa que
+              habia alguien adentro ni que se lo llevo puesto. Lo unico que se toma de aca es
+              el registro de sesiones; a quien se desplaza lo decide la persona, en la pantalla
+              que muestra despuesDeEntrar.
+
+              expiredUrl es lo que ve el equipo desplazado en su pedido siguiente: el login
+              diciendo por que se cerro, en vez del formulario pelado.
+            */
+            .sessionManagement(sesion -> sesion
+                .maximumSessions(-1)
+                .sessionRegistry(sessionRegistry)
+                .expiredUrl("/login?desplazada"))
             .logout(logout -> logout
                 .logoutSuccessHandler(SecurityConfig::despuesDeCerrarSesion)
                 // Solo la de sesion. La del puesto identifica la MAQUINA y tiene que
@@ -279,6 +302,51 @@ public class SecurityConfig {
                                               Authentication authentication) throws IOException {
         boolean alKiosco = "kiosco".equals(request.getParameter("destino"));
         response.sendRedirect(request.getContextPath() + (alKiosco ? "/kiosco" : "/login?logout"));
+    }
+
+    /**
+     * A dónde va quien acaba de entrar: al inicio, o al paso que le pregunta qué hacer con la
+     * sesión que esa cuenta ya tiene abierta en otro equipo.
+     *
+     * <p>El desplazo no se hace acá. Quien entra ve primero qué se va a cerrar --puede ser el
+     * equipo que está tomando asistencia-- y recién entonces decide. Hasta que lo decida, la
+     * sesión nueva no sirve para nada más: lo sostiene {@code SesionPorConfirmarInterceptor}.
+     *
+     * <p>La marca va en la sesión y no en la base: describe a esta sesión, no a la cuenta, y
+     * muere con ella. Si el navegador se cierra antes de decidir, no queda nada que limpiar.
+     */
+    private static AuthenticationSuccessHandler despuesDeEntrar(SesionesActivasService sesiones) {
+        return (request, response, autenticacion) -> {
+            String actual = request.getSession().getId();
+            boolean hayOtras = !sesiones.otrasDe(autenticacion.getName(), actual).isEmpty();
+            if (hayOtras) {
+                request.getSession().setAttribute(SESION_POR_CONFIRMAR, Boolean.TRUE);
+            }
+            response.sendRedirect(request.getContextPath()
+                + (hayOtras ? "/sesion/otra-abierta" : "/"));
+        };
+    }
+
+    /** Marca de sesión: entró, pero todavía no dijo qué hacer con la otra que ya estaba. */
+    public static final String SESION_POR_CONFIRMAR = "SESION_POR_CONFIRMAR";
+
+    /**
+     * El registro de sesiones abiertas, en memoria.
+     *
+     * <p>Se pierde al reiniciar el sistema, y está bien: las sesiones también. Lo que no puede
+     * faltar es el publicador de eventos de abajo, o el registro se queda con sesiones que ya
+     * no existen y cada ingreso preguntaría por una sesión fantasma.
+     */
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    // Avisa al registro cuando una sesión se destruye --cerrar sesión, vencimiento, reinicio--
+    // para que deje de contarla.
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
     // BCrypt: las contraseñas nunca se guardan ni se comparan en texto plano (RNF-06).
