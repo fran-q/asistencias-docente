@@ -46,7 +46,7 @@
         'pase': 'Pase de asistencia', 'manual': 'Carga manual',
         'justificar': 'Justificar ausencia', 'rostro': 'Registro del rostro',
         'registrar': 'Registrar', 'consentimiento': 'Consentimiento',
-        'ficha': 'Ficha del docente', 'constancia': 'Constancia',
+        'constancia': 'Constancia',
         'otorgar': 'Otorgar', 'revocar': 'Revocar', 'password': 'Cambiar contraseña',
         // Vistas de un registro hacia sus hijos: /carreras/{id}/materias y
         // /materias/{id}/comisiones. Sin estas entradas la miga se cortaba en el padre

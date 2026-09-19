@@ -348,27 +348,39 @@ class AjustesPantallasIT {
     //  Derechos ARCO (RNF-14)
     // ========================================================================
 
+    /**
+     * Los cuatro derechos ARCO, todos en la pantalla del docente (RNF-14).
+     *
+     * <p>Estaban repartidos en tres pantallas, se juntaron en una ficha aparte, y esa ficha
+     * terminó repitiendo los datos personales que la edición ya muestra --y deja corregir-- y
+     * enlazando de vuelta para ejercer los otros tres derechos. Ahora la edición ES la ficha:
+     * lo que hay que comprobar es que ninguna de las cuatro operaciones se haya perdido en la
+     * mudanza, porque son una exigencia de la Ley 25.326 y no una comodidad de la pantalla.
+     */
     @Test
-    @DisplayName("La ficha del docente muestra todos sus datos y los cuatro derechos")
+    @DisplayName("La pantalla del docente reúne los cuatro derechos ARCO")
     void pantallaArcoReuneLosCuatroDerechos() throws Exception {
         Long docenteId = docenteRepository.findAll().stream()
             .filter(d -> tenantId.equals(d.getInstitucionId()))
             .findFirst().orElseThrow().getId();
 
-        mockMvc.perform(get("/docentes/" + docenteId + "/ficha")
+        String html = mockMvc.perform(get("/docentes/" + docenteId + "/editar")
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
-            // Acceso: se ve que tiene el sistema sobre la persona.
-            .andExpect(content().string(containsString("Datos personales")))
-            // El recuadro "Datos biométricos" se saco de la ficha: repetia lo que ya
-            // muestra la pantalla de edicion del docente. Lo que si tiene que seguir
-            // estando es el acceso a las cuatro operaciones sobre el dato sensible.
-            .andExpect(content().string(containsString("Acciones sobre datos biométricos")))
-            // Los otros tres, cada uno con su accion.
-            .andExpect(content().string(containsString("Rectificación")))
-            .andExpect(content().string(containsString("Oposición")))
-            .andExpect(content().string(containsString("Cancelación")))
-            .andExpect(content().string(containsString("Ley 25.326")));
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("acceso: la constancia de todo lo que la institucion trata sobre la persona")
+            .contains("/docentes/" + docenteId + "/constancia")
+            .as("rectificacion: los datos personales, editables, en la misma pantalla")
+            .contains("id=\"dni\"")
+            .as("oposicion: revocar el consentimiento")
+            .contains("Consentimiento biométrico")
+            .as("cancelacion: el recuadro del modelo facial, donde vive la supresion. El boton "
+                + "sale cuando hay algo que suprimir, y este docente todavia no tiene rostro")
+            .contains("Modelo facial")
+            .contains("derechos ARCO")
+            .contains("Ley 25.326");
     }
 
     @Test
@@ -378,7 +390,7 @@ class AjustesPantallasIT {
             .filter(d -> tenantId.equals(d.getInstitucionId()))
             .findFirst().orElseThrow().getId();
 
-        MvcResult r = mockMvc.perform(get("/docentes/" + docenteId + "/ficha/constancia")
+        MvcResult r = mockMvc.perform(get("/docentes/" + docenteId + "/constancia")
                 .with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andReturn();

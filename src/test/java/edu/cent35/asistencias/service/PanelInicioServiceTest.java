@@ -517,13 +517,13 @@ class PanelInicioServiceTest {
     }
 
     @Test
-    @DisplayName("pendientes: con un solo docente se va derecho a su ficha")
+    @DisplayName("pendientes: con un solo docente se va derecho a su pantalla")
     void pendientes_unSoloDocenteVaASuFicha() {
         when(docenteRepository.listarVigentesDelTenant(any())).thenReturn(List.of(docente(7L, "Pérez")));
 
         PanelInicioDto.Pendiente p = service.armar().pendientes().get(0);
 
-        assertThat(p.url()).isEqualTo("/docentes/7/ficha");
+        assertThat(p.url()).isEqualTo("/docentes/7/editar");
         assertThat(p.cualesResumidos()).isEqualTo("Pérez, Nombre");
     }
 

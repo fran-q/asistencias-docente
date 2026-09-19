@@ -344,14 +344,25 @@ class CorreccionesPantallasIT {
     }
 
     @Test
-    @DisplayName("La edición del docente lleva a la ficha ARCO y permite darlo de baja")
+    @DisplayName("La edición del docente ES la ficha: derechos ARCO, constancia y baja")
     void edicionDeDocenteTieneFichaYBaja() throws Exception {
-        mockMvc.perform(get("/docentes/" + docenteId + "/editar")
-                .with(user(principal("ADMIN"))))
-            .andExpect(status().isOk())
-            .andExpect(content().string(containsString("derechos ARCO")))
-            .andExpect(content().string(containsString("/docentes/" + docenteId + "/ficha")))
-            .andExpect(content().string(containsString("Ficha y estado del docente")));
+        assertThat(pantalla("/docentes/" + docenteId + "/editar"))
+            .contains("derechos ARCO")
+            .contains("Ficha y estado del docente")
+            .as("la constancia era lo unico que tenia la pantalla aparte")
+            .contains("/docentes/" + docenteId + "/constancia")
+            .as("y esa pantalla ya no existe: repetia los datos que se editan arriba")
+            .doesNotContain("/docentes/" + docenteId + "/ficha");
+    }
+
+    @Test
+    @DisplayName("El listado de docentes tiene un solo botón, sin el de Ficha")
+    void docentesConUnSoloBoton() throws Exception {
+        assertThat(pantalla("/docentes"))
+            .contains(">Editar</a>")
+            .as("dos botones para la misma persona obligaban a adivinar cual tenia lo que uno "
+                + "venia a hacer")
+            .doesNotContain(">Ficha</a>");
     }
 
     // ========================================================================

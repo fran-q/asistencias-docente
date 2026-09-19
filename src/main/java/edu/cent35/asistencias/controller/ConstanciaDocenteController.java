@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,42 +23,27 @@ import java.io.OutputStream;
 import java.util.List;
 
 /**
- * Ficha completa del docente: todo lo que el sistema sabe de esa persona.
+ * La constancia del derecho de acceso (Ley 25.326, Resolución AAIP 255/2022): un PDF con todo
+ * lo que la institución trata sobre esa persona, para entregarle ante un pedido formal.
  *
- * <p>Las cuatro operaciones ya existían, pero repartidas: los datos personales en el
- * formulario del docente, la oposición dentro del consentimiento, la cancelación escondida
- * en la pantalla de registro del rostro. Un derecho que hay que ir a buscar a tres lugares
- * distintos es un derecho que en la práctica no se ejerce, y ante un pedido formal la
- * institución tiene que poder responderlo sin recorrer el menú entero.
- *
- * <p>Esta pantalla no agrega operaciones nuevas: reúne las que hay, muestra en un solo lugar
- * todo lo que el sistema sabe de la persona y emite la constancia.
+ * <p>Vivía en {@code /docentes/{id}/ficha/constancia}, colgando de una pantalla que reunía los
+ * cuatro derechos ARCO. Esa pantalla desapareció: repetía los datos personales que la edición
+ * del docente ya muestra --y deja corregir-- y enlazaba de vuelta para allá para ejercer los
+ * otros tres derechos. Dos pantallas para la misma persona obligaban a adivinar en cuál estaba
+ * lo que uno venía a hacer. La constancia, que era lo único propio, quedó acá.
  */
 @Controller
-@RequestMapping("/docentes/{docenteId}/ficha")
+@RequestMapping("/docentes/{docenteId}")
 @PreAuthorize("hasAnyRole('INSTITUCION', 'ADMIN')")
 @RequiredArgsConstructor
 @Slf4j
-public class FichaDocenteController {
+public class ConstanciaDocenteController {
 
     private final DocenteService docenteService;
     private final ConsentimientoBiometricoService consentimientoService;
     private final ModeloFacialService modeloFacialService;
     private final ConstanciaArcoService constanciaService;
     private final MiInstitucionService miInstitucionService;
-
-    // Todo lo que el sistema sabe del docente, con los cuatro derechos a mano.
-    @GetMapping
-    public String pantalla(@PathVariable Long docenteId, Model model) {
-        Docente d = docenteService.buscarPorId(docenteId);
-
-        model.addAttribute("docente", d);
-        model.addAttribute("estadoConsentimiento", consentimientoService.estadoActual(docenteId));
-        model.addAttribute("historial", consentimientoService.historialDe(docenteId));
-        model.addAttribute("tieneModelo", modeloFacialService.tieneModeloActivo(docenteId));
-        model.addAttribute("tieneModelos", modeloFacialService.tieneModelos(docenteId));
-        return "docente/ficha";
-    }
 
     // Constancia en PDF de lo que la institución trata sobre esta persona.
     @GetMapping("/constancia")

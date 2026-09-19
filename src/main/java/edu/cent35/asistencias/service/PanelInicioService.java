@@ -493,11 +493,11 @@ public class PanelInicioService {
         return lista;
     }
 
-    // Con un solo docente se va derecho a su ficha, que es donde se otorga el consentimiento y
-    // se registra el rostro; con varios, al listado.
+    // Con un solo docente se va derecho a su pantalla, que es donde se otorga el
+    // consentimiento y se registra el rostro; con varios, al listado.
     private static String aDocentes(List<Docente> docentes) {
         return docentes.size() == 1
-            ? "/docentes/" + docentes.get(0).getId() + "/ficha"
+            ? "/docentes/" + docentes.get(0).getId() + "/editar"
             : "/docentes";
     }
 

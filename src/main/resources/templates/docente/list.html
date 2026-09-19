@@ -155,15 +155,14 @@
                             </td>
 
                             <td role="cell" class="table__actions">
-                                <!-- Un solo botón hacia la ficha de edición. La ficha completa
-                                     (datos personales y derechos ARCO) y el modelo facial viven
-                                     adentro: son operaciones sobre UNA persona, y conviene tener
-                                     a la vista de quién se trata antes de tocarlas. -->
+                                <!-- Un solo botón: adentro está todo lo de esta persona --sus
+                                     datos, el consentimiento, el rostro, los derechos ARCO y la
+                                     constancia--, que son operaciones sobre UNA persona y
+                                     conviene tener a la vista de quién se trata antes de
+                                     tocarlas. Antes eran dos, "Editar" y "Ficha", y había que
+                                     adivinar cuál de las dos tenía lo que uno venía a hacer. -->
                                 <a th:href="@{/docentes/{id}/editar(id=${d.id})}"
                                    class="btn btn--ghost btn--sm">Editar</a>
-
-                                <a th:href="@{/docentes/{id}/ficha(id=${d.id})}"
-                                   class="btn btn--ghost btn--sm">Ficha</a>
 
                                 <!--
                                   Dos botones distintos según se pueda o no dar de baja.

@@ -51,7 +51,7 @@
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-07 | CRUD de docentes | ✅ | `DocenteController` → `/docentes`, `FichaDocenteController`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`) |
+| RF-07 | CRUD de docentes | ✅ | `DocenteController` → `/docentes`. La edición de un docente **es** su ficha: datos, consentimiento, modelo facial, derechos ARCO y baja en una sola pantalla; la constancia en PDF la emite `ConstanciaDocenteController` |
 | RF-08 | Registro del modelo facial | ⚠ | `RegistroFacialController` → `/docentes/{id}/rostro/registrar`, `ModeloFacialService`, `CifradoBiometricoService` |
 | RF-09 | Re-registro facial | ✅ | `ModeloFacialService.registrar` (registra y re-registra); `modelos_faciales.activo` / `fecha_baja` |
 | RF-10 | Consentimiento informado | ✅ | `ConsentimientoController`, `ConsentimientoBiometricoService`, `TextoConsentimiento` |
@@ -353,7 +353,7 @@ la hora a la que se corren.
 | RNF-11 | Ley 25.326 | ✅ | ADR-0005, `Documentacion/3-legal/` |
 | RNF-12 | Resolución AAIP 255/2022 | ✅ | Ídem |
 | RNF-13 | Consentimiento informado | ✅ | `TextoConsentimiento` versionado, `ConsentimientoBiometricoService` |
-| RNF-14 | Derechos ARCO | ✅ | `ModeloFacialService.suprimirDatosBiometricos` (DELETE físico) + `ConstanciaArcoService` (constancia en PDF) |
+| RNF-14 | Derechos ARCO | ✅ | `ModeloFacialService.suprimirDatosBiometricos` (DELETE físico) + `ConstanciaArcoService` (constancia en PDF). Los cuatro derechos se ejercen en `/docentes/{id}/editar`: acceso con la constancia, rectificación en los datos, oposición revocando el consentimiento y cancelación suprimiendo el modelo |
 
 ### Tecnología y arquitectura
 

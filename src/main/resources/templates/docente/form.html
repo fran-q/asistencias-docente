@@ -231,15 +231,24 @@
         </div>
 
         <!--
-          Ficha completa y baja del docente.
+          Estado, constancia y baja del docente.
 
-          Este bloque reemplaza al boton "Datos" que estaba en el listado. La ficha ARCO
-          --acceso, rectificacion, cancelacion y oposicion, con constancia descargable-- es
-          una exigencia de la Ley 25.326 y no podia quedar sin camino: se movio aca, que es
-          donde ya se esta mirando a esta persona en particular.
+          Esta pantalla ES la ficha: hasta ahora habia ademas una pantalla aparte
+          (/docentes/{id}/ficha) que repetia los datos personales --los mismos campos que se
+          editan arriba-- y listaba los derechos ARCO enlazando de vuelta para aca. Dos
+          pantallas para la misma persona obligaban a adivinar en cual estaba lo que uno venia
+          a hacer. Lo unico que aquella tenia y aca faltaba, la constancia, se sumo abajo.
         -->
         <div th:if="${modo == 'editar'}" class="card card--form">
             <h2>Ficha y estado del docente</h2>
+            <p class="text-muted" style="margin-top:-0.5rem;">
+                Las cuatro operaciones que la <strong>Ley 25.326</strong> y la
+                <strong>Resolución AAIP 255/2022</strong> reconocen sobre un dato sensible
+                --los <strong>derechos ARCO</strong>-- se ejercen en esta misma pantalla:
+                <em>acceso</em> con la constancia de acá abajo, <em>rectificación</em> en los
+                datos de arriba, <em>oposición</em> revocando el consentimiento y
+                <em>cancelación</em> suprimiendo los datos biométricos.
+            </p>
 
             <dl class="kv" style="margin-top:1rem;">
                 <dt>Estado</dt>
@@ -256,9 +265,10 @@
             </dl>
 
             <div class="form-actions" style="margin-top:1rem;">
-                <a th:href="@{/docentes/{id}/ficha(id=${docente.id})}" class="btn btn--ghost">
-                    Ver ficha completa y derechos ARCO
-                </a>
+                <!-- Acceso (Ley 25.326): todo lo que la institución trata sobre esta persona,
+                     en un PDF que se le puede entregar ante un pedido formal. -->
+                <a th:href="@{/docentes/{id}/constancia(id=${docente.id})}"
+                   class="btn btn--ghost btn--success">⬇ Descargar constancia</a>
 
                 <!-- Igual que en el listado: si la baja no se puede, el boton lo dice de una
                      vez en vez de abrir un cuadro para confirmar algo que va a fallar. -->
