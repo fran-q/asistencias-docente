@@ -166,8 +166,21 @@
         aplicar();
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    function iniciar() {
         [].forEach.call(document.querySelectorAll('[data-filtro-tabla]'), conectar);
-    });
+    }
+
+    /* Arranca apenas se ejecuta si la pagina ya esta armada, igual que select-menu.js.
+       No es un detalle: los dos van con defer, asi que corren recien terminado el parseo y
+       con readyState "interactive". Esperar a DOMContentLoaded dejaba este script para
+       DESPUES de select-menu, que arma su desplegable con las opciones que encuentra en ese
+       momento --ninguna-- y el filtro quedaba con una sola opcion en pantalla aunque el
+       <select> de abajo las tuviera todas. Corriendo ya, el orden lo decide el orden de los
+       <script> en el layout, donde este va primero. */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', iniciar);
+    } else {
+        iniciar();
+    }
 
 })(document);

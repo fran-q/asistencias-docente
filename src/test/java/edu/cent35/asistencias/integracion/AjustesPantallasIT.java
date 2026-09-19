@@ -708,6 +708,36 @@ class AjustesPantallasIT {
     }
 
     /**
+     * Los filtros de tabla se arman antes que los desplegables propios.
+     *
+     * <p>Las opciones de un filtro por columna no están en la plantilla: las agrega
+     * {@code filtro-tabla.js} leyendo las filas. {@code select-menu.js} reemplaza cada
+     * {@code <select>} por un desplegable propio y copia sus opciones <b>una sola vez</b>, al
+     * construirlo. Si corriera primero, copiaría la lista vacía: el filtro quedaría con una
+     * sola opción en pantalla aunque el select de abajo las tuviera todas. Pasó, y no lo vio
+     * ningún test: los dos scripts van con {@code defer}, así que el orden es el de estas dos
+     * líneas del layout.
+     */
+    @Test
+    @DisplayName("filtro-tabla.js se carga antes que select-menu.js")
+    void losFiltrosSeArmanAntesQueLosDesplegables() throws Exception {
+        String base = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/templates/layout/base.html"));
+
+        assertThat(base.indexOf("filtro-tabla.js"))
+            .as("si select-menu arma su desplegable primero, copia una lista de opciones vacía")
+            .isLessThan(base.indexOf("select-menu.js"))
+            .isNotNegative();
+
+        String filtro = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/static/js/comun/filtro-tabla.js"));
+        assertThat(filtro)
+            .as("con defer la página ya está parseada cuando el script corre: esperar a "
+                + "DOMContentLoaded lo dejaría para después de select-menu")
+            .contains("document.readyState === 'loading'");
+    }
+
+    /**
      * Dentro de un grupo, cada destino tiene su propio icono.
      *
      * <p>El icono existe para reconocer el destino sin leer, en el menú y en la tarjeta. Dos
