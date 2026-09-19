@@ -105,45 +105,9 @@
                          El destino depende del ROL y lo calcula el servidor: si en el grupo el
                          usuario tiene una sola pantalla, va derecho a ella, porque una
                          intermedia con una sola opcion es un clic que no decide nada. -->
-                    <a th:href="@{__${destinoAcademico}__}" class="lateral__grupo"
-                       th:title="|Ver todo: Académico|">Académico</a>
-
-                    <!-- Ciclos y dias sin clase son solo institucionales: definen cuando el
-                         sistema toma asistencia y cuando genera ausencias, que no es una
-                         tarea del dia a dia. Van primero porque sin un ciclo no se puede
-                         cargar una comision. -->
-                    <th:block sec:authorize="hasRole('INSTITUCION')">
-                        <a th:href="@{/ciclos}" class="lateral__link">
-                            <svg th:replace="~{layout/iconos :: calendario}"></svg>
-                            <span class="lateral__texto">Ciclos lectivos</span>
-                        </a>
-                        <a th:href="@{/dias-sin-clase}" class="lateral__link">
-                            <svg th:replace="~{layout/iconos :: calendarioX}"></svg>
-                            <span class="lateral__texto">Días sin clase</span>
-                        </a>
-                    </th:block>
-
-                    <a th:href="@{/carreras}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: libro}"></svg>
-                        <span class="lateral__texto">Carreras</span>
-                    </a>
-                    <a th:href="@{/materias}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: materia}"></svg>
-                        <span class="lateral__texto">Materias</span>
-                    </a>
-                    <a th:href="@{/comisiones}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: personas}"></svg>
-                        <span class="lateral__texto">Comisiones</span>
-                    </a>
-                    <a th:href="@{/horarios}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: reloj}"></svg>
-                        <span class="lateral__texto">Horarios</span>
-                    </a>
-                    <a th:href="@{/grilla}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: grilla}"></svg>
-                        <span class="lateral__texto">Grilla semanal</span>
-                    </a>
-
+                    <!-- Asistencias va primero: es lo que se usa todos los días. Lo académico
+                         se carga al empezar el año y después se toca poco, así que queda abajo.
+                         La barra se lee de arriba abajo, y arriba tiene que estar lo frecuente. -->
                     <a th:href="@{__${destinoAsistencia}__}" class="lateral__grupo"
                        th:title="|Ver todo: Asistencias|">Asistencias</a>
 
@@ -163,6 +127,50 @@
                         <svg th:replace="~{layout/iconos :: grafico}"></svg>
                         <span class="lateral__texto">Reportes</span>
                     </a>
+
+                    <a th:href="@{__${destinoAcademico}__}" class="lateral__grupo"
+                       th:title="|Ver todo: Académico|">Académico</a>
+
+                    <!-- Del uso diario al anual, al revés de como se carga. La grilla y los
+                         horarios se miran seguido; una carrera o un ciclo se cargan una vez y
+                         se vuelven a mirar el año siguiente. El orden de carga --ciclo,
+                         carrera, materia, comisión, horario-- lo cuenta la pantalla de
+                         Académico, que es donde hace falta saberlo. -->
+                    <a th:href="@{/grilla}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: grilla}"></svg>
+                        <span class="lateral__texto">Grilla semanal</span>
+                    </a>
+                    <a th:href="@{/horarios}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: reloj}"></svg>
+                        <span class="lateral__texto">Horarios</span>
+                    </a>
+                    <a th:href="@{/comisiones}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: personas}"></svg>
+                        <span class="lateral__texto">Comisiones</span>
+                    </a>
+                    <a th:href="@{/materias}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: materia}"></svg>
+                        <span class="lateral__texto">Materias</span>
+                    </a>
+                    <a th:href="@{/carreras}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: libro}"></svg>
+                        <span class="lateral__texto">Carreras</span>
+                    </a>
+
+                    <!-- Ciclos y dias sin clase son solo institucionales: definen cuando el
+                         sistema toma asistencia y cuando genera ausencias, que no es una tarea
+                         del dia a dia. Por eso, y porque se cargan una vez al ano, van al final
+                         del grupo. -->
+                    <th:block sec:authorize="hasRole('INSTITUCION')">
+                        <a th:href="@{/dias-sin-clase}" class="lateral__link">
+                            <svg th:replace="~{layout/iconos :: calendarioX}"></svg>
+                            <span class="lateral__texto">Días sin clase</span>
+                        </a>
+                        <a th:href="@{/ciclos}" class="lateral__link">
+                            <svg th:replace="~{layout/iconos :: calendario}"></svg>
+                            <span class="lateral__texto">Ciclos lectivos</span>
+                        </a>
+                    </th:block>
 
                     <a th:href="@{__${destinoPersonal}__}" class="lateral__grupo"
                        th:title="|Ver todo: Personal|">Personal</a>

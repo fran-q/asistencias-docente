@@ -638,6 +638,61 @@ class AjustesPantallasIT {
     }
 
     /**
+     * El orden del menú: por frecuencia de uso, no por el orden en que se cargan las cosas.
+     *
+     * <p>Asistencias va primero porque es lo de todos los días, y dentro de Académico los
+     * destinos van del uso diario --la grilla, los horarios-- a lo que se carga una vez al año
+     * --las carreras, el ciclo--. Es al revés del orden en que hay que cargarlos, que pasó a
+     * contarlo la descripción de la pantalla de Académico.
+     *
+     * <p>Se fija acá porque es una decisión de uso que nada más sostiene: reordenar el menú no
+     * rompe ninguna pantalla, así que un cambio de paso lo dejaría como estaba sin que se note.
+     * Y la pantalla intermedia tiene que seguir el mismo orden, o las dos listas se contradicen.
+     */
+    @Test
+    @DisplayName("El menú va de lo más frecuente a lo más anual, y la pantalla del grupo también")
+    void elMenuVaPorFrecuenciaDeUso() throws Exception {
+        String base = java.nio.file.Files.readString(
+            java.nio.file.Path.of("src/main/resources/templates/layout/base.html"));
+        String nav = base.substring(base.indexOf("id=\"lateral-nav\""), base.indexOf("lateral__pie"));
+
+        assertThat(nav.indexOf("destinoAsistencia"))
+            .as("Asistencias es lo que se usa todos los días: va antes que Académico")
+            .isLessThan(nav.indexOf("destinoAcademico"));
+        assertThat(nav.indexOf("destinoAcademico"))
+            .isLessThan(nav.indexOf("destinoPersonal"));
+
+        java.util.List<String> academico = java.util.List.of(
+            "@{/grilla}", "@{/horarios}", "@{/comisiones}", "@{/materias}", "@{/carreras}",
+            "@{/dias-sin-clase}", "@{/ciclos}");
+        for (int i = 1; i < academico.size(); i++) {
+            assertThat(nav.indexOf(academico.get(i)))
+                .as("%s tiene que ir después de %s", academico.get(i), academico.get(i - 1))
+                .isGreaterThan(nav.indexOf(academico.get(i - 1)));
+        }
+
+        // La pantalla del grupo sale de SeccionService, que es otra lista: tiene que coincidir.
+        String html = mockMvc.perform(get("/academico").with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        String tarjetas = html.substring(html.indexOf("seccion__tarjetas"),
+                                         html.indexOf("</section>", html.indexOf("seccion__tarjetas")));
+        for (int i = 1; i < academico.size(); i++) {
+            String actual = academico.get(i).replace("@{", "href=\"").replace("}", "\"");
+            String anterior = academico.get(i - 1).replace("@{", "href=\"").replace("}", "\"");
+            assertThat(tarjetas.indexOf(actual))
+                .as("en la pantalla de Académico, %s tiene que ir después de %s", actual, anterior)
+                .isGreaterThan(tarjetas.indexOf(anterior));
+        }
+        assertThat(tarjetas)
+            .as("el orden de carga ya no se lee en el menú: lo cuenta esta pantalla")
+            .doesNotContain("ciclo lectivo, carrera");
+        assertThat(html)
+            .as("y va en el subtítulo del grupo")
+            .contains("ciclo lectivo, carrera, materia, comisión y horario");
+    }
+
+    /**
      * Dentro de un grupo, cada destino tiene su propio icono.
      *
      * <p>El icono existe para reconocer el destino sin leer, en el menú y en la tarjeta. Dos

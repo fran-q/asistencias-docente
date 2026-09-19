@@ -24,10 +24,14 @@ import java.util.stream.Collectors;
 @Service
 public class SeccionService {
 
-    /** Los tres grupos del menú, con su etiqueta y sus pantallas por rol. */
+    /** Los tres grupos del menú, con su etiqueta y sus pantallas por rol, en su mismo orden. */
     public enum Grupo {
-        ACADEMICO("academico", "Académico", "Carreras, materias, comisiones y horarios."),
         ASISTENCIA("asistencia", "Asistencias", "Registro y consulta de la asistencia docente."),
+        // La descripcion dice el orden de carga porque el menu ya no lo muestra: ahi los
+        // destinos van del uso diario al anual, que es el orden inverso.
+        ACADEMICO("academico", "Académico",
+            "La oferta del año. Se carga en orden: ciclo lectivo, carrera, materia, comisión "
+            + "y horario; cada paso necesita el anterior."),
         PERSONAL("personal", "Personal", "Docentes, cuentas de acceso y datos de la institución.");
 
         private final String ruta;
@@ -55,30 +59,6 @@ public class SeccionService {
         boolean esInstitucion = tieneRol(auth, "ROLE_INSTITUCION");
 
         return switch (grupo) {
-            case ACADEMICO -> {
-                List<SeccionDto> pantallas = new java.util.ArrayList<>();
-                // Ciclos y días sin clase son solo institucionales, igual que en la barra
-                // lateral, y van primero por el mismo motivo: sin un ciclo no se puede cargar
-                // una comisión.
-                if (esInstitucion) {
-                    pantallas.add(new SeccionDto("Ciclos lectivos", "/ciclos",
-                        "Los períodos en los que el sistema toma asistencia.", "calendario"));
-                    pantallas.add(new SeccionDto("Días sin clase", "/dias-sin-clase",
-                        "Feriados y suspensiones: no generan ausencia.", "calendarioX"));
-                }
-                pantallas.add(new SeccionDto("Carreras", "/carreras",
-                    "Los programas académicos de los que cuelga todo lo demás.", "libro"));
-                pantallas.add(new SeccionDto("Materias", "/materias",
-                    "Qué se dicta en cada carrera y en qué año.", "materia"));
-                pantallas.add(new SeccionDto("Comisiones", "/comisiones",
-                    "Las divisiones de cada materia y quién las dicta.", "personas"));
-                pantallas.add(new SeccionDto("Horarios", "/horarios",
-                    "Las franjas semanales contra las que se marca la asistencia.", "reloj"));
-                pantallas.add(new SeccionDto("Grilla semanal", "/grilla",
-                    "Los horarios de una carrera vistos como calendario.", "grilla"));
-                yield List.copyOf(pantallas);
-            }
-
             case ASISTENCIA -> List.of(
                 new SeccionDto("Pase de asistencia", "/asistencia/pase",
                     "Reconocer al docente por cámara y registrar su asistencia.", "rostro"),
@@ -86,6 +66,33 @@ public class SeccionService {
                     "Las marcas de una fecha, con las ausencias calculadas.", "lista"),
                 new SeccionDto("Reportes", "/reportes",
                     "Filtrar por período y exportar a CSV o PDF.", "grafico"));
+
+            case ACADEMICO -> {
+                List<SeccionDto> pantallas = new java.util.ArrayList<>();
+                // Del uso diario al anual, igual que en la barra lateral: la grilla y los
+                // horarios se miran seguido, y una carrera o un ciclo se cargan una vez al año.
+                // El orden en que hay que cargarlos --ciclo, carrera, materia, comisión,
+                // horario-- lo cuenta el texto de esta pantalla, que es donde hace falta.
+                pantallas.add(new SeccionDto("Grilla semanal", "/grilla",
+                    "Los horarios de una carrera vistos como calendario.", "grilla"));
+                pantallas.add(new SeccionDto("Horarios", "/horarios",
+                    "Las franjas semanales contra las que se marca la asistencia.", "reloj"));
+                pantallas.add(new SeccionDto("Comisiones", "/comisiones",
+                    "Las divisiones de cada materia y quién las dicta.", "personas"));
+                pantallas.add(new SeccionDto("Materias", "/materias",
+                    "Qué se dicta en cada carrera y en qué año.", "materia"));
+                pantallas.add(new SeccionDto("Carreras", "/carreras",
+                    "Los programas académicos de los que cuelga todo lo demás.", "libro"));
+                // Ciclos y días sin clase son solo institucionales: definen cuándo el sistema
+                // toma asistencia y cuándo genera ausencias, que no es una tarea del día a día.
+                if (esInstitucion) {
+                    pantallas.add(new SeccionDto("Días sin clase", "/dias-sin-clase",
+                        "Feriados y suspensiones: no generan ausencia.", "calendarioX"));
+                    pantallas.add(new SeccionDto("Ciclos lectivos", "/ciclos",
+                        "Los períodos en los que el sistema toma asistencia.", "calendario"));
+                }
+                yield List.copyOf(pantallas);
+            }
 
             case PERSONAL -> {
                 List<SeccionDto> pantallas = new java.util.ArrayList<>();
