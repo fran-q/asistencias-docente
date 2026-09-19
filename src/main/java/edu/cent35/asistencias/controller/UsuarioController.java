@@ -106,12 +106,17 @@ public class UsuarioController {
     //  Edicion
     // ============================================================
     @GetMapping("/{id}/editar")
-    public String formEditar(@PathVariable Long id, Model model) {
+    public String formEditar(@PathVariable Long id,
+                             @AuthenticationPrincipal UsuarioAutenticado actual,
+                             Model model) {
         Usuario u = usuarioService.buscarPorId(id);
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", UsuarioEditFormDto.from(u));
         }
         model.addAttribute("usuario", u);
+        // La propia cuenta no se da de baja: el boton lo dice de una vez, en vez de abrir un
+        // cuadro para confirmar algo que el servicio va a rechazar igual.
+        model.addAttribute("esPropia", actual != null && id.equals(actual.getUsuarioId()));
         // La pantalla cambia segun el rol: una institucion lleva un solo campo de nombre y no
         // ofrece la baja. Se resuelve aca y no en la plantilla porque Thymeleaf no puede leer
         // constantes de una clase Java.
@@ -146,7 +151,6 @@ public class UsuarioController {
                 form.getNombre(),
                 form.getApellido(),
                 form.getEmail(),
-                form.getActivo(),
                 actual.getUsuarioId(),
                 form.isConfirmado()
             );
@@ -159,7 +163,6 @@ public class UsuarioController {
             campos.put("nombre", form.getNombre());
             campos.put("apellido", form.getApellido());
             campos.put("email", form.getEmail());
-            campos.put("activo", String.valueOf(form.getActivo()));
             campos.values().removeIf(Objects::isNull);
 
             model.addAttribute("impacto", ex.getImpacto());
@@ -180,8 +183,42 @@ public class UsuarioController {
     private void reponerContexto(Long id, Model model) {
         Usuario u = usuarioService.buscarPorId(id);
         model.addAttribute("usuario", u);
+        if (!model.containsAttribute("esPropia")) model.addAttribute("esPropia", false);
         model.addAttribute("esInstitucion",
             RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo()));
+    }
+
+    // ============================================================
+    //  Baja y reactivacion de una cuenta
+    // ============================================================
+    /**
+     * Da de baja la cuenta. Es una acción propia, con su confirmación en pantalla, y no una
+     * casilla que se guardaba junto con el nombre y el correo.
+     *
+     * <p>Vuelve a la edición y no al listado: es donde se estaba, y ahí se ve el estado nuevo
+     * por si hay que reactivarla.
+     */
+    @PostMapping("/{id}/baja")
+    public String darDeBaja(@PathVariable Long id,
+                            @AuthenticationPrincipal UsuarioAutenticado actual,
+                            RedirectAttributes redirect) {
+        try {
+            Usuario u = usuarioService.darDeBaja(id, actual.getUsuarioId());
+            redirect.addFlashAttribute("flashMensaje",
+                "La cuenta " + u.getUsername() + " quedó dada de baja: ya no puede iniciar sesión.");
+        } catch (IllegalArgumentException ex) {
+            redirect.addFlashAttribute("flashError", ex.getMessage());
+        }
+        return "redirect:/usuarios/" + id + "/editar";
+    }
+
+    // Vuelve a habilitar una cuenta dada de baja.
+    @PostMapping("/{id}/alta")
+    public String reactivar(@PathVariable Long id, RedirectAttributes redirect) {
+        Usuario u = usuarioService.reactivar(id);
+        redirect.addFlashAttribute("flashMensaje",
+            "La cuenta " + u.getUsername() + " vuelve a poder iniciar sesión.");
+        return "redirect:/usuarios/" + id + "/editar";
     }
 
     // ============================================================

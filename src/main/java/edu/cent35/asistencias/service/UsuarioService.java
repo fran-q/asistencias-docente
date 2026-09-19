@@ -151,18 +151,22 @@ public class UsuarioService {
      */
     @Transactional
     public Usuario actualizar(Long id, String nombre, String apellido, String email,
-                              boolean activo, Long usuarioActualId) {
-        return actualizar(id, nombre, apellido, email, activo, usuarioActualId, false);
+                              Long usuarioActualId) {
+        return actualizar(id, nombre, apellido, email, usuarioActualId, false);
     }
 
+    /**
+     * Igual que el anterior, con la confirmación ya dada.
+     *
+     * <p>No toca el estado de la cuenta. Darla de baja dejó de ser una casilla de este
+     * formulario --se guardaba junto con el nombre y el correo, sin preguntar nada-- y pasó a
+     * ser su propia acción: {@link #darDeBaja} y {@link #reactivar}.
+     */
     @Transactional
-    // Igual que el anterior, con la confirmacion ya dada.
     public Usuario actualizar(Long id, String nombre, String apellido, String email,
-                              boolean activo, Long usuarioActualId, boolean confirmado) {
+                              Long usuarioActualId, boolean confirmado) {
 
         Usuario u = buscarPorId(id);
-
-        boolean esCuentaDeInstitucion = RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo());
 
         // Si se cambia email, validar unicidad por institucion
         String emailNuevo = email.trim();
@@ -170,21 +174,6 @@ public class UsuarioService {
         if (cambioElCorreo
                 && usuarioRepository.existsByEmailAndInstitucionId(emailNuevo, u.getInstitucionId())) {
             throw new IllegalArgumentException("El correo '" + emailNuevo + "' ya está en uso en esta institución");
-        }
-
-        // La cuenta de la institucion no se da de baja desde la administracion de usuarios.
-        // Se comprueba en el servidor y no solo escondiendo la casilla: la casilla se puede
-        // mandar igual armando el formulario a mano.
-        if (esCuentaDeInstitucion && !activo) {
-            throw new IllegalArgumentException(
-                "La cuenta de la institución no se puede dar de baja: es la única que administra "
-                + "usuarios y datos del establecimiento, y sin ella nadie podría volver a entrar "
-                + "a repararlo.");
-        }
-
-        if (id.equals(usuarioActualId) && !activo) {
-            throw new IllegalArgumentException(
-                "No podés desactivarte a vos mismo. Pedíselo a otra cuenta con permisos.");
         }
 
         // Lo que se va a guardar, que es tambien lo que se muestra si hay que confirmar.
@@ -218,10 +207,6 @@ public class UsuarioService {
         }
 
         u.setEmail(emailNuevo);
-        u.setActivo(activo);
-        // Solo al desactivar: al reactivar se limpia, porque arrastrar quien la dio de baja
-        // describiria una baja que ya no esta vigente.
-        u.setDadoDeBajaPor(activo ? null : usuarioActualId);
 
         // Cambiar la direccion invalida la verificacion: la anterior fue confirmada, esta no.
         // Sin esto la cuenta seguiria figurando verificada con un correo que nadie probo, y
@@ -233,9 +218,54 @@ public class UsuarioService {
         }
 
         Usuario saved = usuarioRepository.save(u);
-        log.info("Usuario actualizado: id={}, username={}, activo={}",
-                 saved.getId(), saved.getUsername(), activo);
+        log.info("Usuario actualizado: id={}, username={}", saved.getId(), saved.getUsername());
         return saved;
+    }
+
+    /**
+     * Da de baja una cuenta: deja de poder iniciar sesión.
+     *
+     * <p>Es su propia operación y no una casilla del formulario de datos. Como casilla se
+     * guardaba junto con el nombre y el correo, sin preguntar nada, y desactivar a alguien
+     * quedaba a un clic distraído de distancia; ahora la pantalla pide confirmarlo, igual que
+     * la baja de un docente.
+     *
+     * <p>Las dos guardas se comprueban acá y no solo escondiendo el botón: un POST armado a
+     * mano llega igual.
+     */
+    @Transactional
+    public Usuario darDeBaja(Long id, Long usuarioActualId) {
+        Usuario u = buscarPorId(id);
+
+        if (RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo())) {
+            throw new IllegalArgumentException(
+                "La cuenta de la institución no se puede dar de baja: es la única que administra "
+                + "usuarios y datos del establecimiento, y sin ella nadie podría volver a entrar "
+                + "a repararlo.");
+        }
+        if (id.equals(usuarioActualId)) {
+            throw new IllegalArgumentException(
+                "No podés desactivarte a vos mismo. Pedíselo a otra cuenta con permisos.");
+        }
+
+        u.setActivo(false);
+        u.setDadoDeBajaPor(usuarioActualId);
+        Usuario guardado = usuarioRepository.save(u);
+        log.info("Usuario dado de baja: id={}, username={}, por={}",
+                 guardado.getId(), guardado.getUsername(), usuarioActualId);
+        return guardado;
+    }
+
+    // Vuelve a habilitar una cuenta dada de baja. Se limpia quien la dio de baja: arrastrarlo
+    // describiria una baja que ya no esta vigente.
+    @Transactional
+    public Usuario reactivar(Long id) {
+        Usuario u = buscarPorId(id);
+        u.setActivo(true);
+        u.setDadoDeBajaPor(null);
+        Usuario guardado = usuarioRepository.save(u);
+        log.info("Usuario reactivado: id={}, username={}", guardado.getId(), guardado.getUsername());
+        return guardado;
     }
 
 

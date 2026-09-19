@@ -48,6 +48,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -269,13 +270,39 @@ class CorreccionesPantallasIT {
     }
 
     @Test
-    @DisplayName("Una cuenta de administrador sí ofrece la casilla de baja, con los dos nombres")
+    @DisplayName("Una cuenta de administrador se da de baja con un botón, no con una casilla")
     void adminConBajaYApellido() throws Exception {
-        mockMvc.perform(get("/usuarios/" + usuarioAdminId + "/editar")
-                .with(user(principal("INSTITUCION"))))
-            .andExpect(status().isOk())
-            .andExpect(content().string(containsString("Cuenta activa")))
-            .andExpect(content().string(containsString("id=\"apellido\"")));
+        String html = pantalla("/usuarios/" + usuarioAdminId + "/editar");
+
+        assertThat(html)
+            .as("dejar a alguien afuera del sistema no es un dato mas que se guarda de paso "
+                + "con el nombre y el correo")
+            .doesNotContain("Cuenta activa")
+            .doesNotContain("name=\"activo\"")
+            .contains("/usuarios/" + usuarioAdminId + "/baja")
+            .as("y se pregunta antes")
+            .contains("¿Dar de baja la cuenta")
+            .contains("id=\"apellido\"");
+    }
+
+    @Test
+    @DisplayName("El botón da de baja la cuenta y después ofrece reactivarla")
+    void laBajaDeUsuarioPideConfirmarYSeDeshace() throws Exception {
+        mockMvc.perform(post("/usuarios/" + usuarioAdminId + "/baja")
+                .with(user(principal("INSTITUCION"))).with(csrf()))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/usuarios/" + usuarioAdminId + "/editar"));
+
+        assertThat(usuarioRepository.findById(usuarioAdminId).orElseThrow().getActivo()).isFalse();
+        assertThat(pantalla("/usuarios/" + usuarioAdminId + "/editar"))
+            .contains("Dada de baja")
+            .as("la vuelta atras esta a la vista, en la misma pantalla")
+            .contains("/usuarios/" + usuarioAdminId + "/alta");
+
+        mockMvc.perform(post("/usuarios/" + usuarioAdminId + "/alta")
+                .with(user(principal("INSTITUCION"))).with(csrf()))
+            .andExpect(status().is3xxRedirection());
+        assertThat(usuarioRepository.findById(usuarioAdminId).orElseThrow().getActivo()).isTrue();
     }
 
     @Test

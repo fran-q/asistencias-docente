@@ -36,7 +36,6 @@ public class UsuarioEditFormDto {
     private String apellido;
 
     @NotNull
-    private Boolean activo;
 
     /**
      * Precarga el formulario con los datos actuales de la cuenta.
@@ -58,7 +57,6 @@ public class UsuarioEditFormDto {
             .email(u.getEmail())
             .nombre(u.esCuentaInstitucional() ? u.getNombreParaMostrar() : u.getPersona().getNombre())
             .apellido(u.esCuentaInstitucional() ? null : u.getPersona().getApellido())
-            .activo(Boolean.TRUE.equals(u.getActivo()))
             .build();
     }
 

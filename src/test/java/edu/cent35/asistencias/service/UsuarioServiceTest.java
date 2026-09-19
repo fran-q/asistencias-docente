@@ -133,7 +133,7 @@ class UsuarioServiceTest {
             .thenReturn(false);
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.actualizar(10L, "N", "A", "otro@x.com", true, USUARIO_ACTUAL);
+        service.actualizar(10L, "N", "A", "otro@x.com", USUARIO_ACTUAL);
 
         assertThat(u.getEmailVerificadoEn())
             .as("la direccion anterior estaba comprobada; esta no, asi que hay que "
@@ -151,7 +151,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         // Se edita el nombre, no el correo.
-        service.actualizar(10L, "Nombre nuevo", "A", u.getEmail(), true, USUARIO_ACTUAL);
+        service.actualizar(10L, "Nombre nuevo", "A", u.getEmail(), USUARIO_ACTUAL);
 
         assertThat(u.getEmailVerificadoEn())
             .as("bloquear a alguien por editarle el nombre seria un castigo sin motivo")
@@ -159,31 +159,32 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
-    //  ACTUALIZAR / autoproteccion
+    //  BAJA / autoproteccion
     // ====================================================================
+    //  La baja dejo de ser una casilla del formulario de datos --se guardaba junto con el
+    //  nombre y el correo, sin preguntar nada-- y paso a ser su propia operacion. Las dos
+    //  guardas viven en ella.
 
     @Test
-    @DisplayName("actualizar: rechaza desactivarse a si mismo")
-    void actualizar_noAutoDesactivar() {
+    @DisplayName("darDeBaja: rechaza desactivarse a si mismo")
+    void baja_noAutoDesactivar() {
         Usuario yo = usuarioActivo(USUARIO_ACTUAL, RolCodigo.ADMIN);
         when(usuarioRepository.findById(USUARIO_ACTUAL)).thenReturn(Optional.of(yo));
 
-        assertThatThrownBy(() -> service.actualizar(
-            USUARIO_ACTUAL, "N", "A", "yo@x.com", /*activo=*/ false, USUARIO_ACTUAL))
+        assertThatThrownBy(() -> service.darDeBaja(USUARIO_ACTUAL, USUARIO_ACTUAL))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("desactivarte");
     }
 
     @Test
-    @DisplayName("actualizar: una cuenta de INSTITUCION no se puede dar de baja")
-    void actualizar_institucionNoSeDaDeBaja() {
+    @DisplayName("darDeBaja: una cuenta de INSTITUCION no se puede dar de baja")
+    void baja_institucionNoSeDaDeBaja() {
         // Es la unica cuenta que administra el establecimiento. Desactivarla por error
         // deja al colegio sin nadie que pueda entrar a repararlo.
         Usuario institucion = usuarioActivo(50L, RolCodigo.INSTITUCION);
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(institucion));
 
-        assertThatThrownBy(() -> service.actualizar(
-            50L, "Colegio", null, "col@x.com", /*activo=*/ false, USUARIO_ACTUAL))
+        assertThatThrownBy(() -> service.darDeBaja(50L, USUARIO_ACTUAL))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("no se puede dar de baja");
 
@@ -191,17 +192,48 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("actualizar: una cuenta ADMIN si se puede dar de baja")
-    void actualizar_adminSiSeDaDeBaja() {
+    @DisplayName("darDeBaja: una cuenta ADMIN si se da de baja, y queda quien la bajo")
+    void baja_adminSiSeDaDeBaja() {
         Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        Usuario actualizado = service.actualizar(
-            50L, "N", "A", "o@x.com", /*activo=*/ false, USUARIO_ACTUAL);
+        Usuario dadoDeBaja = service.darDeBaja(50L, USUARIO_ACTUAL);
 
-        assertThat(actualizado.getActivo()).isFalse();
-        verify(usuarioRepository).save(any());
+        assertThat(dadoDeBaja.getActivo()).isFalse();
+        assertThat(dadoDeBaja.getDadoDeBajaPor()).isEqualTo(USUARIO_ACTUAL);
+    }
+
+    @Test
+    @DisplayName("reactivar: la cuenta vuelve, y sin arrastrar quien la habia dado de baja")
+    void reactivar_limpiaLaBaja() {
+        Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
+        admin.setActivo(false);
+        admin.setDadoDeBajaPor(USUARIO_ACTUAL);
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario reactivado = service.reactivar(50L);
+
+        assertThat(reactivado.getActivo()).isTrue();
+        assertThat(reactivado.getDadoDeBajaPor())
+            .as("arrastrarlo describiria una baja que ya no esta vigente")
+            .isNull();
+    }
+
+    @Test
+    @DisplayName("actualizar: no toca el estado de la cuenta")
+    void actualizar_noTocaElEstado() {
+        Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
+        admin.setActivo(false);
+        when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
+        when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Usuario actualizado = service.actualizar(50L, "N", "A", "o@x.com", USUARIO_ACTUAL);
+
+        assertThat(actualizado.getActivo())
+            .as("corregir el correo de una cuenta dada de baja no la reactiva")
+            .isFalse();
     }
 
     @Test
@@ -214,7 +246,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Usuario actualizado = service.actualizar(
-            50L, "Otro", "Nombre", "otro@x.com", true, USUARIO_ACTUAL);
+            50L, "Otro", "Nombre", "otro@x.com", USUARIO_ACTUAL);
 
         assertThat(actualizado.getRol().getCodigo()).isEqualTo(RolCodigo.ADMIN.name());
     }

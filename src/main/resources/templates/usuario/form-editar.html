@@ -85,24 +85,24 @@
                         </small>
                     </div>
 
-                    <!-- La cuenta de la institucion no se da de baja desde aca: es la unica
-                         que administra el establecimiento, y desactivarla por error lo deja
-                         sin nadie que pueda entrar a repararlo. El servidor lo rechaza igual
-                         aunque el campo se mande a mano. -->
-                    <div class="form-group" th:unless="${esInstitucion}">
-                        <label class="checkbox-label">
-                            <input type="checkbox" th:field="*{activo}">
-                            <span>Cuenta activa</span>
-                        </label>
-                        <small class="form-hint">Si la desactivás, no va a poder iniciar sesión.</small>
-                    </div>
-                    <div class="form-group" th:if="${esInstitucion}">
+                    <!--
+                      El estado se muestra, no se edita. Era una casilla dentro de este
+                      formulario, asi que dar de baja a alguien se guardaba junto con el nombre
+                      y el correo, sin preguntar nada: un clic distraido y esa persona no podia
+                      entrar mas. Ahora es una accion aparte, abajo, con su confirmacion.
+                    -->
+                    <div class="form-group">
                         <label>Estado</label>
-                        <p class="form-static"><span class="badge badge--success">Activa</span></p>
-                        <input type="hidden" th:field="*{activo}">
-                        <small class="form-hint">
+                        <p class="form-static">
+                            <span th:if="${usuario.activo}" class="badge badge--success">Activa</span>
+                            <span th:unless="${usuario.activo}" class="badge badge--danger">Dada de baja</span>
+                        </p>
+                        <small class="form-hint" th:if="${esInstitucion}">
                             La cuenta de la institución no se puede dar de baja: es la única
                             que administra usuarios y datos del establecimiento.
+                        </small>
+                        <small class="form-hint" th:unless="${esInstitucion}">
+                            Se cambia con el botón de abajo, en "Acciones sobre la cuenta".
                         </small>
                     </div>
                 </div>
@@ -149,6 +149,40 @@
                 código de un solo uso le llega a su propio correo. Desde acá no se le puede
                 fijar una contraseña, para que nadie más que ella la conozca.
             </p>
+
+            <!--
+              La baja de la cuenta. Es un boton con confirmacion y no una casilla del
+              formulario de arriba: dejar a alguien afuera del sistema no es un dato mas que
+              se guarda de paso con el nombre y el correo.
+
+              Igual que en Docentes, cuando la baja no se puede el boton lo dice de una vez en
+              vez de abrir un cuadro para confirmar algo que va a fallar.
+            -->
+            <div class="form-actions" th:if="${!esInstitucion}">
+                <button th:if="${usuario.activo and esPropia}"
+                        type="button" class="btn btn--ghost btn--danger"
+                        data-aviso-toast="No podés dar de baja tu propia cuenta. Pedíselo a otra cuenta con permisos.">
+                    Dar de baja la cuenta
+                </button>
+
+                <form th:if="${usuario.activo and !esPropia}"
+                      th:action="@{/usuarios/{id}/baja(id=${usuario.id})}" method="post"
+                      class="inline-form"
+                      th:data-confirm="|¿Dar de baja la cuenta ${usuario.username}?|"
+                      data-confirm-detail="No va a poder iniciar sesión hasta que la reactives. Lo que ya registró se conserva."
+                      data-confirm-action="Dar de baja"
+                      data-confirm-style="danger">
+                    <button type="submit" class="btn btn--ghost btn--danger"
+                            data-texto-enviando="Dando de baja...">Dar de baja la cuenta</button>
+                </form>
+
+                <form th:unless="${usuario.activo}"
+                      th:action="@{/usuarios/{id}/alta(id=${usuario.id})}" method="post"
+                      class="inline-form">
+                    <button type="submit" class="btn btn--ghost btn--success"
+                            data-texto-enviando="Reactivando...">Reactivar la cuenta</button>
+                </form>
+            </div>
         </div>
     </section>
 </body>
