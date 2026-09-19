@@ -508,7 +508,10 @@ class AjustesPantallasIT {
         assertThat(html)
             .as("un click hecho para 'ver de qué es esta clase' terminaba en un formulario")
             .doesNotContain("<a th:href=\"@{/horarios/")
-            .contains("grilla-detalle.js");
+            .contains("grilla-detalle.js")
+            .as("la marca de la hora actual: su script va DENTRO de la section, o el layout "
+                + "lo descarta sin avisar")
+            .contains("grilla-ahora.js");
     }
 
     // ========================================================================

@@ -2024,6 +2024,8 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 .grilla {
     display: grid;
+    /* Ancla de la marca de la hora actual, que se posiciona sobre las filas. */
+    position: relative;
     grid-template-columns: 58px repeat(7, minmax(96px, 1fr));
     grid-template-rows: 34px repeat(32, 18px);
     gap: 3px;
@@ -2091,6 +2093,19 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     background: color-mix(in oklab, var(--dia-sab) 16%, var(--surface)); }
 .grilla__item[style*="grid-column: 8"] { border-left-color: var(--dia-dom);
     background: color-mix(in oklab, var(--dia-dom) 16%, var(--surface)); }
+
+/* La hora actual: un guion a lo ancho de los dias, con un punto en el borde izquierdo.
+   Punteado y en rojo tenue, que es como lo dibuja cualquier calendario: tiene que leerse
+   como una referencia y no como un bloque mas de la grilla. La ubica grilla-ahora.js; sin
+   JavaScript no aparece, y no se pierde nada porque no dice nada. */
+.grilla__ahora {
+    position: absolute; height: 0; z-index: 2; pointer-events: none;
+    border-top: 1px dashed var(--danger); opacity: .6;
+}
+.grilla__ahora::before {
+    content: ""; position: absolute; top: -3px; left: -3px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--danger);
+}
 
 .grilla__footer { margin: var(--space) 0 0; font-size: .8rem; color: var(--text-dim); }
 
