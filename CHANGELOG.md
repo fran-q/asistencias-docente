@@ -34,6 +34,14 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   habilitar una máquina a distancia, que es lo que sostiene que la captura biométrica ocurra
   en máquinas conocidas (ADR-0015). Lo que se abrió es cuántas pueden estarlo a la vez.
 
+### Quitado
+
+- **Revocar un equipo con un código al correo.** Existía porque un equipo solo podía revocarse
+  desde esa misma máquina: cuando esa computadora se rompía o se formateaba, pedir un código al
+  buzón de la institución era la única salida. Ahora se revoca desde la pantalla, así que ese
+  camino se quedó sin nada que resolver. Se fueron sus tres endpoints, su pantalla y el
+  propósito de código que usaba; los códigos ya emitidos vencen solos y nadie los lee.
+
 ---
 
 ## Tiempo neto de la clase

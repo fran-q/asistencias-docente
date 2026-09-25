@@ -1,6 +1,5 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.PropositoCodigo;
 import edu.cent35.asistencias.model.PuestoCaptura;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.model.Institucion;
@@ -57,8 +56,6 @@ public class PuestoCapturaService {
     // Revocar a distancia exige un codigo de un solo uso. Se reusan las defensas que ya
     // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
     // inventar un segundo mecanismo que habria que endurecer por separado.
-    private final CodigoVerificacionService codigoService;
-    private final CanalDeCodigos notificador;
 
     /** Un puesto recién designado, con su token en claro. Es la única vez que el token existe fuera del navegador. */
     @Value
@@ -292,65 +289,24 @@ public class PuestoCapturaService {
     }
 
     /**
-     * Revoca el puesto desde ese mismo equipo. Es baja lógica como en el resto del sistema,
-     * pero acá tiene una consecuencia inmediata: la cookie que vive en ese equipo deja de
-     * servir en la siguiente petición.
+     * Revoca un equipo. Es baja lógica como en el resto del sistema, pero acá tiene una
+     * consecuencia inmediata: la cookie que vive en esa máquina deja de servir en la
+     * siguiente petición.
      *
-     * <p><b>Por qué solo desde ahí.</b> Con un único puesto permitido, quien puede revocar
-     * puede mudar la captura: revoca y designa el suyo. Si eso se pudiera hacer desde
-     * cualquier lado, la contraseña institucional alcanzaría para llevarse la captura
-     * biométrica a una máquina cualquiera, que es exactamente lo que ADR-0015 impide. Con el
-     * equipo de por medio, hay que estar sentado ahí.
+     * <p><b>Desde la pantalla, sin estar en esa máquina</b> (V030). Con un solo equipo
+     * permitido la regla anterior se sostenía: quien revocaba podía mudar la captura, así que
+     * se le exigía estar sentado ahí. Con una cámara por entrada esa regla obliga a caminar
+     * hasta la computadora que justo puede estar rota o robada, que es cuando más urge
+     * revocarla. Lo que autoriza es la cuenta institucional, y solo sobre sus propios equipos.
      *
-     * <p>Cuando esa máquina se rompe o se formatea queda {@link #revocarConCodigo}, que exige
-     * además el buzón de la institución.
-     *
-     * @param desdeEsePuesto si la petición trae la cookie de ese mismo puesto
+     * <p>Lo que no se abrió es la designación: autorizar un equipo sigue siendo desde él
+     * (ADR-0015), y eso es lo que sostiene dónde ocurre la captura biométrica.
      */
     @Transactional
     public void revocar(Long puestoId, Long institucionId) {
         revocarSinControles(puestoId, institucionId);
     }
 
-    /**
-     * Revoca el puesto desde otra máquina, con un código de un solo uso al correo de la
-     * institución. Es la salida para cuando el equipo autorizado ya no existe.
-     *
-     * <p>El código no es un trámite: es lo que convierte "sé la contraseña institucional" en
-     * "sé la contraseña y además entro al buzón de la institución". Sin él, permitir la
-     * revocación a distancia devolvería el agujero que {@link #revocar} cierra.
-     */
-    @Transactional
-    public void revocarConCodigo(Long puestoId, Long institucionId, Usuario solicitante,
-                                 String codigoIngresado) {
-        CodigoVerificacionService.Resultado resultado = codigoService.validar(
-            solicitante.getId(), PropositoCodigo.REVOCACION_PUESTO, codigoIngresado);
-
-        if (resultado != CodigoVerificacionService.Resultado.OK) {
-            throw new IllegalArgumentException(mensajeDelCodigo(resultado));
-        }
-        revocarSinControles(puestoId, institucionId);
-        log.info("Puesto revocado a distancia con codigo: id={}, institucion={}, por usuario={}",
-                 puestoId, institucionId, solicitante.getId());
-    }
-
-    /**
-     * Emite y manda el código para revocar a distancia, al correo de quien lo pide.
-     *
-     * <p>Va al correo que la cuenta tiene cargado y no a uno que se escriba en la pantalla: si
-     * el destino lo eligiera quien pide, el código no probaría nada.
-     */
-    @Transactional
-    public void pedirCodigoDeRevocacion(Usuario solicitante, String ip) {
-        String codigo = codigoService.emitir(
-            solicitante, PropositoCodigo.REVOCACION_PUESTO, solicitante.getEmail(), ip);
-        notificador.enviarCodigo(
-            solicitante, PropositoCodigo.REVOCACION_PUESTO, solicitante.getEmail(), codigo);
-        log.info("Codigo de revocacion de puesto emitido para el usuario {}", solicitante.getId());
-    }
-
-    // La baja en si, sin decidir quien tiene derecho a pedirla: eso ya lo resolvieron los dos
-    // metodos de arriba, cada uno con su prueba.
     /**
      * El tope de equipos autorizados de esa institución, o null si no tiene (V030).
      *
@@ -376,17 +332,6 @@ public class PuestoCapturaService {
         puestoRepository.save(puesto);
 
         log.info("Puesto de captura revocado: id={}, institucion={}", puestoId, institucionId);
-    }
-
-    // Traduce el resultado del codigo a algo que se pueda leer en la pantalla.
-    private String mensajeDelCodigo(CodigoVerificacionService.Resultado resultado) {
-        return switch (resultado) {
-            case OK -> "";
-            case INEXISTENTE -> "No hay ningún código pendiente. Pedí uno nuevo.";
-            case VENCIDO -> "El código venció. Pedí uno nuevo.";
-            case INCORRECTO -> "El código no es correcto.";
-            case SIN_INTENTOS -> "Se agotaron los intentos. Pedí un código nuevo.";
-        };
     }
 
     /**

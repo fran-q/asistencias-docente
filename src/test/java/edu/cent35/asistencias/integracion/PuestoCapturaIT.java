@@ -523,21 +523,6 @@ class PuestoCapturaIT {
     }
 
     @Test
-    @DisplayName("Con un codigo que no es el emitido tampoco se revoca")
-    void noSeRevocaConCodigoInvalido() {
-        designarEn(institucionA);
-        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
-
-        try {
-            puestoService.revocarConCodigo(puestoId, institucionA, cuentaA, "000000");
-            throw new AssertionError("tendria que haber rechazado el codigo");
-        } catch (IllegalArgumentException esperado) {
-            assertThat(esperado.getMessage()).isNotBlank();
-        }
-        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
-    }
-
-    @Test
     @DisplayName("El POST de revocar desde otra maquina revoca igual")
     void elPostDeRevocarDesdeAfueraRevoca() throws Exception {
         // V030: el caso legitimo --la PC de esa puerta se rompio-- es exactamente este, y
