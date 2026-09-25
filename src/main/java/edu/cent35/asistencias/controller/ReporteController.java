@@ -85,6 +85,9 @@ public class ReporteController {
         try {
             List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
             model.addAttribute("filas", filas);
+            // Cuanto se dicto de lo programado en el periodo. Sin esto habia que bajar el CSV
+            // y sumar a mano para contestar la pregunta mas frecuente del reporte.
+            model.addAttribute("totales", reporteService.totales(filas));
             // Cuantas habria sin el tope. Si son mas que las mostradas, la pantalla avisa:
             // un reporte cortado en silencio se lee como un reporte completo.
             long total = reporteService.contar(filtro);
@@ -157,7 +160,8 @@ public class ReporteController {
             "attachment; filename=\"" + nombreArchivo + "\"");
 
         try (OutputStream out = response.getOutputStream()) {
-            reportePdfService.escribir(out, filas, filtro.getDesde(), filtro.getHasta(), institucion);
+            reportePdfService.escribir(out, filas, filtro.getDesde(), filtro.getHasta(),
+                                       institucion, reporteService.totales(filas));
         }
     }
 
@@ -170,6 +174,8 @@ public class ReporteController {
             "docente_dni", "docente_apellido", "docente_nombre",
             "hora_registrada", "hora_salida", "salida_presumida",
             "minutos_programados", "minutos_efectivos",
+            "minutos_tarde", "minutos_salida_anticipada", "minutos_fuera_de_clase",
+            "llegada_en_margen", "salida_en_margen",
             "estado", "metodo",
             "motivo_carga_manual", "detalle_carga_manual", "usuario_registro",
             "justificada", "motivo_justificacion"));
@@ -197,6 +203,14 @@ public class ReporteController {
             // Vacio, no cero: cero dice "no dio la clase" y vacio dice "no tenemos el dato".
             // En la planilla esa diferencia decide si el promedio de horas es una mentira.
             csv(f.getMinutosEfectivos()),
+            // El desvio, desarmado en sus dos mitades. En columnas separadas y no en un texto
+            // como "12 min tarde" porque el CSV se abre para sumar y filtrar, no para leer.
+            csv(f.getMinutosTarde()),
+            csv(f.getMinutosSalidaAnticipada()),
+            csv(f.getMinutosFueraDeClase()),
+            csv(f.getMinutosTarde() == null ? "" : (f.isLlegadaDentroDelMargen() ? "SI" : "NO")),
+            csv(f.getMinutosSalidaAnticipada() == null
+                ? "" : (f.isSalidaDentroDelMargen() ? "SI" : "NO")),
             csv(f.getEstado()),
             csv(f.getMetodo()),
             csv(f.getMotivoManual()),

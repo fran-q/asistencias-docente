@@ -38,10 +38,10 @@ public class ReportePdfService {
     // Anchos relativos de las columnas. La materia y el docente son los que se leen,
     // asi que se llevan el espacio; la fecha y la hora tienen largo fijo.
     private static final float[] ANCHOS =
-        {1.1f, 1.6f, 2.4f, 0.9f, 2.0f, 0.8f, 0.8f, 1.2f, 1.0f, 1.0f};
+        {1.1f, 1.6f, 2.4f, 0.9f, 2.0f, 0.8f, 0.8f, 1.2f, 0.9f, 1.0f, 1.0f};
     private static final String[] CABECERAS = {
         "Fecha", "Horario", "Materia", "Comisión", "Docente",
-        "Entra", "Sale", "Dictado", "Estado", "Método"
+        "Entra", "Sale", "Dictado", "Desvío", "Estado", "Método"
     };
 
     private static final Font FUENTE_TITULO   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
@@ -55,7 +55,8 @@ public class ReportePdfService {
      * que en el controlador es el propio response.
      */
     public void escribir(OutputStream out, List<AsistenciaReporteRowDto> filas,
-                         LocalDate desde, LocalDate hasta, String institucion) {
+                         LocalDate desde, LocalDate hasta, String institucion,
+                         ReporteAsistenciaService.TotalesDelReporte totales) {
         // Apaisado: son ocho columnas y en vertical el nombre de la materia se parte.
         Document doc = new Document(PageSize.A4.rotate(), 28, 28, 32, 28);
         try {
@@ -73,6 +74,14 @@ public class ReportePdfService {
                 doc.add(vacio);
             } else {
                 doc.add(tabla(filas));
+
+                // Lo que suma el periodo. Es lo que se mira primero en un reporte impreso, y
+                // hasta ahora habia que sacarlo sumando las filas a mano.
+                doc.add(new Paragraph(" "));
+                doc.add(new Paragraph(resumen(totales), FUENTE_SUBTITULO));
+                doc.add(new Paragraph(
+                    "Desvío: minutos de clase sin cubrir (-) y minutos de permanencia fuera de "
+                    + "la franja de la clase (+).", FUENTE_SUBTITULO));
                 // Un asterisco sin referencia es peor que no ponerlo: quien recibe el PDF
                 // impreso no tiene a quien preguntarle que significa. Solo se aclara si hay
                 // alguna, para no ensuciar los reportes donde todas las salidas se marcaron.
@@ -153,6 +162,7 @@ public class ReportePdfService {
             agregar(t, f.getHoraRegistrada() == null ? "—" : f.getHoraRegistrada().format(HORA), fondo);
             agregar(t, salida(f), fondo);
             agregar(t, dictado(f), fondo);
+            agregar(t, desvio(f), fondo);
             agregar(t, estado(f), fondo);
             agregar(t, texto(f.getMetodo()), fondo);
         }
@@ -204,5 +214,45 @@ public class ReportePdfService {
     private String dictado(AsistenciaReporteRowDto f) {
         if (f.getMinutosEfectivos() == null) return "—";
         return f.getMinutosEfectivos() + "/" + f.getMinutosProgramados();
+    }
+
+    /**
+     * El desvío de la clase, en dos signos: lo que faltó cubrir y lo que sobró de permanencia.
+     *
+     * <p>"-12 +10" dice, sin leer un renglón, que faltaron doce minutos de clase y que el
+     * docente estuvo diez en la institución fuera de esa franja. La referencia va al pie,
+     * igual que la de la salida presumida.
+     */
+    private String desvio(AsistenciaReporteRowDto f) {
+        if (f.getMinutosEfectivos() == null) {
+            return "—";
+        }
+        int sinCubrir = f.getMinutosProgramados() - f.getMinutosEfectivos();
+        int fuera = f.getMinutosFueraDeClase() == null ? 0 : f.getMinutosFueraDeClase();
+        if (sinCubrir <= 0 && fuera <= 0) {
+            return "—";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (sinCubrir > 0) {
+            sb.append("-").append(sinCubrir);
+        }
+        if (fuera > 0) {
+            sb.append(sb.length() == 0 ? "" : " ").append("+").append(fuera);
+        }
+        return sb.toString();
+    }
+
+    // Lo que suma el periodo, en un renglon.
+    private String resumen(ReporteAsistenciaService.TotalesDelReporte t) {
+        if (t == null) {
+            return "";
+        }
+        String base = "Programado " + t.programadoLegible()
+            + "  ·  dictado " + t.netoLegible() + " (" + t.porcentajeDictado() + "%)"
+            + "  ·  sin cubrir " + t.sinCubrirLegible()
+            + "  ·  fuera de clase " + t.fueraDeClaseLegible();
+        return t.clasesSinDato() == 0
+            ? base
+            : base + "  ·  " + t.clasesSinDato() + " sin dato de salida";
     }
 }

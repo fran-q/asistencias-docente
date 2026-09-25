@@ -1,6 +1,7 @@
 package edu.cent35.asistencias.dto;
 
 import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.BloquePresencia;
 import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.AsistenciaManual;
 import edu.cent35.asistencias.model.DiaSemana;
@@ -62,10 +63,57 @@ public class AsistenciaReporteRowDto {
      */
     Integer minutosEfectivos;
 
+    /**
+     * Minutos que el docente llegó tarde a esta clase: del inicio de la clase a su entrada.
+     *
+     * <p>Cero si llegó a horario o antes, y nunca más que la clase entera. <b>Null cuando no
+     * hay jornada</b>, por el mismo motivo que los minutos efectivos: sin una hora de entrada
+     * observada no se puede afirmar un retraso, y una carga manual guarda la hora en que se
+     * cargó, no la de llegada.
+     */
+    Integer minutosTarde;
+
+    /** Minutos que faltaron al final: de la salida al fin de la clase. Mismo criterio de null. */
+    Integer minutosSalidaAnticipada;
+
+    /**
+     * Minutos de permanencia fuera de la franja de esta clase: el "estuvo de más".
+     *
+     * <p>Se cuentan <b>una sola vez por jornada</b> y contra su primera y su última clase, que
+     * es lo que los hace sumables. Una jornada que cubre tres clases seguidas no estuvo de más
+     * entre la primera y la segunda: estuvo dando la segunda. Lo calcula el servicio del
+     * reporte, que es quien conoce la jornada entera.
+     */
+    Integer minutosFueraDeClase;
+
+    /**
+     * Si el retraso entra en la tolerancia del horario (ADR-0018).
+     *
+     * <p>True cuando no hay dato: lo que la pantalla marca es el desvío que se pasó del margen,
+     * y una fila sin jornada no tiene nada que marcar.
+     */
+    boolean llegadaDentroDelMargen;
+
+    /** Si la salida entra en la tolerancia del horario (RF-78). Mismo criterio que la llegada. */
+    boolean salidaDentroDelMargen;
+
     // Arma la fila del reporte sumando, si los hay, el detalle manual y el de la justificación.
     public static AsistenciaReporteRowDto from(Asistencia a,
                                                AsistenciaManual manualOrNull,
                                                String motivoJustOrNull) {
+        return from(a, manualOrNull, motivoJustOrNull, null);
+    }
+
+    /**
+     * La misma fila, con los minutos que la jornada pasó fuera de la franja de clase.
+     *
+     * <p>Ese dato no sale de la asistencia sola: depende de cuál es la primera y la última
+     * clase de su jornada, y eso lo sabe el servicio del reporte.
+     */
+    public static AsistenciaReporteRowDto from(Asistencia a,
+                                               AsistenciaManual manualOrNull,
+                                               String motivoJustOrNull,
+                                               Integer minutosFueraDeClase) {
         return AsistenciaReporteRowDto.builder()
             .asistenciaId(a.getId())
             .fecha(a.getFecha())
@@ -90,6 +138,11 @@ public class AsistenciaReporteRowDto {
             .minutosProgramados(minutosEntre(
                 a.getHorario().getHoraInicio(), a.getHorario().getHoraFin()))
             .minutosEfectivos(minutosEfectivos(a))
+            .minutosTarde(minutosTarde(a))
+            .minutosSalidaAnticipada(minutosSalidaAnticipada(a))
+            .minutosFueraDeClase(minutosFueraDeClase)
+            .llegadaDentroDelMargen(llegadaDentroDelMargen(a))
+            .salidaDentroDelMargen(salidaDentroDelMargen(a))
             .motivoManual(manualOrNull != null && manualOrNull.getMotivo() != null
                 ? manualOrNull.getMotivo().getDescripcion() : null)
             .detalleManual(manualOrNull != null ? manualOrNull.getDetalleAdicional() : null)
@@ -124,6 +177,47 @@ public class AsistenciaReporteRowDto {
         LocalTime desde = maximo(a.getBloque().getHoraEntrada(), a.getHorario().getHoraInicio());
         LocalTime hasta = minimo(a.getBloque().getHoraSalida(), a.getHorario().getHoraFin());
         return Math.max(0, minutosEntre(desde, hasta));
+    }
+
+    /**
+     * Cuántos minutos de la clase se perdieron por llegar tarde.
+     *
+     * <p>Se tope contra la clase entera para que valga el reparto completo:
+     * <b>efectivos + tarde + salida anticipada = programados</b>. Sin ese tope, una jornada
+     * que ni toca la clase daría cifras más grandes que la clase.
+     */
+    private static Integer minutosTarde(Asistencia a) {
+        BloquePresencia b = a.getBloque();
+        if (b == null) {
+            return null;   // sin jornada no hay hora de llegada observada
+        }
+        int programados = minutosEntre(a.getHorario().getHoraInicio(), a.getHorario().getHoraFin());
+        int tarde = minutosEntre(a.getHorario().getHoraInicio(), b.getHoraEntrada());
+        return Math.min(programados, Math.max(0, tarde));
+    }
+
+    // Cuantos minutos de la clase se perdieron por irse antes. Mismo tope que el retraso.
+    private static Integer minutosSalidaAnticipada(Asistencia a) {
+        BloquePresencia b = a.getBloque();
+        if (b == null || b.getHoraSalida() == null) {
+            return null;
+        }
+        int programados = minutosEntre(a.getHorario().getHoraInicio(), a.getHorario().getHoraFin());
+        int antes = minutosEntre(b.getHoraSalida(), a.getHorario().getHoraFin());
+        return Math.min(programados, Math.max(0, antes));
+    }
+
+    // Si ese retraso lo perdona la tolerancia del horario, que es la misma que decide
+    // PRESENTE o TARDE (ADR-0018).
+    private static boolean llegadaDentroDelMargen(Asistencia a) {
+        BloquePresencia b = a.getBloque();
+        return b == null || a.getHorario().llegadaEnHora(b.getHoraEntrada());
+    }
+
+    private static boolean salidaDentroDelMargen(Asistencia a) {
+        BloquePresencia b = a.getBloque();
+        return b == null || b.getHoraSalida() == null
+            || a.getHorario().salidaEnHora(b.getHoraSalida());
     }
 
     private static int minutosEntre(LocalTime desde, LocalTime hasta) {

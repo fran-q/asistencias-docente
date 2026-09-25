@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,6 +92,46 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("carreraId") Long carreraId,
         @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
         @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
+
+    /**
+     * Los bordes de las clases que cubre cada jornada: la que empieza más temprano y la que
+     * termina más tarde.
+     *
+     * <p>La usa el reporte para atribuir los minutos que el docente estuvo <b>fuera</b> de la
+     * franja de clase —lo que se quedó de más, o el rato previo a empezar— a la primera y a la
+     * última clase de su jornada, y una sola vez. Sin esto, una jornada que cubre tres clases
+     * seguidas le sumaría a cada una el tiempo que el docente pasó dando las otras dos.
+     *
+     * <p>Se consulta aparte en vez de deducirlo de las filas del reporte porque el reporte
+     * puede venir filtrado por materia o por carrera: con las clases hermanas afuera, el
+     * excedente se le atribuiría a la que quedó, que no es la última de nada.
+     *
+     * <p><b>Dónde queda el WHERE del tenant.</b> {@code a.institucionId} por la asistencia y
+     * {@code m.institucionId} por la materia de la comisión —ni comisiones ni horarios tienen
+     * columna propia—: el filtro de Hibernate no se propaga a los JOINs (TD-003).
+     */
+    @Query("""
+        SELECT a.bloque.id AS bloqueId,
+               MIN(h.horaInicio) AS primeraClase,
+               MAX(h.horaFin)    AS ultimaClase
+        FROM Asistencia a
+        JOIN a.horario h
+        JOIN a.comision c
+        JOIN c.materia m
+        WHERE a.institucionId = :tenantId
+          AND m.institucionId = :tenantId
+          AND a.bloque.id IN :bloqueIds
+        GROUP BY a.bloque.id
+    """)
+    List<BordesDeLaJornada> bordesDeLasJornadas(@Param("tenantId") Long tenantId,
+                                                @Param("bloqueIds") Collection<Long> bloqueIds);
+
+    /** Proyección liviana para {@link #bordesDeLasJornadas}. */
+    interface BordesDeLaJornada {
+        Long getBloqueId();
+        LocalTime getPrimeraClase();
+        LocalTime getUltimaClase();
+    }
 
     /**
      * La primera asistencia de un período entre dos fechas, o null si no hay ninguna.

@@ -245,6 +245,14 @@ Tres reglas que no son obvias:
   cerrada que cubre la clase en curso y esa clase ya tiene su asistencia. Se bloquea solo esa
   clase: volver para una posterior abre jornada con normalidad.
 
+**El tiempo neto sale de la intersección, y el desvío de sus dos bordes.** Los minutos
+dictados de una clase son los que la permanencia y la franja tienen en común, recortados por
+los dos lados. Lo que falta se reparte entre lo que llegó tarde y lo que se fue antes —la suma
+de los tres da siempre los minutos programados— y cada desvío se compara contra la tolerancia
+del horario, que es la misma que decide PRESENTE o TARDE. La permanencia que cae fuera de la
+franja se cuenta **una sola vez por jornada**, contra su primera y su última clase: entre dos
+clases seguidas no hay tiempo de más, hay otra clase.
+
 **Cache:** `ConcurrentHashMap<Long, LBPHFaceRecognizer>` en memoria, con **barrido por
 inactividad**: `descartarModelosInactivos` es un `@Scheduled` que suelta los modelos que
 nadie usó en `app.biometria.cache-minutos-inactividad` (30 por defecto). No alcanzaba con

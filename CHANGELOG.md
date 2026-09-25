@@ -7,6 +7,38 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Tiempo neto de la clase
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **El desvío de cada clase, en minutos.** El reporte decía cuántos minutos se dictaron sobre
+  los programados, pero no de qué estaba hecha la diferencia. Ahora cada fila dice cuántos
+  minutos llegó tarde el docente y cuántos se fue antes, y resalta solo los que se pasan de la
+  tolerancia del horario: dentro del margen el dato se informa, no se señala.
+
+  El reparto cierra siempre —dictados + tarde + salida anticipada = programados—, así que las
+  tres cifras se pueden sumar sin que aparezcan ni se pierdan minutos.
+
+- **El tiempo que el docente estuvo fuera de la franja de la clase.** Llegar veinte minutos
+  antes o quedarse después ahora se ve. Se cuenta **una sola vez por jornada**, contra su
+  primera y su última clase: el rato entre dos clases seguidas no es tiempo de más, es la
+  segunda clase.
+
+- **Totales del período.** Cuánto estaba programado, cuánto se dictó y qué porcentaje es,
+  cuánto quedó sin cubrir y cuánto tiempo hubo fuera de clase. Las clases sin dato de salida se
+  cuentan aparte y no entran en ninguna suma: meterlas como cero diría que no se dictaron.
+
+  Van en la pantalla y en el PDF, como un renglón al pie. El CSV no los lleva: esa planilla se
+  abre para sumar, y una fila de totales metida entre los datos rompe la tabla.
+
+- **En el CSV el desvío va desarmado en columnas** —minutos tarde, minutos de salida
+  anticipada, minutos fuera de clase, y si cada uno entra en el margen—, y no como un texto:
+  se abre para filtrar y sumar, no para leer.
+
+---
+
 ## Pase de asistencia
 
 **Período:** septiembre de 2026.

@@ -5,6 +5,9 @@ import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
 import edu.cent35.asistencias.dto.ReporteFiltroDto;
 import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.BloquePresencia;
+import edu.cent35.asistencias.model.EstadoCierre;
+import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.AsistenciaManual;
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.Comision;
@@ -121,7 +124,101 @@ class ReporteAsistenciaServiceTest {
         assertThat(fila.getMotivoJustificacion()).isEqualTo("Certificado médico");
     }
 
+    @Test
+    @DisplayName("totales: suma lo que tiene dato y cuenta aparte lo que no")
+    void totalesDelPeriodo() {
+        // La fila sin dato de salida no suma ni resta: contarla como cero diria que esa clase
+        // no se dicto, y lo unico que se sabe es que falta la salida.
+        AsistenciaReporteRowDto conDesvio = AsistenciaReporteRowDto.builder()
+            .minutosProgramados(120).minutosEfectivos(100).minutosFueraDeClase(10).build();
+        AsistenciaReporteRowDto completa = AsistenciaReporteRowDto.builder()
+            .minutosProgramados(120).minutosEfectivos(120).build();
+        AsistenciaReporteRowDto sinDato = AsistenciaReporteRowDto.builder()
+            .minutosProgramados(120).minutosEfectivos(null).build();
+
+        ReporteAsistenciaService.TotalesDelReporte t =
+            service.totales(List.of(conDesvio, completa, sinDato));
+
+        assertThat(t.clases()).isEqualTo(3);
+        assertThat(t.clasesConDato()).isEqualTo(2);
+        assertThat(t.clasesSinDato()).isEqualTo(1);
+        assertThat(t.minutosProgramados())
+            .as("la fila sin dato no entra en lo programado, o el porcentaje mentiria")
+            .isEqualTo(240);
+        assertThat(t.minutosNetos()).isEqualTo(220);
+        assertThat(t.minutosSinCubrir()).isEqualTo(20);
+        assertThat(t.minutosFueraDeClase()).isEqualTo(10);
+        assertThat(t.porcentajeDictado()).isEqualTo(92);
+        assertThat(t.netoLegible())
+            .as("en horas y minutos: 220 hay que dividirlo mentalmente")
+            .isEqualTo("3 h 40 min");
+    }
+
+    @Test
+    @DisplayName("el tiempo fuera de clase se cuenta una vez por jornada, no una por clase")
+    void fueraDeClaseNoSeDuplicaEntreClases() {
+        // Una jornada de 17:50 a 22:10 que cubre dos clases seguidas: 18 a 20 y 20 a 22. Los
+        // diez minutos de antes son de la primera y los diez de despues, de la segunda. El
+        // rato entre las dos no es tiempo de mas: es la segunda clase.
+        BloquePresencia jornada = BloquePresencia.builder()
+            .id(7L).fecha(LocalDate.of(2026, 6, 15))
+            .horaEntrada(LocalTime.of(17, 50)).horaSalida(LocalTime.of(22, 10))
+            .origenEntrada(OrigenMarca.AUTOMATICO).origenSalida(OrigenMarca.AUTOMATICO)
+            .estadoCierre(EstadoCierre.CERRADO_POR_ROSTRO)
+            .build();
+        Asistencia primera = conJornada(construirAsistenciaAutomatica(), jornada);
+        Asistencia segunda = conJornada(
+            asistenciaEn(2L, LocalTime.of(20, 0), LocalTime.of(22, 0)), jornada);
+
+        when(asistenciaRepository.findParaReporte(any(), any(), any(), any(), any(), any(), any(), any()))
+            .thenReturn(List.of(primera, segunda));
+        when(asistenciaRepository.bordesDeLasJornadas(eq(1L), any()))
+            .thenReturn(List.of(bordes(7L, LocalTime.of(18, 0), LocalTime.of(22, 0))));
+        when(asistenciaManualRepository.findByAsistenciaIdIn(any())).thenReturn(List.of());
+        when(justificacionAusenciaRepository.findByAsistenciaIdIn(any())).thenReturn(List.of());
+
+        List<AsistenciaReporteRowDto> filas = service.reporte(ReporteFiltroDto.builder()
+            .desde(LocalDate.of(2026, 6, 1)).hasta(LocalDate.of(2026, 6, 30)).build());
+
+        assertThat(filas).hasSize(2);
+        assertThat(filas.get(0).getMinutosFueraDeClase())
+            .as("los diez minutos previos van a la primera clase de la jornada")
+            .isEqualTo(10);
+        assertThat(filas.get(1).getMinutosFueraDeClase())
+            .as("y los diez posteriores, a la ultima")
+            .isEqualTo(10);
+        assertThat(filas).allSatisfy(f -> assertThat(f.getMinutosEfectivos())
+            .as("cada clase quedo cubierta entera")
+            .isEqualTo(120));
+        assertThat(service.totales(filas).minutosFueraDeClase())
+            .as("veinte en total, y no cuatro horas y media de permanencia repetidas dos veces")
+            .isEqualTo(20);
+    }
+
     // ------------------------------------------------------------------------
+
+    private Asistencia conJornada(Asistencia a, BloquePresencia jornada) {
+        a.setBloque(jornada);
+        return a;
+    }
+
+    private Asistencia asistenciaEn(Long id, LocalTime desde, LocalTime hasta) {
+        Asistencia a = construirAsistenciaAutomatica();
+        a.setId(id);
+        a.getHorario().setHoraInicio(desde);
+        a.getHorario().setHoraFin(hasta);
+        return a;
+    }
+
+    // La proyeccion que devuelve la consulta de bordes, armada a mano para el test.
+    private AsistenciaRepository.BordesDeLaJornada bordes(Long bloqueId, LocalTime primera,
+                                                          LocalTime ultima) {
+        return new AsistenciaRepository.BordesDeLaJornada() {
+            @Override public Long getBloqueId()        { return bloqueId; }
+            @Override public LocalTime getPrimeraClase() { return primera; }
+            @Override public LocalTime getUltimaClase()  { return ultima; }
+        };
+    }
 
     private Asistencia construirAsistenciaAutomatica() {
         Carrera carrera = Carrera.builder().codigo("ECO").nombre("Eco").build();

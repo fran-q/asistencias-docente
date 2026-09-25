@@ -257,7 +257,7 @@ invisible. Ver `07-pendientes.md`.
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** |
+| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados**, y desde 2026-09-25 el **desvío** —minutos tarde, de salida anticipada y fuera de la franja— con los **totales del período** |
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
