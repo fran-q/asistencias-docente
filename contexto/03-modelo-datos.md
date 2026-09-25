@@ -223,6 +223,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V026__camara_del_puesto` | `puestos_captura.camara_dispositivo_id`, `camara_etiqueta` y `camara_elegida_en`: con qué cámara captura cada puesto |
 | `V027__reabrir_ciclo_lectivo` | `ciclos_lectivos.reabierto_en` y `reabierto_por`: el último ciclo cerrado se puede reabrir, y el cierre anterior se conserva |
 | `V030__varios_puestos_por_institucion` | `instituciones.max_puestos_habilitados` (NULL = sin tope) y se cae el índice de V022: una institución puede tener una cámara por entrada |
+| `V031__equipo_de_salida` | `bloques_presencia.puesto_salida_id`: por qué equipo se registró la salida, que con varias entradas no tiene por qué ser el mismo de la entrada |
 | `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
 | `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
 
@@ -285,6 +286,20 @@ sigue pudiendo. Un reclamo o una inspección llegan casi siempre después de ter
 **Los días no laborables no llevan baja lógica.** Es la excepción junto con la supresión ARCO
 —y, desde V027, los ciclos y períodos vacíos—: nada referencia a esas filas, así que una baja
 lógica solo dejaría basura marcada como inactiva en el listado.
+
+### Invariantes que agregó V031
+
+**La jornada guarda sus dos equipos: por cuál entró y por cuál salió.** Con un solo equipo por
+institución la segunda columna habría sido redundante —entrada y salida eran la misma máquina
+por definición—, pero desde V030 hay una cámara por entrada y el caso que la pidió es el
+docente que sale por la otra puerta. Sin `puesto_salida_id`, el registro afirmaría que salió
+por donde entró: un dato falso, no uno incompleto.
+
+**Queda en NULL cuando no hay equipo que anotar**, y el CHECK solo prohíbe lo imposible —un
+equipo de salida en una jornada sin hora de salida—. Se da en las jornadas que cierra el job
+por vencimiento, donde hay un reloj y no una máquina, y en las que cierra un admin desde la
+pantalla de salidas pendientes, que no exige equipo autorizado: ahí quien sostiene la hora es
+la persona, y eso ya lo dice `cerrado_por_usuario_id`.
 
 ### Invariantes que agregó V030
 

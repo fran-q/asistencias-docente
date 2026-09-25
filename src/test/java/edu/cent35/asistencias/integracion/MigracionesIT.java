@@ -196,6 +196,8 @@ class MigracionesIT {
         // V025. Modo kiosco: de que equipo salio cada marca, y cual puede operar sin sesion.
         assertThat(columnasDe("asistencias")).contains("puesto_id");
         assertThat(columnasDe("bloques_presencia")).contains("puesto_id");
+        // V031. Y por que equipo se fue: con una camara por entrada no tienen por que coincidir.
+        assertThat(columnasDe("bloques_presencia")).contains("puesto_salida_id");
         assertThat(columnasDe("puestos_captura")).contains(
             "kiosco_habilitado", "kiosco_habilitado_en", "kiosco_habilitado_por");
         assertThat(columnasDe("instituciones")).contains("umbral_separacion_min");

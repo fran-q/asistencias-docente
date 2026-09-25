@@ -129,6 +129,22 @@ public class BloquePresencia extends BaseTenantEntity {
     private PuestoCaptura puesto;
 
     /**
+     * Equipo desde el que se registró la salida (V031). NULL cuando no hubo ninguno.
+     *
+     * <p>Con un solo equipo por institución esta columna habría sido redundante: entrada y
+     * salida eran la misma máquina por definición. Desde V030 puede haber una cámara por
+     * entrada, y el caso que lo motivó es el docente que entra por una puerta y sale por la
+     * otra: sin esto, la jornada afirmaría que salió por donde entró.
+     *
+     * <p>Queda en NULL cuando no hay equipo que anotar: las jornadas que cierra el job por
+     * vencimiento —ahí hay un reloj, no una máquina— y las que cierra un admin desde la
+     * pantalla de salidas pendientes, que no exige equipo autorizado.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "puesto_salida_id")
+    private PuestoCaptura puestoSalida;
+
+    /**
      * Quién abrió el bloque sin cámara (V029). NULL en las entradas por rostro.
      *
      * <p>Es el espejo de {@link #cerradoPor}, y va con el mismo {@code ON DELETE SET NULL}

@@ -167,7 +167,7 @@ public class BloquePresenciaService {
             bloqueRepository.findByDocenteIdAndEstadoCierre(docenteId, EstadoCierre.ABIERTO);
 
         return abierto.isPresent()
-            ? cerrar(abierto.get(), docente, modeloFacialId, distanciaLbph, instante)
+            ? cerrar(abierto.get(), docente, modeloFacialId, distanciaLbph, instante, puesto)
             : abrir(docente, tenantId, modeloFacialId, distanciaLbph, instante, puesto, null);
     }
 
@@ -219,7 +219,7 @@ public class BloquePresenciaService {
         if (abierto.isPresent()) {
             ResultadoCierreManual cierre = cerrarManualmente(
                 abierto.get().getId(), instante.toLocalTime().withNano(0),
-                motivoId, detalleLimpio, usuarioActualId);
+                motivoId, detalleLimpio, usuarioActualId, puesto);
             return ResultadoPresencia.salida(cierre.bloque(), cierre.imputadas());
         }
 
@@ -453,10 +453,16 @@ public class BloquePresenciaService {
     //  Cierre
     // ------------------------------------------------------------------------
 
-    // Cierra el bloque por reconocimiento e imputa lo que el docente haya alcanzado a cubrir.
+    /**
+     * Cierra el bloque por reconocimiento e imputa lo que el docente haya alcanzado a cubrir.
+     *
+     * @param puesto equipo desde el que se registró la salida (V031). No tiene por qué ser el
+     *               mismo que abrió la jornada: desde V030 hay una cámara por entrada, y el
+     *               caso que la pidió es justamente el docente que sale por la otra puerta
+     */
     private ResultadoPresencia cerrar(BloquePresencia bloque, Docente docente,
                                       Long modeloFacialId, Double distanciaLbph,
-                                      LocalDateTime instante) {
+                                      LocalDateTime instante, PuestoCaptura puesto) {
         LocalTime horaSalida = instante.toLocalTime().withNano(0);
 
         long minutosAdentro = minutosDesdeLaEntrada(bloque, instante);
@@ -481,6 +487,7 @@ public class BloquePresenciaService {
             : asistenciaService.distanciaToConfianza(distanciaLbph));
         bloque.setEstadoCierre(EstadoCierre.CERRADO_POR_ROSTRO);
         bloque.setEstadoSalida(clasificarSalida(cubiertas, horaSalida));
+        bloque.setPuestoSalida(puesto);
 
         BloquePresencia cerrado = bloqueRepository.saveAndFlush(bloque);
 
@@ -495,9 +502,10 @@ public class BloquePresenciaService {
             imputadas++;
         }
 
-        log.info("Bloque cerrado por rostro: id={}, docente={}, {} a {}, salida={}, clases={}",
+        log.info("Bloque cerrado por rostro: id={}, docente={}, {} a {}, salida={}, "
+                 + "clases={}, equipo de salida={}",
                  cerrado.getId(), docente.getId(), cerrado.getHoraEntrada(), horaSalida,
-                 cerrado.getEstadoSalida(), imputadas);
+                 cerrado.getEstadoSalida(), imputadas, puesto == null ? null : puesto.getId());
         return ResultadoPresencia.salida(cerrado, imputadas);
     }
 
@@ -542,7 +550,7 @@ public class BloquePresenciaService {
     @Transactional
     public ResultadoCierreManual cerrarManualmente(Long bloqueId, LocalTime horaSalida,
                                                    Short motivoId, String detalle,
-                                                   Long usuarioActualId) {
+                                                   Long usuarioActualId, PuestoCaptura puesto) {
         Long tenantId = TenantContext.getRequired();
         BloquePresencia bloque = bloqueRepository.findById(bloqueId)
             .orElseThrow(() -> new EntityNotFoundException("Bloque no encontrado: " + bloqueId));
@@ -586,6 +594,9 @@ public class BloquePresenciaService {
         // Lo exige ck_bloques_salida_modelo, y ademas la hora ya no la sostiene una medicion.
         bloque.setModeloFacialSalida(null);
         bloque.setConfianzaSalida(null);
+        // De que equipo salio, si salio de alguno (V031). Desde la pantalla de pendientes no
+        // hay ninguno: ahi quien sostiene la hora es el admin, y eso lo dice cerradoPor.
+        bloque.setPuestoSalida(puesto);
 
         BloquePresencia cerrado = bloqueRepository.saveAndFlush(bloque);
 

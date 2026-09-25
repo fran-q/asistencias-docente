@@ -173,6 +173,7 @@ public class ReporteController {
             "carrera", "materia_codigo", "materia_nombre", "comision",
             "docente_dni", "docente_apellido", "docente_nombre",
             "hora_registrada", "hora_salida", "salida_presumida",
+            "equipo_entrada", "equipo_salida",
             "minutos_programados", "minutos_efectivos",
             "minutos_tarde", "minutos_salida_anticipada", "minutos_fuera_de_clase",
             "llegada_en_margen", "salida_en_margen",
@@ -199,6 +200,10 @@ public class ReporteController {
             csvTime(f.getHoraRegistrada()),
             csvTime(f.getHoraSalida()),
             csv(f.getHoraSalida() == null ? "" : (f.isSalidaPresumida() ? "SI" : "NO")),
+            // De que equipo salio cada marca (V031). En columnas separadas: en una planilla
+            // se filtra por puerta, no se lee un texto con las dos adentro.
+            csv(f.getEquipoEntrada()),
+            csv(f.getEquipoSalida()),
             csv(f.getMinutosProgramados()),
             // Vacio, no cero: cero dice "no dio la clase" y vacio dice "no tenemos el dato".
             // En la planilla esa diferencia decide si el promedio de horas es una mentira.

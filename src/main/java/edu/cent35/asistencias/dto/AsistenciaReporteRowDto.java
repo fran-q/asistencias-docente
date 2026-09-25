@@ -46,6 +46,18 @@ public class AsistenciaReporteRowDto {
     LocalTime horaSalida;          // del bloque de presencia; null si no hay o sigue adentro
     boolean salidaPresumida;       // la hora la completó el sistema, no la observó nadie
 
+    /**
+     * Nombre del equipo desde el que se registró la entrada, y desde el que se registró la
+     * salida (RF-89, V031). Null cuando no hubo ninguno.
+     *
+     * <p>Van los dos porque desde V030 puede haber una cámara por entrada: el docente entra
+     * por una puerta y sale por la otra, y una sola columna diría que salió por donde entró.
+     * La salida queda vacía cuando la cerró el job por vencimiento o un admin desde la
+     * pantalla de pendientes, que no exige equipo.
+     */
+    String equipoEntrada;
+    String equipoSalida;
+
     /** Cuánto dura la clase según la grilla. Es contra esto que se compara lo efectivo. */
     int minutosProgramados;
 
@@ -133,6 +145,10 @@ public class AsistenciaReporteRowDto {
             .metodo(a.getMetodo().name())
             .confianza(a.getConfianza())
             .horaSalida(a.getBloque() == null ? null : a.getBloque().getHoraSalida())
+            .equipoEntrada(nombreDelEquipo(a.getBloque() == null
+                ? null : a.getBloque().getPuesto()))
+            .equipoSalida(nombreDelEquipo(a.getBloque() == null
+                ? null : a.getBloque().getPuestoSalida()))
             .salidaPresumida(a.getBloque() != null
                 && a.getBloque().getOrigenSalida() == OrigenMarca.PRESUNTO)
             .minutosProgramados(minutosEntre(
@@ -218,6 +234,11 @@ public class AsistenciaReporteRowDto {
         BloquePresencia b = a.getBloque();
         return b == null || b.getHoraSalida() == null
             || a.getHorario().salidaEnHora(b.getHoraSalida());
+    }
+
+    // El nombre con el que la institucion reconoce ese equipo ("Entrada norte"), o null.
+    private static String nombreDelEquipo(edu.cent35.asistencias.model.PuestoCaptura puesto) {
+        return puesto == null ? null : puesto.getNombre();
     }
 
     private static int minutosEntre(LocalTime desde, LocalTime hasta) {

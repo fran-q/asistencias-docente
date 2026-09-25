@@ -48,6 +48,8 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         LEFT JOIN FETCH m.carrera
         JOIN FETCH a.horario h
         LEFT JOIN FETCH a.bloque b
+        LEFT JOIN FETCH b.puesto
+        LEFT JOIN FETCH b.puestoSalida
         WHERE per.institucionId = :tenantId
           AND a.fecha BETWEEN :desde AND :hasta
           AND (:docenteId IS NULL OR d.id = :docenteId)

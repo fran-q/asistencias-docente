@@ -16,6 +16,7 @@ import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.OrigenMarca;
+import edu.cent35.asistencias.model.PuestoCaptura;
 import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
@@ -28,9 +29,11 @@ import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
+import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import edu.cent35.asistencias.service.PuestoCapturaService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -88,6 +91,8 @@ class ReporteTiempoNetoIT {
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private RolRepository rolRepository;
     @Autowired private UsuarioRepository usuarioRepository;
+    @Autowired private PuestoCapturaRepository puestoRepository;
+    @Autowired private PuestoCapturaService puestoService;
 
     private Long tenantId;
     private Docente docente;
@@ -148,12 +153,18 @@ class ReporteTiempoNetoIT {
             .toleranciaMin((short) 15).activo(true)
             .build());
 
+        // Dos equipos: el docente entra por una puerta y sale por la otra (V031).
+        puestoService.designar(tenantId, "Entrada norte", cuenta);
+        puestoService.designar(tenantId, "Entrada sur", cuenta);
+        PuestoCaptura norte = puestoPorNombre("Entrada norte");
+        PuestoCaptura sur = puestoPorNombre("Entrada sur");
+
         // Clase cubierta entera: llegó diez minutos antes y se fue doce después.
         clase(horario, comision, LUNES_CUBIERTO,
-              LocalTime.of(17, 50), LocalTime.of(20, 12), EstadoAsistencia.PRESENTE);
+              LocalTime.of(17, 50), LocalTime.of(20, 12), EstadoAsistencia.PRESENTE, norte, sur);
         // Llegó 25 minutos tarde y se fue 20 antes: las dos cosas fuera de la tolerancia.
         clase(horario, comision, LUNES_CON_DESVIO,
-              LocalTime.of(18, 25), LocalTime.of(19, 40), EstadoAsistencia.TARDE);
+              LocalTime.of(18, 25), LocalTime.of(19, 40), EstadoAsistencia.TARDE, null, null);
     }
 
     @AfterEach
@@ -161,6 +172,7 @@ class ReporteTiempoNetoIT {
         if (tenantId != null) {
             borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
             borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
+            borrar(puestoRepository, p -> tenantId.equals(p.getInstitucionId()));
             List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
                 .map(Comision::getId).toList();
             borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
@@ -193,6 +205,11 @@ class ReporteTiempoNetoIT {
             .contains("Totales del período")
             .contains("3 h 15 min (81%)")
             .contains("4 h");
+
+        assertThat(html)
+            .as("con una camara por entrada, la hora sola no dice donde estuvo la persona")
+            .contains("Entrada norte")
+            .contains("Entrada sur");
     }
 
     @Test
@@ -202,7 +219,10 @@ class ReporteTiempoNetoIT {
 
         assertThat(csv)
             .contains("minutos_tarde;minutos_salida_anticipada;minutos_fuera_de_clase;"
-                      + "llegada_en_margen;salida_en_margen");
+                      + "llegada_en_margen;salida_en_margen")
+            .contains("salida_presumida;equipo_entrada;equipo_salida;")
+            .as("en columnas separadas: en una planilla se filtra por puerta")
+            .contains(";NO;Entrada norte;Entrada sur;");
         assertThat(csv)
             .as("la clase cubierta entera: sin desvio, con 22 minutos fuera de la franja")
             .contains(";120;120;0;0;22;SI;SI;")
@@ -237,13 +257,15 @@ class ReporteTiempoNetoIT {
 
     // Una clase dictada: la jornada del docente y la asistencia que quedó imputada.
     private void clase(Horario horario, Comision comision, LocalDate fecha,
-                       LocalTime entrada, LocalTime salida, EstadoAsistencia estado) {
+                       LocalTime entrada, LocalTime salida, EstadoAsistencia estado,
+                       PuestoCaptura puestoEntrada, PuestoCaptura puestoSalida) {
         BloquePresencia bloque = BloquePresencia.builder()
             .docente(docente).fecha(fecha)
             .horaEntrada(entrada).horaSalida(salida)
             .origenEntrada(OrigenMarca.AUTOMATICO).origenSalida(OrigenMarca.AUTOMATICO)
             .estadoCierre(EstadoCierre.CERRADO_POR_ROSTRO)
             .estadoSalida(EstadoSalida.EN_HORA)
+            .puesto(puestoEntrada).puestoSalida(puestoSalida)
             .build();
         bloque.setInstitucionId(tenantId);
         bloque = bloqueRepository.save(bloque);
@@ -255,6 +277,12 @@ class ReporteTiempoNetoIT {
             .build();
         a.setInstitucionId(tenantId);
         asistenciaRepository.save(a);
+    }
+
+    private PuestoCaptura puestoPorNombre(String nombre) {
+        return puestoRepository.deInstitucion(tenantId).stream()
+            .filter(p -> nombre.equals(p.getNombre()))
+            .findFirst().orElseThrow();
     }
 
     private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,

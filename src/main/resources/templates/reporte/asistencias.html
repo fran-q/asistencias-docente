@@ -183,6 +183,10 @@
                                 <span th:if="${f.horaRegistrada != null}"
                                       th:text="${#temporals.format(f.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
                                 <span th:unless="${f.horaRegistrada != null}" class="text-muted">—</span>
+                                <!-- Por que puerta entro (V031). Con una camara por entrada,
+                                     la hora sola no dice donde estuvo la persona. -->
+                                <small th:if="${f.equipoEntrada != null}" class="text-muted"
+                                       th:text="${f.equipoEntrada}">Entrada norte</small>
                             </td>
                             <td role="cell" data-label="Salida">
                                 <span th:if="${f.horaSalida != null}"
@@ -191,6 +195,8 @@
                                        class="text-muted"
                                        title="La completó el sistema: nadie registró la salida">presumida</small>
                                 <span th:unless="${f.horaSalida != null}" class="text-muted">—</span>
+                                <small th:if="${f.equipoSalida != null}" class="text-muted"
+                                       th:text="${f.equipoSalida}">Entrada sur</small>
                             </td>
                             <!-- Vacío y cero no son lo mismo: cero dice que no dio la clase,
                                  vacío dice que de esa fila no tenemos el dato. -->

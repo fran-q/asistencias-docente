@@ -7,6 +7,29 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Por qué puerta entró y por cuál salió
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **La jornada guarda sus dos equipos (V031).** Hasta ahora quedaba asentado de qué equipo
+  salió la marca que *abre* la jornada, y el cierre no tocaba ese dato. Con un solo equipo por
+  institución daba igual: entrada y salida eran la misma máquina. Con una cámara por entrada,
+  el docente entra por una puerta y sale por la otra, y el registro afirmaba que había salido
+  por donde entró.
+
+- **Se ve en el reporte.** Cada fila muestra el equipo debajo de la hora de entrada y de la de
+  salida, y el CSV los trae en dos columnas para poder filtrar por puerta. El dato se guardaba
+  desde V025 y no se mostraba en ninguna pantalla.
+
+- **Queda vacío cuando no hay equipo que anotar:** las jornadas que cierra el job por
+  vencimiento —ahí hay un reloj, no una máquina— y las que cierra un admin desde la pantalla de
+  salidas pendientes, que no exige equipo autorizado. En esas, quien sostiene la hora es la
+  persona, y eso ya queda registrado con su nombre.
+
+---
+
 ## Varios equipos de captura por institución
 
 **Período:** septiembre de 2026.

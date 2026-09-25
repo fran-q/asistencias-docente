@@ -510,7 +510,7 @@ class BloquePresenciaServiceTest {
             asistenciasDelBloque();
             guardaElBloque();
 
-            var r = service.cerrarManualmente(BLOQUE_ID, LocalTime.of(20, 0), (short) 2, null, 99L);
+            var r = service.cerrarManualmente(BLOQUE_ID, LocalTime.of(20, 0), (short) 2, null, 99L, null);
 
             assertThat(r.bloque().getEstadoCierre()).isEqualTo(EstadoCierre.CERRADO_POR_ADMIN);
             assertThat(r.bloque().getOrigenSalida()).isEqualTo(OrigenMarca.MANUAL);
@@ -535,7 +535,7 @@ class BloquePresenciaServiceTest {
             guardaElBloque();
 
             var r = service.cerrarManualmente(
-                BLOQUE_ID, LocalTime.of(19, 30), (short) 4, "El reloj estaba mal", 99L);
+                BLOQUE_ID, LocalTime.of(19, 30), (short) 4, "El reloj estaba mal", 99L, null);
 
             assertThat(r.bloque().getModeloFacialSalida()).isNull();
             assertThat(r.bloque().getConfianzaSalida()).isNull();
@@ -549,7 +549,7 @@ class BloquePresenciaServiceTest {
             conMotivo((short) 4, "OTRO");
 
             assertThatThrownBy(() -> service.cerrarManualmente(
-                    BLOQUE_ID, LocalTime.of(20, 0), (short) 4, "   ", 99L))
+                    BLOQUE_ID, LocalTime.of(20, 0), (short) 4, "   ", 99L, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("detalle");
         }
@@ -560,7 +560,7 @@ class BloquePresenciaServiceTest {
             bloquePorId(LocalTime.of(18, 0), UN_LUNES, EstadoCierre.SIN_CIERRE);
 
             assertThatThrownBy(() -> service.cerrarManualmente(
-                    BLOQUE_ID, LocalTime.of(17, 0), (short) 1, null, 99L))
+                    BLOQUE_ID, LocalTime.of(17, 0), (short) 1, null, 99L, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("posterior");
         }
@@ -575,7 +575,7 @@ class BloquePresenciaServiceTest {
             when(bloqueRepository.findById(BLOQUE_ID)).thenReturn(Optional.of(ajeno));
 
             assertThatThrownBy(() -> service.cerrarManualmente(
-                    BLOQUE_ID, LocalTime.of(20, 0), (short) 1, null, 99L))
+                    BLOQUE_ID, LocalTime.of(20, 0), (short) 1, null, 99L, null))
                 .isInstanceOf(jakarta.persistence.EntityNotFoundException.class)
                 .hasMessageContaining("no encontrado");
         }
@@ -602,7 +602,7 @@ class BloquePresenciaServiceTest {
                         .horaRegistrada(LocalTime.of(18, 0)).build(),
                     aDeLaSegunda));
 
-            var r = service.cerrarManualmente(BLOQUE_ID, LocalTime.of(19, 0), (short) 1, null, 99L);
+            var r = service.cerrarManualmente(BLOQUE_ID, LocalTime.of(19, 0), (short) 1, null, 99L, null);
 
             assertThat(r.imputadas()).isEqualTo(1);
             assertThat(r.fueraDeRango()).extracting(Asistencia::getId).containsExactly(2L);

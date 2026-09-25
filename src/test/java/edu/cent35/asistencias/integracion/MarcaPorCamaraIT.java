@@ -348,6 +348,45 @@ class MarcaPorCamaraIT {
             .hasSize(1);
     }
 
+
+    @Test
+    @DisplayName("Entra por una puerta y sale por la otra: cada marca deja su equipo")
+    void laSalidaPorOtraPuertaQuedaAsentada() throws Exception {
+        // Es el caso que pidio abrir el tope de equipos: con una camara por entrada, el
+        // docente sale por donde le queda mas cerca. Sin el equipo de salida, la jornada
+        // afirmaria que salio por donde entro, que es un dato falso y no uno incompleto.
+        PuestoCaptura norte = puestoRepository.deInstitucion(tenantId).get(0);
+        String tokenSur = puestoService.designar(tenantId, "Entrada sur", cuenta).getTokenEnClaro();
+        PuestoCaptura sur = puestoRepository.deInstitucion(tenantId).stream()
+            .filter(p -> "Entrada sur".equals(p.getNombre()))
+            .findFirst().orElseThrow();
+
+        BloquePresencia abierto = BloquePresencia.builder()
+            .docente(docente)
+            .fecha(LocalDate.now())
+            .horaEntrada(LocalTime.now().minusMinutes(20).withSecond(0).withNano(0))
+            .origenEntrada(OrigenMarca.AUTOMATICO)
+            .estadoCierre(EstadoCierre.ABIERTO)
+            .puesto(norte)
+            .build();
+        abierto.setInstitucionId(tenantId);
+        bloqueRepository.save(abierto);
+
+        mockMvc.perform(post("/asistencia/pase/marcar")
+                .with(user(new UsuarioAutenticado(cuenta))).with(csrf())
+                .cookie(new Cookie(CookiePuesto.NOMBRE, tokenSur))
+                .contentType(MediaType.APPLICATION_JSON).content(IMAGEN))
+            .andExpect(status().isOk());
+
+        BloquePresencia cerrado = bloqueRepository.findById(abierto.getId()).orElseThrow();
+        assertThat(cerrado.getPuesto().getId())
+            .as("la entrada sigue siendo la del equipo que abrio la jornada")
+            .isEqualTo(norte.getId());
+        assertThat(cerrado.getPuestoSalida().getId())
+            .as("y la salida, la del equipo por el que se fue")
+            .isEqualTo(sur.getId());
+    }
+
     // ========================================================================
     //  helpers
     // ========================================================================
