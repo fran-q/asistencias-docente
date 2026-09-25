@@ -75,9 +75,11 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
 - FK a `modelos_faciales` con `ON DELETE SET NULL`: si el docente ejerce ARCO y se borra
   su modelo, **el historial de asistencias se conserva**.
 
-**`puestos_captura`** (V015, V022, V025)
-- `UNIQUE (institucion_si_habilitado)` sobre columna generada: una institución no puede tener
-  dos puestos habilitados a la vez. Los revocados no chocan porque la columna vale NULL (V022).
+**`puestos_captura`** (V015, V022, V025, V030)
+- **Cuántos equipos puede tener habilitados una institución lo decide ella**, en
+  `instituciones.max_puestos_habilitados`; NULL es sin tope (V030). Hasta V030 el tope era uno
+  solo y vivía en el esquema, sostenido por un índice único sobre una columna generada: ese
+  índice y esa columna se fueron con la migración.
 - `UNIQUE (token_hash)` **global**, no por institución. Por eso un token identifica un puesto
   —y con él una institución— sin ambigüedad, que es lo que permite resolver el tenant desde el
   equipo cuando no hay sesión (V025, ADR-0019).
@@ -210,7 +212,9 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V025__modo_kiosco` | `puestos_captura.kiosco_habilitado` (+ quién y cuándo) y `puesto_id` en `asistencias` y `bloques_presencia` (ADR-0019) |
 | `V026__camara_del_puesto` | `puestos_captura.camara_dispositivo_id`, `camara_etiqueta` y `camara_elegida_en`: con qué cámara captura cada puesto |
 | `V027__reabrir_ciclo_lectivo` | `ciclos_lectivos.reabierto_en` y `reabierto_por`: el último ciclo cerrado se puede reabrir, y el cierre anterior se conserva |
+| `V030__varios_puestos_por_institucion` | `instituciones.max_puestos_habilitados` (NULL = sin tope) y se cae el índice de V022: una institución puede tener una cámara por entrada |
 | `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
+| `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
 
 ### Invariantes que agregó V028
 
@@ -272,6 +276,20 @@ sigue pudiendo. Un reclamo o una inspección llegan casi siempre después de ter
 —y, desde V027, los ciclos y períodos vacíos—: nada referencia a esas filas, así que una baja
 lógica solo dejaría basura marcada como inactiva en el listado.
 
+### Invariantes que agregó V030
+
+**Cuántos equipos de captura hay a la vez lo decide cada institución.**
+`instituciones.max_puestos_habilitados` con NULL = sin tope, y un CHECK que exige al menos 1
+cuando tiene valor. Reemplaza al tope de uno de V022: una institución con más de una entrada
+necesita una cámara en cada una, y obligar al docente a cruzar el edificio para marcar la
+salida terminaba en salidas sin marcar, que es el dato que después falta en el reporte.
+
+**Lo que no cambió es cómo se autoriza un equipo.** Sigue siendo desde esa misma máquina, y no
+hay forma de habilitar una a distancia (ADR-0015). Lo que se abrió es cuántas pueden estarlo a
+la vez. **Revocar, en cambio, ahora se hace desde la pantalla**: con una cámara por entrada,
+exigir estar en esa máquina obligaba a caminar hasta la que justo puede estar rota o robada,
+que es cuando más urge revocarla.
+
 ### Invariantes que agregaron V021 y V022
 
 **Una contraseña nueva cada 24 horas.** `usuarios.password_cambiada_en` se sella en los dos
@@ -285,8 +303,9 @@ esa fecha es el registro de cuándo cambió de verdad. Vale mientras sea **poste
 cambio, y se consume al usarlo; sin ese "posterior", un destrabe viejo serviría para siempre.
 Nadie puede destrabarse a sí mismo: si pudiera, el límite no existiría.
 
-**Un solo puesto habilitado por institución.** No hay índices únicos parciales, así que
-`institucion_si_habilitado` es una columna generada que vale `institucion_id` mientras el
+**Un solo puesto habilitado por institución** (reemplazado por V030, ver arriba). No hay
+índices únicos parciales, así que
+`institucion_si_habilitado` era una columna generada que valía `institucion_id` mientras el
 puesto esté activo y `NULL` cuando no. En un `UNIQUE` los `NULL` no chocan entre sí, de modo
 que los revocados quedan afuera de la restricción y el historial se conserva. La regla está
 además en `PuestoCapturaService`, porque el índice no explica nada cuando falla.

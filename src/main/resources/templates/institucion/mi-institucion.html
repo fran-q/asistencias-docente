@@ -62,10 +62,19 @@
             <dl class="kv">
                 <dt>Umbral de separación entre clases</dt>
                 <dd th:text="|${institucion.umbralSeparacionMin} minutos|">60 minutos</dd>
+
+                <dt>Tope de equipos de captura</dt>
+                <dd th:if="${institucion.maxPuestosHabilitados != null}"
+                    th:text="|${institucion.maxPuestosHabilitados} equipo(s) a la vez|">3 equipo(s) a la vez</dd>
+                <dd th:if="${institucion.maxPuestosHabilitados == null}" class="text-muted">Sin tope</dd>
             </dl>
             <p class="form-hint">
                 Dos clases seguidas del mismo docente, con un hueco menor a este, cuentan como una
                 sola permanencia: una entrada y una salida.
+            </p>
+            <p class="form-hint">
+                El tope limita cuántas computadoras pueden tomar asistencia por cámara a la vez
+                —una por entrada, si hace falta—. Cada una se autoriza desde sí misma.
             </p>
         </div>
 

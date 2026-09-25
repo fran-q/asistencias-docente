@@ -79,8 +79,12 @@ public class PuestoCapturaController {
                          HttpServletRequest request) {
         Long institucionId = TenantContext.getRequired();
 
-        boolean hayAlguno = puestoService.contarHabilitados(institucionId) > 0;
+        long habilitados = puestoService.contarHabilitados(institucionId);
+        boolean hayAlguno = habilitados > 0;
         boolean desdePuesto = vieneDePuestoAutorizado(request, institucionId);
+        Short tope = puestoService.topeDeEquipos(institucionId);
+        boolean hayCupo = tope == null || habilitados < tope;
+        Long esteEquipo = idDeEsteEquipo(request, institucionId);
 
         model.addAttribute("bloqueado", bloqueado);
         model.addAttribute("puestos", puestoService.listar(institucionId));
@@ -88,15 +92,18 @@ public class PuestoCapturaController {
         // Designar un equipo es autorizar el tratamiento de datos sensibles en esa maquina:
         // lo decide la cuenta institucional, no cualquier administrativo.
         model.addAttribute("puedeDesignar", tieneRolInstitucion(principal));
-        // El formulario solo aparece cuando designar es realmente posible: cuando no hay
-        // ninguno. Es la misma regla que aplica el service, repetida en la vista para no
-        // ofrecer un boton que va a fallar.
+        // El formulario aparece cuando autorizar es realmente posible: esta maquina todavia
+        // no es un equipo y queda cupo. Es la misma regla que aplica el service, repetida en
+        // la vista para no ofrecer un boton que va a fallar.
         model.addAttribute("puedeAutorizarEsteEquipo",
-            tieneRolInstitucion(principal) && !hayAlguno);
+            tieneRolInstitucion(principal) && esteEquipo == null && hayCupo);
+        model.addAttribute("habilitados", habilitados);
+        model.addAttribute("tope", tope);
+        model.addAttribute("hayCupo", hayCupo);
         // Cual de los puestos listados es esta misma maquina. Sin esto la pantalla muestra
         // nombres y quien la mira no sabe si esta sentado en el equipo autorizado o no, que
         // es justo lo que necesita saber para revocarlo.
-        model.addAttribute("idDeEsteEquipo", idDeEsteEquipo(request, institucionId));
+        model.addAttribute("idDeEsteEquipo", esteEquipo);
         model.addAttribute("desdePuesto", desdePuesto);
         return VIEW;
     }
@@ -149,9 +156,11 @@ public class PuestoCapturaController {
      * Revoca el puesto desde esa misma máquina, y le borra la cookie: dejarla sería guardar
      * una credencial que ya no sirve.
      *
-     * <p>Desde cualquier otra máquina no revoca: manda a la pantalla del código. No es un
-     * rechazo seco porque el caso legítimo —la PC del puesto se rompió— es exactamente ese, y
-     * quien lo vive necesita saber cómo salir, no enterarse de que no puede.
+     * <p><b>Desde V030 se revoca desde acá, sin estar en esa máquina.</b> Con una sola puerta
+     * la regla anterior se sostenía —el equipo era uno y estaba a la vista—, pero con una
+     * cámara por entrada obliga a caminar hasta la máquina que justamente puede estar rota o
+     * robada, que es cuando más urge revocarla. Lo que autoriza sigue siendo la cuenta
+     * institucional; lo que no cambió es que designar un equipo solo se puede desde él.
      */
     @PostMapping("/puestos/{id}/revocar")
     @PreAuthorize("hasRole('INSTITUCION')")
@@ -161,16 +170,15 @@ public class PuestoCapturaController {
                           RedirectAttributes redirect) {
 
         Long institucionId = TenantContext.getRequired();
-        boolean esEsteEquipo = esteEquipoEs(id, institucionId, request);
-
-        if (!esEsteEquipo) {
-            return "redirect:/puestos/" + id + "/revocar-a-distancia";
-        }
 
         try {
-            puestoService.revocar(id, institucionId, true);
-            CookiePuesto.borrar(request, response);
-            redirect.addFlashAttribute("flashMensaje", "Puesto revocado.");
+            puestoService.revocar(id, institucionId);
+            // Si la maquina que revoca es la revocada, ademas se le saca la credencial: sin
+            // esto seguiria mandando una cookie que ya no vale hasta que alguien la limpie.
+            if (esteEquipoEs(id, institucionId, request)) {
+                CookiePuesto.borrar(request, response);
+            }
+            redirect.addFlashAttribute("flashMensaje", "Equipo revocado.");
         } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("flashError", e.getMessage());
         }

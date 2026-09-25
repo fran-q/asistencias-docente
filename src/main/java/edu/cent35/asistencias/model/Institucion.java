@@ -70,6 +70,20 @@ public class Institucion {
     @Builder.Default
     private Short umbralSeparacionMin = (short) 60;
 
+    /**
+     * Cuántos equipos de captura puede tener autorizados a la vez. NULL = sin tope (V030).
+     *
+     * <p>Hasta V030 el tope era uno solo y estaba en el esquema, igual para todos. Una
+     * institución con tres entradas necesita una cámara en cada una, y otra con una sola
+     * puerta no quiere que un segundo equipo quede habilitado por descuido: el número
+     * depende del edificio, así que lo decide cada institución.
+     *
+     * <p>Lo que <b>no</b> cambia es cómo se autoriza cada equipo: siempre desde esa misma
+     * máquina (ADR-0015).
+     */
+    @Column(name = "max_puestos_habilitados")
+    private Short maxPuestosHabilitados;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

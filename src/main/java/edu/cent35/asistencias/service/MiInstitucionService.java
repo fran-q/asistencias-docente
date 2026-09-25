@@ -59,6 +59,18 @@ public class MiInstitucionService {
         }
         inst.setUmbralSeparacionMin(umbralNuevo);
 
+        // El tope de equipos autorizados (V030). Se registra igual que el umbral: decide
+        // cuantas maquinas pueden capturar datos biometricos a la vez, asi que bajarlo o
+        // subirlo tiene que poder reconstruirse despues.
+        Short topeAnterior = inst.getMaxPuestosHabilitados();
+        Short topeNuevo = dto.getMaxPuestosHabilitados();
+        if (!java.util.Objects.equals(topeAnterior, topeNuevo)) {
+            log.info("V030: tope de equipos de la institucion id={} pasa de {} a {}",
+                     tenantId, topeAnterior == null ? "sin tope" : topeAnterior,
+                     topeNuevo == null ? "sin tope" : topeNuevo);
+        }
+        inst.setMaxPuestosHabilitados(topeNuevo);
+
         Institucion saved = institucionRepository.save(inst);
         log.info("Institucion id={} actualizada por superadmin", tenantId);
         return saved;

@@ -356,7 +356,7 @@ class PuestoCapturaIT {
             .andExpect(status().isOk());
 
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
-        puestoService.revocar(puestoId, institucionA, true);
+        puestoService.revocar(puestoId, institucionA);
 
         mockMvc.perform(get("/asistencia/pase")
                 .with(user(new UsuarioAutenticado(cuentaA))).cookie(cookie))
@@ -423,13 +423,9 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Dos puestos nunca comparten token")
     void dosPuestosNuncaCompartenToken() {
-        // Desde que solo puede haber uno habilitado, los dos puestos de este caso son el
-        // actual y el que lo reemplaza. La propiedad que importa es la misma: el token del
-        // equipo revocado no puede volver a servir en el que viene atras.
+        // Desde V030 los dos pueden estar habilitados a la vez --una camara por entrada--,
+        // asi que la propiedad importa mas que antes: el token de uno no sirve en el otro.
         String primero = designarEn(institucionA);
-        Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
-        puestoService.revocar(puestoId, institucionA, true);
-
         String segundo = puestoService.designar(institucionA, "Secretaria PC-2", cuentaA)
             .getTokenEnClaro();
 
@@ -464,35 +460,48 @@ class PuestoCapturaIT {
     }
 
     @Test
-    @DisplayName("Con un puesto ya habilitado no se autoriza ningun otro")
-    void elSegundoNoSeAutoriza() {
-        // Es lo que sostiene todo el control. Sin esta regla, cualquiera con la cuenta
-        // institucional convierte su propia maquina en puesto desde donde este, que es
-        // justo lo que ADR-0015 quiere impedir.
+    @DisplayName("Sin tope, una institucion autoriza tantos equipos como entradas tenga")
+    void variosEquiposConviven() {
+        // V030: el caso que lo pide es el colegio con dos entradas. Antes habia que revocar
+        // el equipo de una puerta para autorizar el de la otra, y el docente terminaba
+        // cruzando el edificio para marcar la salida.
+        designarEn(institucionA);
+        puestoService.designar(institucionA, "Entrada norte", cuentaA);
+        puestoService.designar(institucionA, "Entrada sur", cuentaA);
+
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Con el tope alcanzado no se autoriza uno mas")
+    void elTopeFrenaLaDesignacion() {
+        // El tope lo pone la institucion: una con una sola puerta no quiere que un segundo
+        // equipo quede habilitado por descuido.
+        conTopeDeEquipos((short) 1);
         designarEn(institucionA);
 
         try {
             puestoService.designar(institucionA, "Mi notebook", cuentaA);
             throw new AssertionError("tendria que haber rechazado la designacion");
         } catch (IllegalArgumentException esperado) {
-            assertThat(esperado.getMessage()).contains("ya tiene un equipo autorizado");
+            assertThat(esperado.getMessage()).contains("tope");
         }
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
     }
 
     @Test
-    @DisplayName("Hay que revocar el actual antes de autorizar el que viene")
-    void primeroSeRevocaYDespuesSeAutoriza() {
+    @DisplayName("Con el tope alcanzado, revocar uno libera el lugar para el siguiente")
+    void revocarLiberaCupo() {
+        conTopeDeEquipos((short) 1);
         designarEn(institucionA);
         Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
-        puestoService.revocar(actual, institucionA, true);
+        puestoService.revocar(actual, institucionA);
 
         assertThat(puestoService.designar(institucionA, "Secretaria PC-2", cuentaA).getPuesto())
             .as("con el anterior revocado, el lugar quedo libre")
             .isNotNull();
-        assertThat(puestoService.contarHabilitados(institucionA))
-            .as("y sigue habiendo uno solo")
-            .isEqualTo(1);
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
     }
 
     // ========================================================================
@@ -500,23 +509,17 @@ class PuestoCapturaIT {
     // ========================================================================
 
     @Test
-    @DisplayName("Desde otra maquina no se revoca sin codigo")
-    void noSeRevocaDesdeOtraMaquina() {
-        // Con un solo puesto permitido, quien revoca puede mudar la captura: revoca y
-        // designa el suyo. Si esto se pudiera desde cualquier lado, la contrasena
-        // institucional alcanzaria para llevarse la captura biometrica a otra maquina.
+    @DisplayName("Un equipo se revoca desde la pantalla, sin estar en esa maquina")
+    void seRevocaDesdeLaPantalla() {
+        // V030: con una camara por entrada, exigir estar en esa maquina obligaba a caminar
+        // hasta la que justo puede estar rota o robada, que es cuando mas urge revocarla.
+        // Lo que autoriza la revocacion es la cuenta institucional.
         designarEn(institucionA);
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
-        try {
-            puestoService.revocar(puestoId, institucionA, false);
-            throw new AssertionError("tendria que haber rechazado la revocacion");
-        } catch (IllegalArgumentException esperado) {
-            assertThat(esperado.getMessage()).contains("desde esa misma máquina");
-        }
-        assertThat(puestoService.contarHabilitados(institucionA))
-            .as("el puesto tiene que seguir habilitado")
-            .isEqualTo(1);
+        puestoService.revocar(puestoId, institucionA);
+
+        assertThat(puestoService.contarHabilitados(institucionA)).isZero();
     }
 
     @Test
@@ -535,28 +538,44 @@ class PuestoCapturaIT {
     }
 
     @Test
-    @DisplayName("El POST de revocar desde otra maquina manda a la pantalla del codigo")
-    void elPostDeRevocarDesdeAfueraDesvia() throws Exception {
-        // No es un rechazo seco: el caso legitimo --la PC del puesto se rompio-- es
-        // exactamente ese, y quien lo vive necesita saber como salir.
+    @DisplayName("El POST de revocar desde otra maquina revoca igual")
+    void elPostDeRevocarDesdeAfueraRevoca() throws Exception {
+        // V030: el caso legitimo --la PC de esa puerta se rompio-- es exactamente este, y
+        // antes obligaba a pedir un codigo al correo para resolverlo.
         designarEn(institucionA);
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
         mockMvc.perform(post("/puestos/" + puestoId + "/revocar")
                 .with(user(new UsuarioAutenticado(cuentaA))).with(csrf()))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/puestos/" + puestoId + "/revocar-a-distancia"));
+            .andExpect(status().is3xxRedirection());
+
+        assertThat(puestoService.contarHabilitados(institucionA)).isZero();
+    }
+
+    @Test
+    @DisplayName("Una cuenta de otra institucion no revoca el equipo ajeno")
+    void noSeRevocaElEquipoDeOtraInstitucion() throws Exception {
+        // Lo que autoriza la revocacion es la cuenta institucional, asi que hay que
+        // asegurarse de que sea la de ESA institucion: es el control que reemplaza a la
+        // regla de estar sentado en esa maquina.
+        designarEn(institucionA);
+        Long puestoDeA = puestoRepository.deInstitucion(institucionA).get(0).getId();
+
+        mockMvc.perform(post("/puestos/" + puestoDeA + "/revocar")
+                .with(user(new UsuarioAutenticado(cuentaB))).with(csrf()))
+            .andExpect(status().is3xxRedirection());
 
         assertThat(puestoService.contarHabilitados(institucionA))
-            .as("el desvio no puede revocar nada por si solo")
+            .as("el equipo de A tiene que seguir habilitado")
             .isEqualTo(1);
     }
 
     @Test
-    @DisplayName("El POST directo tampoco saltea la regla: no alcanza con esconder el form")
-    void elPostDirectoNoSalteaLaRegla() throws Exception {
+    @DisplayName("El POST directo tampoco saltea el tope: no alcanza con esconder el form")
+    void elPostDirectoNoSalteaElTope() throws Exception {
         // Una vista que no muestra el boton no frena a quien arma la peticion a mano. Por eso
-        // la condicion vive en el service y este caso la ejerce por HTTP, sin cookie.
+        // el tope vive en el service y este caso lo ejerce por HTTP.
+        conTopeDeEquipos((short) 1);
         designarEn(institucionA);
 
         mockMvc.perform(post("/puestos/designar")
@@ -565,13 +584,29 @@ class PuestoCapturaIT {
             .andExpect(status().is3xxRedirection());
 
         assertThat(puestoRepository.deInstitucion(institucionA))
-            .as("no tendria que haberse creado el segundo puesto")
+            .as("el segundo equipo se pasaba del tope de la institucion")
             .hasSize(1);
     }
 
     @Test
-    @DisplayName("Con un puesto ya habilitado, la pantalla de bloqueo no ofrece autorizar")
-    void laPantallaDeBloqueoNoOfreceAutorizar() throws Exception {
+    @DisplayName("Con otro equipo ya habilitado, la pantalla ofrece sumar este")
+    void laPantallaOfreceSumarEsteEquipo() throws Exception {
+        designarEn(institucionA);
+
+        String html = mockMvc.perform(get(PANTALLA_BLOQUEO)
+                .with(user(new UsuarioAutenticado(cuentaA))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+
+        assertThat(html)
+            .as("desde V030 esta maquina puede ser la camara de otra entrada")
+            .contains("Autorizar este equipo");
+    }
+
+    @Test
+    @DisplayName("Con el tope alcanzado, la pantalla no ofrece autorizar y dice por que")
+    void laPantallaConTopeAlcanzadoNoOfreceAutorizar() throws Exception {
+        conTopeDeEquipos((short) 1);
         designarEn(institucionA);
 
         String html = mockMvc.perform(get(PANTALLA_BLOQUEO)
@@ -582,7 +617,7 @@ class PuestoCapturaIT {
         assertThat(html)
             .as("ofrecer un boton que el service va a rechazar es peor que no ofrecerlo")
             .doesNotContain("Autorizar este equipo");
-        assertThat(html).contains("ya tiene un equipo autorizado");
+        assertThat(html).contains("Llegaste al tope de equipos");
     }
 
     @Test
@@ -765,6 +800,13 @@ class PuestoCapturaIT {
 
     // ========================================================================
     //  helpers
+    // Le pone tope de equipos a la institucion de prueba (V030).
+    private void conTopeDeEquipos(short tope) {
+        Institucion i = institucionRepository.findById(institucionA).orElseThrow();
+        i.setMaxPuestosHabilitados(tope);
+        institucionRepository.save(i);
+    }
+
     // ========================================================================
 
     private void assertThatNombreRepetidoFalla() {
@@ -772,7 +814,7 @@ class PuestoCapturaIT {
         // por el tope y el test pasaria sin haber ejercitado nunca el control del nombre.
         // El nombre sigue tomado despues de revocar, a proposito: el historial lo conserva.
         Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
-        puestoService.revocar(actual, institucionA, true);
+        puestoService.revocar(actual, institucionA);
 
         try {
             puestoService.designar(institucionA, "Secretaria PC-1", cuentaA);

@@ -169,6 +169,10 @@ class MigracionesIT {
             .contains("camara_dispositivo_id", "camara_etiqueta", "camara_elegida_en");
         // V027. Reabrir un ciclo cerrado: quien y cuando, sin borrar el cierre.
         assertThat(columnasDe("ciclos_lectivos")).contains("reabierto_en", "reabierto_por");
+        // V030. Varios equipos por institucion, con tope propio: la columna generada que
+        // sostenia el tope de uno se fue con el indice que la usaba.
+        assertThat(columnasDe("instituciones")).contains("max_puestos_habilitados");
+        assertThat(columnasDe("puestos_captura")).doesNotContain("institucion_si_habilitado");
         // V028. El tipo de dia sin clase, por el que se filtra el listado.
         assertThat(columnasDe("dias_no_laborables")).contains("tipo", "motivo");
         assertThat(columnasDe("ciclos_lectivos")).contains("anio", "fecha_inicio", "fecha_fin", "estado");

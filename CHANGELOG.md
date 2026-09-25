@@ -7,6 +7,35 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Varios equipos de captura por institución
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **Una cámara por entrada (V030).** Hasta ahora una institución podía tener un solo equipo
+  autorizado a la vez: para mudar la captura a otra máquina había que revocar la anterior. Un
+  colegio con dos entradas terminaba obligando al docente a cruzar el edificio para marcar la
+  salida, y esa salida muchas veces no se marcaba, así que el sistema la presumía y el reporte
+  lo decía. Ahora pueden convivir tantos equipos como haga falta, cada uno con su cámara y con
+  su modo kiosco.
+
+- **El tope lo decide cada institución**, en Mi institución: vacío es sin tope. Una con tres
+  entradas pone tres; una con una sola puerta lo deja en uno y evita que un segundo equipo
+  quede habilitado por descuido. Bajarlo no revoca nada: impide autorizar uno nuevo hasta que
+  la cuenta baje del tope.
+
+- **Revocar se hace desde la pantalla de equipos**, sin tener que estar sentado en esa máquina.
+  Con una cámara por entrada, la regla anterior obligaba a caminar hasta la computadora que
+  justo puede estar rota o robada, que es cuando más urge revocarla. Lo que autoriza la
+  revocación es la cuenta institucional, y sigue sin poder tocar los equipos de otra.
+
+- **Lo que no cambió: autorizar un equipo sigue siendo desde ese equipo.** No hay forma de
+  habilitar una máquina a distancia, que es lo que sostiene que la captura biométrica ocurra
+  en máquinas conocidas (ADR-0015). Lo que se abrió es cuántas pueden estarlo a la vez.
+
+---
+
 ## Tiempo neto de la clase
 
 **Período:** septiembre de 2026.

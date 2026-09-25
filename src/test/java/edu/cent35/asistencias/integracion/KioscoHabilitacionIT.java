@@ -314,7 +314,7 @@ class KioscoHabilitacionIT {
             .as("habilitado, el token resuelve la institucion")
             .isPresent();
 
-        puestoService.revocar(puestoId, institucionA, true);
+        puestoService.revocar(puestoId, institucionA);
 
         assertThat(puestoService.resolverKiosco(token))
             .as("revocado, el token no resuelve ninguna institucion")

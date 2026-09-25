@@ -65,6 +65,17 @@ public class InstitucionFormDto {
     @Max(value = 240, message = "El umbral no puede superar los 240 minutos")
     private Short umbralSeparacionMin;
 
+    /**
+     * Cuántos equipos de captura pueden estar autorizados a la vez; vacío es sin tope (V030).
+     *
+     * <p>Opcional a propósito: una institución que todavía no sabe cuántas entradas va a
+     * cubrir no tiene por qué inventar un número. El mínimo es uno, que es el mismo que exige
+     * el CHECK {@code ck_instituciones_max_puestos}.
+     */
+    @Min(value = 1, message = "El tope de equipos no puede ser menor que 1")
+    @Max(value = 50, message = "El tope de equipos no puede superar los 50")
+    private Short maxPuestosHabilitados;
+
     // Precarga el formulario con los datos actuales de la institución.
     public static InstitucionFormDto from(Institucion entidad) {
         return InstitucionFormDto.builder()
@@ -74,6 +85,7 @@ public class InstitucionFormDto {
             .emailContacto(entidad.getEmailContacto())
             .telefonoContacto(entidad.getTelefonoContacto())
             .umbralSeparacionMin(entidad.getUmbralSeparacionMin())
+            .maxPuestosHabilitados(entidad.getMaxPuestosHabilitados())
             .build();
     }
 }

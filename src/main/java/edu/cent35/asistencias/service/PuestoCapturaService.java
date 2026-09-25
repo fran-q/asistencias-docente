@@ -2,6 +2,8 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.model.PropositoCodigo;
 import edu.cent35.asistencias.model.PuestoCaptura;
+import edu.cent35.asistencias.repository.InstitucionRepository;
+import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +52,8 @@ public class PuestoCapturaService {
     private long diasDeInactividad;
 
     private final PuestoCapturaRepository puestoRepository;
+    // Para leer el tope de equipos de la institucion (V030).
+    private final InstitucionRepository institucionRepository;
     // Revocar a distancia exige un codigo de un solo uso. Se reusan las defensas que ya
     // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
     // inventar un segundo mecanismo que habria que endurecer por separado.
@@ -91,12 +95,15 @@ public class PuestoCapturaService {
         if (limpio.isEmpty()) {
             throw new IllegalArgumentException("El puesto necesita un nombre.");
         }
-        if (contarHabilitados(institucionId) > 0) {
-            log.warn("Designacion rechazada: la institucion {} ya tiene un puesto habilitado",
-                     institucionId);
+        Short tope = topeDeEquipos(institucionId);
+        long habilitados = contarHabilitados(institucionId);
+        if (tope != null && habilitados >= tope) {
+            log.warn("Designacion rechazada: la institucion {} llego a su tope de {} equipos",
+                     institucionId, tope);
             throw new IllegalArgumentException(
-                "Esta institución ya tiene un equipo autorizado y solo puede haber uno. "
-                + "Revocá el actual desde esa misma máquina y después autorizá este.");
+                "Esta institución ya tiene " + habilitados + " equipo(s) autorizado(s) y su "
+                + "tope es " + tope + ". Revocá uno desde la pantalla de equipos, o subí el "
+                + "tope en Mi institución.");
         }
         if (puestoRepository.existeNombre(institucionId, limpio, null)) {
             throw new IllegalArgumentException(
@@ -301,14 +308,7 @@ public class PuestoCapturaService {
      * @param desdeEsePuesto si la petición trae la cookie de ese mismo puesto
      */
     @Transactional
-    public void revocar(Long puestoId, Long institucionId, boolean desdeEsePuesto) {
-        if (!desdeEsePuesto) {
-            log.warn("Revocacion rechazada: la peticion no viene del puesto {} (institucion {})",
-                     puestoId, institucionId);
-            throw new IllegalArgumentException(
-                "El equipo autorizado solo se revoca desde esa misma máquina. Si ya no la "
-                + "tenés, pedí un código al correo de la institución para revocarlo desde acá.");
-        }
+    public void revocar(Long puestoId, Long institucionId) {
         revocarSinControles(puestoId, institucionId);
     }
 
@@ -351,6 +351,19 @@ public class PuestoCapturaService {
 
     // La baja en si, sin decidir quien tiene derecho a pedirla: eso ya lo resolvieron los dos
     // metodos de arriba, cada uno con su prueba.
+    /**
+     * El tope de equipos autorizados de esa institución, o null si no tiene (V030).
+     *
+     * <p>Sale de la institución y no de una constante porque lo decide el edificio: una con
+     * tres entradas necesita tres, y otra con una sola puerta no quiere que un segundo equipo
+     * quede habilitado por descuido.
+     */
+    public Short topeDeEquipos(Long institucionId) {
+        return institucionRepository.findById(institucionId)
+            .map(Institucion::getMaxPuestosHabilitados)
+            .orElse(null);
+    }
+
     private void revocarSinControles(Long puestoId, Long institucionId) {
         PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
             .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));
