@@ -120,6 +120,11 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
   tener motivo, autor ni detalle. El CHECK exige el **motivo** y no el usuario, porque la FK
   del usuario hace `SET NULL` y exigirlo rompería filas ya escritas al suprimir una cuenta.
   El motivo sale del **mismo** catálogo que la carga manual (`motivos_carga_manual`).
+- **V029**: el espejo del anterior, del lado de la entrada. Una entrada con
+  `origen_entrada = MANUAL` lleva motivo obligatorio; una por rostro no puede tener motivo,
+  autor ni detalle. Cuelga del **origen** y no del estado de cierre —como el de V020— porque la
+  entrada no tiene un estado propio: el bloque nace abierto de las dos formas, y lo único que
+  las distingue es de dónde salió la hora (ADR-0021).
 
 ⚠ **Ninguno de estos CHECK se ejercita en los tests.** El perfil `test` corre sobre H2 con
 `flyway.enabled=false` y `ddl-auto=create-drop`, así que el esquema de los tests sale de
@@ -136,6 +141,11 @@ estructural de la base real:
   deshabilitar conserva el rastro; el `RESTRICT` impide borrar un puesto que originó marcas y
   la baja lógica sí lo permite; suprimir la cuenta que habilitó el kiosco deja
   `kiosco_habilitado_por` en NULL sin romper la fila.
+- **V029** (2026-09-19): aplica limpia sobre la tabla ya poblada —las filas existentes son
+  todas `AUTOMATICO` con las columnas nuevas en NULL, que es la rama permitida—. Los cuatro
+  casos que `ck_bloques_entrada_admin` tiene que rechazar los rechaza: entrada a mano sin
+  motivo, entrada por rostro con motivo, con autor, o con detalle. Y el `ON DELETE SET NULL`
+  deja el bloque en pie, con su motivo, después de suprimir la cuenta que lo cargó.
 
 **Como no está automatizado, hay que repetirlo si se toca el esquema de estas tablas.**
 `MigracionesIT` sí verifica que todas las migraciones apliquen de cero contra MariaDB y que

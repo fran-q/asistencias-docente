@@ -129,6 +129,26 @@ public class BloquePresencia extends BaseTenantEntity {
     private PuestoCaptura puesto;
 
     /**
+     * Quién abrió el bloque sin cámara (V029). NULL en las entradas por rostro.
+     *
+     * <p>Es el espejo de {@link #cerradoPor}, y va con el mismo {@code ON DELETE SET NULL}
+     * por la misma razón: suprimir una cuenta no puede romper filas ya escritas. Por eso el
+     * CHECK de V029 exige el <b>motivo</b> y no el usuario.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "abierto_por_usuario_id")
+    private Usuario abiertoPor;
+
+    // Por qué se cargó la entrada a mano, del mismo catálogo que todo lo demás (RF-23).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "motivo_entrada_id")
+    private MotivoCargaManual motivoEntrada;
+
+    // Texto libre del admin. Obligatorio cuando el motivo es OTRO, validado en el service.
+    @Column(name = "detalle_entrada", columnDefinition = "TEXT")
+    private String detalleEntrada;
+
+    /**
      * Quién cerró o corrigió la salida a mano (RF-83). NULL en los otros cierres.
      *
      * <p>La FK va con {@code ON DELETE SET NULL}: si algún día se suprime la cuenta, el
@@ -165,6 +185,11 @@ public class BloquePresencia extends BaseTenantEntity {
     // Indica si la hora de salida la fijó un administrador y no el reconocimiento (RF-83).
     public boolean cerradoAMano() {
         return estadoCierre == EstadoCierre.CERRADO_POR_ADMIN;
+    }
+
+    // Indica si la hora de entrada la cargó un administrador y no el reconocimiento (V029).
+    public boolean abiertoAMano() {
+        return origenEntrada == OrigenMarca.MANUAL;
     }
 
     // Indica si el bloque todavía espera una marca de salida.

@@ -135,6 +135,7 @@ reporte.
 | RF-81 | Imputación por permanencia efectiva | ✅ | `AsistenciaService.imputarDelBloque`, `BloquePresenciaService.clasesCubiertas`, en el cierre por rostro y en el del job |
 | RF-82 | Cierre biométrico exige consentimiento vigente | ✅ | `BloquePresenciaService.registrar`, primera guarda del método |
 | RF-83 | Cierre manual del bloque | ✅ | `BloquePresenciaService.cerrarManualmente`, `BloquePresenciaController`, `bloques-pendientes.html`, columnas de V020 |
+| — | Entrada sin cámara, desde el pase | ✅ | `BloquePresenciaService.registrarSinCamara`, `PaseAsistenciaService.marcarSinCamara`, `POST /asistencia/pase/sin-camara`, columnas de V029 (ADR-0021). **Fuera del documento de requerimientos**: es el espejo de RF-83 del lado de la entrada, y la vía para el docente sin consentimiento vigente |
 
 **Fuga de consentimiento, cerrada el 2026-09-01.** Revocar el consentimiento marcaba
 `vigente = false` pero **no tocaba el modelo facial**, y el pase compara contra los modelos
@@ -420,3 +421,5 @@ formalmente al alcance acordado.
 | Validación de superposición de horarios | `ManejadorDeColisiones` | Evita cargar dos clases encimadas |
 | Alta autogestionada de institución | `AltaInstitucionController` | ADR-0010 |
 | Puestos de captura autorizados | `PuestoCapturaService`, `PuestoCapturaInterceptor`, `puestos_captura` | ADR-0015 — la captura biométrica solo desde equipos registrados. Habilita el acceso móvil al resto |
+| Marca sin cámara desde el pase | `BloquePresenciaService.registrarSinCamara`, V029 | ADR-0021 — el docente al que el reconocimiento no acierta se quedaba sin forma de registrar en el momento |
+| Una sesión por cuenta | `SesionesActivasService`, `SesionPorConfirmarInterceptor` | ADR-0020 |

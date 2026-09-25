@@ -628,6 +628,168 @@
         }
     }
 
+    /* ======================================================================
+     *  Marcar sin camara
+     *
+     *  Para el docente que el reconocimiento no acierta: rostro todavia sin registrar,
+     *  camara que falla, luz que no da, consentimiento revocado. Lo registra el admin que
+     *  esta atendiendo el pase, sobre la fila del docente, y el servidor decide si es
+     *  entrada o salida igual que con la cara (V029, ADR-0017).
+     *
+     *  La camara no se toca: el pase sigue andando mientras el cuadro esta abierto. Es a
+     *  proposito --el docente siguiente ya puede estar pasando-- y por eso el resultado se
+     *  muestra con mensajeParaLeer, que lo sostiene unos segundos para que el loop no lo
+     *  pise con "No se detecta ningun rostro" al cuadro siguiente.
+     * ====================================================================== */
+
+    const scOverlay  = document.getElementById('pa-sc-overlay');
+    const scDocente  = document.getElementById('pa-sc-docente');
+    const scMotivo   = document.getElementById('pa-sc-motivo');
+    const scDetalle  = document.getElementById('pa-sc-detalle');
+    const scOpcional = document.getElementById('pa-sc-detalle-opcional');
+    const scError    = document.getElementById('pa-sc-error');
+    const scOk       = document.getElementById('pa-sc-ok');
+    const scCancelar = document.getElementById('pa-sc-cancelar');
+
+    let scDocenteId = null;
+    let scAbriendo  = false;
+    let scFocoPrevio = null;
+
+    // El boton vive adentro de la tarjeta de clases, que se reemplaza entera cada minuto:
+    // escuchar en el documento es lo unico que sobrevive a ese reemplazo.
+    document.addEventListener('click', function (ev) {
+        const boton = ev.target.closest && ev.target.closest('.pase__sin-camara');
+        if (boton) abrirSinCamara(boton);
+    });
+
+    function abrirSinCamara(boton) {
+        if (!scOverlay) return;
+        scDocenteId = boton.dataset.docenteId;
+        scDocente.textContent = boton.dataset.docenteNombre || 'el docente';
+        scDetalle.value = '';
+        scMotivo.selectedIndex = 0;
+        ocultarErrorSc();
+        marcarDetalleSegunMotivo();
+
+        scFocoPrevio = document.activeElement;
+        scOverlay.setAttribute('aria-hidden', 'false');
+        scOverlay.classList.add('modal-overlay--in');
+        setTimeout(function () { scMotivo.focus(); }, 50);
+    }
+
+    function cerrarSinCamara() {
+        if (!scOverlay) return;
+        scOverlay.classList.remove('modal-overlay--in');
+        scOverlay.setAttribute('aria-hidden', 'true');
+        scDocenteId = null;
+        if (scFocoPrevio && typeof scFocoPrevio.focus === 'function') {
+            try { scFocoPrevio.focus(); } catch (e) { /* el boton ya no existe */ }
+        }
+    }
+
+    // "Otro" sin detalle deja un registro que no dice nada, asi que ahi el campo pasa a ser
+    // obligatorio. Lo vuelve a revisar el servidor: esto es para no hacer ir y volver.
+    function marcarDetalleSegunMotivo() {
+        const codigo = scMotivo.options[scMotivo.selectedIndex]
+            ? scMotivo.options[scMotivo.selectedIndex].dataset.codigo : null;
+        const obligatorio = codigo === 'OTRO';
+        scDetalle.required = obligatorio;
+        if (scOpcional) scOpcional.textContent = obligatorio ? '(contá qué pasó)' : '(opcional)';
+    }
+
+    function mostrarErrorSc(texto) {
+        if (!scError) return;
+        scError.textContent = texto;
+        scError.hidden = false;
+    }
+
+    function ocultarErrorSc() {
+        if (!scError) return;
+        scError.textContent = '';
+        scError.hidden = true;
+    }
+
+    async function registrarSinCamara() {
+        if (scAbriendo || !scDocenteId) return;
+        if (scDetalle.required && !scDetalle.value.trim()) {
+            mostrarErrorSc('Elegiste "Otro": contá en el detalle qué pasó.');
+            scDetalle.focus();
+            return;
+        }
+
+        scAbriendo = true;
+        scOk.disabled = true;
+        ocultarErrorSc();
+        try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            const resp = await fetch('/asistencia/pase/sin-camara', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    docenteId: Number(scDocenteId),
+                    motivoId: Number(scMotivo.value),
+                    detalle: scDetalle.value
+                })
+            });
+
+            // Con la sesion vencida o el equipo desautorizado vuelve HTML detras de una
+            // redireccion: eso no es un resultado, y leerlo como JSON explota.
+            if (resp.redirected || resp.status === 401 || resp.status === 403) {
+                mostrarErrorSc('La sesión venció o este equipo dejó de estar autorizado. '
+                    + 'Volvé a entrar y probá de nuevo.');
+                return;
+            }
+
+            const datos = await resp.json();
+
+            // 400 es un dato a corregir --el motivo-- y el cuadro se queda abierto. Un
+            // rechazo de negocio viene con 200 y se cierra: no hay nada que corregir aca.
+            if (!resp.ok) {
+                mostrarErrorSc(datos.mensaje || 'No se pudo registrar la marca.');
+                return;
+            }
+
+            cerrarSinCamara();
+            const esSalida = datos.tipoDeMarca === 'SALIDA';
+            const texto = datos.docenteNombre
+                ? datos.mensaje + ' (' + datos.docenteNombre + ')'
+                : datos.mensaje;
+
+            if (datos.registrada) {
+                mensajeParaLeer(texto, esSalida ? 'info' : 'success');
+                claseEl.textContent = '';
+                avisarAlResto(esSalida ? 'info' : 'success', texto);
+                refrescarClases();
+            } else {
+                mensajeParaLeer(texto, 'warn');
+                claseEl.textContent = '';
+                avisarAlResto('warning', texto);
+            }
+        } catch (err) {
+            mostrarErrorSc('No se pudo registrar la marca. Revisá la conexión y probá de nuevo.');
+        } finally {
+            scAbriendo = false;
+            scOk.disabled = false;
+        }
+    }
+
+    if (scOverlay) {
+        scMotivo.addEventListener('change', marcarDetalleSegunMotivo);
+        scOk.addEventListener('click', registrarSinCamara);
+        scCancelar.addEventListener('click', cerrarSinCamara);
+        // Igual que el modal de confirmacion: Esc cierra y el clic afuera tambien.
+        scOverlay.addEventListener('click', function (ev) {
+            if (ev.target === scOverlay) cerrarSinCamara();
+        });
+        document.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape' && scOverlay.classList.contains('modal-overlay--in')) {
+                cerrarSinCamara();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         revisarOtraVentana();
         setInterval(revisarOtraVentana, 2000);

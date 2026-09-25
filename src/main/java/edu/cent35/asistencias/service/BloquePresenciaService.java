@@ -168,7 +168,67 @@ public class BloquePresenciaService {
 
         return abierto.isPresent()
             ? cerrar(abierto.get(), docente, modeloFacialId, distanciaLbph, instante)
-            : abrir(docente, tenantId, modeloFacialId, distanciaLbph, instante, puesto);
+            : abrir(docente, tenantId, modeloFacialId, distanciaLbph, instante, puesto, null);
+    }
+
+    /**
+     * Registra la marca de un docente <b>sin pasar por la cámara</b> (V029).
+     *
+     * <p>Es el camino cuando el reconocimiento no sirve: un rostro que todavía no se
+     * registró, una cámara que falla, iluminación que no da, o un consentimiento revocado
+     * —donde el rostro directamente no se puede usar (RF-82)—. Con LBPH eso no es un caso
+     * de borde, y hasta acá el docente no tenía ninguna salida en el momento: su asistencia
+     * dependía de que después alguien la cargara desde otra pantalla, sin bloque, o sea sin
+     * hora de salida ni permanencia.
+     *
+     * <p><b>Decide lo mismo que la cámara y por el mismo criterio</b>: sin bloque abierto es
+     * una entrada, con bloque abierto es la salida (ADR-0017). Quien está adelante no elige
+     * cuál de las dos registra, igual que no lo elige al pasar la cara; lo único que agrega
+     * es por qué hubo que hacerlo a mano.
+     *
+     * <p><b>No se consulta el consentimiento biométrico, y es deliberado.</b> La regla es que
+     * sin consentimiento vigente no se <i>usa un rostro</i>, y acá no se usa ninguno: no hay
+     * captura, ni modelo, ni comparación. Consultarlo sería dejar sin forma de registrar su
+     * asistencia justamente al docente que ejerció su derecho a revocarlo, que es el caso
+     * para el que este camino tiene que existir. La marca queda igual que cualquier carga
+     * manual: con motivo, con detalle y con el nombre de quien la hizo.
+     *
+     * <p>Lo que sí se sigue exigiendo es todo lo que no depende del rostro: que el día no esté
+     * declarado sin clases, que haya una clase en curso y que esa clase no tenga ya su jornada
+     * cerrada. Son condiciones del calendario, no del reconocimiento.
+     *
+     * @param usuarioActualId el admin que la registra; queda asentado en el bloque
+     * @param puesto          de qué equipo salió (RF-89)
+     */
+    @Transactional
+    public ResultadoPresencia registrarSinCamara(Long docenteId, Short motivoId, String detalle,
+                                                 Long usuarioActualId, LocalDateTime instante,
+                                                 PuestoCaptura puesto) {
+        Long tenantId = TenantContext.getRequired();
+        Docente docente = obtenerDocenteValidado(docenteId, tenantId);
+
+        String detalleLimpio = trimToNull(detalle);
+        MotivoCargaManual motivo = motivoValidado(motivoId, detalleLimpio);
+
+        Optional<BloquePresencia> abierto =
+            bloqueRepository.findByDocenteIdAndEstadoCierre(docenteId, EstadoCierre.ABIERTO);
+
+        // La salida a mano ya existe desde V020 y está probada: se delega entera en vez de
+        // escribir una segunda forma de cerrar un bloque. Que se pueda hacer desde el pase y
+        // desde la pantalla de pendientes es una comodidad, no dos caminos distintos.
+        if (abierto.isPresent()) {
+            ResultadoCierreManual cierre = cerrarManualmente(
+                abierto.get().getId(), instante.toLocalTime().withNano(0),
+                motivoId, detalleLimpio, usuarioActualId);
+            return ResultadoPresencia.salida(cierre.bloque(), cierre.imputadas());
+        }
+
+        Usuario admin = usuarioRepository.findById(usuarioActualId)
+            .orElseThrow(() -> new EntityNotFoundException(
+                "Usuario actual no encontrado: " + usuarioActualId));
+
+        return abrir(docente, tenantId, null, null, instante, puesto,
+                     new EntradaManual(admin, motivo, detalleLimpio));
     }
 
     // ------------------------------------------------------------------------
@@ -176,15 +236,31 @@ public class BloquePresenciaService {
     // ------------------------------------------------------------------------
 
     /**
+     * Quién cargó una entrada a mano y por qué. Null en las entradas por rostro (V029).
+     *
+     * <p>Viaja junta y no como tres parámetros sueltos porque las tres son una sola cosa: o
+     * están las tres o no está ninguna, que es exactamente lo que exige el CHECK
+     * {@code ck_bloques_entrada_admin}.
+     */
+    private record EntradaManual(Usuario admin, MotivoCargaManual motivo, String detalle) {}
+
+    /**
      * Abre un bloque e imputa únicamente la clase en curso (RF-81).
      *
      * <p>Las clases siguientes del bloque <b>no</b> se marcan acá. Hacerlo asentaría como
      * hecho consumado una clase que todavía no empezó, y si el docente se retira antes queda
      * registrado que dictó algo que no dictó. Se imputan al cerrar, según lo que haya cubierto.
+     *
+     * <p>Sirve para los dos orígenes. Todas las guardas de más abajo —día sin clases, clase en
+     * curso, jornada ya cerrada— valen igual para una entrada cargada a mano: son condiciones
+     * del calendario, no del reconocimiento, y saltearlas por venir sin cámara dejaría abrir a
+     * mano bloques que la cámara rechaza.
+     *
+     * @param manual quién y por qué, cuando la entrada se carga sin cámara; null si fue rostro
      */
     private ResultadoPresencia abrir(Docente docente, Long tenantId, Long modeloFacialId,
                                      Double distanciaLbph, LocalDateTime instante,
-                                     PuestoCaptura puesto) {
+                                     PuestoCaptura puesto, EntradaManual manual) {
         // Un dia declarado sin clases no abre bloque (V024). La asistencia se registra CONTRA
         // UN HORARIO, asi que una marca en un feriado afirma que se dicto una clase que la
         // institucion habia cancelado: es el mismo dato falso que la ausencia automatica, del
@@ -197,9 +273,14 @@ public class BloquePresenciaService {
         if (motivoSinClases.isPresent()) {
             log.info("Entrada rechazada: {} esta marcado como dia sin clases ({}), docente={}",
                      instante.toLocalDate(), motivoSinClases.get(), docente.getId());
-            return ResultadoPresencia.rechazada(
-                "Hoy no hay clases: " + motivoSinClases.get() + ". Si viniste igual, pedile a "
-                + "secretaría que cargue la asistencia a mano.");
+            // El camino a seguir no es el mismo para los dos: al docente parado frente a la
+            // camara hay que mandarlo a secretaria, pero decirle eso a secretaria --que es
+            // quien carga la entrada a mano-- seria mandarla a preguntarse a si misma.
+            return ResultadoPresencia.rechazada(manual == null
+                ? "Hoy no hay clases: " + motivoSinClases.get() + ". Si viniste igual, pedile a "
+                  + "secretaría que cargue la asistencia a mano."
+                : "Hoy no hay clases: " + motivoSinClases.get() + ". Si igual se dictó, sacá "
+                  + "el día de la lista de días sin clase y volvé a registrar la marca.");
         }
 
         Optional<BloqueDeHorarios> enCurso = resolutor.bloqueEnCurso(docente.getId(), instante);
@@ -237,13 +318,19 @@ public class BloquePresenciaService {
             .docente(docente)
             .fecha(instante.toLocalDate())
             .horaEntrada(horaEntrada)
-            .origenEntrada(OrigenMarca.AUTOMATICO)
+            .origenEntrada(manual == null ? OrigenMarca.AUTOMATICO : OrigenMarca.MANUAL)
             // De que equipo salio la jornada (RF-89). Sin sesion no hay usuario a quien
             // atribuir el registro, y "desde donde" es lo que reemplaza a "quien".
             .puesto(puesto)
             .modeloFacialEntrada(modelo)
             .confianzaEntrada(distanciaLbph == null ? null
                 : asistenciaService.distanciaToConfianza(distanciaLbph))
+            // Quien la cargo y por que, o los tres en null si la abrio un rostro. Lo exige
+            // ck_bloques_entrada_admin, y antes que el CHECK lo exige el registro: una hora
+            // de entrada que nadie firma no se puede defender.
+            .abiertoPor(manual == null ? null : manual.admin())
+            .motivoEntrada(manual == null ? null : manual.motivo())
+            .detalleEntrada(manual == null ? null : manual.detalle())
             .estadoCierre(EstadoCierre.ABIERTO)
             .build();
         bloque.setInstitucionId(tenantId);
@@ -268,8 +355,10 @@ public class BloquePresenciaService {
             imputadas = 1;
         }
 
-        log.info("Bloque abierto: id={}, docente={}, fecha={}, entrada={}, clases del bloque={}",
+        log.info("Bloque abierto: id={}, docente={}, fecha={}, entrada={}, origen={}, "
+                 + "clases del bloque={}",
                  guardado.getId(), docente.getId(), guardado.getFecha(), horaEntrada,
+                 manual == null ? "rostro" : "a mano por " + manual.admin().getUsername(),
                  enCurso.get().cantidadDeClases());
         return ResultadoPresencia.entrada(guardado, imputadas, marcada);
     }
@@ -477,17 +566,8 @@ public class BloquePresenciaService {
             throw new IllegalArgumentException("La hora de salida no puede ser futura.");
         }
 
-        MotivoCargaManual motivo = motivoCargaManualRepository.findById(motivoId)
-            .orElseThrow(() -> new IllegalArgumentException("El motivo seleccionado no existe."));
-        if (Boolean.FALSE.equals(motivo.getActivo())) {
-            throw new IllegalArgumentException("El motivo elegido está inactivo.");
-        }
         String detalleLimpio = trimToNull(detalle);
-        if ("OTRO".equals(motivo.getCodigo()) && detalleLimpio == null) {
-            throw new IllegalArgumentException(
-                "Elegiste el motivo Otro: contá en el detalle qué pasó, si no el registro "
-                + "no dice nada.");
-        }
+        MotivoCargaManual motivo = motivoValidado(motivoId, detalleLimpio);
 
         Usuario admin = usuarioRepository.findById(usuarioActualId)
             .orElseThrow(() -> new EntityNotFoundException(
@@ -530,6 +610,33 @@ public class BloquePresenciaService {
                  cerrado.getId(), cerrado.getDocente().getId(), horaSalida, motivo.getCodigo(),
                  admin.getId(), imputadas, fueraDeRango.size());
         return new ResultadoCierreManual(cerrado, imputadas, fueraDeRango);
+    }
+
+    /**
+     * El motivo del catálogo, con sus dos condiciones: que exista y esté activo, y que si es
+     * OTRO venga con el detalle escrito.
+     *
+     * <p>Lo comparten la entrada y la salida a mano porque es el mismo catálogo y el mismo
+     * criterio. Con una copia de cada lado alcanzaba con arreglar una para que la otra
+     * siguiera aceptando un "Otro" que no cuenta nada.
+     *
+     * @param detalleLimpio el detalle ya normalizado, tal como se va a guardar
+     */
+    private MotivoCargaManual motivoValidado(Short motivoId, String detalleLimpio) {
+        if (motivoId == null) {
+            throw new IllegalArgumentException("Hay que elegir un motivo.");
+        }
+        MotivoCargaManual motivo = motivoCargaManualRepository.findById(motivoId)
+            .orElseThrow(() -> new IllegalArgumentException("El motivo seleccionado no existe."));
+        if (Boolean.FALSE.equals(motivo.getActivo())) {
+            throw new IllegalArgumentException("El motivo elegido está inactivo.");
+        }
+        if ("OTRO".equals(motivo.getCodigo()) && detalleLimpio == null) {
+            throw new IllegalArgumentException(
+                "Elegiste el motivo Otro: contá en el detalle qué pasó, si no el registro "
+                + "no dice nada.");
+        }
+        return motivo;
     }
 
     // Normaliza texto opcional: deja null si viene vacio o solo con espacios.

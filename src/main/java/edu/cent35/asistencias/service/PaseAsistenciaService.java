@@ -3,9 +3,11 @@ package edu.cent35.asistencias.service;
 import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
 import edu.cent35.asistencias.dto.IdentificacionResultadoDto;
 import edu.cent35.asistencias.dto.KioscoResultadoDto;
+import edu.cent35.asistencias.dto.MarcaSinCamaraResultadoDto;
 import edu.cent35.asistencias.dto.PaseAsistenciaResultadoDto;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.BloquePresencia;
+import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoSalida;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.model.Materia;
@@ -13,6 +15,7 @@ import edu.cent35.asistencias.model.PuestoCaptura;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,6 +39,7 @@ public class PaseAsistenciaService {
     private final IdentificacionFacialService identificacionService;
     private final BloquePresenciaService bloquePresenciaService;
     private final VentanaConfirmacionService ventanaConfirmacion;
+    private final DocenteService docenteService;
 
     // Pasa asistencia desde un frame: identifica, exige que la identidad se sostenga y marca.
     /**
@@ -189,6 +193,56 @@ public class PaseAsistenciaService {
             (esSalida ? "Salida registrada: " : "Entrada registrada: ") + detalle);
     }
 
+    /**
+     * Registra la marca de un docente <b>sin pasar por la cámara</b>, a pedido del admin que
+     * está atendiendo el pase (V029).
+     *
+     * <p>Es la salida para cuando el reconocimiento no sirve y el docente está ahí parado:
+     * rostro sin registrar, cámara que falla, luz que no da, o consentimiento revocado. Antes
+     * había que ir a la carga manual, que vive en otra pantalla —o sea soltando la cámara— y
+     * que no abre bloque: quedaba la asistencia de esa clase, sin hora de salida ni permanencia.
+     *
+     * <p><b>Acá no se elige entre entrada y salida.</b> Lo decide el estado del docente, igual
+     * que en una pasada por la cámara (ADR-0017). Lo único que se agrega es por qué hubo que
+     * hacerlo a mano, y queda con el nombre de quien lo hizo.
+     *
+     * <p>Va transaccional entero, y no solo la escritura: con {@code open-in-view} apagado, el
+     * nombre del docente y la clase imputada se leen recién al armar la respuesta, y fuera de
+     * la transacción esas lecturas fallan.
+     */
+    @Transactional
+    public MarcaSinCamaraResultadoDto marcarSinCamara(Long docenteId, Short motivoId,
+                                                      String detalle, Long usuarioActualId,
+                                                      PuestoCaptura puesto) {
+        // Antes de tocar nada: si el docente no es de esta institución, esto tira y no sigue.
+        Docente docente = docenteService.buscarPorId(docenteId);
+        String nombre = docente.getNombreCompleto();
+
+        BloquePresenciaService.ResultadoPresencia p = bloquePresenciaService.registrarSinCamara(
+            docenteId, motivoId, detalle, usuarioActualId, LocalDateTime.now(), puesto);
+
+        if (!p.registrada()) {
+            return MarcaSinCamaraResultadoDto.rechazada(nombre, p.motivo());
+        }
+
+        log.info("Marca sin camara: docente={} tipo={} clases={} admin={} puesto={}",
+                 docenteId, p.tipo(), p.clasesImputadas(), usuarioActualId,
+                 puesto == null ? null : puesto.getId());
+
+        if (p.tipo() == BloquePresenciaService.TipoDeMarca.SALIDA) {
+            return MarcaSinCamaraResultadoDto.salida(
+                nombre, resumenDeSalida(p.bloque(), p.clasesImputadas()));
+        }
+
+        // Sin asistencia imputada el bloque abrió en la ventana previa al inicio de la clase:
+        // hay entrada, todavía no hay clase que marcar. Se informa la hora y nada más, porque
+        // decir un estado de asistencia ahí estaría inventando una clase que no empezó.
+        Asistencia a = p.asistencia();
+        return MarcaSinCamaraResultadoDto.entrada(nombre, a == null
+            ? p.bloque().getHoraEntrada().format(HM)
+            : a.getEstado().name() + " en " + armarClaseLabel(a));
+    }
+
     // Respuesta de una entrada: el estado con el que llegó y qué clase está dando.
     private PaseAsistenciaResultadoDto armarEntrada(IdentificacionResultadoDto id,
                                                     BloquePresenciaService.ResultadoPresencia p) {
@@ -204,14 +258,19 @@ public class PaseAsistenciaService {
     private PaseAsistenciaResultadoDto armarSalida(IdentificacionResultadoDto id,
                                                    BloquePresenciaService.ResultadoPresencia p) {
         BloquePresencia b = p.bloque();
-        int clases = p.clasesImputadas();
-        String resumen = b.getHoraEntrada().format(HM) + " a " + b.getHoraSalida().format(HM)
-            + " - " + clases + (clases == 1 ? " clase" : " clases");
+        String resumen = resumenDeSalida(b, p.clasesImputadas());
         return PaseAsistenciaResultadoDto.salidaRegistrada(
             id.docenteId(), id.docenteNombre(), id.distancia(),
             id.x(), id.y(), id.ancho(), id.alto(),
             resumen,
             b.getEstadoSalida() == EstadoSalida.ANTICIPADA);
+    }
+
+    // Cuanto estuvo y cuantas clases le quedaron imputadas: "18:00 a 20:00 - 2 clases".
+    // Lo comparten la salida por rostro y la cargada a mano, que informan lo mismo.
+    private static String resumenDeSalida(BloquePresencia b, int clases) {
+        return b.getHoraEntrada().format(HM) + " a " + b.getHoraSalida().format(HM)
+            + " - " + clases + (clases == 1 ? " clase" : " clases");
     }
 
     // Construye un label legible para la clase: "Comisión A - Matemática (18:00-20:00)".

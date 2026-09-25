@@ -52,6 +52,10 @@ public record PanelInicioDto(
     /**
      * Una clase corriendo ahora, con el estado de su docente.
      *
+     * @param docenteId  a quien hay que marcarle la asistencia. Lo usa el pase para ofrecer la
+     *                   marca sin camara sobre esta misma fila (V029): elegir de esta lista, y
+     *                   no de un buscador de todos los docentes, hace imposible marcarle a
+     *                   alguien que no tiene clase ahora
      * @param estado     PRESENTE o TARDE si ya marco; null si todavia no
      * @param horaMarca  cuando marco, o null si todavia no
      */
@@ -60,6 +64,7 @@ public record PanelInicioDto(
         LocalTime horaFin,
         String comisionCodigo,
         String materiaNombre,
+        Long docenteId,
         String docenteNombre,
         boolean marcada,
         String estado,

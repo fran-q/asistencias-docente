@@ -611,6 +611,132 @@ class BloquePresenciaServiceTest {
     }
 
     // ========================================================================
+    //  Marca sin camara (V029)
+    // ========================================================================
+
+    @Nested
+    @DisplayName("registrarSinCamara")
+    class SinCamara {
+
+        @Test
+        @DisplayName("abre el bloque con origen manual, y con quien lo cargo y por que")
+        void abreAMano() {
+            docenteDelTenant();
+            sinBloqueAbierto();
+            conMotivo((short) 3, "NO_REGISTRADO");
+            conAdmin();
+            bloqueEnCursoCon(LocalTime.of(18, 0), LocalTime.of(20, 0), horario(1L, 18, 0, 20, 0));
+            guardaElBloque();
+
+            var r = service.registrarSinCamara(DOCENTE_ID, (short) 3, "  todavia sin foto  ",
+                                               99L, UN_LUNES.atTime(18, 5), null);
+
+            assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.ENTRADA);
+
+            ArgumentCaptor<BloquePresencia> captor = ArgumentCaptor.forClass(BloquePresencia.class);
+            verify(bloqueRepository).saveAndFlush(captor.capture());
+            BloquePresencia guardado = captor.getValue();
+
+            assertThat(guardado.getOrigenEntrada()).isEqualTo(OrigenMarca.MANUAL);
+            assertThat(guardado.getAbiertoPor())
+                .as("una hora de entrada que nadie firma no se puede defender")
+                .isNotNull();
+            assertThat(guardado.getMotivoEntrada()).isNotNull();
+            assertThat(guardado.getDetalleEntrada()).isEqualTo("todavia sin foto");
+
+            // ck_bloques_entrada_modelo: una hora que no salio de una medicion no lleva
+            // evidencia biometrica detras, porque no hubo ninguna medicion.
+            assertThat(guardado.getModeloFacialEntrada()).isNull();
+            assertThat(guardado.getConfianzaEntrada()).isNull();
+        }
+
+        @Test
+        @DisplayName("un consentimiento no vigente no la frena: aca no se usa ningun rostro")
+        void sinConsentimientoSeRegistraIgual() {
+            // Es el caso para el que este camino existe. La regla dura es que sin
+            // consentimiento vigente no se USA UN ROSTRO (RF-82, Ley 25.326), y aca no hay
+            // captura, ni modelo, ni comparacion. Consultarlo dejaria sin forma de registrar
+            // su asistencia justamente al docente que ejercio su derecho a revocarlo.
+            docenteDelTenant();
+            sinBloqueAbierto();
+            conMotivo((short) 2, "FALLA_RECONOCIMIENTO");
+            conAdmin();
+            bloqueEnCursoCon(LocalTime.of(18, 0), LocalTime.of(20, 0), horario(1L, 18, 0, 20, 0));
+            guardaElBloque();
+
+            var r = service.registrarSinCamara(DOCENTE_ID, (short) 2, null, 99L,
+                                               UN_LUNES.atTime(18, 5), null);
+
+            assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.ENTRADA);
+            verify(consentimientoService, never()).estadoActual(any());
+        }
+
+        @Test
+        @DisplayName("con el bloque abierto registra la salida, no una segunda entrada")
+        void conBloqueAbiertoCierra() {
+            // El sentido de la marca lo decide el estado del docente, igual que en una pasada
+            // por la camara (ADR-0017). Quien la carga no elige entre entrada y salida, y por
+            // eso el pedido del navegador no trae esa palabra.
+            docenteDelTenant();
+            conBloqueAbierto(LocalTime.of(18, 0), UN_LUNES);
+            bloquePorId(LocalTime.of(18, 0), UN_LUNES, EstadoCierre.ABIERTO);
+            conMotivo((short) 1, "FALLA_CAMARA");
+            conAdmin();
+            horariosDelDia(horario(1L, 18, 0, 20, 0));
+            asistenciasDelBloque();
+            guardaElBloque();
+
+            var r = service.registrarSinCamara(DOCENTE_ID, (short) 1, null, 99L,
+                                               UN_LUNES.atTime(20, 0), null);
+
+            assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.SALIDA);
+            assertThat(r.bloque().getEstadoCierre()).isEqualTo(EstadoCierre.CERRADO_POR_ADMIN);
+            assertThat(r.bloque().getOrigenSalida()).isEqualTo(OrigenMarca.MANUAL);
+            assertThat(r.bloque().getHoraSalida()).isEqualTo(LocalTime.of(20, 0));
+        }
+
+        @Test
+        @DisplayName("el motivo Otro sin detalle no registra nada")
+        void otroSinDetalleNoRegistra() {
+            docenteDelTenant();
+            conMotivo((short) 4, "OTRO");
+
+            assertThatThrownBy(() -> service.registrarSinCamara(
+                    DOCENTE_ID, (short) 4, "   ", 99L, UN_LUNES.atTime(18, 5), null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Otro");
+
+            verify(bloqueRepository, never()).saveAndFlush(any());
+        }
+
+        @Test
+        @DisplayName("en un dia sin clases le dice al admin que hacer, no que pida ayuda")
+        void enDiaSinClasesElMensajeEsParaElAdmin() {
+            // Las guardas del calendario valen igual que con camara: un feriado no abre
+            // bloque. Lo que cambia es a quien se le habla. "Pedile a secretaria que la
+            // cargue a mano" es una instruccion para el docente parado frente a la camara;
+            // dicha a secretaria, que es quien esta cargando esto, la manda a preguntarse a
+            // si misma.
+            docenteDelTenant();
+            sinBloqueAbierto();
+            conMotivo((short) 1, "FALLA_CAMARA");
+            conAdmin();
+            when(diaNoLaborableService.motivoSinClases(TENANT_A, UN_LUNES))
+                .thenReturn(Optional.of("Feriado nacional"));
+
+            var r = service.registrarSinCamara(DOCENTE_ID, (short) 1, null, 99L,
+                                               UN_LUNES.atTime(18, 5), null);
+
+            assertThat(r.tipo()).isEqualTo(BloquePresenciaService.TipoDeMarca.RECHAZADA);
+            assertThat(r.motivo())
+                .contains("Feriado nacional")
+                .contains("días sin clase")
+                .doesNotContain("secretaría");
+            verify(bloqueRepository, never()).saveAndFlush(any());
+        }
+    }
+
+    // ========================================================================
     //  Que el motivo no nombre a nadie (RF-87)
     // ========================================================================
 

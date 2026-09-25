@@ -1424,6 +1424,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     background: var(--field); color: var(--text);
     border: 1px solid var(--border); border-radius: var(--r); font-size: .9rem;
 }
+/* Un campo de texto libre no entra en el alto fijo de los demás: con height los
+   dos renglones del detalle quedan en uno solo y recortado. */
+.modal__campo-input--texto { height: auto; padding: 8px 12px; resize: vertical; }
 .modal__actions { display: flex; gap: 9px; justify-content: flex-end; }
 .modal__actions .btn { min-width: 112px; }
 

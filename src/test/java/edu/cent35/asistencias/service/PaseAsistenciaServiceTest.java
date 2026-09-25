@@ -44,6 +44,7 @@ class PaseAsistenciaServiceTest {
     @Mock private IdentificacionFacialService identificacionService;
     @Mock private BloquePresenciaService bloquePresenciaService;
     @Mock private VentanaConfirmacionService ventanaConfirmacion;
+    @Mock private DocenteService docenteService;
 
     @InjectMocks private PaseAsistenciaService service;
 

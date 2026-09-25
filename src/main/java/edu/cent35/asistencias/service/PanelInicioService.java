@@ -166,6 +166,7 @@ public class PanelInicioService {
                 h.getHoraFin(),
                 c.getCodigo(),
                 c.getMateria().getNombre(),
+                c.getDocenteAsignado().getId(),
                 c.getDocenteAsignado().getNombreCompleto(),
                 marca != null,
                 marca == null ? null : marca.getEstado().name(),

@@ -94,7 +94,7 @@ build verde** y por eso conviene tenerlas escritas:
       no. El proyecto no tiene infraestructura de tests de JS y no vale la pena montarla por
       esto solo, pero conviene saber que esa línea se rompe en silencio.
 
-- [ ] **Los CHECK de V019 y V020 se verifican a mano.** El perfil `test` corre sobre H2 con
+- [ ] **Los CHECK de V019, V020 y V029 se verifican a mano.** El perfil `test` corre sobre H2 con
       Flyway apagado, así que ningún constraint de esas migraciones se ejercita. Se probaron
       contra MariaDB 10.4.32 el 2026-09-01 —los diez de V019, uno por uno— pero **hay que
       repetirlo si se toca el esquema de la tabla**. `MigracionesIT` sí verifica que las

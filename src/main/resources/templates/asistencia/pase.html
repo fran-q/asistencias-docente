@@ -122,6 +122,20 @@
                                       th:text="${c.estado()} + ' ' + ${#temporals.format(c.horaMarca(), 'HH:mm')}">PRESENTE</span>
                                 <span th:unless="${c.marcada()}" class="badge badge--warning">Sin marcar</span>
                             </span>
+                            <!--
+                              La salida cuando la cámara no sirve: rostro sin registrar, luz que
+                              no da, consentimiento revocado. Va sobre la fila del docente y no
+                              como un buscador aparte, así lo único que se puede elegir es
+                              alguien que tiene clase en curso ahora.
+
+                              Aparece también en las ya marcadas: ahí lo que registra es la
+                              salida, que falla por lo mismo que la entrada (V029, ADR-0017).
+                            -->
+                            <button type="button" class="btn btn--ghost btn--sm pase__sin-camara"
+                                    th:attr="data-docente-id=${c.docenteId()},
+                                             data-docente-nombre=${c.docenteNombre()}">
+                                Marcar a mano
+                            </button>
                         </li>
                     </ul>
                 </div>
@@ -169,6 +183,53 @@
                     Ir al kiosco: asistencia sin supervisión
                 </button>
             </form>
+        </div>
+
+        <!--
+          El cuadro de marcar sin cámara.
+
+          Vive en la pantalla y no adentro de "Clases de ahora", que se redibuja solo cada
+          minuto: si estuviera ahí, el refresco lo cerraría en la mitad de escribir el motivo.
+
+          Usa las clases del modal de confirmación en vez de llamarlo: ese pide a lo sumo una
+          fecha, y acá hacen falta un motivo del catálogo y un detalle. Agregarle campos
+          arbitrarios a un modal que usan veinte pantallas para que lo use una sola es la
+          clase de generalidad que después nadie entiende.
+        -->
+        <div class="modal-overlay" id="pa-sc-overlay" role="dialog" aria-modal="true"
+             aria-hidden="true" aria-labelledby="pa-sc-titulo">
+            <div class="modal" role="document">
+                <h2 class="modal__title" id="pa-sc-titulo">Marcar a mano</h2>
+                <p class="modal__detail">
+                    Se registra la entrada de <strong id="pa-sc-docente">el docente</strong> sin
+                    pasar por la cámara, o su salida si ya está adentro. Queda asentado con tu
+                    nombre y con el motivo.
+                </p>
+
+                <div class="modal__campo">
+                    <label class="modal__campo-label" for="pa-sc-motivo">Por qué no pasó por la cámara</label>
+                    <select id="pa-sc-motivo" class="modal__campo-input">
+                        <option th:each="m : ${motivos}"
+                                th:value="${m.id}" th:text="${m.descripcion}"
+                                th:attr="data-codigo=${m.codigo}">Motivo</option>
+                    </select>
+                </div>
+
+                <div class="modal__campo">
+                    <label class="modal__campo-label" for="pa-sc-detalle">
+                        Detalle <span class="text-muted" id="pa-sc-detalle-opcional">(opcional)</span>
+                    </label>
+                    <textarea id="pa-sc-detalle" rows="2" maxlength="500"
+                              class="modal__campo-input modal__campo-input--texto"></textarea>
+                </div>
+
+                <p class="form-error" id="pa-sc-error" role="alert" hidden></p>
+
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--ghost" id="pa-sc-cancelar">Cancelar</button>
+                    <button type="button" class="btn btn--primary" id="pa-sc-ok">Registrar</button>
+                </div>
+            </div>
         </div>
 
         <script th:src="@{/js/facial/camara.js}" defer></script>

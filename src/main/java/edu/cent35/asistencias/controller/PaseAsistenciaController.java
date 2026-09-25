@@ -3,13 +3,17 @@ package edu.cent35.asistencias.controller;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import edu.cent35.asistencias.service.AsistenciaService;
 import edu.cent35.asistencias.service.PanelInicioService;
 import edu.cent35.asistencias.service.PaseAsistenciaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +38,7 @@ public class PaseAsistenciaController {
 
     private final PaseAsistenciaService paseAsistenciaService;
     private final PanelInicioService panelInicioService;
+    private final AsistenciaService asistenciaService;
 
     /**
      * Pantalla del pase: webcam + loop de reconocimiento + marca automática.
@@ -49,6 +54,9 @@ public class PaseAsistenciaController {
         // La camara elegida para este equipo (V026); null deja la predeterminada.
         model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         model.addAttribute("clases", panelInicioService.clasesDeAhora());
+        // Para el cuadro de marcar sin camara. Va en la pantalla y no en el fragmento de las
+        // clases, que se refresca solo: el cuadro esta afuera y no se vuelve a dibujar.
+        model.addAttribute("motivos", asistenciaService.motivosActivos());
         return "asistencia/pase";
     }
 
@@ -96,6 +104,39 @@ public class PaseAsistenciaController {
             return PaseAsistenciaResultadoDto.sinRostro();
         }
         return paseAsistenciaService.pasar(imagen, rachaDe(sesion), puestoDe(request));
+    }
+
+    /**
+     * Registra una marca sin cámara, para el docente que el reconocimiento no acierta (V029).
+     *
+     * <p>Queda bajo {@code /asistencia/pase/**}, así que exige lo mismo que el resto del pase:
+     * sesión de INSTITUCION o ADMIN y equipo autorizado. Lo segundo no es por la captura
+     * —acá no hay ninguna— sino porque esto registra presencia: si se pudiera desde cualquier
+     * máquina, alcanzaría con la sesión para marcarle la entrada a alguien que no está.
+     *
+     * <p><b>No lo puede hacer el kiosco</b>, que corre sin sesión. Ahí no hay quien controle
+     * nada, y un botón para marcar sin rostro en una pantalla que mira cualquiera es
+     * exactamente la forma de que uno marque por otro (ADR-0019).
+     *
+     * <p>Un motivo inválido responde 400 y el cuadro queda abierto para corregirlo; un rechazo
+     * de negocio —no hay clase ahora, el día está sin clases— responde 200 con
+     * {@code registrada: false}, porque no hay nada que corregir en el formulario.
+     */
+    @PostMapping("/sin-camara")
+    @ResponseBody
+    public ResponseEntity<MarcaSinCamaraResultadoDto> marcarSinCamara(
+            @RequestBody MarcaSinCamaraDto pedido,
+            @AuthenticationPrincipal UsuarioAutenticado principal,
+            HttpServletRequest request) {
+        try {
+            return ResponseEntity.ok(paseAsistenciaService.marcarSinCamara(
+                pedido.docenteId(), pedido.motivoId(), pedido.detalle(),
+                principal.getUsuarioId(), puestoDe(request)));
+        } catch (IllegalArgumentException ex) {
+            log.info("Marca sin camara rechazada por datos: {}", ex.getMessage());
+            return ResponseEntity.badRequest()
+                .body(MarcaSinCamaraResultadoDto.rechazada(null, ex.getMessage()));
+        }
     }
 
     // La racha vive en la sesion, no en el navegador ni en un mapa del servidor: asi no se
