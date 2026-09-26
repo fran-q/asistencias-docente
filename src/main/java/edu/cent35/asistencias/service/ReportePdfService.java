@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Arma el reporte de asistencias en PDF (RF-61).
@@ -35,13 +36,19 @@ public class ReportePdfService {
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter HORA  = DateTimeFormatter.ofPattern("HH:mm");
 
-    // Anchos relativos de las columnas. La materia y el docente son los que se leen,
-    // asi que se llevan el espacio; la fecha y la hora tienen largo fijo.
+    /*
+     * Anchos relativos de las columnas, medidos contra lo que de verdad entra en cada una a
+     * Helvetica 8 mas los 4pt de padding de cada lado. El reparto anterior le daba a la hora
+     * y a lo dictado casi el doble del ancho de su contenido, y le quedaba corto a "Método":
+     * "AUTOMATICO" mide 61pt y la columna tenia 57, asi que se partia en dos renglones en
+     * casi todas las filas. Ajustado, entra el equipo y ademas sobra espacio para la materia
+     * y el docente, que son los que de verdad necesitan crecer.
+     */
     private static final float[] ANCHOS =
-        {1.1f, 1.6f, 2.4f, 0.9f, 2.0f, 0.8f, 0.8f, 1.2f, 0.9f, 1.0f, 1.0f};
+        {1.0f, 1.15f, 3.1f, 1.0f, 2.7f, 0.7f, 0.75f, 1.25f, 0.85f, 0.95f, 1.1f, 1.3f};
     private static final String[] CABECERAS = {
         "Fecha", "Horario", "Materia", "Comisión", "Docente",
-        "Entra", "Sale", "Dictado", "Desvío", "Estado", "Método"
+        "Entra", "Sale", "Equipo", "Dictado", "Desvío", "Estado", "Método"
     };
 
     private static final Font FUENTE_TITULO   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
@@ -57,7 +64,8 @@ public class ReportePdfService {
     public void escribir(OutputStream out, List<AsistenciaReporteRowDto> filas,
                          LocalDate desde, LocalDate hasta, String institucion,
                          ReporteAsistenciaService.TotalesDelReporte totales) {
-        // Apaisado: son ocho columnas y en vertical el nombre de la materia se parte.
+        // Apaisado: con esta cantidad de columnas, en vertical el nombre de la materia se
+        // parte en dos renglones.
         Document doc = new Document(PageSize.A4.rotate(), 28, 28, 32, 28);
         try {
             PdfWriter.getInstance(doc, out);
@@ -82,6 +90,16 @@ public class ReportePdfService {
                 doc.add(new Paragraph(
                     "Desvío: minutos de clase sin cubrir (-) y minutos de permanencia fuera de "
                     + "la franja de la clase (+).", FUENTE_SUBTITULO));
+                // La columna del equipo solo se explica si alguna fila trae las dos puertas.
+                // Con una sola cámara por institución el nombre suelto se entiende solo, y una
+                // referencia de más en un PDF impreso es una línea que nadie lee.
+                if (filas.stream().anyMatch(this::muestraLosDos)) {
+                    doc.add(new Paragraph(
+                        "Equipo: el nombre del equipo donde se registró la marca. Cuando la "
+                        + "salida no se tomó en el mismo equipo que la entrada va «entrada › "
+                        + "salida», y un guion del lado de la salida dice que la jornada se "
+                        + "cerró sin pasar por una cámara.", FUENTE_SUBTITULO));
+                }
                 // Un asterisco sin referencia es peor que no ponerlo: quien recibe el PDF
                 // impreso no tiene a quien preguntarle que significa. Solo se aclara si hay
                 // alguna, para no ensuciar los reportes donde todas las salidas se marcaron.
@@ -149,8 +167,8 @@ public class ReportePdfService {
 
         boolean gris = false;
         for (AsistenciaReporteRowDto f : filas) {
-            // Filas alternadas: con ocho columnas angostas es lo que evita saltar de renglon
-            // al recorrerlas con la vista.
+            // Filas alternadas: con tantas columnas angostas es lo que evita saltar de
+            // renglon al recorrerlas con la vista.
             Color fondo = gris ? new Color(0xF2, 0xF3, 0xF5) : Color.WHITE;
             gris = !gris;
 
@@ -161,6 +179,7 @@ public class ReportePdfService {
             agregar(t, texto(f.getDocenteApellido()) + ", " + texto(f.getDocenteNombre()), fondo);
             agregar(t, f.getHoraRegistrada() == null ? "—" : f.getHoraRegistrada().format(HORA), fondo);
             agregar(t, salida(f), fondo);
+            agregar(t, equipos(f), fondo);
             agregar(t, dictado(f), fondo);
             agregar(t, desvio(f), fondo);
             agregar(t, estado(f), fondo);
@@ -240,6 +259,45 @@ public class ReportePdfService {
             sb.append(sb.length() == 0 ? "" : " ").append("+").append(fuera);
         }
         return sb.toString();
+    }
+
+    /**
+     * Por qué puerta entró y por cuál salió (RF-89, V031).
+     *
+     * <p>Un solo nombre cuando las dos marcas se tomaron en el mismo equipo, que es el caso
+     * normal y el que no hay que leer. Los dos nombres cuando no coinciden: ahí está lo que
+     * una inspección viene a buscar, y hasta que existió esta columna el PDF afirmaba, por
+     * omisión, que el docente había salido por donde entró.
+     */
+    private String equipos(AsistenciaReporteRowDto f) {
+        String entrada = nombre(f.getEquipoEntrada());
+        if (!muestraLosDos(f)) {
+            return entrada;
+        }
+        return entrada + " › " + nombre(f.getEquipoSalida());
+    }
+
+    /**
+     * Si la fila tiene que mostrar los dos equipos.
+     *
+     * <p>Sin hora de salida no hay segundo equipo del que hablar —el guion de la columna
+     * "Sale" ya lo dijo—, y con la misma puerta de los dos lados repetir el nombre solo gasta
+     * ancho. El guion del lado de la salida, en cambio, sí es un dato: la jornada la cerró el
+     * job por vencimiento o un admin desde la pantalla de pendientes, sin cámara de por medio.
+     */
+    private boolean muestraLosDos(AsistenciaReporteRowDto f) {
+        if (f.getHoraSalida() == null) {
+            return false;
+        }
+        if (f.getEquipoEntrada() == null && f.getEquipoSalida() == null) {
+            return false;
+        }
+        return !Objects.equals(f.getEquipoEntrada(), f.getEquipoSalida());
+    }
+
+    // Guion cuando no hay equipo, igual que en el resto de la tabla.
+    private String nombre(String equipo) {
+        return equipo == null ? "—" : equipo;
     }
 
     // Lo que suma el periodo, en un renglon.

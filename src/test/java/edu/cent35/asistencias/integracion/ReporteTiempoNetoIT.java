@@ -1,5 +1,7 @@
 package edu.cent35.asistencias.integracion;
 
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
@@ -231,7 +233,7 @@ class ReporteTiempoNetoIT {
     }
 
     @Test
-    @DisplayName("El PDF sale con la columna de desvio y el resumen al pie")
+    @DisplayName("El PDF sale con el desvio, los equipos y el resumen al pie")
     void elPdfSale() throws Exception {
         byte[] pdf = mockMvc.perform(get("/reportes/pdf")
                 .param("desde", "2026-06-01").param("hasta", "2026-06-30")
@@ -243,6 +245,26 @@ class ReporteTiempoNetoIT {
         assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.ISO_8859_1))
             .as("un PDF de verdad, no una pantalla de error")
             .isEqualTo("%PDF-");
+
+        String hoja = textoDe(pdf);
+        assertThat(hoja)
+            .as("las columnas del desvio y del equipo, y el resumen del periodo")
+            .contains("Desvío").contains("Equipo")
+            .contains("dictado 3 h 15 min (81%)")
+            .as("por que puerta entro y por cual salio, en la hoja que se archiva")
+            .contains("Entrada norte › Entrada sur")
+            .contains("«entrada › salida»");
+    }
+
+    // El texto de la primera hoja del PDF, con los saltos normalizados: una celda angosta
+    // parte su contenido en dos renglones y eso es correcto en la hoja impresa.
+    private String textoDe(byte[] pdf) throws Exception {
+        PdfReader reader = new PdfReader(pdf);
+        try {
+            return new PdfTextExtractor(reader).getTextFromPage(1).replaceAll("\\s+", " ");
+        } finally {
+            reader.close();
+        }
     }
 
     // ------------------------------------------------------------------------

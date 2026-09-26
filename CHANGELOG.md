@@ -19,9 +19,23 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   el docente entra por una puerta y sale por la otra, y el registro afirmaba que había salido
   por donde entró.
 
-- **Se ve en el reporte.** Cada fila muestra el equipo debajo de la hora de entrada y de la de
-  salida, y el CSV los trae en dos columnas para poder filtrar por puerta. El dato se guardaba
-  desde V025 y no se mostraba en ninguna pantalla.
+- **Se ve en las tres salidas del reporte.** En pantalla, el equipo va debajo de la hora de
+  entrada y de la de salida. El CSV los trae en dos columnas, para poder filtrar por puerta en
+  una planilla. Y el PDF —la hoja que se imprime y se archiva— suma una columna **Equipo**: el
+  nombre una sola vez cuando las dos marcas se tomaron en la misma puerta, y los dos nombres
+  separados cuando no. Un guion del lado de la salida no es un hueco sino un dato: la jornada
+  se cerró sin pasar por una cámara. El equipo se guardaba desde V025 y no se mostraba en
+  ninguna pantalla.
+
+### Corregido
+
+- **El PDF partía casi todas sus filas en dos renglones.** Los anchos de las columnas estaban
+  puestos a ojo: la hora y lo dictado tenían casi el doble del ancho que necesitaban, y a
+  "Método" le faltaban cuatro puntos para que entrara `AUTOMATICO`, que es el valor de casi
+  todas las filas. Medidos contra lo que de verdad ocupa cada dato, entró la columna nueva y
+  todavía sobró espacio para la materia y el docente, que son los que se leen. Lo sostiene un
+  test que lee el texto del PDF generado y exige encontrar cada dato entero: una celda que se
+  parte deja de encontrarse.
 
 - **Queda vacío cuando no hay equipo que anotar:** las jornadas que cierra el job por
   vencimiento —ahí hay un reloj, no una máquina— y las que cierra un admin desde la pantalla de

@@ -168,7 +168,7 @@ con horarios para abajo.
 | RF-86 | El registro del rostro nunca opera sin sesión | ✅ | `WebMvcConfig.PUEDEN_SIN_SESION` es una lista aparte que solo tiene `/kiosco/**`; la ruta de registro sigue en la cadena principal |
 | RF-87 | Identificación mínima en la pantalla desatendida | ✅ | `KioscoResultadoDto` no tiene campo para el nombre completo; el recorte lo hace `Docente.getApellido()` en el servidor. Los mensajes de rechazo de `BloquePresenciaService` tampoco nombran a nadie — ver la nota de abajo |
 | RF-88 | Vencimiento de la credencial por inactividad | ✅ | `PuestoCapturaService.resolverKiosco` contra `ultimo_uso_en` (ya existía desde V001), `app.biometria.puesto.dias-inactividad` (30). Sin uso previo cuenta desde `creado_en` |
-| RF-89 | Trazabilidad del equipo en cada marca | ✅ | `BloquePresenciaService.registrar` anota el equipo en el bloque y `AsistenciaService.imputarDelBloque` lo hereda de ahí. Vale también para el pase con sesión |
+| RF-89 | Trazabilidad del equipo en cada marca | ✅ | `BloquePresenciaService.registrar` anota el equipo en el bloque y `AsistenciaService.imputarDelBloque` lo hereda de ahí. Vale también para el pase con sesión. Desde V031 el cierre anota el **equipo de salida**, que con una cámara por entrada no tiene por qué ser el mismo, y las tres salidas del reporte lo muestran: pantalla, CSV (dos columnas) y PDF (columna **Equipo**) |
 
 **Fuga de RF-87 detectada y cerrada el 2026-09-08.** El DTO del kiosco está diseñado para que
 el nombre completo no pueda salir: no tiene campo donde ponerlo. Pero **el mensaje de texto
@@ -262,7 +262,7 @@ invisible. Ver `07-pendientes.md`.
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
-| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF) |
+| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Doce columnas, con el desvío y el equipo de cada marca; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF |
 | RF-32 | Exportación a Excel (.xlsx) | ⚠ | `GET /reportes/csv` |
 | RF-33 | Visualizaciones gráficas | ❌ | — |
 
