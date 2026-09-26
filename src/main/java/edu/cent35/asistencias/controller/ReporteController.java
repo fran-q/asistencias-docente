@@ -10,6 +10,7 @@ import edu.cent35.asistencias.service.CarreraService;
 import edu.cent35.asistencias.service.MiInstitucionService;
 import edu.cent35.asistencias.service.ReporteAsistenciaService;
 import edu.cent35.asistencias.service.ReportePdfService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -120,6 +121,7 @@ public class ReporteController {
     @GetMapping("/csv")
     public void descargarCsv(
             @ModelAttribute ReporteFiltroDto filtro,
+            HttpServletRequest request,
             HttpServletResponse response) throws IOException {
 
         // Default: mes actual hasta hoy.
@@ -127,7 +129,13 @@ public class ReporteController {
         if (filtro.getDesde() == null) filtro.setDesde(hoy.withDayOfMonth(1));
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 
-        List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
+        List<AsistenciaReporteRowDto> filas;
+        try {
+            filas = reporteService.reporte(filtro);
+        } catch (IllegalArgumentException ex) {
+            volverAlReporte(request, response, filtro, ex);
+            return;
+        }
         // Cuantas habria sin el tope, igual que en la pantalla. Un archivo cortado en
         // silencio se lee como el periodo entero, y este se abre en una planilla para
         // sacar cuentas: el que suma no tiene como saber que le faltan filas.
@@ -166,6 +174,7 @@ public class ReporteController {
     @GetMapping("/pdf")
     public void descargarPdf(
             @ModelAttribute ReporteFiltroDto filtro,
+            HttpServletRequest request,
             HttpServletResponse response) throws IOException {
 
         // Mismo default que el CSV: mes actual hasta hoy.
@@ -173,7 +182,13 @@ public class ReporteController {
         if (filtro.getDesde() == null) filtro.setDesde(hoy.withDayOfMonth(1));
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 
-        List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
+        List<AsistenciaReporteRowDto> filas;
+        try {
+            filas = reporteService.reporte(filtro);
+        } catch (IllegalArgumentException ex) {
+            volverAlReporte(request, response, filtro, ex);
+            return;
+        }
         long totalSinTope = reporteService.contar(filtro);
         String institucion = miInstitucionService.getMiInstitucion().getNombre();
         String nombreArchivo = reportePdfService.nombreArchivo(
@@ -191,6 +206,43 @@ public class ReporteController {
     }
 
     // ------------------------------------------------------------------------
+
+    /**
+     * Cuando el filtro no da un reporte, vuelve a la pantalla con los mismos filtros.
+     *
+     * <p>Un rango al revés se escribe solo: la pantalla tiene los dos campos y nada impide
+     * poner diciembre en "desde" y enero en "hasta". Ahí el error se muestra y se corrige;
+     * pidiendo la descarga con esas mismas fechas —el botón está al lado, y la URL se guarda
+     * en favoritos— la excepción salía sin manejar y terminaba en una pantalla de error.
+     *
+     * <p><b>No se le pasa el mensaje.</b> La pantalla arma el mismo reporte, se choca con la
+     * misma validación del servicio y lo muestra ella: uno solo que lo diga y siempre el
+     * mismo texto. Y la URL se arma con los valores <b>ya convertidos</b> —fechas, ids y
+     * enums—, no con lo que vino escrito en la consulta: devolver texto de afuera dentro de
+     * una cabecera {@code Location} es justo lo que no hay que hacer.
+     */
+    private void volverAlReporte(HttpServletRequest request, HttpServletResponse response,
+                                 ReporteFiltroDto filtro, RuntimeException motivo)
+            throws IOException {
+        log.info("Descarga sin reporte posible ({}): desde={}, hasta={}",
+                 motivo.getMessage(), filtro.getDesde(), filtro.getHasta());
+
+        StringBuilder url = new StringBuilder(request.getContextPath())
+            .append("/reportes?desde=").append(filtro.getDesde())
+            .append("&hasta=").append(filtro.getHasta());
+        parametro(url, "docenteId", filtro.getDocenteId());
+        parametro(url, "materiaId", filtro.getMateriaId());
+        parametro(url, "carreraId", filtro.getCarreraId());
+        parametro(url, "estado",    filtro.getEstado());
+        parametro(url, "metodo",    filtro.getMetodo());
+        response.sendRedirect(url.toString());
+    }
+
+    private static void parametro(StringBuilder url, String nombre, Object valor) {
+        if (valor != null) {
+            url.append('&').append(nombre).append('=').append(valor);
+        }
+    }
 
     private void escribirEncabezado(PrintWriter w) {
         w.println(String.join(";",

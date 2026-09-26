@@ -231,6 +231,61 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
+    //  Rango invertido
+    // ========================================================================
+
+    /*
+     * La pantalla tiene los dos campos de fecha y nada impide poner diciembre en "desde" y
+     * enero en "hasta". Ahi el error se muestra; pidiendo la descarga con esas mismas fechas
+     * --el boton esta al lado, y la URL se guarda en favoritos-- la excepcion del servicio
+     * salia sin manejar y terminaba en una pantalla de error del servidor.
+     */
+
+    @Test
+    @DisplayName("Con el rango al reves, la pantalla del reporte explica el problema")
+    void rangoInvertidoEnLaPantalla() throws Exception {
+        mockMvc.perform(get("/reportes")
+                .param("desde", "2026-12-01").param("hasta", "2026-01-31")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString(
+                "La fecha &#39;desde&#39; no puede ser posterior a &#39;hasta&#39;.")))
+            .andExpect(content().string(not(containsString("Descargar CSV"))))
+            .andExpect(content().string(not(containsString("Descargar PDF"))));
+    }
+
+    @Test
+    @DisplayName("Con el rango al reves, el CSV vuelve a la pantalla con los mismos filtros")
+    void rangoInvertidoEnElCsv() throws Exception {
+        mockMvc.perform(get("/reportes/csv")
+                .param("desde", "2026-12-01").param("hasta", "2026-01-31")
+                .param("estado", "AUSENTE")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl(
+                "/reportes?desde=2026-12-01&hasta=2026-01-31&estado=AUSENTE"));
+    }
+
+    @Test
+    @DisplayName("Con el rango al reves, el PDF hace lo mismo que el CSV")
+    void rangoInvertidoEnElPdf() throws Exception {
+        mockMvc.perform(get("/reportes/pdf")
+                .param("desde", "2026-12-01").param("hasta", "2026-01-31")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(redirectedUrl("/reportes?desde=2026-12-01&hasta=2026-01-31"));
+    }
+
+    @Test
+    @DisplayName("Una fecha que no es una fecha se rechaza antes de armar el reporte")
+    void fechaIlegible() throws Exception {
+        mockMvc.perform(get("/reportes/csv")
+                .param("desde", "ayer").param("hasta", "2026-01-31")
+                .with(user(principal("INSTITUCION"))))
+            .andExpect(status().isBadRequest());
+    }
+
+    // ========================================================================
     //  Reporte en PDF
     // ========================================================================
 

@@ -7,6 +7,25 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Un rango al revés ya no rompe la descarga
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **`desde` posterior a `hasta` reventaba el CSV y el PDF.** La pantalla tiene los dos campos
+  y nada impide poner diciembre en "desde" y enero en "hasta": ahí el error se muestra y se
+  corrige. Pero pidiendo la descarga con esas mismas fechas —el botón está al lado, y la URL
+  se guarda en favoritos— la excepción del servicio salía sin manejar y terminaba en una
+  pantalla de error del servidor.
+
+- **Ahora las descargas vuelven a la pantalla del reporte** con los mismos filtros, y el
+  mensaje lo da ella: arma el mismo reporte, se choca con la misma validación y lo explica.
+  Uno solo que lo diga y siempre el mismo texto. Además, mientras el filtro esté mal, la
+  pantalla no ofrece los botones de descarga.
+
+---
+
 ## Un reporte cortado no puede leerse como uno completo
 
 **Período:** septiembre de 2026.

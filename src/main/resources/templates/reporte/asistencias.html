@@ -94,7 +94,10 @@
                 <span th:if="${truncado}" class="badge badge--warning" style="margin-left:8px;"
                       th:text="|de ${totalSinTope} · acotá el rango o los filtros|">de N</span>
             </span>
-            <div class="reporte__descargas">
+            <!-- Sin reporte no hay nada que bajar. Los botones siguen siendo links con
+                 las fechas adentro, asi que el servidor igual valida: esto es para que no
+                 se ofrezca una descarga que se sabe que no va a salir. -->
+            <div class="reporte__descargas" th:if="${error == null}">
             <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
                                         docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
                                         carreraId=${filtro.carreraId},

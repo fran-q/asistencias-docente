@@ -321,6 +321,13 @@ cortado en silencio se lee como un reporte completo, así que **las tres salidas
 El nombre del archivo es la parte que importa: es lo único del aviso que sobrevive a que el
 archivo se guarde y se reenvíe.
 
+**Rango invertido.** `ReporteAsistenciaService.reporte` rechaza `desde > hasta`. La pantalla
+lo atrapa y lo muestra; las descargas **vuelven a la pantalla** con los mismos filtros
+(`ReporteController.volverAlReporte`) en vez de dejar salir la excepción, y el mensaje lo da
+la pantalla: uno solo que lo diga. La URL de vuelta se arma con los valores ya convertidos
+—fechas, ids y enums—, no con lo que vino escrito en la consulta. Una fecha que ni siquiera
+es una fecha la rechaza el binding de Spring con un 400, sin llegar al servicio.
+
 ## Auditoría
 
 | ID | Requerimiento | Estado |
