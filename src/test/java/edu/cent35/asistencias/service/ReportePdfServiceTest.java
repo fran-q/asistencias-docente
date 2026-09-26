@@ -88,6 +88,46 @@ class ReportePdfServiceTest {
     }
 
     @Test
+    @DisplayName("Dictado y Desvio se explican en toda hoja; el resto solo si hace falta")
+    void lasReferenciasQueVanSiempre() {
+        String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)));
+
+        assertThat(texto)
+            .as("las referencias sueltas que se fueron acumulando ahora son un bloque")
+            .contains("Cómo leer esta tabla")
+            .as("estas dos columnas están en toda hoja y ninguna se adivina")
+            .contains("Dictado:")
+            .contains("Desvío:")
+            .as("nada de lo otro pasó en esta hoja, y una referencia a algo que no está es "
+                + "una línea que nadie lee")
+            .doesNotContain("Entra:")
+            .doesNotContain("Sale:")
+            .doesNotContain("Equipo:");
+    }
+
+    @Test
+    @DisplayName("Lo de Entra se explica cuando hay una fila sin llegada observada")
+    void laReferenciaDeEntra() {
+        String texto = pdfDe(sinLlegada());
+
+        assertThat(texto)
+            .contains("Entra:")
+            .contains("la cargó un administrador");
+    }
+
+    @Test
+    @DisplayName("El asterisco se explica cuando hay alguna salida que completo el sistema")
+    void laReferenciaDelAsterisco() {
+        String texto = pdfDe(conSalidaPresumida());
+
+        assertThat(texto)
+            .contains("Sale:")
+            .contains("un asterisco marca")
+            .as("y no se explica lo que no pasó en esta hoja")
+            .doesNotContain("Entra:");
+    }
+
+    @Test
     @DisplayName("Cada dato entra entero en su celda, sin partirse en dos renglones")
     void cadaDatoEntraEnteroEnSuCelda() {
         // Sin normalizar: un dato que no entra en su columna aparece cortado —"AUTOMATI CO"—
@@ -179,6 +219,41 @@ class ReportePdfServiceTest {
         } catch (Exception e) {
             throw new IllegalStateException("No se pudo leer el PDF generado.", e);
         }
+    }
+
+    // Una carga manual: la hora que se guardo es la del asiento, no la de una llegada.
+    private AsistenciaReporteRowDto sinLlegada() {
+        return AsistenciaReporteRowDto.builder()
+            .asistenciaId(2L)
+            .fecha(LocalDate.of(2026, 6, 15))
+            .diaSemana("Lunes")
+            .horaInicio(LocalTime.of(18, 0)).horaFin(LocalTime.of(20, 0))
+            .materiaCodigo("PRG1").materiaNombre("Programación I")
+            .comisionCodigo("A")
+            .docenteApellido("Pérez").docenteNombre("Ana")
+            .horaRegistrada(LocalTime.of(14, 32))
+            .estado("PRESENTE").metodo("MANUAL")
+            .minutosProgramados(120)
+            .llegadaDentroDelMargen(true).salidaDentroDelMargen(true)
+            .build();
+    }
+
+    // Una jornada que cerro el job: la hora de salida la puso el sistema, no la observo nadie.
+    private AsistenciaReporteRowDto conSalidaPresumida() {
+        return AsistenciaReporteRowDto.builder()
+            .asistenciaId(3L)
+            .fecha(LocalDate.of(2026, 6, 15))
+            .diaSemana("Lunes")
+            .horaInicio(LocalTime.of(18, 0)).horaFin(LocalTime.of(20, 0))
+            .materiaCodigo("PRG1").materiaNombre("Programación I")
+            .comisionCodigo("A")
+            .docenteApellido("Pérez").docenteNombre("Ana")
+            .horaRegistrada(LocalTime.of(17, 55))
+            .horaSalida(LocalTime.of(20, 0)).salidaPresumida(true)
+            .estado("PRESENTE").metodo("AUTOMATICO")
+            .minutosProgramados(120).minutosEfectivos(120)
+            .llegadaDentroDelMargen(true).salidaDentroDelMargen(true)
+            .build();
     }
 
     // Una clase de 18 a 20, dictada entera, con los equipos que el caso necesita.

@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -66,6 +67,13 @@ public class ReportePdfService {
     private static final Font FUENTE_PIE_AVISO =
         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, new Color(0xA0, 0x1B, 0x1B));
 
+    // El bloque de referencias del pie. Un punto mas chico que el resumen: es material de
+    // consulta, se lee una vez y despues estorba.
+    private static final Font FUENTE_LEYENDA =
+        FontFactory.getFont(FontFactory.HELVETICA, 8, Color.DARK_GRAY);
+    private static final Font FUENTE_LEYENDA_COLUMNA =
+        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.DARK_GRAY);
+
     /**
      * Escribe el reporte al stream indicado. No lo cierra: de eso se encarga quien lo abrio,
      * que en el controlador es el propio response.
@@ -117,31 +125,9 @@ public class ReportePdfService {
                 // hasta ahora habia que sacarlo sumando las filas a mano.
                 doc.add(new Paragraph(" "));
                 doc.add(new Paragraph(resumen(totales), FUENTE_SUBTITULO));
-                doc.add(new Paragraph(
-                    "Desvío: minutos de clase sin cubrir (-) y minutos de permanencia fuera de "
-                    + "la franja de la clase (+).", FUENTE_SUBTITULO));
-                // La columna del equipo solo se explica si alguna fila trae las dos puertas.
-                // Con una sola cámara por institución el nombre suelto se entiende solo, y una
-                // referencia de más en un PDF impreso es una línea que nadie lee.
-                if (filas.stream().anyMatch(this::muestraLosDos)) {
-                    doc.add(new Paragraph(
-                        "Equipo: el nombre del equipo donde se registró la marca. Cuando la "
-                        + "salida no se tomó en el mismo equipo que la entrada va «entrada › "
-                        + "salida», y un guion del lado de la salida dice que la jornada se "
-                        + "cerró sin pasar por una cámara.", FUENTE_SUBTITULO));
-                }
-                // Un asterisco sin referencia es peor que no ponerlo: quien recibe el PDF
-                // impreso no tiene a quien preguntarle que significa. Solo se aclara si hay
-                // alguna, para no ensuciar los reportes donde todas las salidas se marcaron.
-                boolean hayPresumidas = filas.stream()
-                    .anyMatch(f -> f.getHoraSalida() != null && f.isSalidaPresumida());
-                if (hayPresumidas) {
-                    doc.add(new Paragraph(" "));
-                    doc.add(new Paragraph(
-                        "* Hora de salida completada por el sistema: nadie la registró. "
-                        + "La asistencia es válida; el dato de salida está pendiente de "
-                        + "confirmación.", FUENTE_SUBTITULO));
-                }
+
+                doc.add(new Paragraph(" "));
+                comoLeer(doc, filas);
             }
         } catch (Exception e) {
             // El stream ya puede llevar bytes escritos, asi que no hay forma de devolver una
@@ -331,6 +317,62 @@ public class ReportePdfService {
             sb.append(sb.length() == 0 ? "" : " ").append("+").append(fuera);
         }
         return sb.toString();
+    }
+
+    /**
+     * El bloque que explica las columnas que no se entienden solas.
+     *
+     * <p><b>Por qué junto y no suelto.</b> Cada columna que se agregó al reporte fue dejando
+     * su propia referencia al pie, y terminaron siendo cuatro renglones sin orden ni título,
+     * cada uno apareciendo por su cuenta. Juntas y con un encabezado se leen como lo que son:
+     * las instrucciones de la hoja. Quien recibe un PDF impreso no tiene a quién preguntarle.
+     *
+     * <p><b>Qué entra y qué no.</b> "Dictado" y "Desvío" van siempre: sus columnas están en
+     * todos los reportes y ninguna de las dos se adivina. Las otras tres explican algo que
+     * puede no haber pasado —un registro sin llegada, una salida que completó el sistema, un
+     * docente que salió por otra puerta—, y una referencia a algo que no está en la hoja es
+     * una línea que nadie lee. Esas aparecen sólo si hay alguna fila que las necesite.
+     */
+    private void comoLeer(Document doc, List<AsistenciaReporteRowDto> filas) {
+        doc.add(new Paragraph("Cómo leer esta tabla", FUENTE_LEYENDA_COLUMNA));
+
+        doc.add(referencia("Dictado",
+            "minutos de la clase que el docente cubrió, sobre los que duraba. Cuenta sólo lo "
+            + "que se pisa con la franja de la clase: llegar antes o quedarse después no "
+            + "suma. Un guion es que falta la marca de salida y no se puede saber, que no es "
+            + "lo mismo que cero."));
+        doc.add(referencia("Desvío",
+            "minutos de clase sin cubrir (-) y minutos de permanencia fuera de la franja de "
+            + "la clase (+)."));
+
+        if (filas.stream().anyMatch(f -> !f.isHoraDeLlegada())) {
+            doc.add(referencia("Entra",
+                "la hora en que la cámara reconoció al docente. Un guion es que no hubo una "
+                + "llegada observada: la fila la cargó un administrador —y entonces la hora "
+                + "que se guardó es la de esa carga— o es una ausencia."));
+        }
+        if (filas.stream().anyMatch(f -> f.getHoraSalida() != null && f.isSalidaPresumida())) {
+            doc.add(referencia("Sale",
+                "un asterisco marca la hora que completó el sistema porque nadie la "
+                + "registró. La asistencia es válida; el dato de salida está pendiente de "
+                + "confirmación."));
+        }
+        if (filas.stream().anyMatch(this::muestraLosDos)) {
+            doc.add(referencia("Equipo",
+                "el equipo donde se registró la marca. Cuando la salida no se tomó en el "
+                + "mismo que la entrada va «entrada › salida», y un guion del lado de la "
+                + "salida dice que la jornada se cerró sin pasar por una cámara."));
+        }
+    }
+
+    // Un renglon de la referencia: el nombre de la columna en negrita y su explicacion al
+    // lado. Sangrado, para que se vea de una que cuelgan del titulo del bloque.
+    private Paragraph referencia(String columna, String explicacion) {
+        Paragraph p = new Paragraph();
+        p.add(new Chunk(columna + ": ", FUENTE_LEYENDA_COLUMNA));
+        p.add(new Chunk(explicacion, FUENTE_LEYENDA));
+        p.setIndentationLeft(10f);
+        return p;
     }
 
     /**

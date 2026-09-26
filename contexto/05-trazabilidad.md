@@ -271,7 +271,7 @@ correcto de lo que es.
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
-| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Doce columnas, con el desvío y el equipo de cada marca; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF |
+| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Doce columnas, con el desvío y el equipo de cada marca; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, un bloque **"Cómo leer esta tabla"**: Dictado y Desvío siempre, y Entra, Sale y Equipo sólo si alguna fila los necesita |
 | RF-32 | Exportación a Excel (.xlsx) | ⚠ | `GET /reportes/csv` |
 | RF-33 | Visualizaciones gráficas | ❌ | — |
 

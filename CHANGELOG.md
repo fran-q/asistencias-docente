@@ -7,6 +7,30 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## El PDF explica sus propias columnas
+
+**Período:** septiembre de 2026.
+
+### Cambiado
+
+- **Las referencias del pie ahora son un bloque.** Cada columna que se fue agregando al
+  reporte dejó su propia línea suelta al pie, y terminaron siendo cuatro sin orden ni título,
+  cada una apareciendo por su cuenta. Ahora están juntas bajo *"Cómo leer esta tabla"*, con
+  el nombre de la columna en negrita, que es como se leen las instrucciones de una hoja.
+
+- **"Dictado" era la que faltaba, y es la que más se pregunta.** Dice cuántos minutos de la
+  clase cubrió el docente sobre los que duraba, contando **solo lo que se pisa con la franja
+  de la clase**: llegar antes o quedarse después no suma. Y que un guion no es cero, sino que
+  falta la marca de salida y no se puede saber.
+
+- **Tres de las cinco aparecen solo si hacen falta**: la de "Entra" cuando hay una fila sin
+  llegada observada, la del asterisco de "Sale" cuando alguna salida la completó el sistema,
+  y la de "Equipo" cuando alguien entró por una puerta y salió por otra. Una referencia a
+  algo que no pasó en esa hoja es una línea que nadie lee. "Dictado" y "Desvío" van siempre,
+  porque sus columnas están en todos los reportes y ninguna se adivina.
+
+---
+
 ## Un rango al revés ya no rompe la descarga
 
 **Período:** septiembre de 2026.
