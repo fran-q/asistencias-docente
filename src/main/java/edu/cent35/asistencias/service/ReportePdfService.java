@@ -177,7 +177,7 @@ public class ReportePdfService {
             agregar(t, texto(f.getMateriaCodigo()) + " " + texto(f.getMateriaNombre()), fondo);
             agregar(t, texto(f.getComisionCodigo()), fondo);
             agregar(t, texto(f.getDocenteApellido()) + ", " + texto(f.getDocenteNombre()), fondo);
-            agregar(t, f.getHoraRegistrada() == null ? "—" : f.getHoraRegistrada().format(HORA), fondo);
+            agregar(t, entrada(f), fondo);
             agregar(t, salida(f), fondo);
             agregar(t, equipos(f), fondo);
             agregar(t, dictado(f), fondo);
@@ -210,6 +210,21 @@ public class ReportePdfService {
 
     private String texto(String s) {
         return s == null ? "" : s;
+    }
+
+    /**
+     * La hora de llegada, y guion cuando no hubo ninguna.
+     *
+     * <p>Una carga manual guarda el momento en que el administrador la asentó, y una ausencia
+     * generada por el job, el fin de la clase. Impresas bajo "Entra" las dos dicen que alguien
+     * llegó a esa hora, que es justo lo que no pasó. La columna "Método" y la de "Estado"
+     * quedan diciendo por qué la fila no tiene llegada.
+     */
+    private String entrada(AsistenciaReporteRowDto f) {
+        if (!f.isHoraDeLlegada() || f.getHoraRegistrada() == null) {
+            return "—";
+        }
+        return f.getHoraRegistrada().format(HORA);
     }
 
     /**

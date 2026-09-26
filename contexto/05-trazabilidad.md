@@ -247,6 +247,15 @@ invisible. Ver `07-pendientes.md`.
 | RF-23 | Motivo de carga manual | ✅ | Catálogo `motivos_carga_manual` (seed en V001) + `detalle_adicional` |
 | RF-24 | Trazabilidad de carga manual | ✅ | Tabla `asistencias_manuales` (usuario, motivo, fecha) |
 
+**La hora de una carga manual no es una hora de llegada.** `asistencias.hora_registrada` la
+pone el sistema con el momento del asiento (`AsistenciaService.marcarManual`), y en las
+ausencias que genera el job es la hora de fin de la clase. Solo en las marcas automáticas es
+una llegada observada. Las pantallas y el PDF muestran esa hora bajo "Entrada" **únicamente
+cuando lo es** —`AsistenciaReporteRowDto.isHoraDeLlegada()` y su par en
+`AsistenciaListItemDto`—; en los otros dos casos va un guion, y la carga manual aclara aparte
+cuándo se asentó. El CSV la sigue trayendo entera en `hora_registrada`, que es el nombre
+correcto de lo que es.
+
 ## Gestión de ausencias
 
 | ID | Requerimiento | Estado | Dónde vive |

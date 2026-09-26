@@ -61,10 +61,17 @@
                     <tbody role="rowgroup">
                         <tr th:each="a : ${asistencias}"
                             th:classappend="${a.calculada} ? 'row--inactive'" role="row">
+                            <!-- Igual que en el reporte: bajo "Entrada" va la llegada observada
+                                 y nada mas. La carga manual muestra aparte cuando se asento. -->
                             <td role="cell" data-label="Entrada">
-                                <span th:if="${a.horaRegistrada != null}"
+                                <span th:if="${a.horaDeLlegada and a.horaRegistrada != null}"
                                       th:text="${#temporals.format(a.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
-                                <span th:unless="${a.horaRegistrada != null}" class="text-muted">—</span>
+                                <span th:unless="${a.horaDeLlegada and a.horaRegistrada != null}"
+                                      class="text-muted">—</span>
+                                <small th:if="${a.cargaManual and a.horaRegistrada != null}"
+                                       class="text-muted"
+                                       title="Hora en que el administrador cargó el registro. No es la hora de llegada: no la observó nadie."
+                                       th:text="|cargada ${#temporals.format(a.horaRegistrada, 'HH:mm')}|">cargada 14:32</small>
                             </td>
                             <!-- Vacía mientras el docente siga adentro, y en los registros
                                  anteriores a la marca de salida. Una hora presumida se marca

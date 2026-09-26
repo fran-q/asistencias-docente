@@ -7,6 +7,35 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Bajo "Entrada" va una llegada, o no va nada
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **La columna "Entrada" mostraba tres cosas distintas como si fueran la misma.** En
+  `hora_registrada` conviven la hora en que la cámara reconoció al docente —una llegada
+  observada—, el momento en que un administrador cargó el registro a mano, y la hora de fin de
+  la clase que el job le pone a una ausencia. Las tres salían con el mismo formato en la misma
+  columna: un registro asentado a las 14:32 se leía como un docente que llegó a las 14:32 a
+  una clase de las 18:00, y una ausencia se leía como alguien que entró justo cuando la clase
+  terminaba.
+
+- **Ahora esa columna solo muestra llegadas.** Las otras dos quedan en guion, y la carga
+  manual dice aparte *"cargada 14:32"*, con la aclaración de que esa hora es la del asiento.
+  Las columnas "Estado" y "Método", que ya estaban, terminan de explicar por qué la fila no
+  tiene llegada. Vale igual en el listado del día, en el reporte en pantalla y en el PDF.
+
+- **El CSV no cambia.** Su columna se llama `hora_registrada`, que es exactamente lo que trae,
+  y es el archivo que se abre para trabajar el dato crudo. El problema era el rótulo
+  "Entrada", no el dato.
+
+- **La hora de la carga manual se sigue poniendo sola, y está bien así.** No es un campo que
+  se tipea: lo que se asienta es "yo, tal administrador, a esta hora, declaro que este docente
+  estuvo en esta clase". Lo que se arregló es mostrarla como si fuera otra cosa.
+
+---
+
 ## El CSV no le entrega fórmulas a la planilla
 
 **Período:** septiembre de 2026.

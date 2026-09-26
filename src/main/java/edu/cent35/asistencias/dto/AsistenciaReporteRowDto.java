@@ -2,6 +2,8 @@ package edu.cent35.asistencias.dto;
 
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.BloquePresencia;
+import edu.cent35.asistencias.model.EstadoAsistencia;
+import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.AsistenciaManual;
 import edu.cent35.asistencias.model.DiaSemana;
@@ -108,6 +110,34 @@ public class AsistenciaReporteRowDto {
 
     /** Si la salida entra en la tolerancia del horario (RF-78). Mismo criterio que la llegada. */
     boolean salidaDentroDelMargen;
+
+    /**
+     * Si {@link #horaRegistrada} es de verdad la hora en que el docente llegó.
+     *
+     * <p>En esa columna conviven tres cosas distintas, y hasta acá se mostraban iguales:
+     *
+     * <ul>
+     *   <li><b>Marca automática</b>: la hora en que la cámara lo reconoció, o el inicio de la
+     *       clase si ya estaba adentro. Es una llegada observada.</li>
+     *   <li><b>Carga manual</b>: el momento en que el administrador cargó el registro, que es
+     *       a propósito y no un dato que se tipea (ver {@code AsistenciaService.marcarManual}).
+     *       Puede ser de otro día y de otro horario que el de la clase.</li>
+     *   <li><b>Ausencia generada por el job</b>: la hora de fin de la clase. Ahí no llegó
+     *       nadie; ese valor es sólo la marca de tiempo del asiento.</li>
+     * </ul>
+     *
+     * <p>Las dos últimas mostradas bajo el título "Entrada" afirman algo que no pasó. El CSV
+     * las sigue trayendo en {@code hora_registrada}, que es el nombre correcto de lo que son.
+     */
+    public boolean isHoraDeLlegada() {
+        return MetodoAsistencia.AUTOMATICO.name().equals(metodo)
+            && !EstadoAsistencia.AUSENTE.name().equals(estado);
+    }
+
+    /** Si la cargó a mano un administrador: la hora del asiento no es la de nadie llegando. */
+    public boolean isCargaManual() {
+        return MetodoAsistencia.MANUAL.name().equals(metodo);
+    }
 
     // Arma la fila del reporte sumando, si los hay, el detalle manual y el de la justificación.
     public static AsistenciaReporteRowDto from(Asistencia a,

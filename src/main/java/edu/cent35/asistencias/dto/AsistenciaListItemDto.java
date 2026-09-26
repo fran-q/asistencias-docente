@@ -70,6 +70,23 @@ public class AsistenciaListItemDto {
      */
     boolean salidaPresumida;
 
+    /**
+     * Si {@link #horaRegistrada} es de verdad la hora en que el docente llegó.
+     *
+     * <p>Bajo el título "Entrada" conviven tres cosas: la hora en que la cámara lo reconoció
+     * —una llegada observada—, el momento en que un administrador cargó el registro a mano, y
+     * la hora de fin de la clase que el job le pone a una ausencia. Las dos últimas no son
+     * llegadas de nadie, y mostradas igual que la primera afirman algo que no pasó.
+     */
+    public boolean isHoraDeLlegada() {
+        return metodo == MetodoAsistencia.AUTOMATICO && estado != EstadoAsistencia.AUSENTE;
+    }
+
+    /** Si la cargó a mano un administrador: la hora del asiento no es la de nadie llegando. */
+    public boolean isCargaManual() {
+        return metodo == MetodoAsistencia.MANUAL;
+    }
+
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
     public static AsistenciaListItemDto from(Asistencia a) {
         Horario h = a.getHorario();

@@ -46,8 +46,55 @@ class AsistenciaReporteRowDtoTest {
         assertThat(fila.getDiaSemana()).isEqualTo("Miércoles");
     }
 
+    @Test
+    @DisplayName("La hora de una marca automatica es una llegada observada")
+    void laMarcaDeLaCamaraEsUnaLlegada() {
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.TARDE, MetodoAsistencia.AUTOMATICO);
+
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.isHoraDeLlegada()).isTrue();
+        assertThat(fila.isCargaManual()).isFalse();
+    }
+
+    @Test
+    @DisplayName("La de una carga manual es la hora del asiento, no la de llegada")
+    void laCargaManualNoEsUnaLlegada() {
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.PRESENTE, MetodoAsistencia.MANUAL);
+
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.isHoraDeLlegada())
+            .as("el admin la cargó a las 8:05, y eso no dice a qué hora llegó el docente")
+            .isFalse();
+        assertThat(fila.isCargaManual()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Una ausencia no tiene hora de llegada aunque la haya generado el sistema")
+    void laAusenciaNoTieneLlegada() {
+        // El job le pone la hora de fin de la clase como marca de tiempo del asiento.
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.AUSENTE, MetodoAsistencia.AUTOMATICO);
+
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.isHoraDeLlegada())
+            .as("no llegó nadie: esa hora es cuando terminó la clase")
+            .isFalse();
+        assertThat(fila.isCargaManual()).isFalse();
+    }
+
     // Arma una asistencia con la fecha y el día de horario que pida el caso.
     private Asistencia asistenciaCon(LocalDate fecha, byte diaSemanaHorario) {
+        return asistenciaCon(fecha, diaSemanaHorario,
+                             EstadoAsistencia.TARDE, MetodoAsistencia.MANUAL);
+    }
+
+    private Asistencia asistenciaCon(LocalDate fecha, byte diaSemanaHorario,
+                                     EstadoAsistencia estado, MetodoAsistencia metodo) {
         Materia materia = Materia.builder()
             .id(1L).codigo("BIO-201").nombre("Biología").build();
         Comision comision = Comision.builder()
@@ -66,8 +113,8 @@ class AsistenciaReporteRowDtoTest {
             .id(5L).docente(docente).comision(comision).horario(horario)
             .fecha(fecha)
             .horaRegistrada(LocalTime.of(8, 5))
-            .estado(EstadoAsistencia.TARDE)
-            .metodo(MetodoAsistencia.MANUAL)
+            .estado(estado)
+            .metodo(metodo)
             .build();
     }
 }

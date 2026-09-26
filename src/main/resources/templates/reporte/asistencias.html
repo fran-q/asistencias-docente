@@ -179,10 +179,18 @@
                             <td role="cell" data-label="Horario">
                                 <span th:text="|${#temporals.format(f.horaInicio,'HH:mm')}-${#temporals.format(f.horaFin,'HH:mm')}|">18:00-20:00</span>
                             </td>
+                            <!-- Solo las llegadas observadas van como hora de entrada. Una carga
+                                 manual guarda el momento del asiento y una ausencia generada, el
+                                 fin de la clase: ninguna de las dos es alguien llegando. -->
                             <td role="cell" data-label="Entrada">
-                                <span th:if="${f.horaRegistrada != null}"
+                                <span th:if="${f.horaDeLlegada and f.horaRegistrada != null}"
                                       th:text="${#temporals.format(f.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>
-                                <span th:unless="${f.horaRegistrada != null}" class="text-muted">—</span>
+                                <span th:unless="${f.horaDeLlegada and f.horaRegistrada != null}"
+                                      class="text-muted">—</span>
+                                <small th:if="${f.cargaManual and f.horaRegistrada != null}"
+                                       class="text-muted"
+                                       title="Hora en que el administrador cargó el registro. No es la hora de llegada: no la observó nadie."
+                                       th:text="|cargada ${#temporals.format(f.horaRegistrada, 'HH:mm')}|">cargada 14:32</small>
                                 <!-- Por que puerta entro (V031). Con una camara por entrada,
                                      la hora sola no dice donde estuvo la persona. -->
                                 <small th:if="${f.equipoEntrada != null}" class="text-muted"
