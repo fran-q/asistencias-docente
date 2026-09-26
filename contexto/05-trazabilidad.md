@@ -286,6 +286,13 @@ horas es una mentira.
 real. Abre directo en Excel con acentos correctos y se sigue trabajando en planilla, que
 es el uso previsto. No es un archivo Excel nativo: no lleva formato, fórmulas ni hojas.
 
+**Que abra en una planilla es también un riesgo, y está cubierto.** Una celda que empieza
+con `=`, `+`, `-` o `@` se evalúa sola al abrir el archivo, y varios campos del reporte los
+escribe gente (nombre de materia, de cámara, detalle de una carga manual). `ReporteController`
+les antepone una comilla simple antes de escribirlos —`sinFormula`, sobre los textos y no
+sobre los números— y `DescargaCsvSeguraIT` recorre celda por celda el archivo que sale por la
+ruta de descarga. Es CWE-1236.
+
 **RF-33 no implementado.** No hay librería de gráficos en el proyecto. Es una brecha
 abierta y está en el rumbo hacia el producto final — ver `07-pendientes.md`.
 

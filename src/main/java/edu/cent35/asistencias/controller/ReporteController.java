@@ -50,6 +50,14 @@ public class ReporteController {
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter FMT_HORA  = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    /**
+     * Los caracteres con los que una planilla arranca una fórmula.
+     *
+     * <p>El tabulador y el retorno de carro están en la lista aunque no sean operadores:
+     * varias planillas los descartan al leer la celda y dejan de primero al que sí lo es.
+     */
+    private static final String ARRANCA_FORMULA = "=+-@\t\r";
+
     private final ReporteAsistenciaService reporteService;
     private final DocenteService docenteService;
     private final MateriaService materiaService;
@@ -226,15 +234,44 @@ public class ReporteController {
         ));
     }
 
-    // Escapa un campo CSV con separador ';' y comillas dobles (RFC 4180 con coma → ';').
+    /**
+     * Escapa un campo CSV con separador ';' y comillas dobles (RFC 4180 con coma → ';'), y
+     * antes desarma lo que la planilla leería como fórmula.
+     *
+     * <p>Solo los textos: un número no puede arrancar una fórmula, y anteponerle una comilla
+     * lo convertiría en texto, que en una planilla es dejar de poder sumarlo. Por eso las
+     * columnas de minutos y la confianza salen intactas.
+     */
     private static String csv(Object v) {
         if (v == null) return "";
-        String s = String.valueOf(v);
+        String s = v instanceof CharSequence ? sinFormula(v.toString()) : String.valueOf(v);
         // Si tiene ; " o salto de línea, encerrar entre comillas y duplicar las " internas.
         if (s.contains(";") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
             return "\"" + s.replace("\"", "\"\"") + "\"";
         }
         return s;
+    }
+
+    /**
+     * Desactiva el texto que una planilla ejecutaría al abrir el archivo (CWE-1236).
+     *
+     * <p>Excel y LibreOffice no abren el CSV como texto: una celda que empieza con '=', '+',
+     * '-' o '@' es una fórmula y se evalúa sola. Y buena parte de lo que va en este reporte
+     * lo escribe gente —el nombre de una materia, el detalle de una carga manual, el nombre
+     * que se le puso a una cámara—, así que alcanza con llamar a una materia
+     * {@code =HYPERLINK("http://...")} para que eso corra en la máquina de quien descarga el
+     * reporte, que no es la misma persona que lo escribió.
+     *
+     * <p>Se antepone una comilla simple, que es lo que la planilla entiende como "esto es
+     * texto". <b>La comilla se ve en la celda</b>, y es a propósito: un dato con un carácter
+     * de más se explica, uno que se ejecuta no. Solo se toca lo que empieza con alguno de
+     * esos caracteres; el resto del reporte sale exactamente igual que antes.
+     */
+    private static String sinFormula(String s) {
+        if (s.isEmpty()) {
+            return s;
+        }
+        return ARRANCA_FORMULA.indexOf(s.charAt(0)) >= 0 ? "'" + s : s;
     }
 
     // Formatea un decimal para el CSV; se deja el punto porque Excel lo interpreta bien y el

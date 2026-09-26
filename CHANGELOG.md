@@ -7,6 +7,28 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## El CSV no le entrega fórmulas a la planilla
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **Una materia llamada `=HYPERLINK(...)` se ejecutaba al abrir el reporte.** El CSV no se
+  mira en un visor de texto: se abre en Excel o en LibreOffice, y ahí una celda que empieza
+  con `=`, `+`, `-` o `@` no es un dato sino una fórmula que se evalúa sola. Buena parte de lo
+  que va en el reporte lo escribe gente —el nombre de una materia, el de una cámara, el
+  apellido de un docente, el detalle de una carga manual—, y quien descarga el reporte no es
+  la misma persona que lo escribió. Era la única salida del sistema donde un texto cargado por
+  alguien terminaba corriendo en la máquina de otro (CWE-1236).
+
+- **Cómo quedó.** A esos valores se les antepone una comilla simple, que es lo que la planilla
+  entiende como "esto es texto". La comilla **se ve en la celda**: es el precio de que el dato
+  no se ejecute, y deja a la vista que alguien cargó eso. Los números salen intactos —una
+  comilla los volvería texto y dejarían de poder sumarse—, igual que las fechas y las horas.
+  Un reporte con datos normales sale byte por byte como antes.
+
+---
+
 ## Por qué puerta entró y por cuál salió
 
 **Período:** septiembre de 2026.
