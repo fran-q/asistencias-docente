@@ -121,7 +121,13 @@
              dato de salida se cuentan aparte, porque meterlas como cero diria que esas clases
              no se dictaron, que no es lo que se sabe. -->
         <div class="card" th:if="${totales != null and totales.clases() > 0}" style="margin-top:1rem;">
-            <h2>Totales del período</h2>
+            <h2 th:text="${truncado} ? 'Totales de lo listado' : 'Totales del período'">Totales del período</h2>
+            <!-- Con el reporte cortado estos numeros son de las filas que se ven, no del
+                 periodo. Un total con nombre de total se toma por el del periodo aunque
+                 arriba diga que faltan filas. -->
+            <p th:if="${truncado}" class="text-muted" style="margin-top:-.5rem;"
+               th:text="|Sobre ${#lists.size(filas)} de ${totalSinTope} registros: no son los totales del período.|">
+                Sobre N de M registros.</p>
             <dl class="kv">
                 <dt>Programado</dt>
                 <dd th:text="${totales.programadoLegible()}">12 h</dd>

@@ -7,6 +7,33 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Un reporte cortado no puede leerse como uno completo
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **Las descargas no decían que el reporte venía cortado.** El reporte trae hasta 2000 filas
+  y descarta el resto; la pantalla avisaba, pero el PDF y el CSV salían sin una palabra.
+  Alguien pedía un semestre sin filtros, se llevaba el PDF con las primeras 2000 filas, lo
+  imprimía y lo firmaba: la hoja no decía en ninguna parte que faltaba la mitad.
+
+- **Ahora lo dicen las tres salidas.** El PDF lleva un aviso en rojo arriba de la tabla y un
+  pie en *todas* las páginas, porque un reporte de sesenta hojas se lee por el medio. El CSV
+  cierra con una fila de aviso, al final y en una sola celda: arriba correría las columnas, y
+  quien abre el archivo para ver si está completo va justo al final. Y los dos archivos
+  terminan en `_parcial`, que es la única parte del aviso que sobrevive a que el archivo se
+  guarde y se reenvíe.
+
+- **Los totales tampoco eran los del período.** Se calculan sobre las filas devueltas, así
+  que con el reporte cortado la tarjeta *"Totales del período"* mostraba los de una parte.
+  Ahora, cuando hay corte, se llama *"Totales de lo listado"* y dice sobre cuántos registros
+  está hecha. En el PDF el aviso lo aclara en la misma línea. Era lo más fácil de leer mal:
+  un total con nombre de total se toma por el del período aunque arriba diga que faltan
+  filas.
+
+---
+
 ## Bajo "Entrada" va una llegada, o no va nada
 
 **Período:** septiembre de 2026.

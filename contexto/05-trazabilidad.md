@@ -305,8 +305,21 @@ ruta de descarga. Es CWE-1236.
 **RF-33 no implementado.** No hay librería de gráficos en el proyecto. Es una brecha
 abierta y está en el rumbo hacia el producto final — ver `07-pendientes.md`.
 
-**Tope de filas.** El reporte trae hasta `maxFilas` y la pantalla avisa cuando el
-resultado quedó truncado. Un reporte cortado en silencio se lee como un reporte completo.
+**Tope de filas.** El reporte trae hasta `maxFilas` (2000) y descarta el resto. Un reporte
+cortado en silencio se lee como un reporte completo, así que **las tres salidas lo dicen**:
+
+- **Pantalla**: el recuento muestra "N de M" y la tarjeta de totales pasa a llamarse
+  *"Totales de lo listado"*, porque se calculan sobre las filas devueltas y no sobre el
+  período.
+- **PDF**: un aviso en rojo arriba de la tabla, el recuento del encabezado como "N de M", y
+  un pie en **todas** las páginas —un reporte de sesenta hojas se lee por el medio—. El
+  nombre del archivo termina en `_parcial.pdf`.
+- **CSV**: `_parcial.csv` en el nombre y una última fila con el aviso, en una sola celda.
+  Arriba correría las columnas, y quien abre el archivo para ver si está completo va al
+  final.
+
+El nombre del archivo es la parte que importa: es lo único del aviso que sobrevive a que el
+archivo se guarde y se reenvíe.
 
 ## Auditoría
 

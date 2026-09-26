@@ -4,7 +4,9 @@ import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.HeaderFooter;
 import com.lowagie.text.PageSize;
+import com.lowagie.text.Rectangle;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
@@ -57,22 +59,50 @@ public class ReportePdfService {
     private static final Font FUENTE_CELDA    = FontFactory.getFont(FontFactory.HELVETICA, 8);
     private static final Color FONDO_CABECERA = new Color(0x33, 0x3A, 0x45);
 
+    // El aviso de reporte cortado va en rojo y en negrita. No es decoracion: es lo unico
+    // que distingue esta hoja de una completa, y se imprime igual que el resto en gris.
+    private static final Font FUENTE_AVISO =
+        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(0xA0, 0x1B, 0x1B));
+    private static final Font FUENTE_PIE_AVISO =
+        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, new Color(0xA0, 0x1B, 0x1B));
+
     /**
      * Escribe el reporte al stream indicado. No lo cierra: de eso se encarga quien lo abrio,
      * que en el controlador es el propio response.
      */
     public void escribir(OutputStream out, List<AsistenciaReporteRowDto> filas,
                          LocalDate desde, LocalDate hasta, String institucion,
-                         ReporteAsistenciaService.TotalesDelReporte totales) {
+                         ReporteAsistenciaService.TotalesDelReporte totales,
+                         long totalSinTope) {
+        // El reporte trae hasta un tope de filas. Si lo paso, esta hoja no es el periodo:
+        // es una parte, y los totales del pie tampoco son los del periodo.
+        boolean cortado = totalSinTope > filas.size();
         // Apaisado: con esta cantidad de columnas, en vertical el nombre de la materia se
         // parte en dos renglones.
         Document doc = new Document(PageSize.A4.rotate(), 28, 28, 32, 28);
         try {
             PdfWriter.getInstance(doc, out);
+
+            // En todas las paginas, no solo en la primera: un reporte de sesenta hojas se
+            // lee por el medio, y el aviso de arriba no llega hasta ahi. Va DESPUES del
+            // getInstance --que es cuando el writer se suscribe al documento-- y antes del
+            // open: puesto antes, el pie se guarda en el Document y nadie lo dibuja.
+            if (cortado) {
+                HeaderFooter pie = new HeaderFooter(
+                    new Phrase("Reporte incompleto — se listan " + filas.size()
+                               + " de " + totalSinTope + " registros", FUENTE_PIE_AVISO),
+                    false);
+                pie.setAlignment(Element.ALIGN_CENTER);
+                pie.setBorder(Rectangle.NO_BORDER);
+                doc.setFooter(pie);
+            }
             doc.open();
 
             doc.add(titulo(institucion));
-            doc.add(subtitulo(filas.size(), desde, hasta));
+            doc.add(subtitulo(filas.size(), desde, hasta, cortado, totalSinTope));
+            if (cortado) {
+                doc.add(aviso(filas.size(), totalSinTope));
+            }
             doc.add(new Paragraph(" "));
 
             if (filas.isEmpty()) {
@@ -123,9 +153,16 @@ public class ReportePdfService {
         log.info("Reporte PDF generado: {} filas, {} a {}", filas.size(), desde, hasta);
     }
 
-    // Nombre del archivo sugerido al navegador, con el rango adentro.
-    public String nombreArchivo(LocalDate desde, LocalDate hasta) {
-        return String.format("asistencias_%s_a_%s.pdf", desde, hasta);
+    /**
+     * Nombre del archivo sugerido al navegador, con el rango adentro.
+     *
+     * <p>Cuando el reporte vino cortado lo dice el nombre, porque es lo único del aviso que
+     * sobrevive a que el archivo se guarde y se reenvíe: adentro está, pero para verlo hay
+     * que abrirlo.
+     */
+    public String nombreArchivo(LocalDate desde, LocalDate hasta, boolean cortado) {
+        return String.format("asistencias_%s_a_%s%s.pdf", desde, hasta,
+                             cortado ? "_parcial" : "");
     }
 
     // ------------------------------------------------------------------------
@@ -142,11 +179,31 @@ public class ReportePdfService {
 
     // Deja escrito de que periodo es y cuantas filas trae: sin eso, dos PDF impresos con
     // filtros distintos son indistinguibles una vez que estan sobre el escritorio.
-    private Paragraph subtitulo(int cantidad, LocalDate desde, LocalDate hasta) {
+    private Paragraph subtitulo(int cantidad, LocalDate desde, LocalDate hasta,
+                                boolean cortado, long totalSinTope) {
+        String cuantos = cortado
+            ? cantidad + " de " + totalSinTope + " registros"
+            : cantidad + (cantidad == 1 ? " registro" : " registros");
         String texto = "Período " + desde.format(FECHA) + " a " + hasta.format(FECHA)
-                     + "  ·  " + cantidad + (cantidad == 1 ? " registro" : " registros")
+                     + "  ·  " + cuantos
                      + "  ·  emitido el " + LocalDate.now().format(FECHA);
         return new Paragraph(texto, FUENTE_SUBTITULO);
+    }
+
+    /**
+     * El aviso de que esta hoja no es el período entero.
+     *
+     * <p>Dice también que los totales del pie son de lo listado y no del período, que es la
+     * parte que más fácil se lee mal: un total con nombre de total se toma por el del período
+     * aunque arriba diga que faltan filas.
+     */
+    private Paragraph aviso(int cuantas, long totalSinTope) {
+        return new Paragraph(
+            "REPORTE INCOMPLETO. El tope del reporte cortó la lista: se listan " + cuantas
+            + " de " + totalSinTope + " registros. Los totales del pie corresponden solo a "
+            + "esos registros, no al período. Acotá el rango de fechas o los filtros para "
+            + "tenerlo entero.",
+            FUENTE_AVISO);
     }
 
     private PdfPTable tabla(List<AsistenciaReporteRowDto> filas) throws Exception {

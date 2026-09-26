@@ -128,9 +128,14 @@ public class ReporteController {
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 
         List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
+        // Cuantas habria sin el tope, igual que en la pantalla. Un archivo cortado en
+        // silencio se lee como el periodo entero, y este se abre en una planilla para
+        // sacar cuentas: el que suma no tiene como saber que le faltan filas.
+        long totalSinTope = reporteService.contar(filtro);
+        boolean cortado = totalSinTope > filas.size();
 
-        String nombreArchivo = String.format("asistencias_%s_a_%s.csv",
-            filtro.getDesde(), filtro.getHasta());
+        String nombreArchivo = String.format("asistencias_%s_a_%s%s.csv",
+            filtro.getDesde(), filtro.getHasta(), cortado ? "_parcial" : "");
         response.setContentType("text/csv; charset=UTF-8");
         response.setHeader("Content-Disposition",
             "attachment; filename=\"" + nombreArchivo + "\"");
@@ -144,8 +149,17 @@ public class ReporteController {
             for (AsistenciaReporteRowDto f : filas) {
                 escribirFila(writer, f);
             }
+            // Al final y en una sola celda: arriba correria las columnas, y el que abre el
+            // archivo para ver si esta completo va justo al final.
+            if (cortado) {
+                writer.println(csv(
+                    "Reporte incompleto: se exportaron las primeras " + filas.size()
+                    + " filas de " + totalSinTope + ". Acotá el rango de fechas o los "
+                    + "filtros para bajarlo entero."));
+            }
         }
-        log.info("Reporte CSV exportado: {} filas, archivo={}", filas.size(), nombreArchivo);
+        log.info("Reporte CSV exportado: {} filas de {}, archivo={}",
+                 filas.size(), totalSinTope, nombreArchivo);
     }
 
     // Descarga el mismo reporte como PDF, ya listo para imprimir.
@@ -160,8 +174,10 @@ public class ReporteController {
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 
         List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
+        long totalSinTope = reporteService.contar(filtro);
         String institucion = miInstitucionService.getMiInstitucion().getNombre();
-        String nombreArchivo = reportePdfService.nombreArchivo(filtro.getDesde(), filtro.getHasta());
+        String nombreArchivo = reportePdfService.nombreArchivo(
+            filtro.getDesde(), filtro.getHasta(), totalSinTope > filas.size());
 
         response.setContentType("application/pdf");
         response.setHeader("Content-Disposition",
@@ -169,7 +185,8 @@ public class ReporteController {
 
         try (OutputStream out = response.getOutputStream()) {
             reportePdfService.escribir(out, filas, filtro.getDesde(), filtro.getHasta(),
-                                       institucion, reporteService.totales(filas));
+                                       institucion, reporteService.totales(filas),
+                                       totalSinTope);
         }
     }
 

@@ -105,18 +105,70 @@ class ReportePdfServiceTest {
             .contains("AUTOMATICO");
     }
 
+    @Test
+    @DisplayName("Un reporte cortado lo dice arriba, al pie de cada hoja y en el recuento")
+    void elReporteCortadoLoDice() {
+        // Una fila devuelta de 5384 que habia: el tope se comio el resto.
+        String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)), 5384);
+
+        assertThat(texto)
+            .as("el aviso arriba de todo, donde se mira primero")
+            .contains("REPORTE INCOMPLETO")
+            .contains("se listan 1 de 5384 registros")
+            .as("y que los totales del pie no son los del periodo, que es lo que mas facil "
+                + "se lee mal")
+            .contains("Los totales del pie corresponden solo a esos registros")
+            .as("el recuento del encabezado deja de decir que son todos")
+            .contains("1 de 5384 registros")
+            .as("y al pie de la hoja, porque un reporte largo se lee por el medio")
+            .contains("Reporte incompleto — se listan 1 de 5384 registros");
+    }
+
+    @Test
+    @DisplayName("Un reporte entero no lleva ningun aviso")
+    void elReporteEnteroNoAvisa() {
+        String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)));
+
+        assertThat(texto)
+            .doesNotContain("INCOMPLETO")
+            .doesNotContain("Reporte incompleto")
+            .as("el recuento sigue siendo el de siempre")
+            .contains("1 registro");
+    }
+
+    @Test
+    @DisplayName("El nombre del archivo avisa cuando el reporte vino cortado")
+    void elNombreDelArchivoAvisa() {
+        assertThat(service.nombreArchivo(DESDE, HASTA, false))
+            .isEqualTo("asistencias_2026-06-01_a_2026-06-30.pdf");
+        assertThat(service.nombreArchivo(DESDE, HASTA, true))
+            .as("es lo unico del aviso que sobrevive a guardar el archivo y reenviarlo")
+            .isEqualTo("asistencias_2026-06-01_a_2026-06-30_parcial.pdf");
+    }
+
     // ------------------------------------------------------------------------
 
     private String pdfDe(AsistenciaReporteRowDto fila) {
+        return pdfDe(fila, 1);
+    }
+
+    private String pdfDe(AsistenciaReporteRowDto fila, long totalSinTope) {
         // Los saltos se normalizan: una celda angosta parte su contenido en dos renglones y
         // eso es correcto en la hoja, pero no tiene que romper una asercion de contenido.
-        return crudoDe(fila).replaceAll("\\s+", " ");
+        return crudoDe(fila, totalSinTope).replaceAll("\\s+", " ");
     }
 
     private String crudoDe(AsistenciaReporteRowDto fila) {
+        return crudoDe(fila, 1);
+    }
+
+    // El mismo PDF, diciendo cuantas filas habria sin el tope: igual a la que se pasa
+    // significa que el reporte esta entero.
+    private String crudoDe(AsistenciaReporteRowDto fila, long totalSinTope) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         service.escribir(out, List.of(fila), DESDE, HASTA, "Instituto de prueba",
-                         new ReporteAsistenciaService.TotalesDelReporte(1, 1, 120, 120, 0, 0));
+                         new ReporteAsistenciaService.TotalesDelReporte(1, 1, 120, 120, 0, 0),
+                         totalSinTope);
         try {
             PdfReader reader = new PdfReader(out.toByteArray());
             try {
