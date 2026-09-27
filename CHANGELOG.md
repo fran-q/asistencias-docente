@@ -29,9 +29,13 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   no se caiga dibujando la tabla; una curva armada sobre un período cortado mostraría algo
   falso. Los gráficos usan su propio camino, sin el tope.
 
-- **El formulario de filtros dejó de estar copiado.** Lo usan la tabla y los gráficos, así que
-  pasó a ser un fragmento compartido: dos copias se desincronizan solas y un filtro nuevo
-  aparecería en una pantalla y en la otra no.
+- **El filtrado sigue viviendo en la tabla.** Los gráficos toman el período y los criterios
+  del enlace que los trae, y dicen cuál es; para cambiarlos se vuelve a la tabla. Dos
+  formularios para el mismo filtro obligan a elegir dos veces lo mismo.
+
+- **El eje va dentro del gráfico.** Las guías dicen 100%, 50% y 0% sobre sí mismas, en vez de
+  explicarse en una nota al pie: una línea sin valor obliga a leer un renglón para saber qué
+  marca, y lo que se busca en un gráfico es justamente no tener que leerlo.
 
 ---
 

@@ -124,8 +124,12 @@
                         <span class="lateral__texto">Listado del día</span>
                     </a>
                     <a th:href="@{/reportes}" class="lateral__link">
-                        <svg th:replace="~{layout/iconos :: grafico}"></svg>
+                        <svg th:replace="~{layout/iconos :: lupa}"></svg>
                         <span class="lateral__texto">Reportes</span>
+                    </a>
+                    <a th:href="@{/reportes/graficos}" class="lateral__link">
+                        <svg th:replace="~{layout/iconos :: grafico}"></svg>
+                        <span class="lateral__texto">Gráficos</span>
                     </a>
 
                     <a th:href="@{__${destinoAcademico}__}" class="lateral__grupo"

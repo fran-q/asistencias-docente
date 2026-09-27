@@ -121,8 +121,13 @@ public class ReporteController {
      *
      * <p>Va en su propia pantalla y no arriba de la tabla porque contestan preguntas
      * distintas: la tabla sirve para encontrar una fila y ésta, para ver cómo viene el
-     * período. Comparten el formulario de filtros y se enlazan en los dos sentidos, así que
-     * pasar de una a la otra no obliga a volver a elegir nada.
+     * período.
+     *
+     * <p><b>No tiene formulario de filtros propio.</b> Los criterios se eligen una sola vez,
+     * en la tabla, y llegan acá por el enlace; dos formularios para el mismo filtro obligan a
+     * elegir dos veces lo mismo. Por eso los parámetros se siguen leyendo —son los que trae
+     * ese enlace— pero no hacen falta las listas de docentes, materias y carreras, que eran
+     * tres consultas para llenar unos selects que ya no se dibujan.
      */
     @GetMapping("/graficos")
     public String graficos(
@@ -155,11 +160,6 @@ public class ReporteController {
         }
 
         model.addAttribute("filtro", filtro);
-        model.addAttribute("docentes", docenteService.listar());
-        model.addAttribute("materias", materiaService.listar());
-        model.addAttribute("carreras", carreraService.listar());
-        model.addAttribute("estadosPosibles", EstadoAsistencia.values());
-        model.addAttribute("metodosPosibles", MetodoAsistencia.values());
         return "reporte/graficos";
     }
 

@@ -65,7 +65,7 @@ public class SeccionService {
                 new SeccionDto("Listado del día", "/asistencias",
                     "Las marcas de una fecha, con las ausencias calculadas.", "lista"),
                 new SeccionDto("Reportes", "/reportes",
-                    "Filtrar por período y exportar a CSV o PDF.", "lista"),
+                    "Filtrar por período y exportar a CSV o PDF.", "lupa"),
                 // Los mismos filtros, mirados de conjunto. Va despues de la tabla porque
                 // primero se acota el periodo y despues se lo mira.
                 new SeccionDto("Gráficos", "/reportes/graficos",

@@ -10,22 +10,28 @@
             <h1>Gráficos del reporte</h1>
             <p class="page-header__subtitle">
                 Los mismos datos del reporte, mirados de conjunto: cómo viene el dictado,
-                cómo se reparten las clases y dónde se concentran las ausencias.
+                cómo se reparten las clases y dónde se concentran las ausencias. El período y
+                los filtros se eligen en la tabla y llegan con el enlace.
             </p>
         </header>
-
-        <!-- El mismo formulario que usa la tabla. -->
-        <div th:replace="~{layout/fragmentos :: filtrosDelReporte('/reportes/graficos')}"></div>
 
         <div th:if="${error != null}" class="alert alert--error" style="margin-top:1rem;" role="alert">
             <p th:text="${error}">Error</p>
         </div>
 
-        <!-- Ida y vuelta con la tabla, llevando los filtros puestos: pasar de una a la otra
-             no tiene que obligar a volver a elegir todo. -->
+        <!-- Esta pantalla no tiene formulario propio: los criterios se eligen en la tabla y
+             vienen en el enlace. Dos formularios para el mismo filtro obligan a elegir dos
+             veces lo mismo, y acá lo que se mira es el conjunto, no una fila. Lo que sí se
+             dice es sobre qué período está hecho lo que se ve: un gráfico sin su período es
+             un gráfico del que no se sabe nada. -->
         <div th:if="${error == null}" class="reporte__acciones">
-            <span th:if="${graficos.clases > 0}">
-                Sobre <strong th:text="${graficos.clases}">0</strong> clase(s)
+            <span>
+                Período
+                <strong th:text="${#temporals.format(filtro.desde, 'dd/MM/yyyy')}">01/09/2026</strong>
+                a
+                <strong th:text="${#temporals.format(filtro.hasta, 'dd/MM/yyyy')}">27/09/2026</strong>
+                <span th:if="${graficos.clases > 0}" class="text-muted"
+                      th:text="|· ${graficos.clases} clase(s)|">· N clase(s)</span>
                 <span th:if="${graficos.clasesSinDato > 0}" class="text-muted"
                       th:text="|· ${graficos.clasesSinDato} sin dato de salida|">· N sin dato</span>
             </span>
@@ -33,7 +39,7 @@
                                     docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
                                     carreraId=${filtro.carreraId},
                                     estado=${filtro.estado}, metodo=${filtro.metodo})}"
-               class="btn btn--ghost">Ver la tabla con estos filtros</a>
+               class="btn btn--ghost">Cambiar el período en la tabla</a>
         </div>
 
         <p th:if="${error == null and graficos.vacio}" class="home__vacio" style="margin-top:1rem;">
@@ -54,25 +60,37 @@
                 </p>
 
                 <div class="grafico">
-                    <svg class="grafico__svg" viewBox="0 -24 720 232"
-                         preserveAspectRatio="none" role="img"
-                         aria-label="Porcentaje dictado por semana">
-                        <!-- Las guías del 50 y del 100 dan la escala sin un eje completo. -->
-                        <line x1="0" y1="0" x2="720" y2="0" class="grafico__guia"></line>
-                        <line x1="0" y1="100" x2="720" y2="100" class="grafico__guia"></line>
-                        <line x1="0" y1="200" x2="720" y2="200" class="grafico__eje"></line>
+                    <div class="grafico__area">
+                        <!-- El eje va en el gráfico y no en una nota al pie: una línea sin
+                             valor obliga a leer un renglón para saber qué marca, y lo que se
+                             busca en un gráfico es justamente no tener que leerlo. -->
+                        <div class="grafico__escala" aria-hidden="true">
+                            <span class="grafico__escala-marca" style="top:0">100%</span>
+                            <span class="grafico__escala-marca" style="top:50%">50%</span>
+                            <span class="grafico__escala-marca" style="top:100%">0%</span>
+                        </div>
 
-                        <g th:each="s : ${graficos.semanas}">
-                            <rect th:x="${s.x}" th:y="${s.y}"
-                                  th:width="${s.ancho}" th:height="${s.alto}"
-                                  th:classappend="${s.sinDato} ? 'grafico__barra--sin-dato' : ''"
-                                  class="grafico__barra"
-                                  th:attr="aria-label=${s.etiqueta}"></rect>
-                        </g>
-                    </svg>
+                        <svg class="grafico__svg" viewBox="0 0 720 200"
+                             preserveAspectRatio="none" role="img"
+                             aria-label="Porcentaje dictado por semana">
+                            <line x1="0" y1="0" x2="720" y2="0" class="grafico__guia"></line>
+                            <line x1="0" y1="100" x2="720" y2="100" class="grafico__guia"></line>
+                            <line x1="0" y1="200" x2="720" y2="200" class="grafico__eje"></line>
+
+                            <g th:each="s : ${graficos.semanas}">
+                                <rect th:x="${s.x}" th:y="${s.y}"
+                                      th:width="${s.ancho}" th:height="${s.alto}"
+                                      th:classappend="${s.sinDato} ? 'grafico__barra--sin-dato' : ''"
+                                      class="grafico__barra"
+                                      th:attr="aria-label=${s.etiqueta}"></rect>
+                            </g>
+                        </svg>
+                    </div>
 
                     <!-- Las etiquetas van en HTML y no dentro del SVG: con preserveAspectRatio
-                         none el lienzo se estira y el texto de adentro saldría deformado. -->
+                         none el lienzo se estira y el texto de adentro saldría deformado. La
+                         sangría de la izquierda es la misma que la del eje, para que cada
+                         etiqueta caiga debajo de su columna. -->
                     <div class="grafico__etiquetas">
                         <span th:each="s : ${graficos.semanas}" class="grafico__etiqueta">
                             <span class="grafico__etiqueta-valor"
@@ -81,10 +99,6 @@
                         </span>
                     </div>
                 </div>
-
-                <p class="text-muted grafico__guia-texto">
-                    Las dos líneas marcan el 50% y el 100% de lo programado.
-                </p>
             </div>
 
             <!-- ============ REPARTO DE ESTADOS ============ -->

@@ -14,8 +14,72 @@
             </p>
         </header>
 
-        <!-- El mismo formulario que usa la pantalla de gráficos. -->
-        <div th:replace="~{layout/fragmentos :: filtrosDelReporte('/reportes')}"></div>
+        <!-- Filtros -->
+        <form method="get" th:action="@{/reportes}" class="card"
+              style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+            <div class="form-group" style="margin:0;">
+                <label for="desde">Desde</label>
+                <input type="date" id="desde" name="desde" th:value="${filtro.desde}" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="hasta">Hasta</label>
+                <input type="date" id="hasta" name="hasta" th:value="${filtro.hasta}" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="docenteId">Docente</label>
+                <select id="docenteId" data-buscable name="docenteId">
+                    <option value="">Todos</option>
+                    <option th:each="d : ${docentes}"
+                            th:value="${d.id}"
+                            th:text="|${d.nombreCompleto} — ${!#strings.isEmpty(d.legajo) ? 'Leg. ' + d.legajo : 'DNI ' + d.persona.dni}|"
+                            th:selected="${d.id == filtro.docenteId}">Apellido, Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="carreraId">Carrera</label>
+                <select id="carreraId" data-buscable name="carreraId">
+                    <option value="">Todas</option>
+                    <option th:each="c : ${carreras}"
+                            th:value="${c.id}"
+                            th:text="${c.nombre}" th:title="${c.nombre}"
+                            th:selected="${c.id == filtro.carreraId}">CAR - Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="materiaId">Materia</label>
+                <select id="materiaId" data-buscable name="materiaId">
+                    <option value="">Todas</option>
+                    <option th:each="m : ${materias}"
+                            th:value="${m.id}"
+                            th:text="|${m.codigo} — ${m.nombre}|"
+                            th:selected="${m.id == filtro.materiaId}">MAT - Nombre</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="estado">Estado</label>
+                <select id="estado" name="estado">
+                    <option value="">Todos</option>
+                    <option th:each="e : ${estadosPosibles}"
+                            th:value="${e}"
+                            th:text="${e}"
+                            th:selected="${e == filtro.estado}">PRESENTE</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label for="metodo">Método</label>
+                <select id="metodo" name="metodo">
+                    <option value="">Todos</option>
+                    <option th:each="m : ${metodosPosibles}"
+                            th:value="${m}"
+                            th:text="${m}"
+                            th:selected="${m == filtro.metodo}">AUTOMATICO</option>
+                </select>
+            </div>
+            <div class="form-actions" style="margin:0;">
+                <button type="submit" class="btn btn--primary" data-texto-enviando="Aplicando...">Aplicar</button>
+                <a th:href="@{/reportes}" class="btn btn--ghost">Limpiar</a>
+            </div>
+        </form>
 
         <!-- Acciones de descarga.
              Los dos botones van agrupados: sueltos dentro del space-between, el PDF

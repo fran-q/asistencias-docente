@@ -189,11 +189,19 @@ class GraficosDelReporteIT {
         // asi que se leen los atributos y no solo que la pagina responda.
         assertThat(contarOcurrencias(html, "class=\"grafico__barra\""))
             .isEqualTo(2);
+        // Se busca el valor DENTRO de su etiqueta y no suelto: el eje del gráfico también
+        // dice "50%" y "100%", así que un contains pelado pasaría aunque las columnas
+        // estuvieran mal calculadas.
         assertThat(html)
             .as("la primera semana tiene una clase entera y una ausente: 120 de 240")
-            .contains("50%")
+            .contains("grafico__etiqueta-valor\">50%<")
             .as("y la segunda, cubierta entera")
-            .contains("100%");
+            .contains("grafico__etiqueta-valor\">100%<");
+
+        assertThat(html)
+            .as("el eje dice qué marcan las guías, en el gráfico y no en una nota al pie")
+            .contains("grafico__escala-marca")
+            .doesNotContain("Las dos líneas marcan");
     }
 
     @Test
@@ -207,7 +215,7 @@ class GraficosDelReporteIT {
         assertThat(pedir("/reportes/graficos"))
             .as("los graficos, en cambio, cuentan las tres: una curva armada sobre un "
                 + "periodo cortado es peor que no mostrarla")
-            .contains("<strong>3</strong>")
+            .contains("· 3 clase(s)")
             .contains("15/06");
     }
 
@@ -250,13 +258,49 @@ class GraficosDelReporteIT {
     }
 
     @Test
-    @DisplayName("La pantalla enlaza a la tabla llevando los filtros puestos")
-    void enlazaConLaTabla() throws Exception {
-        assertThat(pedir("/reportes/graficos?desde=2026-06-01&hasta=2026-06-30"))
-            .as("pasar de una a la otra no tiene que obligar a volver a elegir todo")
-            .contains("Ver la tabla con estos filtros")
+    @DisplayName("La pantalla dice de que periodo es y manda a la tabla a cambiarlo")
+    void diceSuPeriodoYEnlazaConLaTabla() throws Exception {
+        String html = pedir("/reportes/graficos?desde=2026-06-01&hasta=2026-06-30");
+
+        assertThat(html)
+            .as("un gráfico sin su período es un gráfico del que no se sabe nada")
+            .contains("01/06/2026").contains("30/06/2026")
+            .contains("Cambiar el período en la tabla")
             .contains("desde=2026-06-01")
             .contains("hasta=2026-06-30");
+
+        assertThat(html)
+            .as("los criterios se eligen una sola vez, en la tabla: dos formularios para el "
+                + "mismo filtro obligan a elegir dos veces lo mismo")
+            .doesNotContain("data-texto-enviando=\"Aplicando...\"")
+            .doesNotContain("name=\"docenteId\"");
+    }
+
+    @Test
+    @DisplayName("La barra lateral tiene su enlace a los graficos")
+    void estaEnLaBarraLateral() throws Exception {
+        assertThat(pedir("/reportes/graficos"))
+            .as("la barra está escrita a mano en el layout, así que una pantalla nueva no "
+                + "aparece sola por estar dada de alta en SeccionService")
+            .contains("/reportes/graficos")
+            .contains("Gráficos");
+    }
+
+    @Test
+    @DisplayName("Los filtros que trae el enlace de la tabla se aplican de verdad")
+    void losFiltrosDelEnlaceSeAplican() throws Exception {
+        assertThat(pedir("/reportes/graficos?desde=2026-06-01&hasta=2026-06-30"))
+            .as("sin filtrar, las tres clases")
+            .contains("· 3 clase(s)");
+
+        assertThat(pedir("/reportes/graficos?desde=2026-06-01&hasta=2026-06-30&estado=AUSENTE"))
+            .as("filtrando por ausente, una sola")
+            .contains("· 1 clase(s)");
+
+        assertThat(pedir("/reportes/graficos?desde=2026-06-15&hasta=2026-06-30"))
+            .as("acotando el rango, solo la segunda semana")
+            .contains("· 1 clase(s)")
+            .doesNotContain("08/06");
     }
 
     // ------------------------------------------------------------------------

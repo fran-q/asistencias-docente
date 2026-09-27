@@ -312,9 +312,16 @@ ruta de descarga. Es CWE-1236.
 
 **RF-33, decisiones (2026-09-27).** Los gráficos viven en **su propia pantalla** y no
 arriba de la tabla: contestan preguntas distintas —la tabla sirve para encontrar una fila y
-los gráficos para ver cómo viene el período— y la tabla se había aligerado justo antes. Las
-dos comparten el formulario de filtros, que pasó a ser el fragmento
-`layout/fragmentos :: filtrosDelReporte(accion)`, y se enlazan en los dos sentidos.
+los gráficos para ver cómo viene el período— y la tabla se había aligerado justo antes.
+
+**El formulario de filtros está sólo en la tabla.** Los gráficos leen los mismos parámetros
+—llegan por el enlace "Ver en gráficos"— pero no dibujan un segundo formulario: dos
+formularios para el mismo filtro obligan a elegir dos veces lo mismo. La pantalla dice de qué
+período es lo que muestra y manda a la tabla a cambiarlo.
+
+**La barra lateral está escrita a mano** en `layout/base.html`. Dar de alta una pantalla en
+`SeccionService` la agrega a la página índice de la sección, no a la barra: son dos lugares y
+hay que tocar los dos.
 
 **No se sumó ninguna librería.** Los 20 archivos JS del proyecto son propios y no hay CDN;
 Chart.js habría sido la primera dependencia de terceros del front, 200 KB versionados en un

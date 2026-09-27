@@ -2737,10 +2737,22 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
    ============================================================================ */
 
 .grafico { margin-top: 12px; }
-.grafico__svg { width: 100%; height: 190px; display: block; overflow: visible; }
 
-/* Las guias dan la escala sin dibujar un eje numerado, que a este tamano se
-   lee peor que las dos lineas solas. */
+/* El ancho del eje se reserva con la misma sangria arriba y abajo, para que cada
+   etiqueta de semana caiga justo debajo de su columna. */
+.grafico__area { position: relative; padding-left: var(--grafico-eje, 40px); }
+.grafico__svg { width: 100%; height: 190px; display: block; }
+
+/* Los valores del eje van sobre las lineas que marcan, no en una nota al pie:
+   una guia sin numero obliga a leer un renglon para saber que marca. Van en HTML
+   y no dentro del SVG porque el lienzo se estira --preserveAspectRatio none-- y
+   el texto de adentro saldria deformado. */
+.grafico__escala { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--grafico-eje, 40px) - 8px); }
+.grafico__escala-marca {
+    position: absolute; right: 0; transform: translateY(-50%);
+    font-size: .7rem; color: var(--text-muted); white-space: nowrap;
+}
+
 .grafico__guia { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
 .grafico__eje  { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
 
@@ -2749,14 +2761,13 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
    semana en la que no se dicto nada. */
 .grafico__barra--sin-dato { fill: var(--text-muted); opacity: .45; }
 
-.grafico__etiquetas { display: flex; margin-top: 6px; }
+.grafico__etiquetas { display: flex; margin-top: 6px; padding-left: var(--grafico-eje, 40px); }
 .grafico__etiqueta {
     flex: 1 1 0; min-width: 0; text-align: center;
     display: flex; flex-direction: column; gap: 1px;
 }
 .grafico__etiqueta-valor { font-size: .78rem; font-weight: 600; }
 .grafico__etiqueta-texto { font-size: .7rem; color: var(--text-muted); }
-.grafico__guia-texto { font-size: .78rem; margin-top: 10px; }
 
 /* ---- Barra apilada de estados ---- */
 .grafico__apilada {
