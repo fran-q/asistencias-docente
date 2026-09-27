@@ -7,6 +7,33 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## El reporte dice menos y se lee mejor
+
+**Período:** septiembre de 2026.
+
+### Cambiado
+
+- **Se fue la columna "Desvío".** Ocupaba un lugar entero de la tabla para decir en palabras
+  —"4 min tarde", "6 min antes", "+1 min fuera"— lo que la columna "Dictado" ya dice en
+  números. Con doce columnas y tres líneas por celda, el reporte se leía cargado y la cifra
+  que importa quedaba tapada. El cálculo no se tocó: **las cinco columnas del desvío siguen
+  en el CSV**, que es el archivo que se abre en una planilla justamente para filtrar y sumar
+  por esas cifras.
+
+- **Se fue la tarjeta "Totales del período".** No es lo que se va a buscar al reporte, y
+  ocupaba la primera pantalla antes de la tabla.
+
+- **El equipo pasó a tener columna propia.** Estaba en gris chico debajo de cada hora, que es
+  donde no se lee, y además dejaba las celdas de hora con dos renglones. Ahora va en la
+  columna que dejó libre "Desvío", con el mismo criterio que ya usaba el PDF: un nombre si
+  entró y salió por el mismo equipo, «entrada › salida» si fueron distintos.
+
+- **La regla de cómo mostrar los equipos se mudó al DTO.** La tenían la pantalla y el PDF por
+  separado; dos copias de la misma regla terminan diciendo cosas distintas de la misma
+  jornada.
+
+---
+
 ## El PDF explica sus propias columnas
 
 **Período:** septiembre de 2026.

@@ -210,25 +210,19 @@ class ReporteCortadoIT {
         assertThat(hoja)
             .contains("REPORTE INCOMPLETO")
             .contains("se listan 2 de 3 registros")
-            .as("y que los totales del pie son de lo listado, no del periodo")
-            .contains("no al período")
             .as("el recuento del encabezado deja de decir que son todos")
             .contains("2 de 3 registros");
     }
 
     @Test
-    @DisplayName("La pantalla no llama totales del periodo a los totales de lo que entro")
-    void laPantallaAclaraLosTotales() throws Exception {
+    @DisplayName("La pantalla avisa en el recuento que el reporte vino cortado")
+    void laPantallaAvisaDelCorte() throws Exception {
         String html = pedir("/reportes", "2026-06-01", "2026-06-30")
             .getResponse().getContentAsString();
 
         assertThat(html)
-            .as("el recuento ya avisaba")
-            .contains("de 3 · acotá el rango o los filtros")
-            .as("y ahora los totales tampoco se presentan como los del periodo")
-            .contains("Totales de lo listado")
-            .contains("Sobre 2 de 3 registros")
-            .doesNotContain("Totales del período");
+            .as("un reporte cortado en silencio se lee como uno completo")
+            .contains("de 3 · acotá el rango o los filtros");
     }
 
     @Test
@@ -249,8 +243,7 @@ class ReporteCortadoIT {
 
         assertThat(pedir("/reportes", "2026-06-15", "2026-06-15")
                        .getResponse().getContentAsString())
-            .as("sin corte, la tarjeta vuelve a ser la del periodo")
-            .contains("Totales del período")
+            .as("sin corte, la pantalla no avisa nada")
             .doesNotContain("acotá el rango o los filtros");
     }
 

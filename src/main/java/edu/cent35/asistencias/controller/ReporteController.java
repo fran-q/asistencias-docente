@@ -94,9 +94,6 @@ public class ReporteController {
         try {
             List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
             model.addAttribute("filas", filas);
-            // Cuanto se dicto de lo programado en el periodo. Sin esto habia que bajar el CSV
-            // y sumar a mano para contestar la pregunta mas frecuente del reporte.
-            model.addAttribute("totales", reporteService.totales(filas));
             // Cuantas habria sin el tope. Si son mas que las mostradas, la pantalla avisa:
             // un reporte cortado en silencio se lee como un reporte completo.
             long total = reporteService.contar(filtro);
@@ -200,8 +197,7 @@ public class ReporteController {
 
         try (OutputStream out = response.getOutputStream()) {
             reportePdfService.escribir(out, filas, filtro.getDesde(), filtro.getHasta(),
-                                       institucion, reporteService.totales(filas),
-                                       totalSinTope);
+                                       institucion, totalSinTope);
         }
     }
 

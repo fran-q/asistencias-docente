@@ -58,8 +58,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * El tiempo neto de cada clase y su desvío, en las tres salidas del reporte: la pantalla, el
- * CSV y el PDF.
+ * El tiempo neto de cada clase, en las tres salidas del reporte: la pantalla, el CSV y el PDF.
  *
  * <p><b>Por qué va como IT.</b> El cálculo ya está cubierto por sus tests unitarios; lo que
  * acá se prueba es que llegue a destino. Las expresiones de Thymeleaf fallan recién al
@@ -68,6 +67,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Los datos son dos clases del mismo docente: una cubierta entera —con el docente en la
  * institución un rato antes y otro después— y otra a la que llegó tarde y de la que se fue
  * antes, las dos veces pasándose de la tolerancia.
+ *
+ * <p><b>El desvío desarmado quedó sólo en el CSV.</b> En pantalla y en el PDF ocupaba una
+ * columna entera para decir en palabras lo que "Dictado" ya dice en números. En una planilla
+ * sí sirve, porque ahí se filtra y se suma por esas cifras.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -190,28 +193,26 @@ class ReporteTiempoNetoIT {
     }
 
     @Test
-    @DisplayName("La pantalla muestra el desvio de cada clase y los totales del periodo")
-    void laPantallaMuestraElDesvio() throws Exception {
+    @DisplayName("La pantalla muestra lo dictado de cada clase y por que puerta paso")
+    void laPantallaMuestraLoDictado() throws Exception {
         String html = pedir("/reportes");
 
         assertThat(html)
-            .contains("Desvío")
-            .as("el desvio se dice en minutos, no solo como 'tarde'")
-            .contains("25 min tarde")
-            .contains("20 min antes")
-            .as("y lo que estuvo en la institucion fuera de la franja de la clase")
-            .contains("+22 min fuera");
+            .as("lo dictado sobre lo programado, que es la cifra del reporte")
+            .contains("120 / 120 min")
+            .contains("75 / 120 min");
 
         assertThat(html)
-            .as("los totales del periodo: 195 minutos dictados sobre 240 programados")
-            .contains("Totales del período")
-            .contains("3 h 15 min (81%)")
-            .contains("4 h");
+            .as("el equipo tiene columna propia: con una camara por entrada, la hora sola "
+                + "no dice donde estuvo la persona")
+            .contains("Entrada norte › Entrada sur");
 
         assertThat(html)
-            .as("con una camara por entrada, la hora sola no dice donde estuvo la persona")
-            .contains("Entrada norte")
-            .contains("Entrada sur");
+            .as("el desvio desarmado y los totales se fueron de la pantalla: uno ocupaba "
+                + "una columna para repetir en palabras lo que Dictado dice en numeros")
+            .doesNotContain("Desvío")
+            .doesNotContain("min tarde")
+            .doesNotContain("Totales del período");
     }
 
     @Test
@@ -233,7 +234,7 @@ class ReporteTiempoNetoIT {
     }
 
     @Test
-    @DisplayName("El PDF sale con el desvio, los equipos y el resumen al pie")
+    @DisplayName("El PDF sale con lo dictado, los equipos y la referencia al pie")
     void elPdfSale() throws Exception {
         byte[] pdf = mockMvc.perform(get("/reportes/pdf")
                 .param("desde", "2026-06-01").param("hasta", "2026-06-30")
@@ -248,12 +249,13 @@ class ReporteTiempoNetoIT {
 
         String hoja = textoDe(pdf);
         assertThat(hoja)
-            .as("las columnas del desvio y del equipo, y el resumen del periodo")
-            .contains("Desvío").contains("Equipo")
-            .contains("dictado 3 h 15 min (81%)")
+            .contains("Dictado").contains("Equipo")
             .as("por que puerta entro y por cual salio, en la hoja que se archiva")
             .contains("Entrada norte › Entrada sur")
-            .contains("«entrada › salida»");
+            .contains("«entrada › salida»")
+            .as("el desvio y el resumen del periodo se fueron tambien del papel")
+            .doesNotContain("Desvío")
+            .doesNotContain("Programado");
     }
 
     // El texto de la primera hoja del PDF, con los saltos normalizados: una celda angosta

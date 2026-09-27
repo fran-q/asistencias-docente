@@ -22,7 +22,6 @@ import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Arma el reporte de asistencias en PDF (RF-61).
@@ -41,17 +40,15 @@ public class ReportePdfService {
 
     /*
      * Anchos relativos de las columnas, medidos contra lo que de verdad entra en cada una a
-     * Helvetica 8 mas los 4pt de padding de cada lado. El reparto anterior le daba a la hora
-     * y a lo dictado casi el doble del ancho de su contenido, y le quedaba corto a "Método":
-     * "AUTOMATICO" mide 61pt y la columna tenia 57, asi que se partia en dos renglones en
-     * casi todas las filas. Ajustado, entra el equipo y ademas sobra espacio para la materia
-     * y el docente, que son los que de verdad necesitan crecer.
+     * Helvetica 8 mas los 4pt de padding de cada lado. Medirlos en vez de estimarlos es lo
+     * que evita que una celda se parta en dos renglones y duplique el alto de toda la tabla:
+     * "AUTOMATICO" mide 61pt y con 57 se partia en casi todas las filas.
      */
     private static final float[] ANCHOS =
-        {1.0f, 1.15f, 3.1f, 1.0f, 2.7f, 0.7f, 0.75f, 1.25f, 0.85f, 0.95f, 1.1f, 1.3f};
+        {1.0f, 1.15f, 3.1f, 1.0f, 2.7f, 0.7f, 0.75f, 0.85f, 1.25f, 1.1f, 1.3f};
     private static final String[] CABECERAS = {
         "Fecha", "Horario", "Materia", "Comisión", "Docente",
-        "Entra", "Sale", "Equipo", "Dictado", "Desvío", "Estado", "Método"
+        "Entra", "Sale", "Dictado", "Equipo", "Estado", "Método"
     };
 
     private static final Font FUENTE_TITULO   = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
@@ -80,7 +77,6 @@ public class ReportePdfService {
      */
     public void escribir(OutputStream out, List<AsistenciaReporteRowDto> filas,
                          LocalDate desde, LocalDate hasta, String institucion,
-                         ReporteAsistenciaService.TotalesDelReporte totales,
                          long totalSinTope) {
         // El reporte trae hasta un tope de filas. Si lo paso, esta hoja no es el periodo:
         // es una parte, y los totales del pie tampoco son los del periodo.
@@ -120,11 +116,6 @@ public class ReportePdfService {
                 doc.add(vacio);
             } else {
                 doc.add(tabla(filas));
-
-                // Lo que suma el periodo. Es lo que se mira primero en un reporte impreso, y
-                // hasta ahora habia que sacarlo sumando las filas a mano.
-                doc.add(new Paragraph(" "));
-                doc.add(new Paragraph(resumen(totales), FUENTE_SUBTITULO));
 
                 doc.add(new Paragraph(" "));
                 comoLeer(doc, filas);
@@ -176,19 +167,12 @@ public class ReportePdfService {
         return new Paragraph(texto, FUENTE_SUBTITULO);
     }
 
-    /**
-     * El aviso de que esta hoja no es el período entero.
-     *
-     * <p>Dice también que los totales del pie son de lo listado y no del período, que es la
-     * parte que más fácil se lee mal: un total con nombre de total se toma por el del período
-     * aunque arriba diga que faltan filas.
-     */
+    // El aviso de que esta hoja no es el periodo entero.
     private Paragraph aviso(int cuantas, long totalSinTope) {
         return new Paragraph(
             "REPORTE INCOMPLETO. El tope del reporte cortó la lista: se listan " + cuantas
-            + " de " + totalSinTope + " registros. Los totales del pie corresponden solo a "
-            + "esos registros, no al período. Acotá el rango de fechas o los filtros para "
-            + "tenerlo entero.",
+            + " de " + totalSinTope + " registros. Acotá el rango de fechas o los filtros "
+            + "para tenerlo entero.",
             FUENTE_AVISO);
     }
 
@@ -222,9 +206,8 @@ public class ReportePdfService {
             agregar(t, texto(f.getDocenteApellido()) + ", " + texto(f.getDocenteNombre()), fondo);
             agregar(t, entrada(f), fondo);
             agregar(t, salida(f), fondo);
-            agregar(t, equipos(f), fondo);
             agregar(t, dictado(f), fondo);
-            agregar(t, desvio(f), fondo);
+            agregar(t, f.getEquipos(), fondo);
             agregar(t, estado(f), fondo);
             agregar(t, texto(f.getMetodo()), fondo);
         }
@@ -294,32 +277,6 @@ public class ReportePdfService {
     }
 
     /**
-     * El desvío de la clase, en dos signos: lo que faltó cubrir y lo que sobró de permanencia.
-     *
-     * <p>"-12 +10" dice, sin leer un renglón, que faltaron doce minutos de clase y que el
-     * docente estuvo diez en la institución fuera de esa franja. La referencia va al pie,
-     * igual que la de la salida presumida.
-     */
-    private String desvio(AsistenciaReporteRowDto f) {
-        if (f.getMinutosEfectivos() == null) {
-            return "—";
-        }
-        int sinCubrir = f.getMinutosProgramados() - f.getMinutosEfectivos();
-        int fuera = f.getMinutosFueraDeClase() == null ? 0 : f.getMinutosFueraDeClase();
-        if (sinCubrir <= 0 && fuera <= 0) {
-            return "—";
-        }
-        StringBuilder sb = new StringBuilder();
-        if (sinCubrir > 0) {
-            sb.append("-").append(sinCubrir);
-        }
-        if (fuera > 0) {
-            sb.append(sb.length() == 0 ? "" : " ").append("+").append(fuera);
-        }
-        return sb.toString();
-    }
-
-    /**
      * El bloque que explica las columnas que no se entienden solas.
      *
      * <p><b>Por qué junto y no suelto.</b> Cada columna que se agregó al reporte fue dejando
@@ -327,11 +284,11 @@ public class ReportePdfService {
      * cada uno apareciendo por su cuenta. Juntas y con un encabezado se leen como lo que son:
      * las instrucciones de la hoja. Quien recibe un PDF impreso no tiene a quién preguntarle.
      *
-     * <p><b>Qué entra y qué no.</b> "Dictado" y "Desvío" van siempre: sus columnas están en
-     * todos los reportes y ninguna de las dos se adivina. Las otras tres explican algo que
-     * puede no haber pasado —un registro sin llegada, una salida que completó el sistema, un
-     * docente que salió por otra puerta—, y una referencia a algo que no está en la hoja es
-     * una línea que nadie lee. Esas aparecen sólo si hay alguna fila que las necesite.
+     * <p><b>Qué entra y qué no.</b> "Dictado" va siempre: su columna está en todos los
+     * reportes y no se adivina. Las otras tres explican algo que puede no haber pasado —un
+     * registro sin llegada, una salida que completó el sistema, un docente que salió por otra
+     * puerta—, y una referencia a algo que no está en la hoja es una línea que nadie lee.
+     * Esas aparecen sólo si hay alguna fila que las necesite.
      */
     private void comoLeer(Document doc, List<AsistenciaReporteRowDto> filas) {
         doc.add(new Paragraph("Cómo leer esta tabla", FUENTE_LEYENDA_COLUMNA));
@@ -341,10 +298,6 @@ public class ReportePdfService {
             + "que se pisa con la franja de la clase: llegar antes o quedarse después no "
             + "suma. Un guion es que falta la marca de salida y no se puede saber, que no es "
             + "lo mismo que cero."));
-        doc.add(referencia("Desvío",
-            "minutos de clase sin cubrir (-) y minutos de permanencia fuera de la franja de "
-            + "la clase (+)."));
-
         if (filas.stream().anyMatch(f -> !f.isHoraDeLlegada())) {
             doc.add(referencia("Entra",
                 "la hora en que la cámara reconoció al docente. Un guion es que no hubo una "
@@ -357,7 +310,7 @@ public class ReportePdfService {
                 + "registró. La asistencia es válida; el dato de salida está pendiente de "
                 + "confirmación."));
         }
-        if (filas.stream().anyMatch(this::muestraLosDos)) {
+        if (filas.stream().anyMatch(AsistenciaReporteRowDto::isEquiposDistintos)) {
             doc.add(referencia("Equipo",
                 "el equipo donde se registró la marca. Cuando la salida no se tomó en el "
                 + "mismo que la entrada va «entrada › salida», y un guion del lado de la "
@@ -375,56 +328,4 @@ public class ReportePdfService {
         return p;
     }
 
-    /**
-     * Por qué puerta entró y por cuál salió (RF-89, V031).
-     *
-     * <p>Un solo nombre cuando las dos marcas se tomaron en el mismo equipo, que es el caso
-     * normal y el que no hay que leer. Los dos nombres cuando no coinciden: ahí está lo que
-     * una inspección viene a buscar, y hasta que existió esta columna el PDF afirmaba, por
-     * omisión, que el docente había salido por donde entró.
-     */
-    private String equipos(AsistenciaReporteRowDto f) {
-        String entrada = nombre(f.getEquipoEntrada());
-        if (!muestraLosDos(f)) {
-            return entrada;
-        }
-        return entrada + " › " + nombre(f.getEquipoSalida());
-    }
-
-    /**
-     * Si la fila tiene que mostrar los dos equipos.
-     *
-     * <p>Sin hora de salida no hay segundo equipo del que hablar —el guion de la columna
-     * "Sale" ya lo dijo—, y con la misma puerta de los dos lados repetir el nombre solo gasta
-     * ancho. El guion del lado de la salida, en cambio, sí es un dato: la jornada la cerró el
-     * job por vencimiento o un admin desde la pantalla de pendientes, sin cámara de por medio.
-     */
-    private boolean muestraLosDos(AsistenciaReporteRowDto f) {
-        if (f.getHoraSalida() == null) {
-            return false;
-        }
-        if (f.getEquipoEntrada() == null && f.getEquipoSalida() == null) {
-            return false;
-        }
-        return !Objects.equals(f.getEquipoEntrada(), f.getEquipoSalida());
-    }
-
-    // Guion cuando no hay equipo, igual que en el resto de la tabla.
-    private String nombre(String equipo) {
-        return equipo == null ? "—" : equipo;
-    }
-
-    // Lo que suma el periodo, en un renglon.
-    private String resumen(ReporteAsistenciaService.TotalesDelReporte t) {
-        if (t == null) {
-            return "";
-        }
-        String base = "Programado " + t.programadoLegible()
-            + "  ·  dictado " + t.netoLegible() + " (" + t.porcentajeDictado() + "%)"
-            + "  ·  sin cubrir " + t.sinCubrirLegible()
-            + "  ·  fuera de clase " + t.fueraDeClaseLegible();
-        return t.clasesSinDato() == 0
-            ? base
-            : base + "  ·  " + t.clasesSinDato() + " sin dato de salida";
-    }
 }

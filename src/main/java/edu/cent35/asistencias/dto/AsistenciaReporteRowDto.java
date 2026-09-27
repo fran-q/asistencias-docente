@@ -139,6 +139,48 @@ public class AsistenciaReporteRowDto {
         return MetodoAsistencia.MANUAL.name().equals(metodo);
     }
 
+    /**
+     * Por qué puerta entró y por cuál salió, en un solo texto (RF-89, V031).
+     *
+     * <p>Un solo nombre cuando las dos marcas se tomaron en el mismo equipo, que es el caso
+     * normal y el que no hay que leer. Los dos cuando no coinciden: ahí está lo que una
+     * inspección viene a buscar, y sin eso el reporte afirma por omisión que el docente salió
+     * por donde entró.
+     *
+     * <p>Vive acá y no en cada pantalla porque lo muestran la tabla en pantalla y el PDF, y
+     * dos copias de esta regla terminan diciendo cosas distintas de la misma jornada.
+     */
+    public String getEquipos() {
+        String entrada = nombreOGuion(equipoEntrada);
+        if (!isEquiposDistintos()) {
+            return entrada;
+        }
+        return entrada + " › " + nombreOGuion(equipoSalida);
+    }
+
+    /**
+     * Si la fila tiene que mostrar los dos equipos.
+     *
+     * <p>Sin hora de salida no hay segundo equipo del que hablar —la columna "Salida" ya puso
+     * su guion—, y con la misma puerta de los dos lados repetir el nombre sólo gasta ancho. El
+     * guion del lado de la salida, en cambio, sí es un dato: la jornada la cerró el job por
+     * vencimiento o un admin desde la pantalla de pendientes, sin cámara de por medio.
+     */
+    public boolean isEquiposDistintos() {
+        if (horaSalida == null) {
+            return false;
+        }
+        if (equipoEntrada == null && equipoSalida == null) {
+            return false;
+        }
+        return !java.util.Objects.equals(equipoEntrada, equipoSalida);
+    }
+
+    // Guion cuando no hay equipo, igual que en el resto de la tabla.
+    private static String nombreOGuion(String equipo) {
+        return equipo == null ? "—" : equipo;
+    }
+
     // Arma la fila del reporte sumando, si los hay, el detalle manual y el de la justificación.
     public static AsistenciaReporteRowDto from(Asistencia a,
                                                AsistenciaManual manualOrNull,

@@ -120,37 +120,6 @@
             <p th:text="${error}">Error</p>
         </div>
 
-        <!-- Lo que suma el periodo: la pregunta que el reporte no contestaba. Las filas sin
-             dato de salida se cuentan aparte, porque meterlas como cero diria que esas clases
-             no se dictaron, que no es lo que se sabe. -->
-        <div class="card" th:if="${totales != null and totales.clases() > 0}" style="margin-top:1rem;">
-            <h2 th:text="${truncado} ? 'Totales de lo listado' : 'Totales del período'">Totales del período</h2>
-            <!-- Con el reporte cortado estos numeros son de las filas que se ven, no del
-                 periodo. Un total con nombre de total se toma por el del periodo aunque
-                 arriba diga que faltan filas. -->
-            <p th:if="${truncado}" class="text-muted" style="margin-top:-.5rem;"
-               th:text="|Sobre ${#lists.size(filas)} de ${totalSinTope} registros: no son los totales del período.|">
-                Sobre N de M registros.</p>
-            <dl class="kv">
-                <dt>Programado</dt>
-                <dd th:text="${totales.programadoLegible()}">12 h</dd>
-
-                <dt>Dictado</dt>
-                <dd th:text="|${totales.netoLegible()} (${totales.porcentajeDictado()}%)|">11 h 20 min (94%)</dd>
-
-                <dt>Sin cubrir</dt>
-                <dd th:text="${totales.sinCubrirLegible()}">40 min</dd>
-
-                <dt title="Permanencia fuera de la franja de clase: llegó antes de empezar o se quedó después de terminar">Fuera de clase</dt>
-                <dd th:text="${totales.fueraDeClaseLegible()}">25 min</dd>
-
-                <th:block th:if="${totales.clasesSinDato() > 0}">
-                    <dt>Sin dato de salida</dt>
-                    <dd th:text="|${totales.clasesSinDato()} de ${totales.clases()} clases|">2 de 30 clases</dd>
-                </th:block>
-            </dl>
-        </div>
-
         <div class="card card--no-padding" style="margin-top:1rem;">
             <div class="table-wrap">
                 <table class="table table--tarjetas" role="table">
@@ -164,7 +133,7 @@
                             <th role="columnheader">Entrada</th>
                             <th role="columnheader">Salida</th>
                             <th role="columnheader" title="Minutos de clase efectivamente cubiertos sobre los programados">Dictado</th>
-                            <th role="columnheader" title="Cuánto se apartó de lo programado, y si entra en la tolerancia del horario">Desvío</th>
+                            <th role="columnheader" title="Equipo donde se registró la marca. Si la salida no se tomó en el mismo que la entrada, van los dos">Equipo</th>
                             <th role="columnheader">Estado</th>
                             <th role="columnheader">Método</th>
                             <th role="columnheader">Justif.</th>
@@ -200,10 +169,6 @@
                                        class="text-muted"
                                        title="Hora en que el administrador cargó el registro. No es la hora de llegada: no la observó nadie."
                                        th:text="|cargada ${#temporals.format(f.horaRegistrada, 'HH:mm')}|">cargada 14:32</small>
-                                <!-- Por que puerta entro (V031). Con una camara por entrada,
-                                     la hora sola no dice donde estuvo la persona. -->
-                                <small th:if="${f.equipoEntrada != null}" class="text-muted"
-                                       th:text="${f.equipoEntrada}">Entrada norte</small>
                             </td>
                             <td role="cell" data-label="Salida">
                                 <span th:if="${f.horaSalida != null}"
@@ -212,8 +177,6 @@
                                        class="text-muted"
                                        title="La completó el sistema: nadie registró la salida">presumida</small>
                                 <span th:unless="${f.horaSalida != null}" class="text-muted">—</span>
-                                <small th:if="${f.equipoSalida != null}" class="text-muted"
-                                       th:text="${f.equipoSalida}">Entrada sur</small>
                             </td>
                             <!-- Vacío y cero no son lo mismo: cero dice que no dio la clase,
                                  vacío dice que de esa fila no tenemos el dato. -->
@@ -223,30 +186,12 @@
                                 <span th:unless="${f.minutosEfectivos != null}"
                                       class="text-muted" title="Sin marca de salida para esta clase">—</span>
                             </td>
-                            <!-- El desvio, en sus dos mitades: lo que falto cubrir de la clase
-                                 y lo que sobro de permanencia. Se resalta solo lo que se paso
-                                 del margen del horario; adentro del margen es informativo. -->
-                            <td role="cell" data-label="Desvío">
-                                <span th:if="${f.minutosEfectivos == null}" class="text-muted"
-                                      title="Sin marca de salida para esta clase">—</span>
-                                <th:block th:if="${f.minutosEfectivos != null}">
-                                    <span th:if="${f.minutosTarde != null and f.minutosTarde > 0}"
-                                          th:class="${f.llegadaDentroDelMargen} ? 'text-muted' : 'badge badge--warning'"
-                                          th:title="${f.llegadaDentroDelMargen} ? 'Entra en la tolerancia del horario' : 'Se pasó de la tolerancia del horario'"
-                                          th:text="|${f.minutosTarde} min tarde|">7 min tarde</span>
-                                    <span th:if="${f.minutosSalidaAnticipada != null and f.minutosSalidaAnticipada > 0}"
-                                          th:class="${f.salidaDentroDelMargen} ? 'text-muted' : 'badge badge--warning'"
-                                          th:title="${f.salidaDentroDelMargen} ? 'Entra en la tolerancia del horario' : 'Se pasó de la tolerancia del horario'"
-                                          th:text="|${f.minutosSalidaAnticipada} min antes|">12 min antes</span>
-                                    <span th:if="${f.minutosFueraDeClase != null and f.minutosFueraDeClase > 0}"
-                                          class="text-muted"
-                                          title="Estuvo en la institución fuera de la franja de esta clase"
-                                          th:text="|+${f.minutosFueraDeClase} min fuera|">+10 min fuera</span>
-                                    <span th:if="${(f.minutosTarde == null or f.minutosTarde == 0)
-                                              and (f.minutosSalidaAnticipada == null or f.minutosSalidaAnticipada == 0)
-                                              and (f.minutosFueraDeClase == null or f.minutosFueraDeClase == 0)}"
-                                          class="text-muted">En horario</span>
-                                </th:block>
+                            <!-- Por que puerta entro y por cual salio (V031). Con una camara por
+                                 entrada, la hora sola no dice donde estuvo la persona. La regla
+                                 --un nombre si coinciden, los dos si no-- vive en el DTO,
+                                 porque la comparte con el PDF. -->
+                            <td role="cell" data-label="Equipo">
+                                <span th:text="${f.equipos}" class="text-muted">Entrada norte</span>
                             </td>
                             <td role="cell" data-label="Estado">
                                 <span th:if="${f.estado == 'PRESENTE'}"

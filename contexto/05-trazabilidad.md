@@ -267,11 +267,11 @@ correcto de lo que es.
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados**, y desde 2026-09-25 el **desvío** —minutos tarde, de salida anticipada y fuera de la franja— con los **totales del período** |
+| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** y, desde 2026-09-27, el **equipo** de cada jornada en columna propia |
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
-| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Doce columnas, con el desvío y el equipo de cada marca; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, un bloque **"Cómo leer esta tabla"**: Dictado y Desvío siempre, y Entra, Sale y Equipo sólo si alguna fila los necesita |
+| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Once columnas, las mismas que la pantalla; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, un bloque **"Cómo leer esta tabla"**: Dictado siempre, y Entra, Sale y Equipo sólo si alguna fila los necesita |
 | RF-32 | Exportación a Excel (.xlsx) | ⚠ | `GET /reportes/csv` |
 | RF-33 | Visualizaciones gráficas | ❌ | — |
 
@@ -291,6 +291,14 @@ clase, vacío que de esa fila no hay dato — marcas anteriores a V019, cargas m
 bloque, o un docente todavía adentro. En una planilla esa diferencia decide si el promedio de
 horas es una mentira.
 
+**Dónde quedó el desvío desarmado (2026-09-27).** Los minutos tarde, los de salida
+anticipada y los de permanencia fuera de la franja **siguen calculándose y siguen saliendo en
+el CSV**, en cinco columnas. Lo que se sacó es su columna en pantalla y en el PDF: ocupaba un
+lugar entero para decir en palabras lo que "Dictado" ya dice en números, y el reporte se leía
+cargado. En una planilla sí sirven, porque ahí se filtra y se suma por esas cifras. Con la
+misma lógica se sacó la tarjeta de totales del período, que no era lo que se iba a buscar al
+reporte.
+
 **Desvío RF-32.** La exportación es **CSV con separador `;` y BOM UTF-8**, no `.xlsx`
 real. Abre directo en Excel con acentos correctos y se sigue trabajando en planilla, que
 es el uso previsto. No es un archivo Excel nativo: no lleva formato, fórmulas ni hojas.
@@ -308,9 +316,7 @@ abierta y está en el rumbo hacia el producto final — ver `07-pendientes.md`.
 **Tope de filas.** El reporte trae hasta `maxFilas` (2000) y descarta el resto. Un reporte
 cortado en silencio se lee como un reporte completo, así que **las tres salidas lo dicen**:
 
-- **Pantalla**: el recuento muestra "N de M" y la tarjeta de totales pasa a llamarse
-  *"Totales de lo listado"*, porque se calculan sobre las filas devueltas y no sobre el
-  período.
+- **Pantalla**: el recuento muestra "N de M".
 - **PDF**: un aviso en rojo arriba de la tabla, el recuento del encabezado como "N de M", y
   un pie en **todas** las páginas —un reporte de sesenta hojas se lee por el medio—. El
   nombre del archivo termina en `_parcial.pdf`.

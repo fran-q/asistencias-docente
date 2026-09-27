@@ -88,16 +88,15 @@ class ReportePdfServiceTest {
     }
 
     @Test
-    @DisplayName("Dictado y Desvio se explican en toda hoja; el resto solo si hace falta")
+    @DisplayName("Dictado se explica en toda hoja; el resto solo si hace falta")
     void lasReferenciasQueVanSiempre() {
         String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)));
 
         assertThat(texto)
             .as("las referencias sueltas que se fueron acumulando ahora son un bloque")
             .contains("Cómo leer esta tabla")
-            .as("estas dos columnas están en toda hoja y ninguna se adivina")
+            .as("esta columna está en toda hoja y no se adivina")
             .contains("Dictado:")
-            .contains("Desvío:")
             .as("nada de lo otro pasó en esta hoja, y una referencia a algo que no está es "
                 + "una línea que nadie lee")
             .doesNotContain("Entra:")
@@ -155,9 +154,6 @@ class ReportePdfServiceTest {
             .as("el aviso arriba de todo, donde se mira primero")
             .contains("REPORTE INCOMPLETO")
             .contains("se listan 1 de 5384 registros")
-            .as("y que los totales del pie no son los del periodo, que es lo que mas facil "
-                + "se lee mal")
-            .contains("Los totales del pie corresponden solo a esos registros")
             .as("el recuento del encabezado deja de decir que son todos")
             .contains("1 de 5384 registros")
             .as("y al pie de la hoja, porque un reporte largo se lee por el medio")
@@ -207,7 +203,6 @@ class ReportePdfServiceTest {
     private String crudoDe(AsistenciaReporteRowDto fila, long totalSinTope) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         service.escribir(out, List.of(fila), DESDE, HASTA, "Instituto de prueba",
-                         new ReporteAsistenciaService.TotalesDelReporte(1, 1, 120, 120, 0, 0),
                          totalSinTope);
         try {
             PdfReader reader = new PdfReader(out.toByteArray());
