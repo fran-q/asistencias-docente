@@ -252,7 +252,9 @@ class ReporteTiempoNetoIT {
             .contains("Dictado").contains("Equipo")
             .as("por que puerta entro y por cual salio, en la hoja que se archiva")
             .contains("Entrada norte › Entrada sur")
-            .contains("«entrada › salida»")
+            .as("al pie queda una sola aclaracion, la de Dictado")
+            .contains("Dictado: minutos de la clase")
+            .doesNotContain("Cómo leer esta tabla")
             .as("el desvio y el resumen del periodo se fueron tambien del papel")
             .doesNotContain("Desvío")
             .doesNotContain("Programado");

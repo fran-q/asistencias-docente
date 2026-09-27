@@ -39,9 +39,7 @@ class ReportePdfServiceTest {
             .as("la columna existe")
             .contains("Equipo")
             .as("las dos puertas, en el orden en que pasó: entrada y después salida")
-            .contains("Entrada norte › Entrada sur")
-            .as("y al pie se dice cómo leerla, porque el PDF se imprime y se archiva")
-            .contains("«entrada › salida»");
+            .contains("Entrada norte › Entrada sur");
     }
 
     @Test
@@ -52,9 +50,7 @@ class ReportePdfServiceTest {
         assertThat(texto)
             .as("repetir el nombre solo gasta ancho: no hay nada que comparar")
             .contains("Entrada norte")
-            .doesNotContain("›")
-            .as("sin filas de dos puertas, la referencia al pie sobra")
-            .doesNotContain("«entrada");
+            .doesNotContain("›");
     }
 
     @Test
@@ -88,42 +84,46 @@ class ReportePdfServiceTest {
     }
 
     @Test
-    @DisplayName("Dictado se explica en toda hoja; el resto solo si hace falta")
-    void lasReferenciasQueVanSiempre() {
-        String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)));
+    @DisplayName("En una hoja sin asteriscos, al pie va solo lo de Dictado")
+    void alPieVaLoDeDictado() {
+        String texto = pdfDe(fila("Entrada norte", "Entrada sur", LocalTime.of(20, 10)));
 
         assertThat(texto)
-            .as("las referencias sueltas que se fueron acumulando ahora son un bloque")
-            .contains("Cómo leer esta tabla")
-            .as("esta columna está en toda hoja y no se adivina")
-            .contains("Dictado:")
-            .as("nada de lo otro pasó en esta hoja, y una referencia a algo que no está es "
-                + "una línea que nadie lee")
-            .doesNotContain("Entra:")
+            .as("dos números separados por una barra no se adivinan")
+            .contains("Dictado: minutos de la clase que el docente cubrió")
+            .as("y las dos decisiones que cambian lo que esa cifra dice")
+            .contains("Cuenta sólo lo que se pisa con la franja de la clase")
+            .contains("no es lo mismo que cero");
+
+        assertThat(texto)
+            .as("sin ninguna salida presumida, esa referencia no tiene a qué apuntar")
             .doesNotContain("Sale:")
+            .as("y el resto se entiende mirando la fila: explicar lo que ya se entiende "
+                + "llena de texto una hoja que se imprime")
+            .doesNotContain("Cómo leer esta tabla")
+            .doesNotContain("Entra:")
             .doesNotContain("Equipo:");
     }
 
     @Test
-    @DisplayName("Lo de Entra se explica cuando hay una fila sin llegada observada")
-    void laReferenciaDeEntra() {
-        String texto = pdfDe(sinLlegada());
-
-        assertThat(texto)
-            .contains("Entra:")
-            .contains("la cargó un administrador");
-    }
-
-    @Test
-    @DisplayName("El asterisco se explica cuando hay alguna salida que completo el sistema")
-    void laReferenciaDelAsterisco() {
+    @DisplayName("Con una salida que completo el sistema, se suma la linea del asterisco")
+    void elAsteriscoSeExplicaCuandoLoHay() {
+        // La fila trae ademas dos puertas distintas y ninguna llegada observada: sirve para
+        // ver que lo que vuelve es la linea del asterisco y no el bloque entero.
         String texto = pdfDe(conSalidaPresumida());
 
         assertThat(texto)
-            .contains("Sale:")
-            .contains("un asterisco marca")
-            .as("y no se explica lo que no pasó en esta hoja")
-            .doesNotContain("Entra:");
+            .as("un asterisco sin referencia, en una hoja que se archiva, no se lo puede "
+                + "preguntar a nadie")
+            .contains("Sale: el asterisco marca la hora que completó el sistema")
+            .as("lo de Dictado sigue en su lugar")
+            .contains("Dictado: minutos de la clase");
+
+        assertThat(texto)
+            .as("vuelve esa línea sola, no el bloque que se sacó")
+            .doesNotContain("Cómo leer esta tabla")
+            .doesNotContain("Entra:")
+            .doesNotContain("Equipo:");
     }
 
     @Test
@@ -216,24 +216,8 @@ class ReportePdfServiceTest {
         }
     }
 
-    // Una carga manual: la hora que se guardo es la del asiento, no la de una llegada.
-    private AsistenciaReporteRowDto sinLlegada() {
-        return AsistenciaReporteRowDto.builder()
-            .asistenciaId(2L)
-            .fecha(LocalDate.of(2026, 6, 15))
-            .diaSemana("Lunes")
-            .horaInicio(LocalTime.of(18, 0)).horaFin(LocalTime.of(20, 0))
-            .materiaCodigo("PRG1").materiaNombre("Programación I")
-            .comisionCodigo("A")
-            .docenteApellido("Pérez").docenteNombre("Ana")
-            .horaRegistrada(LocalTime.of(14, 32))
-            .estado("PRESENTE").metodo("MANUAL")
-            .minutosProgramados(120)
-            .llegadaDentroDelMargen(true).salidaDentroDelMargen(true)
-            .build();
-    }
-
-    // Una jornada que cerro el job: la hora de salida la puso el sistema, no la observo nadie.
+    // Una jornada que cerro el job, entrando por una puerta y saliendo por otra: es la
+    // fila que antes disparaba tres referencias distintas al pie.
     private AsistenciaReporteRowDto conSalidaPresumida() {
         return AsistenciaReporteRowDto.builder()
             .asistenciaId(3L)
@@ -245,6 +229,7 @@ class ReportePdfServiceTest {
             .docenteApellido("Pérez").docenteNombre("Ana")
             .horaRegistrada(LocalTime.of(17, 55))
             .horaSalida(LocalTime.of(20, 0)).salidaPresumida(true)
+            .equipoEntrada("Entrada norte").equipoSalida("Entrada sur")
             .estado("PRESENTE").metodo("AUTOMATICO")
             .minutosProgramados(120).minutosEfectivos(120)
             .llegadaDentroDelMargen(true).salidaDentroDelMargen(true)

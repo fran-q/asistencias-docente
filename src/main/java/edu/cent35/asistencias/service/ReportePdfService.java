@@ -118,7 +118,20 @@ public class ReportePdfService {
                 doc.add(tabla(filas));
 
                 doc.add(new Paragraph(" "));
-                comoLeer(doc, filas);
+                doc.add(referencia("Dictado",
+                    "minutos de la clase que el docente cubrió, sobre los que duraba. Cuenta "
+                    + "sólo lo que se pisa con la franja de la clase: llegar antes o quedarse "
+                    + "después no suma. Un guion es que falta la marca de salida y no se puede "
+                    + "saber, que no es lo mismo que cero."));
+                // El asterisco es el otro que no se entiende solo, con el agravante de que
+                // ni siquiera es una palabra. Solo se explica si hay alguno en la hoja.
+                if (filas.stream().anyMatch(
+                        f -> f.getHoraSalida() != null && f.isSalidaPresumida())) {
+                    doc.add(referencia("Sale",
+                        "el asterisco marca la hora que completó el sistema porque nadie la "
+                        + "registró. La asistencia es válida; el dato de salida está "
+                        + "pendiente de confirmación."));
+                }
             }
         } catch (Exception e) {
             // El stream ya puede llevar bytes escritos, asi que no hay forma de devolver una
@@ -277,54 +290,22 @@ public class ReportePdfService {
     }
 
     /**
-     * El bloque que explica las columnas que no se entienden solas.
+     * Un renglón del pie: el nombre de la columna en negrita y su explicación al lado.
      *
-     * <p><b>Por qué junto y no suelto.</b> Cada columna que se agregó al reporte fue dejando
-     * su propia referencia al pie, y terminaron siendo cuatro renglones sin orden ni título,
-     * cada uno apareciendo por su cuenta. Juntas y con un encabezado se leen como lo que son:
-     * las instrucciones de la hoja. Quien recibe un PDF impreso no tiene a quién preguntarle.
+     * <p>Hubo un bloque de cuatro referencias, una por cada columna que se fue agregando.
+     * Quedaron dos, y no por simetría: son las dos que no se entienden mirando la fila.
+     * <b>"Dictado"</b> porque dos números separados por una barra pueden ser cualquier cosa,
+     * y porque esconde dos decisiones que cambian lo que dicen —que sólo cuenta lo que se
+     * pisa con la franja de la clase, y que un guion no es cero—. <b>El asterisco de "Sale"</b>
+     * porque ni siquiera es una palabra: quien recibe la hoja impresa no tiene a quién
+     * preguntarle qué significa. "Entra" y "Equipo" sí se leen solas y se fueron.
      *
-     * <p><b>Qué entra y qué no.</b> "Dictado" va siempre: su columna está en todos los
-     * reportes y no se adivina. Las otras tres explican algo que puede no haber pasado —un
-     * registro sin llegada, una salida que completó el sistema, un docente que salió por otra
-     * puerta—, y una referencia a algo que no está en la hoja es una línea que nadie lee.
-     * Esas aparecen sólo si hay alguna fila que las necesite.
+     * <p>Lo de "Dictado" va en toda hoja; lo del asterisco, sólo si hay alguno.
      */
-    private void comoLeer(Document doc, List<AsistenciaReporteRowDto> filas) {
-        doc.add(new Paragraph("Cómo leer esta tabla", FUENTE_LEYENDA_COLUMNA));
-
-        doc.add(referencia("Dictado",
-            "minutos de la clase que el docente cubrió, sobre los que duraba. Cuenta sólo lo "
-            + "que se pisa con la franja de la clase: llegar antes o quedarse después no "
-            + "suma. Un guion es que falta la marca de salida y no se puede saber, que no es "
-            + "lo mismo que cero."));
-        if (filas.stream().anyMatch(f -> !f.isHoraDeLlegada())) {
-            doc.add(referencia("Entra",
-                "la hora en que la cámara reconoció al docente. Un guion es que no hubo una "
-                + "llegada observada: la fila la cargó un administrador —y entonces la hora "
-                + "que se guardó es la de esa carga— o es una ausencia."));
-        }
-        if (filas.stream().anyMatch(f -> f.getHoraSalida() != null && f.isSalidaPresumida())) {
-            doc.add(referencia("Sale",
-                "un asterisco marca la hora que completó el sistema porque nadie la "
-                + "registró. La asistencia es válida; el dato de salida está pendiente de "
-                + "confirmación."));
-        }
-        if (filas.stream().anyMatch(AsistenciaReporteRowDto::isEquiposDistintos)) {
-            doc.add(referencia("Equipo",
-                "el equipo donde se registró la marca. Cuando la salida no se tomó en el "
-                + "mismo que la entrada va «entrada › salida», y un guion del lado de la "
-                + "salida dice que la jornada se cerró sin pasar por una cámara."));
-        }
-    }
-
-    // Un renglon de la referencia: el nombre de la columna en negrita y su explicacion al
-    // lado. Sangrado, para que se vea de una que cuelgan del titulo del bloque.
     private Paragraph referencia(String columna, String explicacion) {
         Paragraph p = new Paragraph();
         p.add(new Chunk(columna + ": ", FUENTE_LEYENDA_COLUMNA));
         p.add(new Chunk(explicacion, FUENTE_LEYENDA));
-        p.setIndentationLeft(10f);
         return p;
     }
 

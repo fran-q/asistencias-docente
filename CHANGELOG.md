@@ -7,6 +7,26 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## El pie del PDF explica solo lo que no se entiende solo
+
+**Período:** septiembre de 2026.
+
+### Cambiado
+
+- **Del bloque "Cómo leer esta tabla" quedaron dos líneas, y se fue el título.** "Entra" y
+  "Equipo" se entienden mirando la fila, y explicar lo que ya se entiende llena de texto una
+  hoja que se imprime. "Dictado" no: dos números separados por una barra pueden ser cualquier
+  cosa, y además esconden dos decisiones que cambian lo que dicen —que sólo cuenta lo que se
+  pisa con la franja de la clase, y que un guion no es cero—.
+
+- **El asterisco conserva su línea, y sólo cuando hay alguno.** Una salida que completó el
+  sistema se imprime como `20:00 *`, y eso ni siquiera es una palabra: quien recibe la hoja
+  impresa no tiene a quién preguntarle. Esa referencia aparece sola al pie, únicamente si
+  alguna fila la necesita. En pantalla el criterio es otro y no hace falta: ahí dice
+  "presumida" al lado de la hora.
+
+---
+
 ## Cinco tests que no corrían de noche
 
 **Período:** septiembre de 2026.

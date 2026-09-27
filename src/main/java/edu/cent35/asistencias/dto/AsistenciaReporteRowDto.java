@@ -166,7 +166,7 @@ public class AsistenciaReporteRowDto {
      * guion del lado de la salida, en cambio, sí es un dato: la jornada la cerró el job por
      * vencimiento o un admin desde la pantalla de pendientes, sin cámara de por medio.
      */
-    public boolean isEquiposDistintos() {
+    private boolean isEquiposDistintos() {
         if (horaSalida == null) {
             return false;
         }

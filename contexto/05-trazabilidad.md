@@ -271,7 +271,7 @@ correcto de lo que es.
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
-| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Once columnas, las mismas que la pantalla; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, un bloque **"Cómo leer esta tabla"**: Dictado siempre, y Entra, Sale y Equipo sólo si alguna fila los necesita |
+| RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Once columnas, las mismas que la pantalla; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, dos aclaraciones y sólo esas dos: **Dictado** en toda hoja, y el **asterisco** de "Sale" cuando hay alguna salida que completó el sistema |
 | RF-32 | Exportación a Excel (.xlsx) | ⚠ | `GET /reportes/csv` |
 | RF-33 | Visualizaciones gráficas | ❌ | — |
 
@@ -326,6 +326,15 @@ cortado en silencio se lee como un reporte completo, así que **las tres salidas
 
 El nombre del archivo es la parte que importa: es lo único del aviso que sobrevive a que el
 archivo se guarde y se reenvíe.
+
+**Qué se explica al pie del PDF y qué no (2026-09-27).** Hubo un bloque de cuatro
+referencias —una por columna— y se redujo a las dos que no se entienden mirando la fila.
+**"Dictado"**, porque dos números separados por una barra pueden ser cualquier cosa y además
+esconden que sólo se cuenta lo que se pisa con la franja de la clase y que un guion no es
+cero. **El asterisco de "Sale"**, porque ni siquiera es una palabra, y esa línea aparece sólo
+si hay alguna fila presumida. "Entra" y "Equipo" se leen solas y no llevan referencia. En
+pantalla el criterio es otro y no hace falta: ahí la salida presumida dice "presumida" al
+lado de la hora.
 
 **Rango invertido.** `ReporteAsistenciaService.reporte` rechaza `desde > hasta`. La pantalla
 lo atrapa y lo muestra; las descargas **vuelven a la pantalla** con los mismos filtros
