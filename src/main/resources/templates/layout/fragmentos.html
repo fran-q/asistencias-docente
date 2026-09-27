@@ -108,5 +108,87 @@
     <span th:if="${motivo.url() != null and !conEnlace}">Lo resuelve la cuenta de la institución.</span>
 </p>
 
+<!--
+  El formulario de filtros del reporte.
+
+  Vive acá porque lo usan dos pantallas: la tabla y los gráficos. Son los mismos
+  criterios mirados de dos formas, así que una segunda copia del formulario se
+  desincroniza sola —un filtro nuevo aparecería en una pantalla y en la otra no—
+  y quien lo use no tendría cómo saber si eso pasa porque ese criterio no aplica
+  o porque la pantalla se quedó atrás.
+
+  Los datos (docentes, materias, carreras y el filtro actual) los pone en el
+  modelo cada controlador; lo único que cambia entre pantallas es a dónde
+  envía.
+
+  @param accion  la ruta que recibe el formulario y a la que vuelve "Limpiar"
+-->
+<form th:fragment="filtrosDelReporte(accion)"
+      method="get" th:action="@{${accion}}" class="card"
+      style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;">
+    <div class="form-group" style="margin:0;">
+        <label for="desde">Desde</label>
+        <input type="date" id="desde" name="desde" th:value="${filtro.desde}" autocomplete="off">
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="hasta">Hasta</label>
+        <input type="date" id="hasta" name="hasta" th:value="${filtro.hasta}" autocomplete="off">
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="docenteId">Docente</label>
+        <select id="docenteId" data-buscable name="docenteId">
+            <option value="">Todos</option>
+            <option th:each="d : ${docentes}"
+                    th:value="${d.id}"
+                    th:text="|${d.nombreCompleto} — ${!#strings.isEmpty(d.legajo) ? 'Leg. ' + d.legajo : 'DNI ' + d.persona.dni}|"
+                    th:selected="${d.id == filtro.docenteId}">Apellido, Nombre</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="carreraId">Carrera</label>
+        <select id="carreraId" data-buscable name="carreraId">
+            <option value="">Todas</option>
+            <option th:each="c : ${carreras}"
+                    th:value="${c.id}"
+                    th:text="${c.nombre}" th:title="${c.nombre}"
+                    th:selected="${c.id == filtro.carreraId}">CAR - Nombre</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="materiaId">Materia</label>
+        <select id="materiaId" data-buscable name="materiaId">
+            <option value="">Todas</option>
+            <option th:each="m : ${materias}"
+                    th:value="${m.id}"
+                    th:text="|${m.codigo} — ${m.nombre}|"
+                    th:selected="${m.id == filtro.materiaId}">MAT - Nombre</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="estado">Estado</label>
+        <select id="estado" name="estado">
+            <option value="">Todos</option>
+            <option th:each="e : ${estadosPosibles}"
+                    th:value="${e}"
+                    th:text="${e}"
+                    th:selected="${e == filtro.estado}">PRESENTE</option>
+        </select>
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label for="metodo">Método</label>
+        <select id="metodo" name="metodo">
+            <option value="">Todos</option>
+            <option th:each="m : ${metodosPosibles}"
+                    th:value="${m}"
+                    th:text="${m}"
+                    th:selected="${m == filtro.metodo}">AUTOMATICO</option>
+        </select>
+    </div>
+    <div class="form-actions" style="margin:0;">
+        <button type="submit" class="btn btn--primary" data-texto-enviando="Aplicando...">Aplicar</button>
+        <a th:href="@{${accion}}" class="btn btn--ghost">Limpiar</a>
+    </div>
+</form>
+
 </body>
 </html>

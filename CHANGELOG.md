@@ -7,6 +7,34 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Los reportes, en gráficos
+
+**Período:** septiembre de 2026.
+
+### Agregado
+
+- **Una pantalla de gráficos (RF-33), con los mismos filtros del reporte.** Tres lecturas:
+  cuánto se dictó de lo programado semana a semana, cómo se reparten las clases entre
+  presentes, tarde y ausentes, y dónde se concentran las ausencias —por docente y por
+  materia—. Va en su propia pantalla y no arriba de la tabla porque contestan preguntas
+  distintas: una sirve para encontrar una fila y la otra para ver cómo viene el período.
+
+- **Sin ninguna librería.** Los 20 archivos JS del proyecto son propios y no hay un solo CDN;
+  Chart.js habría sido la primera dependencia de terceros del front y habría movido el dibujo
+  al navegador, donde no se puede probar. El gráfico semanal es un SVG que escribe la
+  plantilla con la geometría ya resuelta por el servicio, y las otras dos son barras CSS,
+  como la de cobertura del panel de inicio.
+
+- **Los gráficos ven el período entero.** El reporte corta en 2000 filas para que el navegador
+  no se caiga dibujando la tabla; una curva armada sobre un período cortado mostraría algo
+  falso. Los gráficos usan su propio camino, sin el tope.
+
+- **El formulario de filtros dejó de estar copiado.** Lo usan la tabla y los gráficos, así que
+  pasó a ser un fragmento compartido: dos copias se desincronizan solas y un filtro nuevo
+  aparecería en una pantalla y en la otra no.
+
+---
+
 ## El pie del PDF explica solo lo que no se entiende solo
 
 **Período:** septiembre de 2026.

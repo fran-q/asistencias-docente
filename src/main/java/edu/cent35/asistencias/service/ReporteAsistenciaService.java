@@ -62,21 +62,63 @@ public class ReporteAsistenciaService {
         return maxFilas;
     }
 
-    // Arma las filas del reporte; los detalles manuales y de justificación se traen en bulk (evita N+1).
+    /**
+     * Las clases del período, sin el tope de la pantalla y sin el detalle que no se usa.
+     *
+     * <p>Es lo que alimenta los gráficos, y por dos motivos no puede ser {@link #reporte}:
+     *
+     * <ul>
+     *   <li><b>El tope no va.</b> Corta a {@code maxFilas} para que el navegador no se caiga
+     *       dibujando la tabla; un gráfico armado sobre un período cortado mostraría una
+     *       curva falsa, que es peor que no mostrarla.</li>
+     *   <li><b>El detalle tampoco.</b> El motivo de una carga manual y el de una
+     *       justificación son dos consultas más por reporte, y ningún gráfico los mira.</li>
+     * </ul>
+     *
+     * <p>La consulta es la misma —con su filtro de institución— así que lo que se ve acá es
+     * exactamente lo que se ve en la tabla, sin el corte.
+     */
     @Transactional(readOnly = true)
-    public List<AsistenciaReporteRowDto> reporte(ReporteFiltroDto filtro) {
-        // Default: rango del mes actual si no se especifica.
-        LocalDate hoy = LocalDate.now();
-        LocalDate desde = filtro.getDesde() != null
-            ? filtro.getDesde()
-            : hoy.withDayOfMonth(1);
-        LocalDate hasta = filtro.getHasta() != null
-            ? filtro.getHasta()
-            : hoy;
+    public List<AsistenciaReporteRowDto> filasParaGraficos(ReporteFiltroDto filtro) {
+        LocalDate desde = desdeEfectivo(filtro);
+        LocalDate hasta = hastaEfectivo(filtro);
+        validarRango(desde, hasta);
+
+        List<Asistencia> asistencias = asistenciaRepository.findParaReporte(
+            TenantContext.getRequired(),
+            desde, hasta,
+            filtro.getDocenteId(), filtro.getMateriaId(), filtro.getCarreraId(),
+            filtro.getEstado(), filtro.getMetodo());
+
+        log.info("Gráficos: {} clases, desde={}, hasta={}", asistencias.size(), desde, hasta);
+        return asistencias.stream()
+            .map(a -> AsistenciaReporteRowDto.from(a, null, null))
+            .toList();
+    }
+
+    // El rango que se usa si el filtro no lo trae: el mes actual hasta hoy.
+    private LocalDate desdeEfectivo(ReporteFiltroDto filtro) {
+        return filtro.getDesde() != null
+            ? filtro.getDesde() : LocalDate.now().withDayOfMonth(1);
+    }
+
+    private LocalDate hastaEfectivo(ReporteFiltroDto filtro) {
+        return filtro.getHasta() != null ? filtro.getHasta() : LocalDate.now();
+    }
+
+    private void validarRango(LocalDate desde, LocalDate hasta) {
         if (desde.isAfter(hasta)) {
             throw new IllegalArgumentException(
                 "La fecha 'desde' no puede ser posterior a 'hasta'.");
         }
+    }
+
+    // Arma las filas del reporte; los detalles manuales y de justificación se traen en bulk (evita N+1).
+    @Transactional(readOnly = true)
+    public List<AsistenciaReporteRowDto> reporte(ReporteFiltroDto filtro) {
+        LocalDate desde = desdeEfectivo(filtro);
+        LocalDate hasta = hastaEfectivo(filtro);
+        validarRango(desde, hasta);
 
         Long tenantId = TenantContext.getRequired();
         List<Asistencia> asistencias = asistenciaRepository.findParaReporte(

@@ -8,6 +8,7 @@ import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.MateriaService;
 import edu.cent35.asistencias.service.CarreraService;
 import edu.cent35.asistencias.service.MiInstitucionService;
+import edu.cent35.asistencias.service.GraficosDeAsistenciaService;
 import edu.cent35.asistencias.service.ReporteAsistenciaService;
 import edu.cent35.asistencias.service.ReportePdfService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,6 +61,7 @@ public class ReporteController {
     private static final String ARRANCA_FORMULA = "=+-@\t\r";
 
     private final ReporteAsistenciaService reporteService;
+    private final GraficosDeAsistenciaService graficosService;
     private final DocenteService docenteService;
     private final MateriaService materiaService;
     private final ReportePdfService reportePdfService;
@@ -112,6 +114,53 @@ public class ReporteController {
         model.addAttribute("estadosPosibles", EstadoAsistencia.values());
         model.addAttribute("metodosPosibles", MetodoAsistencia.values());
         return "reporte/asistencias";
+    }
+
+    /**
+     * Los mismos datos del reporte, mirados de conjunto (RF-33).
+     *
+     * <p>Va en su propia pantalla y no arriba de la tabla porque contestan preguntas
+     * distintas: la tabla sirve para encontrar una fila y ésta, para ver cómo viene el
+     * período. Comparten el formulario de filtros y se enlazan en los dos sentidos, así que
+     * pasar de una a la otra no obliga a volver a elegir nada.
+     */
+    @GetMapping("/graficos")
+    public String graficos(
+            @RequestParam(name = "desde", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(name = "hasta", required = false)
+                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(name = "docenteId", required = false) Long docenteId,
+            @RequestParam(name = "materiaId", required = false) Long materiaId,
+            @RequestParam(name = "carreraId", required = false) Long carreraId,
+            @RequestParam(name = "estado",    required = false) EstadoAsistencia estado,
+            @RequestParam(name = "metodo",    required = false) MetodoAsistencia metodo,
+            Model model) {
+
+        LocalDate hoy = LocalDate.now();
+        if (desde == null) desde = hoy.withDayOfMonth(1);
+        if (hasta == null) hasta = hoy;
+
+        ReporteFiltroDto filtro = ReporteFiltroDto.builder()
+            .desde(desde).hasta(hasta)
+            .docenteId(docenteId).materiaId(materiaId).carreraId(carreraId)
+            .estado(estado).metodo(metodo)
+            .build();
+
+        try {
+            model.addAttribute("graficos",
+                graficosService.resumir(reporteService.filasParaGraficos(filtro)));
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+        }
+
+        model.addAttribute("filtro", filtro);
+        model.addAttribute("docentes", docenteService.listar());
+        model.addAttribute("materias", materiaService.listar());
+        model.addAttribute("carreras", carreraService.listar());
+        model.addAttribute("estadosPosibles", EstadoAsistencia.values());
+        model.addAttribute("metodosPosibles", MetodoAsistencia.values());
+        return "reporte/graficos";
     }
 
     // Descarga el reporte como CSV (UTF-8 con BOM para Excel).

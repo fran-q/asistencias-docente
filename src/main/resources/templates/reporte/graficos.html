@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html th:replace="~{layout/base :: layout(~{::title}, ~{::section})}"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Gráficos del reporte - Visum</title>
+</head>
+<body>
+    <section class="reportes">
+        <header class="page-header">
+            <h1>Gráficos del reporte</h1>
+            <p class="page-header__subtitle">
+                Los mismos datos del reporte, mirados de conjunto: cómo viene el dictado,
+                cómo se reparten las clases y dónde se concentran las ausencias.
+            </p>
+        </header>
+
+        <!-- El mismo formulario que usa la tabla. -->
+        <div th:replace="~{layout/fragmentos :: filtrosDelReporte('/reportes/graficos')}"></div>
+
+        <div th:if="${error != null}" class="alert alert--error" style="margin-top:1rem;" role="alert">
+            <p th:text="${error}">Error</p>
+        </div>
+
+        <!-- Ida y vuelta con la tabla, llevando los filtros puestos: pasar de una a la otra
+             no tiene que obligar a volver a elegir todo. -->
+        <div th:if="${error == null}" class="reporte__acciones">
+            <span th:if="${graficos.clases > 0}">
+                Sobre <strong th:text="${graficos.clases}">0</strong> clase(s)
+                <span th:if="${graficos.clasesSinDato > 0}" class="text-muted"
+                      th:text="|· ${graficos.clasesSinDato} sin dato de salida|">· N sin dato</span>
+            </span>
+            <a th:href="@{/reportes(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                    docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                    carreraId=${filtro.carreraId},
+                                    estado=${filtro.estado}, metodo=${filtro.metodo})}"
+               class="btn btn--ghost">Ver la tabla con estos filtros</a>
+        </div>
+
+        <p th:if="${error == null and graficos.vacio}" class="home__vacio" style="margin-top:1rem;">
+            No hay asistencias registradas con los filtros elegidos.
+        </p>
+
+        <th:block th:if="${error == null and !graficos.vacio}">
+
+            <!-- ============ DICTADO POR SEMANA ============
+                 Las columnas vienen con su x y su alto ya calculados por el servicio: la
+                 plantilla no hace cuentas, solo dibuja lo que le dan. -->
+            <div class="card" style="margin-top:1rem;">
+                <h2>Dictado sobre programado, semana a semana</h2>
+                <p class="text-muted" style="margin-top:-.25rem;">
+                    Cada columna es una semana, desde el lunes. Una semana sin ninguna clase
+                    con marca de salida se dibuja al ras y sin número: no es que se dictara
+                    cero, es que de esa semana no se sabe.
+                </p>
+
+                <div class="grafico">
+                    <svg class="grafico__svg" viewBox="0 -24 720 232"
+                         preserveAspectRatio="none" role="img"
+                         aria-label="Porcentaje dictado por semana">
+                        <!-- Las guías del 50 y del 100 dan la escala sin un eje completo. -->
+                        <line x1="0" y1="0" x2="720" y2="0" class="grafico__guia"></line>
+                        <line x1="0" y1="100" x2="720" y2="100" class="grafico__guia"></line>
+                        <line x1="0" y1="200" x2="720" y2="200" class="grafico__eje"></line>
+
+                        <g th:each="s : ${graficos.semanas}">
+                            <rect th:x="${s.x}" th:y="${s.y}"
+                                  th:width="${s.ancho}" th:height="${s.alto}"
+                                  th:classappend="${s.sinDato} ? 'grafico__barra--sin-dato' : ''"
+                                  class="grafico__barra"
+                                  th:attr="aria-label=${s.etiqueta}"></rect>
+                        </g>
+                    </svg>
+
+                    <!-- Las etiquetas van en HTML y no dentro del SVG: con preserveAspectRatio
+                         none el lienzo se estira y el texto de adentro saldría deformado. -->
+                    <div class="grafico__etiquetas">
+                        <span th:each="s : ${graficos.semanas}" class="grafico__etiqueta">
+                            <span class="grafico__etiqueta-valor"
+                                  th:text="${s.sinDato} ? '—' : ${s.porcentaje} + '%'">88%</span>
+                            <span class="grafico__etiqueta-texto" th:text="${s.etiqueta}">01/06</span>
+                        </span>
+                    </div>
+                </div>
+
+                <p class="text-muted grafico__guia-texto">
+                    Las dos líneas marcan el 50% y el 100% de lo programado.
+                </p>
+            </div>
+
+            <!-- ============ REPARTO DE ESTADOS ============ -->
+            <div class="card" style="margin-top:1rem;">
+                <h2>Presentes, tarde y ausentes</h2>
+
+                <div class="grafico__apilada" role="img"
+                     th:attr="aria-label=|${graficos.estados.presentes} presentes,
+                                          ${graficos.estados.tarde} tarde,
+                                          ${graficos.estados.ausentes} ausentes|">
+                    <div class="grafico__tramo grafico__tramo--ok"
+                         th:if="${graficos.estados.anchoPresentes > 0}"
+                         th:style="'width:' + ${graficos.estados.anchoPresentes} + '%'"></div>
+                    <div class="grafico__tramo grafico__tramo--tarde"
+                         th:if="${graficos.estados.anchoTarde > 0}"
+                         th:style="'width:' + ${graficos.estados.anchoTarde} + '%'"></div>
+                    <div class="grafico__tramo grafico__tramo--ausente"
+                         th:if="${graficos.estados.anchoAusentes > 0}"
+                         th:style="'width:' + ${graficos.estados.anchoAusentes} + '%'"></div>
+                </div>
+
+                <!-- Cada referencia lleva al listado ya filtrado por ese estado, igual que
+                     los números del panel: es lo que la diferencia de una leyenda. -->
+                <div class="grafico__referencias">
+                    <a th:href="@{/reportes(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                            docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                            carreraId=${filtro.carreraId}, estado='PRESENTE')}"
+                       class="grafico__referencia">
+                        <span class="grafico__punto grafico__punto--ok"></span>
+                        <strong th:text="${graficos.estados.presentes}">0</strong> presentes
+                    </a>
+                    <a th:href="@{/reportes(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                            docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                            carreraId=${filtro.carreraId}, estado='TARDE')}"
+                       class="grafico__referencia">
+                        <span class="grafico__punto grafico__punto--tarde"></span>
+                        <strong th:text="${graficos.estados.tarde}">0</strong> tarde
+                    </a>
+                    <a th:href="@{/reportes(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                            docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                            carreraId=${filtro.carreraId}, estado='AUSENTE')}"
+                       class="grafico__referencia">
+                        <span class="grafico__punto grafico__punto--ausente"></span>
+                        <strong th:text="${graficos.estados.ausentes}">0</strong> ausentes
+                    </a>
+                </div>
+            </div>
+
+            <!-- ============ DONDE SE CONCENTRAN LAS AUSENCIAS ============ -->
+            <div class="card" style="margin-top:1rem;">
+                <h2>Dónde se concentran las ausencias</h2>
+
+                <p th:if="${#lists.isEmpty(graficos.docentes)}" class="home__vacio">
+                    No hubo ausencias en el período elegido.
+                </p>
+
+                <div th:unless="${#lists.isEmpty(graficos.docentes)}" class="grafico__rankings">
+                    <div class="grafico__ranking">
+                        <h3>Por docente</h3>
+                        <!-- Se muestran las ausencias Y sobre cuántas clases: dos en tres
+                             clases y dos en cuarenta no son lo mismo, y un ranking que sólo
+                             cuente ausencias pone arriba a quien más clases da. -->
+                        <div th:each="d : ${graficos.docentes}" class="grafico__fila">
+                            <span class="grafico__fila-etiqueta" th:text="${d.etiqueta}"
+                                  th:title="${d.etiqueta}">Apellido, Nombre</span>
+                            <span class="grafico__fila-barra">
+                                <span th:style="'width:' + ${d.ancho} + '%'"></span>
+                            </span>
+                            <span class="grafico__fila-valor"
+                                  th:text="|${d.ausencias} de ${d.clases}|">2 de 30</span>
+                        </div>
+                    </div>
+
+                    <div class="grafico__ranking">
+                        <h3>Por materia</h3>
+                        <div th:each="m : ${graficos.materias}" class="grafico__fila">
+                            <span class="grafico__fila-etiqueta" th:text="${m.etiqueta}"
+                                  th:title="${m.etiqueta}">MAT Materia</span>
+                            <span class="grafico__fila-barra">
+                                <span th:style="'width:' + ${m.ancho} + '%'"></span>
+                            </span>
+                            <span class="grafico__fila-valor"
+                                  th:text="|${m.ausencias} de ${m.clases}|">2 de 30</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+    </section>
+</body>
+</html>

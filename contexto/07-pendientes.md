@@ -63,7 +63,6 @@ Del documento original, lo que falta:
 
 | ID | Qué falta | Estado |
 |---|---|---|
-| RF-33 | Visualizaciones gráficas en los reportes | No implementado. En el rumbo |
 | RF-32 | Exportación a `.xlsx` nativo (hoy es CSV) | Desvío. Decidir si se cierra o se acepta formalmente |
 | RF-30 | Filtro por día de la semana y períodos predefinidos | Parcial |
 | RNF-01/02/03 | Medición formal de los tiempos de respuesta | Sin medir formalmente |
@@ -131,11 +130,14 @@ Reemplazar o complementar el renderizado server-side de Thymeleaf por algo con m
 respuesta percibida. **Sin tecnología definida.** El resto del stack —Java, Spring Boot,
 JavaCV, la estrategia de multi-tenancy— **se mantiene**.
 
-### 4. Gráficos en los reportes
+### 4. Gráficos en los reportes — hecho el 2026-09-27
 
-Cierra el RF-33. **Enfoque a definir**: del lado del cliente con una librería JS, o del
-lado del servidor generando imágenes que también entren al PDF. La restricción de open
-source (RNF-18) aplica.
+Cerró el RF-33. **Enfoque elegido**: del lado del servidor y sin librería, en su propia
+pantalla (`/reportes/graficos`). El detalle está en `05-trazabilidad.md`.
+
+Quedó afuera a propósito: **los gráficos no entran al PDF**. Meterlos obligaría a generarlos
+como imagen en el servidor —otra dependencia— y el PDF ya cumple su función, que es la hoja
+de detalle que se archiva. Si alguna vez hace falta, el cálculo ya está separado del dibujo.
 
 ### 5. Acceso móvil para gestión, con la captura anclada al escritorio
 

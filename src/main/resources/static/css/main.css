@@ -2726,3 +2726,80 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
 /* Lista sin viñetas: los periodos en el listado de ciclos, los dias sin clase en el detalle. */
 .lista-plana { list-style: none; margin: 0; padding: 0; }
 .lista-plana li + li { margin-top: 4px; }
+
+/* ============================================================================
+   Gráficos del reporte (RF-33)
+
+   Dibujados a mano, sin librería: el proyecto no tiene ninguna dependencia de
+   terceros en el front y esto no justifica la primera. Las barras que llevan
+   texto van en HTML --se seleccionan, se leen con lector de pantalla y no se
+   deforman-- y solo el gráfico semanal usa SVG, que es el que necesita escala.
+   ============================================================================ */
+
+.grafico { margin-top: 12px; }
+.grafico__svg { width: 100%; height: 190px; display: block; overflow: visible; }
+
+/* Las guias dan la escala sin dibujar un eje numerado, que a este tamano se
+   lee peor que las dos lineas solas. */
+.grafico__guia { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 4; vector-effect: non-scaling-stroke; }
+.grafico__eje  { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+
+.grafico__barra { fill: var(--success); }
+/* Sin dato no es cero: se dibuja al ras y apagado, para que no se lea como una
+   semana en la que no se dicto nada. */
+.grafico__barra--sin-dato { fill: var(--text-muted); opacity: .45; }
+
+.grafico__etiquetas { display: flex; margin-top: 6px; }
+.grafico__etiqueta {
+    flex: 1 1 0; min-width: 0; text-align: center;
+    display: flex; flex-direction: column; gap: 1px;
+}
+.grafico__etiqueta-valor { font-size: .78rem; font-weight: 600; }
+.grafico__etiqueta-texto { font-size: .7rem; color: var(--text-muted); }
+.grafico__guia-texto { font-size: .78rem; margin-top: 10px; }
+
+/* ---- Barra apilada de estados ---- */
+.grafico__apilada {
+    display: flex; height: 22px; border-radius: 999px; overflow: hidden;
+    background: var(--surface-3); margin-top: 12px;
+}
+.grafico__tramo { height: 100%; }
+.grafico__tramo--ok      { background: var(--success); }
+.grafico__tramo--tarde   { background: var(--warning); }
+.grafico__tramo--ausente { background: var(--danger); }
+
+.grafico__referencias { display: flex; flex-wrap: wrap; gap: 18px; margin-top: 12px; }
+.grafico__referencia {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: var(--text); text-decoration: none; font-size: .9rem;
+    border-radius: var(--r-sm); padding: 2px 4px;
+}
+.grafico__referencia:hover { background: var(--surface-3); }
+.grafico__punto { width: 10px; height: 10px; border-radius: 999px; flex: none; }
+.grafico__punto--ok      { background: var(--success); }
+.grafico__punto--tarde   { background: var(--warning); }
+.grafico__punto--ausente { background: var(--danger); }
+
+/* ---- Rankings ---- */
+.grafico__rankings {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px; margin-top: 12px;
+}
+.grafico__ranking h3 { font-size: .95rem; margin: 0 0 10px; }
+.grafico__fila {
+    display: grid; grid-template-columns: minmax(0, 1fr) 90px auto;
+    align-items: center; gap: 10px; padding: 5px 0;
+}
+.grafico__fila-etiqueta {
+    font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.grafico__fila-barra {
+    height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden;
+}
+.grafico__fila-barra > span { display: block; height: 100%; background: var(--danger); border-radius: 999px; }
+.grafico__fila-valor { font-size: .8rem; color: var(--text-muted); white-space: nowrap; }
+
+@media (max-width: 640px) {
+    .grafico__etiqueta-texto { display: none; }
+    .grafico__fila { grid-template-columns: minmax(0, 1fr) 60px auto; }
+}

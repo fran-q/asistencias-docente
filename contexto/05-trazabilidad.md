@@ -23,10 +23,10 @@
 
 | | RF (37) | RNF (27) |
 |---|---|---|
-| ✅ Implementado | 30 | 22 |
+| ✅ Implementado | 31 | 22 |
 | ⚠ Con desvío | 2 | — |
 | 🟡 Parcial | 1 | 5 |
-| ❌ No implementado | 1 | — |
+| ❌ No implementado | — | — |
 | 🚫 Descartado | 3 | — |
 
 ---
@@ -273,7 +273,7 @@ correcto de lo que es.
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |
 | RF-31 | Exportación a PDF | ✅ | `GET /reportes/pdf`, `ReportePdfService` (OpenPDF). Once columnas, las mismas que la pantalla; los anchos están medidos contra el contenido real y `ReportePdfServiceTest` los sostiene leyendo el texto del PDF. Al pie, dos aclaraciones y sólo esas dos: **Dictado** en toda hoja, y el **asterisco** de "Sale" cuando hay alguna salida que completó el sistema |
 | RF-32 | Exportación a Excel (.xlsx) | ⚠ | `GET /reportes/csv` |
-| RF-33 | Visualizaciones gráficas | ❌ | — |
+| RF-33 | Visualizaciones gráficas | ✅ | `GET /reportes/graficos`, `GraficosDeAsistenciaService` + `templates/reporte/graficos.html`. Tres lecturas: dictado semana a semana, reparto de estados y ranking de ausencias. **Sin librería**: SVG y CSS escritos a mano |
 
 **RF-30 parcial.** Están el rango de fechas y los filtros por entidad, estado y método.
 **No hay filtro por día de la semana** (el día aparece como columna del resultado, no
@@ -310,8 +310,26 @@ les antepone una comilla simple antes de escribirlos —`sinFormula`, sobre los 
 sobre los números— y `DescargaCsvSeguraIT` recorre celda por celda el archivo que sale por la
 ruta de descarga. Es CWE-1236.
 
-**RF-33 no implementado.** No hay librería de gráficos en el proyecto. Es una brecha
-abierta y está en el rumbo hacia el producto final — ver `07-pendientes.md`.
+**RF-33, decisiones (2026-09-27).** Los gráficos viven en **su propia pantalla** y no
+arriba de la tabla: contestan preguntas distintas —la tabla sirve para encontrar una fila y
+los gráficos para ver cómo viene el período— y la tabla se había aligerado justo antes. Las
+dos comparten el formulario de filtros, que pasó a ser el fragmento
+`layout/fragmentos :: filtrosDelReporte(accion)`, y se enlazan en los dos sentidos.
+
+**No se sumó ninguna librería.** Los 20 archivos JS del proyecto son propios y no hay CDN;
+Chart.js habría sido la primera dependencia de terceros del front, 200 KB versionados en un
+repo público, y habría movido el dibujo al navegador, donde no se puede probar. El gráfico
+semanal es un SVG que escribe la plantilla con la geometría ya resuelta por el servicio, y
+las otras dos lecturas son barras CSS, como la de cobertura del panel.
+
+**Los gráficos no pasan por el tope de filas.** `ReporteAsistenciaService.filasParaGraficos`
+trae el período entero: una curva armada sobre un reporte cortado mostraría algo falso, que
+es peor que no mostrarlo. Es la misma consulta de la tabla —con su filtro de institución—
+sin el corte y sin el detalle de cargas manuales y justificaciones, que ningún gráfico mira.
+
+**Las sumas se hacen en Java, no con un GROUP BY.** Los minutos dictados son la intersección
+entre la permanencia y la franja de la clase, y esa regla vive en `AsistenciaReporteRowDto`.
+Escribirla otra vez en SQL sería tener dos definiciones de lo mismo.
 
 **Tope de filas.** El reporte trae hasta `maxFilas` (2000) y descarta el resto. Un reporte
 cortado en silencio se lee como un reporte completo, así que **las tres salidas lo dicen**:
