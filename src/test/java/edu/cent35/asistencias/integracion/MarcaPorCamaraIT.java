@@ -40,7 +40,6 @@ import edu.cent35.asistencias.service.IdentificacionFacialService;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,11 +50,16 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import edu.cent35.asistencias.service.PaseAsistenciaService;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -104,6 +108,7 @@ class MarcaPorCamaraIT {
     @Autowired private MockMvc mockMvc;
     @MockBean private IdentificacionFacialService identificacionService;
 
+    @Autowired private PaseAsistenciaService paseService;
     @Autowired private PuestoCapturaService puestoService;
     @Autowired private PuestoCapturaRepository puestoRepository;
     @Autowired private InstitucionRepository institucionRepository;
@@ -125,15 +130,29 @@ class MarcaPorCamaraIT {
     private Usuario cuenta;
     private String tokenDelPuesto;
 
+    /**
+     * La hora a la que "pasa" todo el test.
+     *
+     * <p>Antes la clase se armaba alrededor de {@code LocalTime.now()} y el test se salteaba
+     * solo entre las 22 y la 1, porque las horas son {@link LocalTime} y restarle media hora
+     * al reloj cerca de medianoche cae en el día anterior. Saltearse tres horas por día no es
+     * una solución: son tres horas en las que estos casos no corren, en ninguna máquina.
+     *
+     * <p>Ahora el pase lee un reloj que el test fija acá, y la clase se arma alrededor de esa
+     * hora. El día sigue siendo hoy —el horario es de un día de la semana y el ciclo, del año
+     * en curso— pero la hora ya no depende de cuándo se corra.
+     */
+    private static final LocalTime LA_HORA = LocalTime.of(10, 30);
+
+    private LocalDate hoy;
+
     @BeforeEach
     void sembrar() {
-        // La clase tiene que estar en curso a la hora en que corre el test, y las horas son
-        // LocalTime: cerca de medianoche, restarle media hora al reloj cae en el dia anterior.
-        // Se saltea antes que dar un resultado que depende de la hora de la maquina.
-        LocalTime ahora = LocalTime.now();
-        Assumptions.assumeTrue(
-            ahora.isAfter(LocalTime.of(1, 0)) && ahora.isBefore(LocalTime.of(22, 0)),
-            "La clase de prueba se arma alrededor de la hora actual: entre las 22 y la 1 no da.");
+        // Una sola lectura del calendario, y de ahi sale todo: asi el fixture y el servicio
+        // no pueden quedar en dias distintos si el test arranca justo al filo de medianoche.
+        hoy = LocalDate.now();
+        relojDelPase(Clock.fixed(hoy.atTime(LA_HORA).atZone(ZoneId.systemDefault()).toInstant(),
+                                 ZoneId.systemDefault()));
 
         Institucion inst = institucionRepository.save(Institucion.builder()
             .nombre("Instituto de la camara " + SECUENCIA.incrementAndGet())
@@ -174,18 +193,19 @@ class MarcaPorCamaraIT {
         docente = docenteRepository.save(docente);
 
         CicloLectivo ciclo = cicloRepository.save(
-            DatosDePrueba.cicloAnualDelTenant(tenantId, LocalDate.now().getYear()));
+            DatosDePrueba.cicloAnualDelTenant(tenantId, hoy.getYear()));
 
         Comision comision = comisionRepository.save(Comision.builder()
             .materia(materia).codigo("A").docenteAsignado(docente).activo(true)
             .periodo(ciclo.getPeriodos().get(0))
             .build());
 
+        // La clase esta en curso a LA_HORA, con lugar de sobra a los dos lados.
         horarioRepository.save(Horario.builder()
             .comision(comision)
-            .diaSemana((byte) LocalDate.now().getDayOfWeek().getValue())
-            .horaInicio(ahora.minusMinutes(30).withSecond(0).withNano(0))
-            .horaFin(ahora.plusMinutes(60).withSecond(0).withNano(0))
+            .diaSemana((byte) hoy.getDayOfWeek().getValue())
+            .horaInicio(LA_HORA.minusMinutes(30))
+            .horaFin(LA_HORA.plusMinutes(60))
             .toleranciaMin((short) 15).activo(true)
             .build());
 
@@ -207,6 +227,9 @@ class MarcaPorCamaraIT {
 
     @AfterEach
     void limpiar() {
+        // El servicio es un bean del contexto, que se comparte con el resto de los tests: si
+        // el reloj fijo quedara puesto, los demas creerian que son las 10:30 de hoy.
+        relojDelPase(Clock.systemDefaultZone());
         if (tenantId != null) {
             borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
             borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
@@ -254,7 +277,7 @@ class MarcaPorCamaraIT {
             .as("de que equipo salio la jornada (RF-89)")
             .isNotNull();
 
-        List<Asistencia> asistencias = asistenciaRepository.findDelDia(tenantId, LocalDate.now());
+        List<Asistencia> asistencias = asistenciaRepository.findDelDia(tenantId, hoy);
         assertThat(asistencias).hasSize(1);
         assertThat(asistencias.get(0).getMetodo()).isEqualTo(MetodoAsistencia.AUTOMATICO);
         assertThat(asistencias.get(0).getPuesto()).isNotNull();
@@ -303,7 +326,7 @@ class MarcaPorCamaraIT {
             .as("la institucion sale del equipo, que es lo unico que identifica al kiosco")
             .singleElement()
             .satisfies(b -> assertThat(b.getInstitucionId()).isEqualTo(tenantId));
-        assertThat(asistenciaRepository.findDelDia(tenantId, LocalDate.now())).hasSize(1);
+        assertThat(asistenciaRepository.findDelDia(tenantId, hoy)).hasSize(1);
     }
 
     // ========================================================================
@@ -316,10 +339,10 @@ class MarcaPorCamaraIT {
         // La entrada se siembra veinte minutos atras: la permanencia minima son diez, y la
         // hora de la marca la pone el servidor, asi que no hay forma de adelantarla desde el
         // pedido.
-        LocalTime entrada = LocalTime.now().minusMinutes(20).withSecond(0).withNano(0);
+        LocalTime entrada = LA_HORA.minusMinutes(20);
         BloquePresencia abierto = BloquePresencia.builder()
             .docente(docente)
-            .fecha(LocalDate.now())
+            .fecha(hoy)
             .horaEntrada(entrada)
             .origenEntrada(OrigenMarca.AUTOMATICO)
             .estadoCierre(EstadoCierre.ABIERTO)
@@ -343,7 +366,7 @@ class MarcaPorCamaraIT {
         assertThat(cerrado.getHoraSalida()).isNotNull();
         assertThat(cerrado.getEstadoSalida()).isNotNull();
 
-        assertThat(asistenciaRepository.findDelDia(tenantId, LocalDate.now()))
+        assertThat(asistenciaRepository.findDelDia(tenantId, hoy))
             .as("al cerrar se imputa la clase que el docente cubrio")
             .hasSize(1);
     }
@@ -363,8 +386,8 @@ class MarcaPorCamaraIT {
 
         BloquePresencia abierto = BloquePresencia.builder()
             .docente(docente)
-            .fecha(LocalDate.now())
-            .horaEntrada(LocalTime.now().minusMinutes(20).withSecond(0).withNano(0))
+            .fecha(hoy)
+            .horaEntrada(LA_HORA.minusMinutes(20))
             .origenEntrada(OrigenMarca.AUTOMATICO)
             .estadoCierre(EstadoCierre.ABIERTO)
             .puesto(norte)
@@ -402,11 +425,26 @@ class MarcaPorCamaraIT {
             .docente(docente)
             .versionTerminos("v1")
             .metodo(MetodoConsentimiento.DIGITAL)
-            .fechaConsentimiento(LocalDate.now().minusDays(1).atStartOfDay())
+            .fechaConsentimiento(hoy.minusDays(1).atStartOfDay())
             .vigente(true)
             .registradoPor(cuenta)
             .build();
         consentimientoRepository.save(c);
+    }
+
+    /**
+     * Le pone al pase el reloj que este test necesita.
+     *
+     * <p>Va por reflexión sobre el objeto de adentro y no por un setter: el bean está detrás
+     * de un proxy —{@code @Service} lo alcanza el aspecto del tenant— así que escribirle el
+     * campo al proxy no tocaría al que de verdad marca.
+     */
+    private void relojDelPase(Clock reloj) {
+        // La variable tipada no es adorno: pasar el generico de getTargetObject directo a
+        // setField hace que Java elija la sobrecarga que espera un Class, y el test revienta
+        // con un ClassCastException que no tiene nada que ver con lo que se esta probando.
+        PaseAsistenciaService real = AopTestUtils.getTargetObject(paseService);
+        ReflectionTestUtils.setField(real, "clock", reloj);
     }
 
     private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,

@@ -7,6 +7,27 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Cinco tests que no corrían de noche
+
+**Período:** septiembre de 2026.
+
+### Corregido
+
+- **`MarcaPorCamaraIT` se salteaba solo entre las 22 y la 1.** Armaba la clase de prueba
+  alrededor de `LocalTime.now()` y las horas se guardan como `LocalTime`: cerca de medianoche,
+  restarle media hora al reloj cae en el día anterior y la clase queda al revés. La salida de
+  entonces fue una `Assumption` que saltea la prueba en esa franja — con lo cual los cinco
+  casos que cubren el pase, el kiosco y la trazabilidad del equipo **no corrían durante tres
+  horas por día, en ninguna máquina**, y el resultado de la suite dependía de a qué hora se
+  la corriera.
+
+- **Ahora el pase lee un reloj que el test puede fijar.** `PaseAsistenciaService` toma el
+  instante de un `Clock` propio, igual que `CicloLectivoService` y
+  `CodigoVerificacionService`. En producción es el del sistema y nada cambia; el test le pone
+  una hora fija y arma la clase alrededor de ésa. La `Assumption` se fue.
+
+---
+
 ## El reporte dice menos y se lee mejor
 
 **Período:** septiembre de 2026.

@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -40,6 +41,18 @@ public class PaseAsistenciaService {
     private final BloquePresenciaService bloquePresenciaService;
     private final VentanaConfirmacionService ventanaConfirmacion;
     private final DocenteService docenteService;
+
+    /**
+     * De acá sale el instante de cada marca.
+     *
+     * <p>Es un campo y no una llamada suelta a {@code now()} para que un test pueda fijarlo:
+     * las clases se guardan como {@link java.time.LocalTime} y un test que arme la suya
+     * alrededor de la hora de la máquina se rompe cerca de medianoche, cuando restarle media
+     * hora al reloj cae en el día anterior. Con el reloj fijo, la misma prueba vale a
+     * cualquier hora. Mismo patrón que {@code CicloLectivoService} y
+     * {@code CodigoVerificacionService}.
+     */
+    private Clock clock = Clock.systemDefaultZone();
 
     // Pasa asistencia desde un frame: identifica, exige que la identidad se sostenga y marca.
     /**
@@ -93,7 +106,8 @@ public class PaseAsistenciaService {
         // sin bloque abierto es su entrada, con bloque abierto es su salida. Quien lo decide es
         // el servicio de bloques, no esta clase ni el operador (ADR-0017).
         BloquePresenciaService.ResultadoPresencia presencia = bloquePresenciaService.registrar(
-            id.docenteId(), id.modeloFacialId(), id.distancia(), LocalDateTime.now(), puesto);
+            id.docenteId(), id.modeloFacialId(), id.distancia(), LocalDateTime.now(clock),
+            puesto);
 
         return new Paso(id, confirmado, presencia);
     }
@@ -219,7 +233,7 @@ public class PaseAsistenciaService {
         String nombre = docente.getNombreCompleto();
 
         BloquePresenciaService.ResultadoPresencia p = bloquePresenciaService.registrarSinCamara(
-            docenteId, motivoId, detalle, usuarioActualId, LocalDateTime.now(), puesto);
+            docenteId, motivoId, detalle, usuarioActualId, LocalDateTime.now(clock), puesto);
 
         if (!p.registrada()) {
             return MarcaSinCamaraResultadoDto.rechazada(nombre, p.motivo());
