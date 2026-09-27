@@ -130,73 +130,8 @@ public class ReporteAsistenciaService {
     }
 
     // ========================================================================
-    //  Tiempo neto y desvios
+    //  Permanencia fuera de la franja de clase
     // ========================================================================
-
-    /**
-     * Lo que suma el período: cuántas horas de clase estaban programadas, cuántas se dictaron
-     * de verdad, cuántas quedaron sin cubrir y cuánta permanencia hubo fuera de las franjas.
-     *
-     * <p>Las filas <b>sin dato de salida</b> no entran en ninguna de esas sumas y se cuentan
-     * aparte: meterlas como cero diría que esas clases no se dictaron, que no es lo que se
-     * sabe. Por eso el total lleva siempre cuántas son.
-     */
-    public record TotalesDelReporte(int clases, int clasesConDato, int minutosProgramados,
-                                    int minutosNetos, int minutosSinCubrir,
-                                    int minutosFueraDeClase) {
-
-        public int clasesSinDato() {
-            return clases - clasesConDato;
-        }
-
-        /** Lo dictado sobre lo programado. Cero si no hay ninguna clase con dato. */
-        public int porcentajeDictado() {
-            return minutosProgramados == 0 ? 0
-                : (int) Math.round(minutosNetos * 100.0 / minutosProgramados);
-        }
-
-        public String netoLegible()         { return enHoras(minutosNetos); }
-        public String programadoLegible()   { return enHoras(minutosProgramados); }
-        public String sinCubrirLegible()    { return enHoras(minutosSinCubrir); }
-        public String fueraDeClaseLegible() { return enHoras(minutosFueraDeClase); }
-
-        // "4 h 30 min" se lee de un vistazo; "270 min" hay que dividirlo mentalmente.
-        private static String enHoras(int minutos) {
-            int horas = minutos / 60;
-            int resto = minutos % 60;
-            if (horas == 0) {
-                return resto + " min";
-            }
-            return resto == 0 ? horas + " h" : horas + " h " + resto + " min";
-        }
-    }
-
-    /**
-     * Suma las filas del reporte.
-     *
-     * <p>Es la pregunta que el reporte no contestaba —cuántas horas netas se dictaron en el
-     * período— y que obligaba a bajar el CSV y sumar a mano.
-     */
-    public TotalesDelReporte totales(List<AsistenciaReporteRowDto> filas) {
-        int conDato = 0;
-        int programados = 0;
-        int netos = 0;
-        int fuera = 0;
-
-        for (AsistenciaReporteRowDto f : filas) {
-            if (f.getMinutosFueraDeClase() != null) {
-                fuera += f.getMinutosFueraDeClase();
-            }
-            if (f.getMinutosEfectivos() == null) {
-                continue;                       // sin dato de salida no suma ni resta
-            }
-            conDato++;
-            programados += f.getMinutosProgramados();
-            netos += f.getMinutosEfectivos();
-        }
-        return new TotalesDelReporte(filas.size(), conDato, programados, netos,
-                                     programados - netos, fuera);
-    }
 
     /**
      * Cuántos minutos pasó cada jornada fuera de la franja de sus clases, atribuidos a la

@@ -21,7 +21,9 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   por esas cifras.
 
 - **Se fue la tarjeta "Totales del período".** No es lo que se va a buscar al reporte, y
-  ocupaba la primera pantalla antes de la tabla.
+  ocupaba la primera pantalla antes de la tabla. Con eso el cálculo quedó sin quien lo
+  muestre, así que también se borró: `TotalesDelReporte` y `ReporteAsistenciaService.totales`
+  no los usaba nadie más.
 
 - **El equipo pasó a tener columna propia.** Estaba en gris chico debajo de cada hora, que es
   donde no se lee, y además dejaba las celdas de hora con dos renglones. Ahora va en la

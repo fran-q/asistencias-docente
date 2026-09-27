@@ -125,36 +125,6 @@ class ReporteAsistenciaServiceTest {
     }
 
     @Test
-    @DisplayName("totales: suma lo que tiene dato y cuenta aparte lo que no")
-    void totalesDelPeriodo() {
-        // La fila sin dato de salida no suma ni resta: contarla como cero diria que esa clase
-        // no se dicto, y lo unico que se sabe es que falta la salida.
-        AsistenciaReporteRowDto conDesvio = AsistenciaReporteRowDto.builder()
-            .minutosProgramados(120).minutosEfectivos(100).minutosFueraDeClase(10).build();
-        AsistenciaReporteRowDto completa = AsistenciaReporteRowDto.builder()
-            .minutosProgramados(120).minutosEfectivos(120).build();
-        AsistenciaReporteRowDto sinDato = AsistenciaReporteRowDto.builder()
-            .minutosProgramados(120).minutosEfectivos(null).build();
-
-        ReporteAsistenciaService.TotalesDelReporte t =
-            service.totales(List.of(conDesvio, completa, sinDato));
-
-        assertThat(t.clases()).isEqualTo(3);
-        assertThat(t.clasesConDato()).isEqualTo(2);
-        assertThat(t.clasesSinDato()).isEqualTo(1);
-        assertThat(t.minutosProgramados())
-            .as("la fila sin dato no entra en lo programado, o el porcentaje mentiria")
-            .isEqualTo(240);
-        assertThat(t.minutosNetos()).isEqualTo(220);
-        assertThat(t.minutosSinCubrir()).isEqualTo(20);
-        assertThat(t.minutosFueraDeClase()).isEqualTo(10);
-        assertThat(t.porcentajeDictado()).isEqualTo(92);
-        assertThat(t.netoLegible())
-            .as("en horas y minutos: 220 hay que dividirlo mentalmente")
-            .isEqualTo("3 h 40 min");
-    }
-
-    @Test
     @DisplayName("el tiempo fuera de clase se cuenta una vez por jornada, no una por clase")
     void fueraDeClaseNoSeDuplicaEntreClases() {
         // Una jornada de 17:50 a 22:10 que cubre dos clases seguidas: 18 a 20 y 20 a 22. Los
@@ -190,7 +160,7 @@ class ReporteAsistenciaServiceTest {
         assertThat(filas).allSatisfy(f -> assertThat(f.getMinutosEfectivos())
             .as("cada clase quedo cubierta entera")
             .isEqualTo(120));
-        assertThat(service.totales(filas).minutosFueraDeClase())
+        assertThat(filas.stream().mapToInt(AsistenciaReporteRowDto::getMinutosFueraDeClase).sum())
             .as("veinte en total, y no cuatro horas y media de permanencia repetidas dos veces")
             .isEqualTo(20);
     }
