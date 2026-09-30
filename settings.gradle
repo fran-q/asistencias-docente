@@ -1,1 +1,27 @@
+// =============================================================================
+//  settings.gradle
+// =============================================================================
+//  El plugin org.bytedeco.gradle-javacpp-platform NO esta en el portal de plugins
+//  de Gradle: se publica en Maven Central, con el artefacto org.bytedeco:gradle-javacpp.
+//  Declararlo en el bloque plugins {} sin esto falla con "could not resolve plugin
+//  artifact", porque Gradle solo mira el portal.
+//
+//  Que hace el plugin: respeta la propiedad javacpp.platform de gradle.properties,
+//  y con eso opencv-platform baja los binarios de UNA plataforma en vez de las
+//  nueve. Ver ADR-0007, decision 2.
+// =============================================================================
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id.startsWith('org.bytedeco')) {
+                useModule("org.bytedeco:gradle-javacpp:${requested.version}")
+            }
+        }
+    }
+}
+
 rootProject.name = 'asistencias'

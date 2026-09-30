@@ -8,6 +8,7 @@ import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.service.InstalacionService;
+import edu.cent35.asistencias.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,7 @@ class InstalacionInicialIT {
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired RolRepository rolRepository;
     @Autowired InstalacionService instalacion;
+    @Autowired UsuarioService usuarioService;
 
     @BeforeEach
     void dejarLaBaseComoReciénInstalada() {
@@ -67,6 +69,9 @@ class InstalacionInicialIT {
         rolRepository.findByCodigo(RolCodigo.INSTITUCION.name())
             .orElseGet(() -> rolRepository.save(
                 Rol.builder().codigo(RolCodigo.INSTITUCION.name()).descripcion("Institución").build()));
+        rolRepository.findByCodigo(RolCodigo.ADMIN.name())
+            .orElseGet(() -> rolRepository.save(
+                Rol.builder().codigo(RolCodigo.ADMIN.name()).descripcion("Administrador").build()));
     }
 
     @Test
@@ -171,6 +176,32 @@ class InstalacionInicialIT {
             .andExpect(status().is3xxRedirection());
 
         mvc.perform(get("/alta-institucion")).andExpect(status().isNotFound());
+    }
+
+
+    @Test
+    @DisplayName("una cuenta creada desde adentro nace verificada: no hay correo que verificar")
+    void lasCuentasNuevasNacenVerificadas() throws Exception {
+        mvc.perform(post("/instalacion").with(csrf())
+                .param("nombreInstitucion", "Instituto que suma gente")
+                .param("cuit", "")
+                .param("username", "instituto")
+                .param("email", "instalacion@ejemplo.test")
+                .param("password", "Prueba123")
+                .param("confirmacion", "Prueba123"))
+            .andExpect(status().is3xxRedirection());
+
+        Long tenantId = institucionRepository.findAll().get(0).getId();
+        TenantContext.set(tenantId);
+        try {
+            Usuario nuevo = usuarioService.crear("secretaria", "secretaria@ejemplo.test",
+                                                 "Prueba123", "Ana", "Gómez");
+            // Sin esto la cuenta se crea bien, entra al login bien, y recien ahi se descubre que
+            // VerificacionInterceptor la manda a /mi-cuenta a esperar un codigo que no llega.
+            assertThat(nuevo.getEmailVerificadoEn()).isNotNull();
+        } finally {
+            TenantContext.clear();
+        }
     }
 
 }

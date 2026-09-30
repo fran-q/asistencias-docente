@@ -52,6 +52,10 @@ class UsuarioServiceTest {
     @Mock private PasswordEncoder passwordEncoder;
     // La baja cierra la sesion que la cuenta tuviera abierta; aca solo hace falta que exista.
     @Mock private edu.cent35.asistencias.seguridad.SesionesActivasService sesionesActivas;
+    // Sin instalacion autonoma: el mock devuelve false, que es el despliegue comun.
+    // Lo contrario --la cuenta que nace verificada porque no hay correo-- se cubre en
+    // InstalacionInicialIT, donde la propiedad esta encendida de verdad.
+    @Mock private edu.cent35.asistencias.config.ModalidadInstalacion modalidad;
 
     @InjectMocks private UsuarioService service;
 

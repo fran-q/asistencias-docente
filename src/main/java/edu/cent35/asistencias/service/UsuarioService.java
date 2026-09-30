@@ -1,4 +1,6 @@
 package edu.cent35.asistencias.service;
+
+import edu.cent35.asistencias.config.ModalidadInstalacion;
 import edu.cent35.asistencias.dto.InstantaneaIdentidad;
 import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.repository.*;
@@ -44,6 +46,8 @@ import java.util.Objects;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+
+    private final ModalidadInstalacion modalidad;
     private final RolRepository rolRepository;
     private final PersonaRepository personaRepository;
     private final PersonaService personaService;
@@ -117,6 +121,11 @@ public class UsuarioService {
             .persona(persona)
             .rol(rol)
             .activo(true)
+            // En una instalacion autonoma la cuenta nace verificada, porque no hay por donde
+            // verificarla: sin SMTP, el codigo no llega, y VerificacionInterceptor la deja
+            // bloqueada en /mi-cuenta para siempre. La cuenta se creaba bien, entraba al login
+            // bien, y recien ahi se descubria que no podia hacer nada (ADR-0022).
+            .emailVerificadoEn(modalidad.esAutonoma() ? LocalDateTime.now() : null)
             .build();
         nuevo.setInstitucionId(tenantId);
 

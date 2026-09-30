@@ -2,6 +2,13 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.14'
 	id 'io.spring.dependency-management' version '1.1.7'
+	// Hace efectiva la propiedad javacpp.platform de gradle.properties: sin el, opencv-platform
+	// arrastra los binarios de las nueve plataformas --android e iOS incluidos-- y el JAR pasa de
+	// 45 a 417 MB. Ver ADR-0007, decision 2, y gradle.properties.
+	// 1.5.10 y no 1.5.11: el plugin se publica aparte de JavaCV y su ultima version es esa.
+	// No tiene que coincidir --lo unico que hace es elegir el clasificador de los binarios
+	// segun javacpp.platform-- pero el desfasaje confunde si no esta dicho.
+	id 'org.bytedeco.gradle-javacpp-platform' version '1.5.10'
 }
 
 group = 'edu.cent35'
@@ -128,4 +135,72 @@ tasks.register('instalarNavegadores', JavaExec) {
 	javaLauncher = javaToolchains.launcherFor(java.toolchain)
 
 	args = ['install', 'chromium']
+}
+
+// =============================================================================
+//  Empaquetado para Windows (ADR-0022)
+// =============================================================================
+//  Arma la aplicacion instalable con jpackage, que viene con el JDK 21. Lleva Java
+//  adentro, asi que la maquina de la institucion no tiene que instalarlo.
+//
+//  DOS TIPOS DE SALIDA
+//    ./gradlew empaquetar                      -> app-image: una carpeta que se copia y
+//                                                 se ejecuta. No necesita nada mas.
+//    ./gradlew empaquetar -PtipoDePaquete=msi  -> el instalador .msi.
+//
+//  El .msi EXIGE WiX Toolset instalado en la maquina que empaqueta; sin el, jpackage
+//  falla diciendo que no encuentra "candle". El app-image no necesita nada.
+//
+//  LO QUE ESTO TODAVIA NO HACE
+//  No trae MariaDB ni registra los servicios de Windows: eso es el paso siguiente del
+//  ADR-0022 y va en los scripts de instalacion. Lo de aca es la aplicacion sola.
+// =============================================================================
+
+// jpackage rechaza una version con sufijo: 0.0.1-SNAPSHOT no le sirve para el .msi.
+def versionDelPaquete = project.version.toString().replaceAll('-SNAPSHOT$', '')
+def tipoDePaquete = project.findProperty('tipoDePaquete') ?: 'app-image'
+
+// El JAR entra a jpackage desde una carpeta que contiene SOLO a el: --input se lleva todo
+// lo que encuentre, y build/libs tiene tambien el -plain.jar, que no arranca nada.
+tasks.register('prepararEmpaquetado', Copy) {
+	group = 'distribution'
+	description = 'Deja el JAR ejecutable solo, listo para jpackage'
+	dependsOn tasks.named('bootJar')
+	from(tasks.named('bootJar').map { it.archiveFile })
+	into layout.buildDirectory.dir('empaquetado/entrada')
+	rename { 'visum.jar' }
+}
+
+tasks.register('empaquetar', Exec) {
+	group = 'distribution'
+	description = 'Arma la aplicacion de Windows con Java adentro (jpackage)'
+	dependsOn tasks.named('prepararEmpaquetado')
+
+	def jdk = javaToolchains.launcherFor(java.toolchain).get().metadata.installationPath
+	def entrada = layout.buildDirectory.dir('empaquetado/entrada').get().asFile
+	def salida = layout.buildDirectory.dir('empaquetado/salida').get().asFile
+
+	doFirst {
+		// jpackage se planta si el destino ya tiene una version anterior.
+		delete salida
+		salida.mkdirs()
+	}
+
+	commandLine(
+		"${jdk}/bin/jpackage",
+		'--type', tipoDePaquete,
+		'--name', 'Visum',
+		'--app-version', versionDelPaquete,
+		'--vendor', 'CENT 35',
+		'--description', 'Registro de asistencia docente por reconocimiento facial',
+		'--input', entrada.absolutePath,
+		'--main-jar', 'visum.jar',
+		'--dest', salida.absolutePath,
+		// El perfil de la instalacion autonoma. Sin esto arranca como un despliegue comun:
+		// sin asistente de primer arranque, sin recuperacion por clave y pidiendo un SMTP.
+		'--java-options', '-Dspring.profiles.active=instalacion'
+		// Sin --win-console: es un flag sin valor, y su AUSENCIA es lo que deja la aplicacion
+		// sin ventana de consola. Pasarle 'false' hace que jpackage lo lea como otra opcion y
+		// falle con "Invalid Option: [false]". Los logs van al archivo que fija el perfil.
+	)
 }

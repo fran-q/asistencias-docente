@@ -1,11 +1,11 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.config.ModalidadInstalacion;
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,9 +31,7 @@ public class InstalacionService {
     private final InstitucionRepository institucionRepository;
     private final AltaInstitucionService altaService;
     private final ClaveRecuperacionService claveRecuperacion;
-
-    @Value("${app.instalacion.autonoma:false}")
-    private boolean autonoma;
+    private final ModalidadInstalacion modalidad;
 
     /**
      * Una institución que ya existe no deja de existir, así que esto solo va de false a true y
@@ -56,12 +54,12 @@ public class InstalacionService {
      * XAMPP. Son cosas distintas y por eso no comparten nombre.
      */
     public boolean autonoma() {
-        return autonoma;
+        return modalidad.esAutonoma();
     }
 
     /** Si corresponde mostrar el asistente. Falso en desarrollo, y falso apenas hay datos. */
     public boolean disponible() {
-        if (!autonoma || yaHayInstitucion) {
+        if (!modalidad.esAutonoma() || yaHayInstitucion) {
             return false;
         }
         if (institucionRepository.count() > 0) {
