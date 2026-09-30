@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+  La clave de recuperación, recién generada (ADR-0022, decisión 5).
+
+  Se ve una sola vez y no hay forma de volver a mostrarla: de la clave queda el
+  hash, igual que de una contraseña. Por eso la pantalla insiste tanto y por eso
+  dice desde dónde se genera otra — que es la salida si esta se pierde, y la
+  única.
+
+  Llega por flash: recargar no la repite, y no queda en la URL ni en el
+  historial del navegador.
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clave de recuperación - Visum</title>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
+            if (!t) {
+                t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            document.documentElement.setAttribute('data-tema', t);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="auth">
+
+    <aside th:replace="~{auth/marca :: panel}"></aside>
+
+    <main class="auth__panel">
+        <div class="auth__centro">
+            <div class="auth__form auth__form--ancha">
+
+                <div class="auth__logo auth__logo--movil">
+                    <span class="auth__logo-marca" aria-hidden="true">V</span>
+                    <span class="auth__logo-texto">Visum</span>
+                </div>
+
+                <h1>Guardá esta clave</h1>
+                <p>
+                    La institución quedó creada. Esta es la clave de recuperación: es lo único
+                    que permite volver a entrar si se olvida la contraseña, porque esta
+                    instalación no envía correos.
+                </p>
+
+                <div class="card" style="margin:var(--space) 0; text-align:center">
+                    <p style="font-family:var(--font-mono); font-size:1.6rem; letter-spacing:.08em;
+                              word-break:break-all; margin:0"
+                       th:text="${claveRecuperacion}">XXXXX-XXXXX-XXXXX-XXXXX</p>
+                </div>
+
+                <div class="alert alert--error" role="alert">
+                    <p>
+                        <strong>No se vuelve a mostrar.</strong> Anotala o imprimila y guardala
+                        fuera de esta computadora: si la máquina se pierde, un papel en un cajón
+                        del mismo escritorio se pierde con ella.
+                    </p>
+                </div>
+
+                <p class="form-hint">
+                    Si la perdés, podés generar una nueva desde <strong>Mi institución</strong>,
+                    entrando con la cuenta que acabás de crear. Al generarla, esta deja de servir.
+                </p>
+
+                <a th:href="@{/login}" class="btn btn--primary btn--lg btn--full"
+                   style="margin-top:var(--space)">
+                    Ya la guardé, ir a iniciar sesión
+                </a>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script th:src="@{/js/comun/tema.js}" defer></script>
+</body>
+</html>

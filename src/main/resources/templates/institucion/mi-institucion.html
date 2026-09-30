@@ -78,6 +78,43 @@
             </p>
         </div>
 
+        <!-- Solo en una instalacion autonoma: en un despliegue con correo la recuperacion va
+             por codigo y esta clave no existe. -->
+        <div class="card card--form" th:if="${instalacionAutonoma}">
+            <h2>Clave de recuperación</h2>
+
+            <div th:if="${claveRecuperacion}" class="alert alert--error" role="alert">
+                <p><strong>Anotala ahora. No se vuelve a mostrar.</strong></p>
+                <p style="font-family:var(--font-mono); font-size:1.3rem; letter-spacing:.08em;
+                          word-break:break-all"
+                   th:text="${claveRecuperacion}">XXXXX-XXXXX-XXXXX-XXXXX</p>
+            </div>
+
+            <dl class="kv">
+                <dt>Generada</dt>
+                <dd th:if="${institucion.claveRecuperacionCreadaEn != null}"
+                    th:text="${#temporals.format(institucion.claveRecuperacionCreadaEn, 'dd/MM/yyyy HH:mm')}">—</dd>
+                <dd th:if="${institucion.claveRecuperacionCreadaEn == null}" class="text-muted">
+                    Sin generar
+                </dd>
+            </dl>
+
+            <p class="form-hint">
+                Es lo único que permite volver a entrar si se olvida la contraseña de esta cuenta,
+                porque esta instalación no envía correos. Generá una nueva si la perdés o si
+                pudo haberla visto quien no corresponde: al hacerlo, <strong>la anterior deja de
+                servir</strong>.
+            </p>
+
+            <form th:action="@{/mi-institucion/clave-recuperacion}" method="post"
+                  data-confirm="¿Generar una clave de recuperación nueva?"
+                  data-confirm-detail="La clave anterior deja de servir en el momento. Si alguien la tiene anotada, esa copia queda sin valor."
+                  data-confirm-action="Generar una nueva"
+                  data-confirm-style="danger">
+                <button type="submit" class="btn btn--secondary">Generar una clave nueva</button>
+            </form>
+        </div>
+
         <div th:replace="~{layout/fragmentos :: datosDelSistema(
                             ${institucion.activo}, 'Activa', 'Inactiva',
                             ${institucion.creadoEn}, ${institucion.actualizadoEn}, ~{})}"></div>

@@ -22,7 +22,7 @@ va el resumen operativo.
 | TD-005 | Cache de modelos LBPH sin TTL ni límite de memoria | Baja en prototipo, media en producción | **Cerrada** — ver abajo |
 | TD-006 | Reportes sin paginación | Baja en prototipo, media en producción | Abierta, mitigada con tope de filas |
 | TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | Abierta |
-| TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | Abierta |
+| TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 
 **Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB) y TD-007 (el
 aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes).
@@ -51,7 +51,10 @@ del CSV.
 
 **TD-008 y TD-009** son deudas de exposición: hoy no molestan porque el despliegue es
 local y dentro de la red de la institución. **El día que el sistema esté en internet, se
-vuelven urgentes.** TD-008 necesita límite por IP además del límite por cuenta; TD-009
+vuelven urgentes.** TD-008 necesita límite por IP además del límite por cuenta. **TD-009 quedó
+cerrada del lado de la instalación autónoma**, donde la recuperación va por la clave que genera
+la configuración inicial (ADR-0022): lo que sigue sin respuesta es el mismo problema en un
+despliegue con correo, donde TD-009
 necesita un procedimiento de recuperación de la cuenta institucional que no dependa del
 correo.
 

@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Lo contrario —que con la propiedad apagada el asistente no exista— vive en
  * {@link InstalacionApagadaIT}, porque es otro contexto de Spring.
  */
-@SpringBootTest(properties = "app.instalacion.asistente-inicial=true")
+@SpringBootTest(properties = "app.instalacion.autonoma=true")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @DisplayName("Asistente de primer arranque")
@@ -96,7 +96,8 @@ class InstalacionInicialIT {
                 .param("password", "Prueba123")
                 .param("confirmacion", "Prueba123"))
             .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/login"));
+            // A la clave de recuperación y no al login: es lo único que se muestra una sola vez.
+            .andExpect(redirectedUrl("/instalacion/clave"));
 
         assertThat(institucionRepository.count()).isEqualTo(1);
 

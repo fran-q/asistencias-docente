@@ -32,6 +32,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 public class InstalacionController {
 
+    private static final String CLAVE = "claveRecuperacion";
+
     private final InstalacionService instalacion;
 
     // Muestra el formulario. 404 si la instalación ya está configurada o el asistente no va.
@@ -45,7 +47,7 @@ public class InstalacionController {
     }
 
     /**
-     * Crea la institución y su cuenta, y manda al login.
+     * Crea la institución y su cuenta, y muestra la clave de recuperación.
      *
      * <p>No deja la sesión abierta a propósito: que la primera cosa que se haga con la cuenta
      * recién creada sea entrar con ella comprueba, ahí mismo y no la semana que viene, que la
@@ -65,16 +67,34 @@ public class InstalacionController {
             return "auth/instalacion";
         }
 
+        InstalacionService.PrimeraInstitucion creada;
         try {
-            instalacion.crearPrimeraInstitucion(form);
+            creada = instalacion.crearPrimeraInstitucion(form);
         } catch (IllegalArgumentException | IllegalStateException ex) {
             binding.reject("error.global", ex.getMessage());
             return "auth/instalacion";
         }
 
-        flash.addFlashAttribute("flashMensaje",
-            "Listo. Entrá con el usuario y la contraseña que acabás de crear.");
-        return "redirect:/login";
+        // En flash y no en la URL ni en la sesión: es un dato que se muestra una vez y no tiene
+        // que quedar en el historial del navegador ni sobrevivir a un F5.
+        flash.addFlashAttribute(CLAVE, creada.claveRecuperacion());
+        return "redirect:/instalacion/clave";
+    }
+
+    /**
+     * Muestra la clave de recuperación recién generada. Se ve una sola vez: de la clave solo
+     * queda el hash, así que ni esta pantalla ni ninguna otra pueden volver a mostrarla.
+     *
+     * <p>No la protege {@code disponible()} —a esta altura ya hay una institución y el asistente
+     * se apagó—, la protege el flash: sin él no hay nada que mostrar y se va al login. Por eso
+     * recargar no la repite.
+     */
+    @GetMapping("/clave")
+    public String clave(@ModelAttribute(CLAVE) String clave) {
+        if (clave == null || clave.isBlank()) {
+            return "redirect:/login";
+        }
+        return "auth/instalacion-clave";
     }
 
     // El 404 se arma acá y no en el interceptor: el interceptor decide a dónde mandar a quien

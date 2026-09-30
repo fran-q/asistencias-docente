@@ -109,7 +109,10 @@
                                  que no se acuerda la contraseña. -->
                             <div class="auth__campo-fila">
                                 <label for="password">Contraseña</label>
-                                <a th:href="@{/recuperar}">¿La olvidaste?</a>
+                                <!-- En una instalacion autonoma no hay SMTP: mandar a /recuperar seria ofrecer un
+                                     codigo por correo que no llega nunca. Ahi la recuperacion va por la clave
+                                     que entrego la configuracion inicial (ADR-0022). -->
+                                <a th:href="${instalacionAutonoma} ? @{/recuperar/clave} : @{/recuperar}">¿La olvidaste?</a>
                             </div>
                             <div class="password-input">
                                 <input type="password" id="password" name="password" required

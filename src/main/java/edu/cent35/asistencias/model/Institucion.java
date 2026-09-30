@@ -84,6 +84,24 @@ public class Institucion {
     @Column(name = "max_puestos_habilitados")
     private Short maxPuestosHabilitados;
 
+    /**
+     * Hash de la clave de recuperación de la institución (V032, ADR-0022).
+     *
+     * <p>Null en toda institución creada por el alta pública: ahí el correo está comprobado y la
+     * recuperación por código alcanza. La clave la genera el asistente de primer arranque, que
+     * es el único camino que corre sin correo.
+     *
+     * <p>Se guarda el hash y no la clave por el mismo motivo que las contraseñas: una copia de
+     * la base no alcanza para fabricar una válida.
+     */
+    @Column(name = "clave_recuperacion_hash", length = 100)
+    private String claveRecuperacionHash;
+
+    // Cual de las copias guardadas es la que vale: al regenerarla, la anterior deja de servir y
+    // sin esta fecha no habria como saber cual es cual.
+    @Column(name = "clave_recuperacion_creada_en")
+    private LocalDateTime claveRecuperacionCreadaEn;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean activo = true;

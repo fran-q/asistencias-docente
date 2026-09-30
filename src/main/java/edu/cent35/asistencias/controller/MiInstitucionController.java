@@ -2,6 +2,8 @@ package edu.cent35.asistencias.controller;
 import edu.cent35.asistencias.dto.*;
 import edu.cent35.asistencias.model.*;
 
+import edu.cent35.asistencias.service.ClaveRecuperacionService;
+import edu.cent35.asistencias.service.InstalacionService;
 import edu.cent35.asistencias.service.MiInstitucionService;
 import edu.cent35.asistencias.model.Institucion;
 import jakarta.validation.Valid;
@@ -15,6 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -39,6 +43,8 @@ public class MiInstitucionController {
     private static final String ENTIDAD_ATTR = "institucion";
 
     private final MiInstitucionService service;
+    private final InstalacionService instalacion;
+    private final ClaveRecuperacionService claveRecuperacion;
 
     // Muestra los datos de la institución del usuario logueado, de solo lectura.
     @GetMapping
@@ -87,4 +93,29 @@ public class MiInstitucionController {
         redirect.addFlashAttribute("flashMensaje", "Datos de la institución actualizados correctamente.");
         return "redirect:/mi-institucion";
     }
+
+    /**
+     * Genera una clave de recuperación nueva y la muestra una sola vez.
+     *
+     * <p>Existe porque la clave se entrega en la configuración inicial y de ahí en más solo
+     * queda su hash: sin esta pantalla, perder el papel sería perder la instalación. Al generar
+     * una nueva la anterior deja de servir en el mismo acto, que es lo que hace que sirva
+     * también cuando la clave no se perdió sino que la vio quien no correspondía.
+     *
+     * <p>Solo en una instalación autónoma: donde hay correo, la recuperación va por código y
+     * esta clave no existe.
+     */
+    @PostMapping("/clave-recuperacion")
+    public String regenerarClave(RedirectAttributes flash) {
+        if (!instalacion.autonoma()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        Institucion mia = service.getMiInstitucion();
+        String clave = claveRecuperacion.generar(mia.getId());
+        flash.addFlashAttribute("claveRecuperacion", clave);
+        flash.addFlashAttribute("flashMensaje",
+            "Clave nueva generada. La anterior dejó de servir.");
+        return "redirect:/mi-institucion";
+    }
+
 }

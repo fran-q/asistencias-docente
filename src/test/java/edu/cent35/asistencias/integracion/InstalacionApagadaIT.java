@@ -66,4 +66,18 @@ class InstalacionApagadaIT {
     void elLoginNoSeRedirige() throws Exception {
         mvc.perform(get("/login")).andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("la recuperación por clave tampoco existe")
+    void laRecuperacionPorClaveNoExiste() throws Exception {
+        // Donde hay correo, recuperar va por codigo. Dos caminos abiertos a la vez serian
+        // superficie de mas sin que nadie la necesite.
+        mvc.perform(get("/recuperar/clave")).andExpect(status().isNotFound());
+        mvc.perform(post("/recuperar/clave").with(csrf())
+                .param("username", "instituto")
+                .param("clave", "ABCDE-ABCDE-ABCDE-ABCDE")
+                .param("nuevaPassword", "Prueba123")
+                .param("confirmacion", "Prueba123"))
+            .andExpect(status().isNotFound());
+    }
 }

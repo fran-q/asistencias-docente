@@ -224,6 +224,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V027__reabrir_ciclo_lectivo` | `ciclos_lectivos.reabierto_en` y `reabierto_por`: el último ciclo cerrado se puede reabrir, y el cierre anterior se conserva |
 | `V030__varios_puestos_por_institucion` | `instituciones.max_puestos_habilitados` (NULL = sin tope) y se cae el índice de V022: una institución puede tener una cámara por entrada |
 | `V031__equipo_de_salida` | `bloques_presencia.puesto_salida_id`: por qué equipo se registró la salida, que con varias entradas no tiene por qué ser el mismo de la entrada |
+| `V032__clave_de_recuperacion` | `instituciones.clave_recuperacion_hash` y `clave_recuperacion_creada_en`: lo que destraba la cuenta institucional donde no hay correo (ADR-0022). Se guarda el hash, no la clave |
 | `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
 | `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
 

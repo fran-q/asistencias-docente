@@ -320,4 +320,4 @@ qué se descartó.
 | 0019 | Modo kiosco: tomar asistencia sin sesión abierta | Propuesta |
 | 0020 | Una sesión por cuenta, y la desplaza quien entra | Propuesta |
 | 0021 | La marca sin cámara la carga el admin, en el momento | Propuesta |
-| 0022 | Instalación local: instalador, servicio y primera cuenta sin correo | Propuesta |
+| 0022 | Instalación autónoma: instalador, servicio y primera cuenta sin correo | Propuesta |
