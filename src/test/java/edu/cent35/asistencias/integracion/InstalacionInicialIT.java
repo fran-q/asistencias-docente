@@ -154,4 +154,23 @@ class InstalacionInicialIT {
         assertThat(institucionRepository.count()).isEqualTo(1);
         mvc.perform(get("/login")).andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("el alta pública de instituciones no existe acá")
+    void elAltaPublicaSeCierra() throws Exception {
+        // Antes de configurar todo lleva al asistente, asi que el 404 se comprueba despues: una
+        // instalacion autonoma atiende a UNA institucion, y el alta manda un codigo por un correo
+        // que en esa maquina no existe.
+        mvc.perform(post("/instalacion").with(csrf())
+                .param("nombreInstitucion", "Instituto unico")
+                .param("cuit", "")
+                .param("username", "instituto")
+                .param("email", "instalacion@ejemplo.test")
+                .param("password", "Prueba123")
+                .param("confirmacion", "Prueba123"))
+            .andExpect(status().is3xxRedirection());
+
+        mvc.perform(get("/alta-institucion")).andExpect(status().isNotFound());
+    }
+
 }

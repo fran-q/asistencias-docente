@@ -80,4 +80,22 @@ class InstalacionApagadaIT {
                 .param("confirmacion", "Prueba123"))
             .andExpect(status().isNotFound());
     }
+
+    @Test
+    @DisplayName("el alta pública de instituciones sigue abierta")
+    void elAltaPublicaSigueAbierta() throws Exception {
+        // La contracara del test de la instalacion autonoma: lo que alla se cierra, en un
+        // despliegue normal tiene que seguir funcionando igual que siempre.
+        mvc.perform(get("/alta-institucion")).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("el respaldo desde la pantalla no existe")
+    void elRespaldoNoExiste() throws Exception {
+        // El volcado se lleva la base entera: donde hay varias instituciones eso seria el dato
+        // de todas en manos de una. Sin sesion cae en el login, que ya dice que no paso.
+        mvc.perform(get("/mi-institucion/respaldo"))
+            .andExpect(status().is3xxRedirection());
+    }
+
 }

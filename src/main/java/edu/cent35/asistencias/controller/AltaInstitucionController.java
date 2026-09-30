@@ -3,10 +3,12 @@ package edu.cent35.asistencias.controller;
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
 import edu.cent35.asistencias.dto.AltaPendiente;
 import edu.cent35.asistencias.service.AltaInstitucionService;
+import edu.cent35.asistencias.service.InstalacionService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -33,6 +36,22 @@ public class AltaInstitucionController {
     private static final String PENDIENTE = "altaInstitucionPendiente";
 
     private final AltaInstitucionService altaService;
+    private final InstalacionService instalacion;
+
+    /**
+     * En una instalación autónoma esta pantalla no existe (ADR-0022): esa máquina atiende a una
+     * sola institución, la creó la configuración inicial, y el alta manda un código por un
+     * correo que ahí no hay. Dejarla abierta seria ofrecer un tramite que no puede terminar.
+     *
+     * <p>Se cierra acá y no solo escondiendo el enlace del login: un enlace que no se ve sigue
+     * siendo una ruta que responde.
+     */
+    @ModelAttribute
+    void exigirQueElAltaCorresponda() {
+        if (instalacion.autonoma()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+    }
 
     // Muestra el formulario vacío.
     @GetMapping

@@ -285,6 +285,13 @@ y la imputación chocaría contra el UNIQUE, dejando como ausente una clase que 
 | `local` | Desarrollo | `application-local.properties` — **gitignored**, credenciales de XAMPP. Lo activa `./gradlew bootRun` |
 | `test` | Tests y CI | `src/test/resources/application-test.properties` — H2 en memoria |
 
+**Instalación autónoma: una modalidad, no un perfil.** `app.instalacion.autonoma` enciende lo
+que necesita la máquina de la institución —el asistente de primer arranque, la recuperación por
+clave y el respaldo descargable— y apaga el alta pública de instituciones. Viene en `false`, así
+que el desarrollo y cualquier despliegue con correo no se enteran. **No confundir con el perfil
+`local`**, que es este entorno de desarrollo contra XAMPP: son cosas distintas y por eso no
+comparten nombre (ADR-0022).
+
 `spring.jpa.hibernate.ddl-auto=validate`: el esquema lo maneja Flyway, Hibernate solo
 verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/Ushuaia`.
 

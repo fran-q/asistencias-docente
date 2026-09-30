@@ -78,6 +78,25 @@
             </p>
         </div>
 
+        <!-- Solo en una instalacion autonoma: el volcado se lleva la base entera, y donde hay
+             varias instituciones eso seria el dato de todas en manos de una. -->
+        <div class="card card--form" th:if="${instalacionAutonoma}">
+            <h2>Respaldo</h2>
+            <p class="form-hint">
+                Baja una copia completa de la base a tu computadora. Todo el sistema vive en esta
+                máquina: si se rompe o se pierde, se pierde con ella el registro de asistencia de
+                la institución. Guardá la copia en otro lado.
+            </p>
+            <p class="form-hint">
+                El archivo incluye los datos biométricos de los docentes —cifrados, pero son datos
+                sensibles bajo la Ley 25.326—, así que se guarda con el mismo cuidado que el resto
+                del legajo.
+            </p>
+            <a th:href="@{/mi-institucion/respaldo}" class="btn btn--secondary">
+                Descargar una copia
+            </a>
+        </div>
+
         <!-- Solo en una instalacion autonoma: en un despliegue con correo la recuperacion va
              por codigo y esta clave no existe. -->
         <div class="card card--form" th:if="${instalacionAutonoma}">

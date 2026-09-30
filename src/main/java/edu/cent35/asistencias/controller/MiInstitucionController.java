@@ -5,8 +5,14 @@ import edu.cent35.asistencias.model.*;
 import edu.cent35.asistencias.service.ClaveRecuperacionService;
 import edu.cent35.asistencias.service.InstalacionService;
 import edu.cent35.asistencias.service.MiInstitucionService;
+import edu.cent35.asistencias.service.RespaldoService;
 import edu.cent35.asistencias.model.Institucion;
 import jakarta.validation.Valid;
+import java.io.FilterInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -18,7 +24,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
@@ -45,6 +56,7 @@ public class MiInstitucionController {
     private final MiInstitucionService service;
     private final InstalacionService instalacion;
     private final ClaveRecuperacionService claveRecuperacion;
+    private final RespaldoService respaldoService;
 
     // Muestra los datos de la institución del usuario logueado, de solo lectura.
     @GetMapping
@@ -116,6 +128,58 @@ public class MiInstitucionController {
         flash.addFlashAttribute("flashMensaje",
             "Clave nueva generada. La anterior dejó de servir.");
         return "redirect:/mi-institucion";
+    }
+
+
+    /**
+     * Baja una copia de la base, para que respaldar no dependa de abrir una terminal (ADR-0022).
+     *
+     * <p>Devuelve {@code Object} porque tiene dos finales legítimos: el archivo, o la vuelta a
+     * esta misma pantalla con el motivo por el cual no se pudo. Un respaldo que falla tiene que
+     * decir qué pasó —la herramienta no está, la base no responde— y no dejar a alguien mirando
+     * una página de error genérica creyendo que ya tiene su copia.
+     *
+     * <p>Solo en una instalación autónoma: el volcado se lleva la base entera, y donde hay
+     * varias instituciones eso sería el dato de todas en manos de una.
+     */
+    @GetMapping("/respaldo")
+    public Object respaldo(RedirectAttributes flash) throws IOException {
+        if (!instalacion.autonoma()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        Path archivo;
+        try {
+            archivo = respaldoService.generar();
+        } catch (IllegalStateException ex) {
+            log.error("No se pudo generar el respaldo", ex);
+            flash.addFlashAttribute("flashError", ex.getMessage());
+            return "redirect:/mi-institucion";
+        }
+
+        Resource cuerpo = new InputStreamResource(flujoQueSeBorra(archivo));
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                    "attachment; filename=\"" + respaldoService.nombreSugerido() + "\"")
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .contentLength(Files.size(archivo))
+            .body(cuerpo);
+    }
+
+    // El temporal se borra cuando termina de enviarse, pase lo que pase: si se borrara antes de
+    // devolver la respuesta no habria nada que mandar, y si no se borrara nunca, cada respaldo
+    // dejaria una copia entera de la base en el disco de la maquina.
+    private InputStream flujoQueSeBorra(Path archivo) throws IOException {
+        return new FilterInputStream(Files.newInputStream(archivo)) {
+            @Override
+            public void close() throws IOException {
+                try {
+                    super.close();
+                } finally {
+                    Files.deleteIfExists(archivo);
+                }
+            }
+        };
     }
 
 }

@@ -134,7 +134,10 @@
                      instalación, no algo que un usuario del día a día necesite. Exponerlo
                      no es un riesgo porque el alta no crea nada hasta que se valide el
                      código enviado al correo. -->
-                <div class="auth__pie">
+                <!-- En una instalacion autonoma no se ofrece: esa instalacion atiende a una sola
+                     institucion, ya creada por la configuracion inicial, y el alta manda un
+                     codigo por un correo que no existe (ADR-0022). -->
+                <div class="auth__pie" th:unless="${instalacionAutonoma}">
                     <p>
                         ¿Tu institución todavía no está en Visum?
                         <a th:href="@{/alta-institucion}">Registrala</a>
