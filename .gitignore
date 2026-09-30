@@ -73,3 +73,15 @@ credenciales-locales.txt
 credenciales_proyecto.txt
 datos-de-prueba-cent35.txt
 datos-de-prueba-cent35.docx
+
+# === Instalador de Windows (ADR-0022) ===
+# Binarios de terceros: no se versionan por tamano, y porque incluirlos es una decision
+# de distribucion y no una dependencia de compilacion. Ver instalador/README.md.
+vendor/
+
+# Generados por instalar.ps1 en la maquina de la institucion. TIENEN SECRETOS: la
+# contrasena de la base y la clave con la que se descifran los modelos faciales.
+instalador/visum-servicio.xml
+instalador/visum-servicio.exe
+instalador/WinSW.exe
+instalador/base-root.txt

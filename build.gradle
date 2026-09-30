@@ -204,3 +204,63 @@ tasks.register('empaquetar', Exec) {
 		// falle con "Invalid Option: [false]". Los logs van al archivo que fija el perfil.
 	)
 }
+
+// La carpeta lista para instalar: lo que arma jpackage, mas los scripts y los dos
+// binarios de terceros que no viven en el repositorio (ver instalador/README.md).
+tasks.register('armarInstalable') {
+	group = 'distribution'
+	description = 'Deja la carpeta completa: aplicacion, MariaDB, WinSW y los scripts'
+	dependsOn tasks.named('empaquetar')
+
+	def destino = layout.buildDirectory.dir('empaquetado/salida/Visum')
+	def scripts = layout.projectDirectory.dir('instalador')
+	def mariadb = layout.projectDirectory.dir('vendor/mariadb')
+	def winsw = layout.projectDirectory.file('vendor/WinSW.exe')
+
+	doLast {
+		def salida = destino.get().asFile
+		if (!salida.exists()) {
+			throw new GradleException("No esta ${salida}: ¿corrio 'empaquetar'?")
+		}
+
+		copy {
+			from scripts
+			into new File(salida, 'instalador')
+		}
+
+		// Los que faltan se avisan uno por uno y con su motivo. Un paquete al que le falta
+		// MariaDB se arma igual, se copia igual, y recien falla en la maquina de la
+		// institucion: mejor que lo diga acá.
+		def faltantes = []
+
+		if (mariadb.asFile.exists()) {
+			copy {
+				from mariadb
+				into new File(salida, 'mariadb')
+			}
+			logger.lifecycle('  MariaDB incluida.')
+		} else {
+			faltantes << "vendor/mariadb/  (la MariaDB portable, descomprimida)"
+		}
+
+		if (winsw.asFile.exists()) {
+			copy {
+				from winsw
+				into new File(salida, 'instalador')
+			}
+			logger.lifecycle('  WinSW incluido.')
+		} else {
+			faltantes << "vendor/WinSW.exe (el ejecutable de WinSW para .NET 4)"
+		}
+
+		logger.lifecycle('')
+		logger.lifecycle("  Paquete en: ${salida}")
+		if (!faltantes.isEmpty()) {
+			logger.warn('')
+			logger.warn('  ATENCION: el paquete esta INCOMPLETO y no se va a poder instalar.')
+			logger.warn('  Falta poner:')
+			faltantes.each { logger.warn("    - ${it}") }
+			logger.warn('  Ver instalador/README.md.')
+		}
+	}
+}

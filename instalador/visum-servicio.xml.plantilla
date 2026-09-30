@@ -1,0 +1,60 @@
+<!--
+  Definicion del servicio de Windows de Visum, para WinSW (ADR-0022).
+
+  ESTO ES UNA PLANTILLA. instalar.ps1 reemplaza los marcadores @@...@@ y escribe el
+  archivo final como visum-servicio.xml, al lado de WinSW.exe.
+
+  EL ARCHIVO GENERADO TIENE SECRETOS. Ahi adentro quedan la contrasena de la base y
+  la clave con la que se cifran los modelos faciales. No se versiona, no se copia a
+  otra maquina y no entra en el respaldo: instalar.ps1 le deja permisos solo para
+  Administradores y para la cuenta del servicio.
+-->
+<service>
+  <id>VisumApp</id>
+  <name>Visum - Asistencia docente</name>
+  <description>Registro de asistencia docente por reconocimiento facial. Atiende en http://localhost:@@PUERTO@@</description>
+
+  <!-- El ejecutable que arma jpackage, con Java adentro: no se usa el java del sistema. -->
+  <executable>@@EJECUTABLE@@</executable>
+
+  <!-- Arranca con Windows, sin que nadie inicie sesion. Si dependiera de que alguien lo
+       abra, el dia que nadie lo abre el pase no toma asistencia y el job de ausencias
+       corre igual: el sistema no quedaria apagado, quedaria afirmando que nadie dio clase. -->
+  <startmode>Automatic</startmode>
+
+  <!-- La base tiene que estar arriba antes que la aplicacion. Sin esto, Visum arranca
+       primero, Flyway no encuentra la base y el servicio muere al primer intento. -->
+  <depend>@@SERVICIO_BASE@@</depend>
+
+  <!-- Si se cae, que vuelva. Las tres primeras veces enseguida; despues espacia, para no
+       quedar reintentando en loop algo que necesita una persona. -->
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="20 sec"/>
+  <onfailure action="restart" delay="60 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Los logs del servicio, aparte de los de la aplicacion. Uno dice si el proceso vive;
+       el otro, que hizo el sistema. Se rotan para que no crezcan sin fin. -->
+  <logpath>@@LOGS@@</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+
+  <!-- ==================================================================
+       Secretos de esta instalacion. Los genera instalar.ps1 una sola vez.
+       ==================================================================
+       OJO al actualizar: si estos valores cambian, los modelos faciales ya
+       registrados NO se pueden descifrar y hay que volver a tomar el rostro de
+       cada docente. instalar.ps1 los conserva cuando encuentra una instalacion
+       anterior; no se editan a mano.
+  -->
+  <env name="VISUM_DB_PUERTO" value="@@PUERTO_BASE@@"/>
+  <env name="VISUM_DB_USUARIO" value="@@DB_USUARIO@@"/>
+  <env name="VISUM_DB_PASSWORD" value="@@DB_PASSWORD@@"/>
+  <env name="BIOMETRIA_CLAVE" value="@@BIOMETRIA_CLAVE@@"/>
+  <env name="BIOMETRIA_SALT" value="@@BIOMETRIA_SALT@@"/>
+  <env name="VISUM_MYSQLDUMP" value="@@MYSQLDUMP@@"/>
+  <env name="VISUM_LOGS" value="@@LOG_APP@@"/>
+  <env name="PORT" value="@@PUERTO@@"/>
+</service>

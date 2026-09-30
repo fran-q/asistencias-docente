@@ -1,0 +1,37 @@
+#
+#  Configuracion de la MariaDB que trae Visum (ADR-0022).
+#
+#  ESTO ES UNA PLANTILLA: instalar.ps1 reemplaza los marcadores @@...@@ y escribe
+#  el my.ini definitivo dentro de la carpeta de datos.
+#
+#  Es una instancia PROPIA de Visum, no la del sistema. Por eso puerto propio,
+#  carpeta de datos propia y nombre de servicio propio: la maquina puede tener ya
+#  un XAMPP o un MySQL instalado, y pisarle la configuracion seria romperle a la
+#  institucion algo que ya usaba.
+#
+[mysqld]
+# Puerto propio: el 3306 suele estar tomado por el XAMPP de la maquina.
+port=@@PUERTO_BASE@@
+# Solo desde esta computadora. La base no tiene por que ser alcanzable desde la red
+# de la institucion: quien entra al sistema lo hace por el navegador, y la unica que
+# habla con la base es la aplicacion, que corre en esta misma maquina.
+bind-address=127.0.0.1
+datadir=@@DATADIR@@
+basedir=@@BASEDIR@@
+
+# Acentos y enies en nombres de docentes y materias. Sin esto, una "Ñ" viaja mal y se
+# guarda mal, y el error aparece meses despues en un reporte.
+character-set-server=utf8mb4
+collation-server=utf8mb4_general_ci
+
+# El motor que asume el esquema: las claves foraneas y las transacciones del pase
+# dependen de InnoDB.
+default-storage-engine=InnoDB
+
+# Zona horaria: la aplicacion trabaja en America/Argentina/Ushuaia y la base tiene que
+# coincidir, o las marcas de asistencia quedan corridas respecto de los horarios.
+default-time-zone='-03:00'
+
+[client]
+port=@@PUERTO_BASE@@
+default-character-set=utf8mb4
