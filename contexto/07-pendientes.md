@@ -23,6 +23,7 @@ va el resumen operativo.
 | TD-006 | Reportes sin paginación | Baja en prototipo, media en producción | Abierta, mitigada con tope de filas |
 | TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | Abierta |
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
+| TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
 
 **Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB) y TD-007 (el
 aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes).
@@ -48,6 +49,15 @@ eso llega a doler.
 **TD-006** sí se vuelve real cuando el sistema salga a la nube y tenga carga verdadera: el
 reporte sin paginación carga todo en memoria. Próximo paso definido: `Pageable` y streaming
 del CSV.
+
+**TD-010 es la contracara de la clave de recuperación.** La clave destraba la cuenta
+INSTITUCION, que es la que, perdida, dejaría la instalación inservible. Para una cuenta ADMIN no
+hay camino: sin correo no llega ningún código, `habilitar-cambio-password` solo levanta el límite
+de 24 horas, y la pantalla que permitía fijarle la contraseña a otro **se eliminó a propósito**
+para que nadie conozca la clave con la que entra otra persona. Se acepta como limitación de la
+versión instalable: cerrarlo obliga a reintroducir eso mismo que se quitó, y esa decisión se toma
+cuando el instalable esté en uso y se sepa cuánto molesta. Mientras tanto, la salida es crear una
+cuenta nueva y dar de baja la anterior.
 
 **TD-008 y TD-009** son deudas de exposición: hoy no molestan porque el despliegue es
 local y dentro de la red de la institución. **El día que el sistema esté en internet, se
