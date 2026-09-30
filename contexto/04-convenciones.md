@@ -213,6 +213,22 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 - **El modo tarjeta de las tablas es opt-in: `class="table table--tarjetas"`.** Sin esa
   clase la tabla se sigue desplazando de costado en pantalla angosta, que es lo correcto
   para las que no se adaptaron: no tienen `data-label` y se verían como valores sin nombre.
+- **Una pantalla de listado se declara con dos clases.** `pantalla-listado` en el
+  `<section>` y `listado-caja` en la tarjeta de la tabla. Con eso la pantalla ocupa
+  exactamente la ventana y el único que se desplaza es el cuerpo de la tabla: los filtros
+  y el encabezado de las columnas quedan quietos. El layout se entera por `:has()`, así
+  que no hay que tocar nada del marco. Si falta cualquiera de las dos, la pantalla vuelve
+  sola al comportamiento viejo —tarjeta flotando arriba, página entera desplazándose— sin
+  romper nada visible al abrirla; lo cuida `PantallasDeListadoIT`.
+- **El recuadro de la tabla está siempre, con registros o sin ellos.** Cuando no hay nada
+  se muestra una fila `.table__empty` adentro, no una tarjeta suelta debajo: si la tabla
+  se oculta, la pantalla queda sin el marco de lo que la persona vino a ver. Van los dos
+  avisos y dicen cosas distintas: `.table__empty-fila` (oculta, la muestra
+  `filtro-tabla.js`) para "el filtro no encontró nada", y una fila con `th:if` sobre la
+  colección vacía para "no hay nada cargado".
+- **No hay selector de densidad.** Hubo uno con tres altos de fila, guardado en
+  `localStorage`; se sacó. Elegir entre tres altos no es una decisión que el listado le
+  tenga que pedir a nadie, y quedó el más amplio en `:root`.
 - **Adaptación a móvil: sí, con límites** (RNF-23 reinterpretado, ADR-0015). Asistencias,
   reportes y consulta de docentes se adaptan. La carga académica y la grilla se quedan en
   escritorio. El pase y el registro del rostro están **bloqueados** fuera de un puesto

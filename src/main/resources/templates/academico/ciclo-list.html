@@ -5,7 +5,7 @@
     <title>Ciclos lectivos - Visum</title>
 </head>
 <body>
-    <section class="ciclos-list">
+    <section class="ciclos-list pantalla-listado">
         <header class="page-header page-header--with-action">
             <div>
                 <h1>Ciclos lectivos</h1>
@@ -38,7 +38,7 @@
         </aside>
 
         <!-- ================= Listado ================= -->
-        <div class="card card--no-padding" th:if="${!#lists.isEmpty(ciclos)}">
+        <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
                 <table class="table">
                     <thead>
@@ -107,17 +107,22 @@
                                 </form>
                             </td>
                         </tr>
+
+                        <!-- Sin ciclos el recuadro no desaparece: queda con el aviso adentro.
+                             Antes esto era una tarjeta aparte debajo de la tabla, y la tabla
+                             se ocultaba entera: la pantalla quedaba sin el marco de lo que
+                             uno vino a ver. -->
+                        <tr th:if="${#lists.isEmpty(ciclos)}">
+                            <td colspan="6" class="table__empty">
+                                <strong>Todavía no hay ningún ciclo lectivo</strong>
+                                Hasta que crees uno no vas a poder cargar comisiones, porque
+                                cada comisión tiene que pertenecer a un año.
+                                <a th:href="@{/ciclos/nuevo}">Crear el primero</a>.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="card" th:if="${#lists.isEmpty(ciclos)}">
-            <p>
-                Todavía no hay ningún ciclo lectivo. Hasta que crees uno no vas a poder cargar
-                comisiones, porque cada comisión tiene que pertenecer a un año.
-                <a th:href="@{/ciclos/nuevo}">Crear el primero</a>.
-            </p>
         </div>
 
         <!-- ================= Copiar la oferta ================= -->

@@ -5,7 +5,7 @@
     <title>Días sin clase - Visum</title>
 </head>
 <body>
-    <section class="dias-sin-clase">
+    <section class="dias-sin-clase pantalla-listado">
         <header class="page-header page-header--with-action">
             <div>
                 <h1>Días sin clase</h1>
@@ -68,7 +68,7 @@
         </div>
 
         <!-- ================= Listado ================= -->
-        <div class="card card--no-padding" th:if="${!#lists.isEmpty(dias)}">
+        <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
                 <table class="table" id="tabla-dias">
                     <thead>
@@ -115,17 +115,21 @@
                                 Probá con otro texto, o elegí "Todos los tipos".
                             </td>
                         </tr>
+
+                        <!-- Sin días cargados el recuadro queda igual, con el aviso adentro.
+                             Es otra cosa que la fila de arriba: aquella dice que el filtro no
+                             encontró nada, esta que no hay nada que encontrar. -->
+                        <tr th:if="${#lists.isEmpty(dias)}">
+                            <td colspan="5" class="table__empty">
+                                <strong>No hay ningún día cargado para
+                                    <span th:text="${anioSeleccionado}">2026</span></strong>
+                                Sin esto, un feriado genera una ausencia automática para cada
+                                docente que tenía clase.
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-        </div>
-
-        <div class="card" th:if="${#lists.isEmpty(dias)}">
-            <p>
-                No hay ningún día cargado para <span th:text="${anioSeleccionado}">2026</span>.
-                Sin esto, un feriado genera una ausencia automática para cada docente que
-                tenía clase.
-            </p>
         </div>
 
     </section>

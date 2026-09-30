@@ -21,15 +21,17 @@
  *     muestra todos, agrupados, y colapsa a iconos o a cajón según el ancho.
  *     Las clases .navbar* siguen definidas para las pantallas sin migrar.
  *
- *  3. Densidad conmutable. --row-h y --cell-y salen de data-densidad en <html>,
- *     así que la misma tabla sirve para revisar treinta filas o para leer una.
+ *  3. Un solo alto de fila. Hubo un conmutador de densidad con tres niveles;
+ *     se sacó. Elegir entre tres altos de fila no es una decisión que el
+ *     listado le tenga que pedir a nadie, y la que se usaba era siempre la
+ *     misma. Quedaron los valores del nivel amplio, que es el que se lee.
  *
  *  4. Tema claro y oscuro recalibrados. Los pares texto/fondo se volvieron a
  *     medir; ninguno baja de 4.5:1, y los tintes de estado tienen su propio
  *     color de texto por tema, que es donde la hoja anterior perdía contraste.
  *
  *  El tema lo decide data-tema en <html>, puesto por el script inline del
- *  layout antes del primer paint. La densidad, data-densidad, igual.
+ *  layout antes del primer paint.
  * ========================================================================== */
 
 /* ============================================================================
@@ -170,14 +172,15 @@
     --content-max:1320px;
     --form-max:   780px;
 
-    /* ---- Densidad ----
-       La sobreescribe data-densidad. Afecta al alto de fila, al padding de las
-       tarjetas y al gap: si sólo cambiara el alto de fila, una tabla compacta
-       dentro de una tarjeta amplia se veía desbalanceada. */
-    --row-h:    46px;
-    --cell-y:   11px;
-    --card-pad: 20px;
-    --gap:      16px;
+    /* ---- Alto de fila y aire de las tarjetas ----
+       Van juntos a propósito: una tabla apretada dentro de una tarjeta con
+       mucho aire se ve desbalanceada. Son los valores del nivel "amplio" del
+       conmutador de densidad que hubo hasta acá; el conmutador se sacó y estos
+       quedaron como los únicos. */
+    --row-h:    58px;
+    --cell-y:   16px;
+    --card-pad: 24px;
+    --gap:      20px;
 
     /* ---- Movimiento ----
        Tres escalones. El easing es siempre el mismo: salida rápida y frenada
@@ -268,10 +271,6 @@
     --shadow-lg: 0 24px 56px -14px rgba(16, 24, 40, .22);
     --scrim:     rgba(20, 28, 38, .42);
 }
-
-/* ---- Densidad, elegida por la persona y guardada en localStorage ---- */
-:root[data-densidad="compacta"] { --row-h: 37px; --cell-y: 7px;  --card-pad: 16px; --gap: 12px; }
-:root[data-densidad="amplia"]   { --row-h: 58px; --cell-y: 16px; --card-pad: 24px; --gap: 20px; }
 
 /* ---- Barra lateral colapsada ---- */
 :root[data-lateral="cerrado"] { --lateral-w: var(--lateral-wc); }
@@ -992,26 +991,6 @@ input, select, button, textarea { font-family: inherit; }
 }
 
 /* ============================================================================
- *  CONMUTADOR SEGMENTADO
- *  Dos o tres opciones excluyentes en una sola caja del alto de un control.
- *  Lo usa el selector de densidad de las tablas.
- * ========================================================================== */
-.segmentado {
-    display: inline-flex; height: var(--h-ctl); padding: 3px; gap: 2px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
-}
-.segmentado__opcion {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-width: 30px; height: 100%; padding: 0 8px;
-    border: none; border-radius: var(--r-sm);
-    background: transparent; color: var(--text-dim);
-    font-size: .82rem; cursor: pointer;
-    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
-}
-.segmentado__opcion:hover { color: var(--text); }
-.segmentado__opcion[aria-pressed="true"] { background: var(--primary-tint); color: var(--primary); }
-
-/* ============================================================================
  *  FORMULARIOS
  * ========================================================================== */
 .form-group { margin-bottom: var(--space); }
@@ -1490,14 +1469,16 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 /* ---- Marco de la tabla ----
    Scroll horizontal si es ancha y vertical si es larga, con el encabezado a la
-   vista. El alto máximo se calcula contra la ventana: lo que sobra arriba
-   (barra, título, filtros) es parecido en todas las pantallas de listado, así
-   la tabla usa todo el alto que haya sin empujar el resto fuera de vista. */
+   vista.
+
+   El alto lo decide la pantalla que la contiene, no esta regla. En un listado
+   (.pantalla-listado, más abajo) la tabla se queda con todo el alto que sobra;
+   en una tarjeta suelta, con el de su contenido. Antes acá había un
+   max-height: calc(100vh - 22rem): un número adivinado sobre cuánto ocupaba lo
+   de arriba, que erraba en cuanto una pantalla tenía una fila más de filtros. */
 .table-wrap {
     position: relative;
     overflow: auto;
-    max-height: calc(100vh - 22rem);
-    min-height: 9rem;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
 }
@@ -1507,11 +1488,84 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .table-wrap::-webkit-scrollbar-track { background: transparent; }
 .table-wrap .table { min-width: 760px; }
 
-/* Tablas cortas dentro de una tarjeta (las materias de cada año, los horarios de cada
-   comisión): conservan el desplazamiento de costado, pero no el alto fijo ni el mínimo,
-   que son del listado principal. Con ellos cada tarjeta quedaba con un hueco debajo de
-   sus dos o tres filas. */
+/* Se conserva por las pantallas que la traen escrita. Desde que .table-wrap no fija
+   alto, no cambia nada: describe lo que ya es el comportamiento por defecto. */
 .table-wrap--libre { max-height: none; min-height: 0; }
+
+/* ============================================================================
+ *  PANTALLA DE LISTADO
+ *  Los catálogos —docentes, usuarios, carreras, materias, comisiones, horarios,
+ *  ciclos, días sin clase— ocupan exactamente la ventana, y el único que se
+ *  desplaza es el cuerpo de la tabla. El encabezado, los filtros y las columnas
+ *  quedan quietos.
+ *
+ *  Por qué. La tabla tenía un alto máximo calculado a ojo contra la ventana, y
+ *  la página entera se desplazaba. Con pocas filas la tarjeta quedaba flotando
+ *  arriba con la mitad de la pantalla vacía abajo; con muchas, al bajar se iban
+ *  los filtros y el encabezado de la tabla, y había que volver arriba para
+ *  acordarse de qué columna era cada una.
+ *
+ *  Se activa con :has() desde el <section> de la pantalla, y no con una clase
+ *  en <body>: la pantalla es la que sabe lo que es, y el layout no tiene que
+ *  enterarse de cuál se está mostrando.
+ *
+ *  Sólo de 761px para arriba. Abajo de eso la tabla se vuelve tarjetas
+ *  (ver el bloque responsive) y encerrarlas en una caja del alto de la ventana
+ *  da dos desplazamientos anidados en una pantalla que apenas tiene alto.
+ * ========================================================================== */
+@media (min-width: 761px) {
+    .app:has(.pantalla-listado) { height: 100vh; min-height: 0; }
+
+    /* overflow: hidden y no auto: acá no tiene que aparecer NINGUNA barra. La
+       única que se ve es la del cuerpo de la tabla. */
+    .app:has(.pantalla-listado) .app__col { min-height: 0; overflow: hidden; }
+
+    /* auto y no hidden: es la válvula. Si la ventana es tan baja que ni con la
+       tabla en su mínimo entra todo --una notebook chica con el navegador a
+       media pantalla--, esta columna se desplaza y nada queda inalcanzable. En
+       una ventana normal no se desplaza nunca. */
+    .app:has(.pantalla-listado) .container {
+        display: flex; flex-direction: column;
+        min-height: 0; overflow: auto;
+        /* El respiro de abajo lo da el padding de la ventana, no los 56px que
+           dejaba la página larga para que el último renglón no quedara pegado. */
+        padding-bottom: clamp(16px, 2.2vw, 28px);
+    }
+
+    .pantalla-listado {
+        display: flex; flex-direction: column;
+        flex: 1; min-height: 0;
+    }
+
+    /* Nada de lo de arriba ni de lo de abajo se achica para que entre la tabla:
+       un filtro a medio alto o una tarjeta de nota recortada es peor que
+       desplazar. El único que cede es el cuerpo de la tabla. */
+    .pantalla-listado > * { flex-shrink: 0; }
+
+    /* La tarjeta de la tabla es lo que crece, y lo dice ella con su clase. Lo de
+       arriba --título, filtros-- mide lo que mide, y lo que sobra es de la
+       tabla. Va marcada y no por posición: hay listados con una tarjeta de nota
+       debajo de la tabla, y un :last-child estiraría esa. */
+    .pantalla-listado > .listado-caja {
+        flex: 1 1 auto;
+        /* El mínimo es lo que hace que la válvula de arriba sirva: sin él, la
+           caja se encogería hasta dejar la tabla en nada antes de desplazar. Da
+           para el encabezado y tres filas. */
+        min-height: 16rem;
+        display: flex; flex-direction: column;
+        margin-bottom: 0;
+    }
+    .pantalla-listado .table-wrap { flex: 1; min-height: 0; }
+
+    /* Sin filas, el aviso se lleva la caja entera y queda centrado, en vez de
+       ser un renglón perdido arriba de un rectángulo vacío. La condición mira
+       la FILA y no la celda: la celda nunca lleva [hidden], lo lleva el <tr>
+       que filtro-tabla.js muestra y esconde. */
+    .pantalla-listado .table-wrap:has(tr:not([hidden]) > .table__empty) > .table {
+        height: 100%;
+    }
+    .pantalla-listado .table__empty { vertical-align: middle; }
+}
 
 /* Aviso de que la tabla sigue hacia un costado: el borde que corta se desvanece. Las
    clases las pone table-scroll.js según dónde esté el desplazamiento; hasta ahora no

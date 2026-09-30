@@ -8,7 +8,7 @@
  *  Se lee una vez; despues estorba. El cuadro trae una cruz para cerrarlo, y el
  *  titulo de la pantalla una "i" discreta para volver a abrirlo, como la que
  *  explica donde esta el codigo de seguridad de una tarjeta. Lo cerrado se
- *  recuerda en este navegador, igual que el tema y la densidad: es una comodidad
+ *  recuerda en este navegador, igual que el tema: es una comodidad
  *  de quien mira, no un dato de la cuenta.
  *
  *  Sin JavaScript el cuadro queda abierto y no aparece ningun boton: se pierde el

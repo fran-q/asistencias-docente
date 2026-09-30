@@ -5,7 +5,7 @@
     <title>Materias - Visum</title>
 </head>
 <body>
-    <section class="materias-list">
+    <section class="materias-list pantalla-listado">
         <header class="page-header page-header--with-action">
             <div>
                 <h1>Materias</h1>
@@ -50,37 +50,10 @@
                     aria-label="Filtrar por titular">
                 <option value="">Todos los titulares</option>
             </select>
-            <!-- Mismo selector de densidad que el listado de docentes. La preferencia es
-                 global --la guarda densidad.js-- pero el control conviene tenerlo en los
-                 cuatro catalogos, que es donde el alto de fila cambia algo. -->
-            <div class="segmentado" role="group" aria-label="Densidad de la tabla">
-                <button type="button" class="segmentado__opcion" data-densidad="compacta"
-                        title="Densidad compacta" aria-label="Densidad compacta">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="equilibrada"
-                        title="Densidad equilibrada" aria-label="Densidad equilibrada">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="amplia"
-                        title="Densidad amplia" aria-label="Densidad amplia">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 8h16M4 16h16"/>
-                    </svg>
-                </button>
-            </div>
-
             <span class="filtro__resultado"></span>
         </div>
 
-        <div class="card card--no-padding">
+        <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
                 <!-- data-ordenable: ordena en el navegador. En un catalogo el listado completo
                      ya vino en la pagina, asi que ir al servidor por otro orden seria un viaje

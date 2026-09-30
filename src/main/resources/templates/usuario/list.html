@@ -6,7 +6,7 @@
     <title>Usuarios del sistema - Visum</title>
 </head>
 <body>
-    <section class="usuarios-list">
+    <section class="usuarios-list pantalla-listado">
         <header class="page-header page-header--with-action">
             <div>
                 <h1>Usuarios del sistema</h1>
@@ -36,37 +36,10 @@
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
-            <!-- Mismo selector de densidad que el resto de los listados. La preferencia es
-                 global --la guarda densidad.js-- pero el control conviene tenerlo en cada
-                 listado, que es donde el alto de fila cambia algo. -->
-            <div class="segmentado" role="group" aria-label="Densidad de la tabla">
-                <button type="button" class="segmentado__opcion" data-densidad="compacta"
-                        title="Densidad compacta" aria-label="Densidad compacta">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="equilibrada"
-                        title="Densidad equilibrada" aria-label="Densidad equilibrada">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="amplia"
-                        title="Densidad amplia" aria-label="Densidad amplia">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 8h16M4 16h16"/>
-                    </svg>
-                </button>
-            </div>
-
             <span class="filtro__resultado"></span>
         </div>
 
-        <div class="card card--no-padding">
+        <div class="card card--no-padding listado-caja">
           <div class="table-wrap">
             <table class="table table--acciones-fijas" id="tabla-usuarios" data-ordenable>
                 <thead>

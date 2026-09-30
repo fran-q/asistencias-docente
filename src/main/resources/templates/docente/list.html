@@ -19,9 +19,10 @@
       terminaba de leer la fila, y había que volver de costado para llegar al
       botón de la fila que ya había elegido.
 
-    · Selector de densidad. Las mismas pantallas se usan para revisar treinta
-      docentes de corrido y para corregir uno; un solo alto de fila sirve bien
-      para una de las dos cosas. La elección se guarda.
+    · pantalla-listado. La pantalla ocupa exactamente la ventana y el único que
+      se desplaza es el cuerpo de la tabla: los filtros y el encabezado de las
+      columnas quedan quietos. Hubo un selector de densidad con tres altos de
+      fila; se sacó. Quedó el más amplio, que es el que se leía.
 
     · Columna de correo y avatar con iniciales. El correo estaba sólo en la ficha,
       así que para saber a quién escribirle había que entrar de a uno. El avatar
@@ -38,7 +39,7 @@
     <title>Docentes - Visum</title>
 </head>
 <body>
-    <section class="docentes-list">
+    <section class="docentes-list pantalla-listado">
         <header class="page-header page-header--with-action">
             <div>
                 <h1>Docentes</h1>
@@ -74,34 +75,10 @@
                 <option value="">Todos los estados</option>
             </select>
 
-            <div class="segmentado" role="group" aria-label="Densidad de la tabla">
-                <button type="button" class="segmentado__opcion" data-densidad="compacta"
-                        title="Densidad compacta" aria-label="Densidad compacta">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="equilibrada"
-                        title="Densidad equilibrada" aria-label="Densidad equilibrada">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                </button>
-                <button type="button" class="segmentado__opcion" data-densidad="amplia"
-                        title="Densidad amplia" aria-label="Densidad amplia">
-                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor"
-                         stroke-width="1.9" stroke-linecap="round" aria-hidden="true">
-                        <path d="M4 8h16M4 16h16"/>
-                    </svg>
-                </button>
-            </div>
-
             <span class="filtro__resultado"></span>
         </div>
 
-        <div class="card card--no-padding">
+        <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
                 <table class="table table--tarjetas table--acciones-fijas" id="tabla-docentes"
                        data-ordenable role="table">

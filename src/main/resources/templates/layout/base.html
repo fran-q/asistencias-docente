@@ -41,7 +41,6 @@
                     ? 'claro' : 'oscuro';
             }
             raiz.setAttribute('data-tema', tema);
-            raiz.setAttribute('data-densidad', leer('densidad') || 'equilibrada');
             raiz.setAttribute('data-lateral', leer('lateral') || 'abierto');
             raiz.setAttribute('data-cajon', 'cerrado');
 
@@ -308,7 +307,6 @@
     <script th:src="@{/js/comun/tema.js}" defer></script>
     <script th:src="@{/js/comun/lateral.js}" defer></script>
     <script th:src="@{/js/comun/reloj.js}" defer></script>
-    <script th:src="@{/js/comun/densidad.js}" defer></script>
     <script th:src="@{/js/comun/tabla-orden.js}" defer></script>
     <script th:src="@{/js/comun/form-validacion.js}" defer></script>
     <script th:src="@{/js/comun/nombre-propio.js}" defer></script>
