@@ -499,3 +499,4 @@ formalmente al alcance acordado.
 | Puestos de captura autorizados | `PuestoCapturaService`, `PuestoCapturaInterceptor`, `puestos_captura` | ADR-0015 — la captura biométrica solo desde equipos registrados. Habilita el acceso móvil al resto |
 | Marca sin cámara desde el pase | `BloquePresenciaService.registrarSinCamara`, V029 | ADR-0021 — el docente al que el reconocimiento no acierta se quedaba sin forma de registrar en el momento |
 | Una sesión por cuenta | `SesionesActivasService`, `SesionPorConfirmarInterceptor` | ADR-0020 |
+| Asistente de primer arranque | `InstalacionService`, `InstalacionController`, `InstalacionInterceptor`, `auth/instalacion.html` | ADR-0022 — en una instalación local no hay SMTP, y sin correo el alta por código no se puede completar: la instalación quedaría sin forma de crear su primera cuenta. **Apagado por defecto** (`app.instalacion.asistente-inicial`), y se apaga solo apenas existe una institución |

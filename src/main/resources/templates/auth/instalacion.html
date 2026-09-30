@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<!--
+  Configuración inicial de una instalación local (ADR-0022).
+
+  Es la primera pantalla que ve quien acaba de instalar el sistema, y la única
+  vez que se ve: crea la institución y la cuenta con la que se entra. Después de
+  eso la ruta responde 404.
+
+  No hay paso de código como en el alta pública, porque en esta máquina no hay
+  servidor de correo. Tampoco hay enlace para volver al login: todavía no existe
+  ninguna cuenta con la cual entrar, y ofrecerlo sería mandar a una pantalla sin
+  salida.
+-->
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración inicial - Visum</title>
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
+            if (!t) {
+                t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+                    ? 'claro' : 'oscuro';
+            }
+            document.documentElement.setAttribute('data-tema', t);
+        })();
+    </script>
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+<div class="auth">
+
+    <aside th:replace="~{auth/marca :: panel}"></aside>
+
+    <main class="auth__panel">
+        <div class="auth__tema">
+            <button type="button" id="tema-toggle" class="btn-icono"
+                    aria-label="Cambiar entre modo claro y oscuro" title="Cambiar de tema">
+                <svg th:replace="~{layout/iconos :: sol}"></svg>
+                <svg th:replace="~{layout/iconos :: luna}"></svg>
+            </button>
+        </div>
+
+        <div class="auth__centro">
+            <div class="auth__form auth__form--ancha">
+
+                <div class="auth__logo auth__logo--movil">
+                    <span class="auth__logo-marca" aria-hidden="true">V</span>
+                    <span class="auth__logo-texto">Visum</span>
+                </div>
+
+                <h1>Configuración inicial</h1>
+                <p>
+                    Esta pantalla aparece una sola vez, en una instalación nueva. Los datos que
+                    cargues acá crean la institución y la cuenta con la que vas a entrar de acá
+                    en adelante.
+                </p>
+
+                <form th:action="@{/instalacion}" method="post" th:object="${form}" novalidate>
+
+                    <!-- Nombre o usuario ya tomados llegan como error global, no de campo. -->
+                    <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
+                        <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
+                    </div>
+
+                    <p class="form-seccion">Institución</p>
+
+                    <div class="form-group">
+                        <label for="nombreInstitucion">Nombre <span class="required">*</span></label>
+                        <input type="text" id="nombreInstitucion" th:field="*{nombreInstitucion}"
+                               required autofocus maxlength="150"
+                               th:errorclass="is-invalid">
+                        <span class="form-hint">
+                            El nombre completo y oficial. Es el que va a figurar en los reportes
+                            y en las constancias de datos biométricos, así que tiene que
+                            identificar al establecimiento tal cual es.
+                        </span>
+                        <span class="form-error" th:if="${#fields.hasErrors('nombreInstitucion')}"
+                              th:errors="*{nombreInstitucion}">Error</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cuit">CUIT</label>
+                        <input type="text" id="cuit" th:field="*{cuit}" maxlength="13"
+                               inputmode="numeric"
+                               placeholder="30-12345678-1" style="font-family:var(--font-mono)"
+                               th:errorclass="is-invalid">
+                        <span class="form-hint">
+                            Con guiones o de corrido. Se comprueba el dígito verificador.
+                        </span>
+                        <span class="form-error" th:if="${#fields.hasErrors('cuit')}"
+                              th:errors="*{cuit}">Error</span>
+                    </div>
+
+                    <hr class="separador">
+                    <p class="form-seccion">Cuenta responsable</p>
+
+                    <div class="form-group">
+                        <label for="username">Nombre corto o siglas <span class="required">*</span></label>
+                        <!-- La regla es la de UsuarioValido, no otra: el patrón y el aviso son sus
+                             constantes PATRON_HTML y AVISO, y UsuarioValidoTest comprueba que esta
+                             plantilla las repita tal cual. -->
+                        <input type="text" id="username" th:field="*{username}" required maxlength="60"
+                               autocomplete="username"
+                               pattern="(?=(?:[^A-Za-z]*[A-Za-z]){3})[A-Za-z0-9._\-]{3,60}"
+                               data-error-patron="Tiene que tener al menos 3 letras, y solo letras sin tilde, números, punto, guion y guion bajo."
+                               data-sugerir-desde="nombreInstitucion"
+                               th:errorclass="is-invalid">
+                        <span class="form-hint">
+                            Es con lo que vas a entrar al sistema, así que conviene algo corto:
+                            las siglas del establecimiento, o el nombre resumido. Al menos 3
+                            letras; también números, punto, guion y guion bajo.
+                        </span>
+                        <span class="form-error" th:if="${#fields.hasErrors('username')}"
+                              th:errors="*{username}">Error</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Correo <span class="required">*</span></label>
+                        <input type="email" id="email" th:field="*{email}" required
+                               th:errorclass="is-invalid">
+                        <!-- Se aclara que acá no se manda nada: en el alta pública este campo
+                             recibe un código, y quien ya vio aquella pantalla esperaría lo
+                             mismo. Esta instalación no tiene por dónde mandar un correo. -->
+                        <span class="form-hint">
+                            Queda como dirección de contacto del establecimiento. Esta
+                            instalación no envía correos, así que no vas a recibir ningún
+                            código: la cuenta queda lista al terminar.
+                        </span>
+                        <span class="form-error" th:if="${#fields.hasErrors('email')}"
+                              th:errors="*{email}">Error</span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">Contraseña <span class="required">*</span></label>
+                            <div class="password-input">
+                                <input type="password" id="password" th:field="*{password}"
+                                       required autocomplete="new-password" th:errorclass="is-invalid">
+                                <button type="button" class="password-toggle"
+                                        aria-label="Mostrar contraseña"></button>
+                            </div>
+                            <!-- La regla es la de PasswordSeguraValidator, no otra: una pista
+                                 que pida algo distinto de lo que el servidor exige manda a
+                                 escribir una contraseña que después va a rechazar. -->
+                            <span class="form-hint">
+                                Entre 6 y 20, con minúscula, mayúscula y número.
+                            </span>
+                            <span class="form-error" th:if="${#fields.hasErrors('password')}"
+                                  th:errors="*{password}">Error</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmacion">Repetir contraseña <span class="required">*</span></label>
+                            <div class="password-input">
+                                <input type="password" id="confirmacion"
+                                       th:field="*{confirmacion}" required
+                                       autocomplete="new-password" th:errorclass="is-invalid">
+                                <button type="button" class="password-toggle"
+                                        aria-label="Mostrar contraseña"></button>
+                            </div>
+                            <span class="form-error" th:if="${#fields.hasErrors('confirmacion')}"
+                                  th:errors="*{confirmacion}">Error</span>
+                        </div>
+                    </div>
+
+                    <!-- Se avisa acá, junto al botón, y no en un párrafo arriba que se saltea:
+                         esta instalación no manda correos, así que no hay "olvidé mi
+                         contraseña" que dependa de una casilla. La recuperación va por la clave
+                         que dejó el instalador. -->
+                    <div class="alert alert--info" style="margin-top:var(--space)" role="note">
+                        <p>
+                            Anotá la contraseña donde la puedas encontrar. Como esta instalación
+                            no envía correos, recuperarla exige la clave de recuperación que el
+                            instalador dejó guardada.
+                        </p>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary btn--lg btn--full"
+                            style="margin-top:var(--space)" data-texto-enviando="Creando...">
+                        Crear la institución
+                    </button>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="flash-data"
+     th:attr="data-success=${flashMensaje}, data-error=${flashError}" hidden></div>
+
+<script th:src="@{/js/comun/tema.js}" defer></script>
+<script th:src="@{/js/comun/toast.js}" defer></script>
+<script th:src="@{/js/comun/envio-form.js}" defer></script>
+<script th:src="@{/js/comun/form-validacion.js}" defer></script>
+<script th:src="@{/js/comun/password-ui.js}" defer></script>
+<script th:src="@{/js/comun/sugerir-usuario.js}" defer></script>
+</body>
+</html>

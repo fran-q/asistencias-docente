@@ -99,8 +99,14 @@ public class SecurityConfig {
                 // que la protege es el codigo que se manda al correo declarado, que ademas
                 // impide que la institucion llegue a crearse sin esa direccion comprobada
                 // (ADR-0010).
+                // /instalacion es el asistente de primer arranque (ADR-0022): crea la
+                // primera cuenta de una instalacion local, asi que por definicion corre sin
+                // nadie autenticado. No queda abierta por esto: solo responde si la base no
+                // tiene ninguna institucion y si la instalacion la habilito; en cualquier otro
+                // caso es un 404.
                 .requestMatchers("/login", "/recuperar/**", "/alta-institucion/**",
                                  "/alta-institucion",
+                                 "/instalacion", "/instalacion/**",
                                  // /fonts/** va con el resto de lo estatico. Sin esta linea
                                  // la peticion de cada .woff2 cae en anyRequest().authenticated()
                                  // y se responde con la redireccion al login: el navegador

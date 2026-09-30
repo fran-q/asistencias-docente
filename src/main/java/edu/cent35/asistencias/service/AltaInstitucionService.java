@@ -118,16 +118,35 @@ public class AltaInstitucionService {
     }
 
     /**
-     * Paso 2: crea la institución y su cuenta en una sola transacción, con el correo ya
-     * comprobado. La cuenta nace verificada porque acaba de demostrar que controla esa casilla,
-     * que es exactamente lo que la verificación pide.
+     * Paso 2: crea la institución y su cuenta, con el correo ya comprobado por el código. La
+     * cuenta nace verificada porque acaba de demostrar que controla esa casilla, que es
+     * exactamente lo que la verificación pide.
      *
      * @return el usuario creado
      */
     @Transactional
     public Usuario confirmar(AltaPendiente pendiente) {
-        AltaInstitucionFormDto form = pendiente.getDatos();
+        Usuario guardado = crearInstitucionConCuenta(pendiente.getDatos());
+        log.info("Alta de institucion confirmada por codigo: usuario_id={}", guardado.getId());
+        return guardado;
+    }
 
+    /**
+     * Crea la institución y su primera cuenta en una sola transacción.
+     *
+     * <p>Vive acá y no en cada uno porque son dos los caminos que pueden hacer nacer una
+     * institución: el alta pública, que comprueba el correo con un código (ADR-0010), y el
+     * asistente de primer arranque de una instalación local, donde no hay correo que comprobar
+     * (ADR-0022). Dos copias de esto terminarían creando cuentas con reglas distintas — una con
+     * persona y otra sin, una activa y otra no — y la diferencia recién se vería el día que
+     * alguien no pueda entrar.
+     *
+     * <p><b>Del correo responde quien llama.</b> Acá la cuenta se marca verificada sin
+     * preguntar nada: ninguno de los dos caminos llega hasta este método sin haber resuelto esa
+     * pregunta a su manera.
+     */
+    @Transactional
+    public Usuario crearInstitucionConCuenta(AltaInstitucionFormDto form) {
         // Se repite la comprobacion: entre el paso 1 y el 2 pasaron minutos, y en el medio
         // otra persona pudo haber registrado ese mismo nombre.
         verificarQueNoExista(form);
@@ -158,7 +177,7 @@ public class AltaInstitucionService {
         usuario.setInstitucionId(institucion.getId());
 
         Usuario guardado = usuarioRepository.save(usuario);
-        log.info("Alta de institucion confirmada: institucion_id={}, nombre='{}', usuario_id={}",
+        log.info("Institucion creada: institucion_id={}, nombre='{}', usuario_id={}",
                  institucion.getId(), institucion.getNombre(), guardado.getId());
         return guardado;
     }

@@ -292,7 +292,7 @@ verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/
 `./gradlew build --no-daemon` sobre H2. Sube el reporte si falla. Ese `build` corre las
 dos suites —unitarios e integración— porque `check` depende de ambas; ver `04-convenciones.md`.
 
-## Los 21 ADR
+## Los 22 ADR
 
 Viven en `Documentacion/4-arquitectura/adr/`. Un ADR dice **por qué** se decidió algo y
 qué se descartó.
@@ -320,3 +320,4 @@ qué se descartó.
 | 0019 | Modo kiosco: tomar asistencia sin sesión abierta | Propuesta |
 | 0020 | Una sesión por cuenta, y la desplaza quien entra | Propuesta |
 | 0021 | La marca sin cámara la carga el admin, en el momento | Propuesta |
+| 0022 | Instalación local: instalador, servicio y primera cuenta sin correo | Propuesta |

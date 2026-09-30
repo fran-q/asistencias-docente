@@ -1,4 +1,5 @@
 package edu.cent35.asistencias.config;
+import edu.cent35.asistencias.interceptor.InstalacionInterceptor;
 import edu.cent35.asistencias.interceptor.VerificacionInterceptor;
 import edu.cent35.asistencias.interceptor.KioscoTenantInterceptor;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
@@ -70,6 +71,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         "/kiosco", "/kiosco/**"
     };
 
+    private final InstalacionInterceptor instalacionInterceptor;
     private final TenantInterceptor tenantInterceptor;
     private final VerificacionInterceptor verificacionInterceptor;
     private final SesionPorConfirmarInterceptor sesionPorConfirmarInterceptor;
@@ -90,6 +92,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // Antes que todo lo demas: en una instalacion sin configurar no hay institucion, y
+        // sin institucion no hay tenant que publicar ni correo que revisar. Se saltea la
+        // propia pantalla del asistente, que si no se redirige a si misma para siempre.
+        registry.addInterceptor(instalacionInterceptor)
+                .excludePathPatterns(SIN_INTERCEPTAR)
+                .excludePathPatterns("/instalacion", "/instalacion/**")
+                .order(-1);
         registry.addInterceptor(kioscoTenantInterceptor)
                 .addPathPatterns(PUEDEN_SIN_SESION)
                 .order(0);
