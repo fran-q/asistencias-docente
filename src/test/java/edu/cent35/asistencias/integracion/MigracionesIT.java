@@ -44,7 +44,17 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 class MigracionesIT {
 
-    private static final String URL_BASE = "jdbc:mariadb://localhost:3306/";
+    /**
+     * El puerto, de {@code MARIADB_PORT} y si no el de siempre.
+     *
+     * <p>Existe para poder correr este mismo test contra la MariaDB que lleva el instalador, que
+     * escucha en un puerto propio (ADR-0022). Sin esto, lo unico verificado seria el motor del
+     * equipo de desarrollo, y el que se le entrega a la institucion es otro.
+     */
+    private static final String PUERTO =
+        System.getenv("MARIADB_PORT") == null ? "3306" : System.getenv("MARIADB_PORT");
+
+    private static final String URL_BASE = "jdbc:mariadb://localhost:" + PUERTO + "/";
     private static final String BASE = "asistencias_test_migraciones";
 
     private static final String USUARIO = credencial("spring.datasource.username", "MARIADB_USER");
@@ -64,6 +74,14 @@ class MigracionesIT {
      * saltea solo, que es el mismo camino que ya tomaba cuando no había MariaDB a mano.
      */
     private static String credencial(String propiedad, String variableDeEntorno) {
+        // La variable de entorno PRIMERO: lo que se pasa explicitamente le gana al archivo del
+        // entorno de desarrollo. Es lo que permite correr este test contra otra base --la que
+        // lleva el instalador, por ejemplo-- sin tocar la configuracion local de nadie.
+        String delEntorno = System.getenv(variableDeEntorno);
+        if (delEntorno != null && !delEntorno.isBlank()) {
+            return delEntorno;
+        }
+
         try (InputStream in = MigracionesIT.class.getResourceAsStream("/application-local.properties")) {
             if (in != null) {
                 Properties p = new Properties();

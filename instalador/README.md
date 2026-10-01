@@ -24,10 +24,19 @@ asistencias/vendor/
 └── WinSW.exe       <- el ejecutable de WinSW para .NET 4, renombrado asi
 ```
 
-- **MariaDB**, versión ZIP para Windows x86_64, de mariadb.org. Es **GPLv2**: distribuirla junto
-  a la aplicación es legítimo, y corresponde dejar constancia en el apartado de licencias, igual
-  que se hizo con la elección de OpenPDF (RNF-18).
-- **WinSW**, licencia MIT, de su página de releases en GitHub. Alcanza el ejecutable suelto.
+- **MariaDB 10.4.34**, ZIP para Windows x86_64, de `archive.mariadb.org`. Es **GPLv2**:
+  distribuirla junto a la aplicación es legítimo, y corresponde dejar constancia en el apartado
+  de licencias, igual que se hizo con la elección de OpenPDF (RNF-18).
+
+  **La versión no es libre de elegir, y conviene saber por qué.** El esquema no aplica sobre
+  10.6 ni sobre 10.11: esas versiones rechazan que una columna esté a la vez en un `CHECK` y en
+  una foránea con `ON DELETE SET NULL`, que es el caso de `asistencias.modelo_facial_id`. Está
+  medido y documentado en **TD-011**. La 10.4 **no tiene soporte desde junio de 2024**: se usa
+  porque es la única sobre la que el esquema corre, y mover el motor es trabajo de TD-011, no
+  de este README.
+
+- **WinSW 2.12.0**, licencia MIT, archivo `WinSW.NET4.exe` de su página de releases en GitHub,
+  renombrado a `WinSW.exe`. Alcanza el ejecutable suelto (0,8 MB).
 
 Con eso puesto:
 
@@ -71,9 +80,22 @@ le corresponde.
 **`base-root.txt`** guarda la contraseña de administración de la base. La aplicación no la usa
 —se conecta con la suya—, pero sin ella no hay forma de entrar a la base a mano.
 
-## Lo que todavía no está probado
+## Qué está verificado y qué no
 
-Nada de esto se corrió en una máquina de verdad. Lo verificado hasta acá es que los scripts
-parsean, que la aplicación empaquetada arranca con el perfil de instalación, y que falla donde
-tiene que fallar cuando la base no está. La instalación completa —con su webcam— es la prueba
-que falta.
+**Verificado:**
+
+- Las **16 migraciones aplican de cero** sobre la MariaDB que lleva el paquete (10.4.34), y el
+  esquema que producen es el que esperan las entidades. Es `MigracionesIT` corriendo contra una
+  instancia levantada desde `vendor/mariadb`, no contra el XAMPP de desarrollo.
+- La aplicación empaquetada **arranca con el perfil de instalación** y falla donde corresponde
+  cuando la base todavía no está.
+- Los dos scripts **parsean** sin errores.
+
+**Sin verificar:**
+
+- La instalación de verdad: registrar los servicios necesita permisos de administrador y una
+  máquina donde hacerlo.
+- El reconocimiento facial con una webcam.
+
+El paquete completo pesa unos **500 MB**: 223 de MariaDB, 149 del runtime de Java y 129 de la
+aplicación.

@@ -24,6 +24,7 @@ va el resumen operativo.
 | TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | Abierta |
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 | TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
+| TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy; **alta para el rumbo** | Abierta — bloquea mover el motor |
 
 **Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB) y TD-007 (el
 aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes).
@@ -49,6 +50,14 @@ eso llega a doler.
 **TD-006** sí se vuelve real cuando el sistema salga a la nube y tenga carga verdadera: el
 reporte sin paginación carga todo en memoria. Próximo paso definido: `Pageable` y streaming
 del CSV.
+
+**TD-011 es el hallazgo que más lejos llega.** `V001` no aplica sobre MariaDB 10.6 ni 10.11:
+rechazan que una columna esté a la vez en un `CHECK` y en una foránea con `ON DELETE SET NULL`,
+que es el caso de `asistencias.modelo_facial_id`. Comprobado con un caso mínimo en 10.6.21 y
+10.11.11, y las 16 migraciones aplican enteras sobre 10.4.34. Por eso el instalable lleva 10.4,
+que **no tiene soporte desde junio de 2024**. No es solo un problema del instalable: el punto 1
+del rumbo (nube) y el punto 2 (base más robusta) pasan por acá. El detalle y los dos caminos
+posibles están en `TECH_DEBT.md`.
 
 **TD-010 es la contracara de la clave de recuperación.** La clave destraba la cuenta
 INSTITUCION, que es la que, perdida, dejaría la instalación inservible. Para una cuenta ADMIN no
@@ -131,6 +140,10 @@ contemplaba la migración desde el principio). Salir a internet arrastra:
 - Revisión del cifrado en tránsito y de dónde vive la clave AES.
 
 ### 2. Base de datos más robusta
+
+**Ahora hay un motivo concreto y medido, además del pedido del cliente: TD-011.** El esquema no
+aplica sobre ninguna versión soportada de MariaDB, así que "base más robusta" dejó de ser una
+mejora deseable y pasó a ser la condición para correr sobre un motor con parches.
 
 El cliente lo pidió explícitamente. Todavía **sin definir el alcance**: puede ir desde
 normalización e índices hasta cambio de motor. Si se evalúa PostgreSQL, tener en cuenta
