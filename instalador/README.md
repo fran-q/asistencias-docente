@@ -5,8 +5,13 @@ la institución: sin internet, sin terminal y sin instalar Java ni MariaDB apart
 
 ## Qué hay acá
 
+Este README es para **quien arma el paquete**. Para **quien lo instala en la institución** está
+[GUIA-DE-INSTALACION.md](GUIA-DE-INSTALACION.md), que viaja adentro del paquete y se lee sin
+saber nada de Gradle.
+
 | Archivo | Qué es |
 |---|---|
+| `GUIA-DE-INSTALACION.md` | La guía paso a paso para la máquina de la institución |
 | `instalar.ps1` | Inicializa la base, genera los secretos, registra los dos servicios y deja el acceso directo |
 | `desinstalar.ps1` | Saca los servicios y los accesos directos. **No borra datos ni secretos**, a propósito |
 | `visum-servicio.xml.plantilla` | Definición del servicio para WinSW. `instalar.ps1` la completa |
