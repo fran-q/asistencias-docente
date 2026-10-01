@@ -134,6 +134,26 @@ class PantallasDeListadoIT {
     }
 
     @Test
+    @DisplayName("En el reporte, el recuento y las descargas van adentro de la tarjeta de filtros")
+    void elRecuentoYLasDescargasVanEnLosFiltros() throws Exception {
+        // Estaban en una franja propia entre los filtros y la tabla, y esa franja le comía
+        // alto al listado para decir dos cosas que entran en el hueco que la última fila de
+        // filtros deja libre. Sacarlas de ahí es justo lo que un vistazo no detecta: la
+        // pantalla se ve bien igual, sólo que con menos registros a la vista.
+        String html = pantalla("/reportes");
+
+        int abre = html.indexOf("<form method=\"get\"");
+        int cierra = html.indexOf("</form>", abre);
+        assertThat(abre).as("no se encontró la barra de filtros del reporte").isNotNegative();
+
+        assertThat(html.substring(abre, cierra))
+            .as("el recuento y las descargas volvieron a quedar fuera de la tarjeta de filtros")
+            .contains("reporte__acciones")
+            .contains("Descargar PDF")
+            .contains("Descargar CSV");
+    }
+
+    @Test
     @DisplayName("Ya no queda rastro del selector de densidad en ningún listado")
     void sinSelectorDeDensidad() throws Exception {
         // Elegir entre tres altos de fila no es una decisión que el listado le tenga que

@@ -75,52 +75,60 @@
                             th:selected="${m == filtro.metodo}">AUTOMATICO</option>
                 </select>
             </div>
-            <div class="form-actions" style="margin:0;">
+            <div class="form-actions form-actions--inline">
                 <button type="submit" class="btn btn--primary" data-texto-enviando="Aplicando...">Aplicar</button>
                 <a th:href="@{/reportes}" class="btn btn--ghost">Limpiar</a>
             </div>
+
+            <!-- El recuento y las descargas, adentro de la tarjeta de filtros.
+
+                 Estaban en una franja propia entre la tarjeta y la tabla: le comían
+                 alto al listado para decir dos cosas que entran en el hueco que la
+                 última fila de filtros deja libre a la derecha.
+
+                 Van adentro del <form> y no al lado: son enlaces, no botones de
+                 envío, así que no disparan nada. Y lo que descargan es el filtro YA
+                 APLICADO --el de la URL, no el que esté tipeado en los campos--, que
+                 es justamente lo que se está viendo en la tabla.
+
+                 Los dos botones van agrupados entre sí: son la misma decisión, en qué
+                 formato me lo llevo. -->
+            <div class="reporte__acciones">
+                <span class="reporte__recuento">
+                    Resultados:
+                    <strong th:text="${#lists.size(filas)}">0</strong>
+                    fila(s)
+                    <!-- Un reporte cortado en silencio se lee como un reporte completo. -->
+                    <span th:if="${truncado}" class="badge badge--warning" style="margin-left:8px;"
+                          th:text="|de ${totalSinTope} · acotá el rango o los filtros|">de N</span>
+                </span>
+                <!-- Sin reporte no hay nada que bajar. Los botones siguen siendo links con
+                     las fechas adentro, asi que el servidor igual valida: esto es para que no
+                     se ofrezca una descarga que se sabe que no va a salir. -->
+                <div class="reporte__descargas" th:if="${error == null}">
+                    <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                                docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                                carreraId=${filtro.carreraId},
+                                                estado=${filtro.estado}, metodo=${filtro.metodo})}"
+                       class="btn btn--primary">
+                        ⬇ Descargar PDF
+                    </a>
+                    <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
+                                                docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
+                                                carreraId=${filtro.carreraId},
+                                                estado=${filtro.estado}, metodo=${filtro.metodo})}"
+                       class="btn btn--ghost btn--success">
+                        ⬇ Descargar CSV
+                    </a>
+                </div>
+            </div>
         </form>
 
-        <!-- Acciones de descarga.
-             Los dos botones van agrupados: sueltos dentro del space-between, el PDF
-             quedaba flotando en el medio de la fila, lejos del CSV y lejos del
-             recuento, como si no tuviera nada que ver con ninguno de los dos. -->
-        <div class="reporte__acciones">
-            <span>
-                Resultados:
-                <strong th:text="${#lists.size(filas)}">0</strong>
-                fila(s)
-                <!-- Un reporte cortado en silencio se lee como un reporte completo. -->
-                <span th:if="${truncado}" class="badge badge--warning" style="margin-left:8px;"
-                      th:text="|de ${totalSinTope} · acotá el rango o los filtros|">de N</span>
-            </span>
-            <!-- Sin reporte no hay nada que bajar. Los botones siguen siendo links con
-                 las fechas adentro, asi que el servidor igual valida: esto es para que no
-                 se ofrezca una descarga que se sabe que no va a salir. -->
-            <div class="reporte__descargas" th:if="${error == null}">
-            <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
-                                        docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
-                                        carreraId=${filtro.carreraId},
-                                        estado=${filtro.estado}, metodo=${filtro.metodo})}"
-               class="btn btn--primary">
-                ⬇ Descargar PDF
-            </a>
-            <a th:href="@{/reportes/csv(desde=${filtro.desde}, hasta=${filtro.hasta},
-                                        docenteId=${filtro.docenteId}, materiaId=${filtro.materiaId},
-                                        carreraId=${filtro.carreraId},
-                                        estado=${filtro.estado}, metodo=${filtro.metodo})}"
-               class="btn btn--ghost btn--success">
-                ⬇ Descargar CSV
-            </a>
-            </div>
-        </div>
-
-        <div th:if="${error != null}" class="alert alert--error"
-             style="margin-top:1rem;" role="alert">
+        <div th:if="${error != null}" class="alert alert--error" role="alert">
             <p th:text="${error}">Error</p>
         </div>
 
-        <div class="card card--no-padding listado-caja" style="margin-top:1rem;">
+        <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
                 <table class="table table--tarjetas" role="table">
                     <thead role="rowgroup">

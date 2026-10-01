@@ -990,6 +990,12 @@ input, select, button, textarea { font-family: inherit; }
     border-top: 1px solid var(--border);
 }
 
+/* En una barra de filtros los botones son un campo más de la fila, no el pie del
+   formulario: el borde que los separa del último campo de un formulario vertical
+   queda ahí como un guion suelto arriba de "Aplicar", del ancho de los dos
+   botones y sin separar nada. */
+.form-actions--inline { margin-top: 0; padding-top: 0; border-top: none; }
+
 /* ============================================================================
  *  FORMULARIOS
  * ========================================================================== */
@@ -2456,10 +2462,18 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .reporte__filtros {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 12px;
 }
+/* El recuento y las descargas son un ítem más de la fila de filtros, empujado al
+   extremo derecho: ocupan el hueco que deja la última fila en vez de una franja
+   propia entre la tarjeta y la tabla, que le comía alto al listado.
+
+   Sin ancho propio y con wrap: si los filtros llenan la fila, este bloque baja
+   entero en vez de apretar a los de al lado. */
 .reporte__acciones {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: var(--gap); margin-bottom: 12px; flex-wrap: wrap;
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 10px var(--gap);
+    margin-left: auto;
 }
+.reporte__recuento { color: var(--text-muted); font-size: .88rem; white-space: nowrap; }
 /* Los dos botones son la misma decisión —en qué formato me lo llevo— así que
    van pegados y no repartidos a lo ancho de la fila. */
 .reporte__descargas { display: flex; align-items: center; gap: 9px; }
