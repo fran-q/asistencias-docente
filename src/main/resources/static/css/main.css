@@ -2218,6 +2218,80 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
    el video queda arriba y el mensaje se va de vista, no sirve de nada. */
 @media (min-height: 800px) { .camara-layout__lateral { position: sticky; top: var(--space-lg); } }
 
+/* ============================================================================
+ *  PANTALLA CON CÁMARA, A ALTO DE VENTANA
+ *  El pase ocupa exactamente la ventana: la cámara se lleva todo el alto que
+ *  sobra y la columna de la derecha se desplaza sola, sin mover el video ni el
+ *  encabezado.
+ *
+ *  Por qué. El video tenía aspect-ratio: 4/3 y un max-height en vh calculado a
+ *  ojo. Entre los dos la caja terminaba más chata que la cámara, y como el video
+ *  va con object-fit: cover, lo que no entraba se recortaba: la imagen quedaba
+ *  cortada a la altura del cuello. Y la página entera se desplazaba, así que
+ *  bajar a leer los avisos se llevaba el video fuera de vista.
+ *
+ *  Acá el video va con object-fit: contain y ocupa la caja entera: no se recorta
+ *  nada, entre a lo ancho o a lo alto. Lo que queda desalineado con eso es el
+ *  recuadro del rostro --que se dibuja en coordenadas de la cámara-- y de eso se
+ *  encarga ajustarOverlay en pase-asistencia.js, que le da al canvas el tamaño y
+ *  la posición exactos de la imagen visible. Hasta ahora ese recuadro caía bien
+ *  sólo si la ventana tenía el alto justo para que la caja quedara en la misma
+ *  proporción que la cámara.
+ *
+ *  De 901px para arriba, que es donde la cámara y el panel van lado a lado.
+ *  Apilados, abajo de eso, la página se desplaza como siempre.
+ * ========================================================================== */
+@media (min-width: 901px) {
+    .app:has(.pantalla-camara) { height: 100vh; min-height: 0; }
+    .app:has(.pantalla-camara) .app__col { min-height: 0; overflow: hidden; }
+    /* auto y no hidden, por lo mismo que en los listados: si la ventana es tan
+       baja que ni con la cámara en su mínimo entra todo, se desplaza. */
+    .app:has(.pantalla-camara) .container {
+        display: flex; flex-direction: column;
+        min-height: 0; overflow: auto;
+        padding-bottom: clamp(16px, 2.2vw, 28px);
+    }
+
+    .pantalla-camara { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .pantalla-camara > * { flex-shrink: 0; }
+
+    .pantalla-camara .camara-layout {
+        flex: 1 1 auto; min-height: 22rem;
+        align-items: stretch;
+        /* La columna de la derecha tiene un ancho util y no mas: son un mensaje, tres
+           botones y una lista corta, y estirarlos no los hace mas legibles. Todo lo que
+           sobra va a la camara, que es lo unico que se mira de lejos, y mientras mas
+           ancha sea su columna mas alto puede usar la imagen sin recortarse. */
+        grid-template-columns: minmax(0, 1fr) clamp(300px, 26%, 24rem);
+    }
+
+    /* La columna de la cámara: la tarjeta y la caja crecen hasta el borde. */
+    .pantalla-camara .camara-layout__principal { display: flex; min-height: 0; }
+    .pantalla-camara .camara-layout__principal > .card {
+        flex: 1; min-height: 0; display: flex; margin-bottom: 0;
+        /* La caja queda centrada cuando la proporción de la cámara deja aire a
+           los costados: pegada a la izquierda se lee como un error de armado. */
+        justify-content: center;
+    }
+    .pantalla-camara .camara-caja { flex: 1; min-width: 0; height: 100%; }
+    .pantalla-camara .camara-video {
+        height: 100%; width: 100%;
+        /* Sin proporción fija y sin tope de alto: los dos juntos eran los que
+           dejaban la caja más chata que la cámara y obligaban a recortar. */
+        aspect-ratio: auto; max-height: none;
+    }
+
+    /* La columna de la derecha se desplaza sola. Sin sticky: ya no hay página
+       que acompañar, y con el alto de la ventana el panel entero está a la vista. */
+    .pantalla-camara .camara-layout__lateral {
+        position: static;
+        min-height: 0; overflow-y: auto;
+        scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
+        /* Aire para que la barra no quede encima del borde de las tarjetas. */
+        padding-right: 4px;
+    }
+}
+
 @media (max-width: 900px) {
     .camara-layout { grid-template-columns: 1fr; }
     .camara-layout__lateral { position: static; }
@@ -2234,6 +2308,19 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
     background: #0a0d11; display: block;
 }
+
+/* Las dos pantallas del pase --la completa y la ventana chica-- muestran el cuadro
+   ENTERO: con `cover` lo que no entra se recorta, y lo primero que se va es el mentón
+   de quien está parado frente a la cámara. El fondo de la caja tapa lo que sobre a los
+   costados. Las otras pantallas con cámara siguen con `cover`: el registro del rostro y
+   el kiosco encuadran de cerca y ahí recortar es lo que corresponde. */
+.pantalla-camara .camara-video,
+.pase-ventana .camara-video { object-fit: contain; }
+
+/* El canvas del recuadro: la posición y el tamaño se los da ajustarOverlay() en el
+   navegador, porque tiene que caer sobre la IMAGEN y no sobre la caja, que con `contain`
+   no son lo mismo. Estos valores son los de antes de que corra, y los que valen en las
+   pantallas cuyo script no lo reposiciona. */
 .camara-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 /* Guía sobre el video. El recuadro cambia de color según el estado, que es la
@@ -2266,22 +2353,12 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .pase__titulo { flex: 1 1 22rem; }
 
-/* El pase al kiosco, apartado al pie y a la derecha. Discreto por lo mismo que el
-   de la otra pantalla: cierra la sesión, así que tiene que estar para quien lo va a
-   buscar al final del día y no llamar la atención de quien vino a marcar asistencia. */
-.pase__pie {
-    display: flex; justify-content: flex-end;
-    margin-top: var(--space-lg);
-    padding-top: var(--space);
-    border-top: 1px solid var(--border);
-}
-.pase__ir-kiosco {
-    opacity: .6;
-    transition: opacity var(--t-fast) var(--ease), color var(--t-fast) var(--ease),
-                border-color var(--t-fast) var(--ease);
-}
-.pase__ir-kiosco:hover,
-.pase__ir-kiosco:focus-visible { opacity: 1; }
+/* El pase al kiosco, en el encabezado y a la derecha. Estuvo al pie y a media
+   opacidad: ahí no se encontraba. Lo que lo cuida no es esconderlo sino el cuadro
+   de confirmación, que dice qué pasa --se cierra la sesión-- antes de que pase.
+   Sigue siendo un botón fantasma: está a la vista sin competir con "Iniciar pase",
+   que es a lo que se viene a esta pantalla. */
+.pase__ir-kiosco { white-space: normal; text-align: center; }
 
 /* El resultado es lo segundo más importante de la pantalla: ocupa el tope de la
    columna y con cuerpo grande, para poder leerse de reojo. */

@@ -391,11 +391,58 @@
 
     // ---- Overlay ----------------------------------------------------------
 
+    /*
+     * Deja el canvas del recuadro justo encima de la imagen.
+     *
+     * Son dos cosas distintas y las dos hacen falta. La primera: el canvas se dibuja en
+     * COORDENADAS DE LA CAMARA --el servidor devuelve el recuadro del rostro en pixeles
+     * del cuadro que recibio-- asi que su bitmap tiene que medir lo que mide la camara.
+     *
+     * La segunda: el video va con object-fit: contain, que muestra el cuadro entero y
+     * deja aire de un lado. O sea que la imagen NO ocupa toda la caja, y un canvas
+     * estirado sobre la caja dibuja el recuadro corrido y deformado: justo arriba de la
+     * cara pero no sobre ella. Asi que se le calcula a mano el rectangulo que la imagen
+     * esta ocupando de verdad, que es lo mismo que hace `contain`: entra a lo ancho o a
+     * lo alto, lo que primero se llene, y se centra en el otro eje.
+     *
+     * Se escribe solo cuando cambia: esto corre con cada cuadro, y tocar cuatro estilos
+     * una vez por segundo para dejarlos igual es pedir un recalculo de layout de gratis.
+     */
     function ajustarOverlay() {
-        if (video.videoWidth > 0 && video.videoHeight > 0) {
-            overlay.width  = video.videoWidth;
-            overlay.height = video.videoHeight;
+        if (!(video.videoWidth > 0 && video.videoHeight > 0)) return;
+
+        // Solo si cambio: asignarle el ancho a un canvas lo BORRA, aunque sea el mismo
+        // valor. Esto corre tambien al cambiar el tamaño de la ventana, y ahi borraria el
+        // recuadro verde que queda en pantalla los segundos de la pausa tras marcar.
+        if (overlay.width !== video.videoWidth)   overlay.width  = video.videoWidth;
+        if (overlay.height !== video.videoHeight) overlay.height = video.videoHeight;
+
+        const cajaAncho = video.clientWidth;
+        const cajaAlto  = video.clientHeight;
+        if (!cajaAncho || !cajaAlto) return;
+
+        const proporcion = video.videoWidth / video.videoHeight;
+        let ancho = cajaAncho;
+        let alto  = cajaAncho / proporcion;
+        if (alto > cajaAlto) {
+            alto  = cajaAlto;
+            ancho = cajaAlto * proporcion;
         }
+
+        const izq = Math.round((cajaAncho - ancho) / 2) + 'px';
+        const arr = Math.round((cajaAlto - alto) / 2) + 'px';
+        ancho = Math.round(ancho) + 'px';
+        alto  = Math.round(alto) + 'px';
+
+        if (overlay.style.width === ancho && overlay.style.height === alto
+            && overlay.style.left === izq && overlay.style.top === arr) return;
+
+        overlay.style.left   = izq;
+        overlay.style.top    = arr;
+        overlay.style.right  = 'auto';
+        overlay.style.bottom = 'auto';
+        overlay.style.width  = ancho;
+        overlay.style.height = alto;
     }
 
     function dibujarRecuadro(x, y, ancho, alto, color, label) {
@@ -789,6 +836,12 @@
             }
         });
     }
+
+    /* Al cambiar el tamaño de la ventana la imagen cambia de lugar y de medida, y el
+       recuadro que esta encima tiene que seguirla. Sin esto se reacomoda recien con el
+       cuadro siguiente --hasta un segundo despues-- y, con el pase detenido y la camara
+       prendida, no se reacomoda nunca. */
+    window.addEventListener('resize', ajustarOverlay);
 
     document.addEventListener('DOMContentLoaded', function () {
         revisarOtraVentana();
