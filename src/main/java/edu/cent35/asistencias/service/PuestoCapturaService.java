@@ -320,6 +320,50 @@ public class PuestoCapturaService {
             .orElse(null);
     }
 
+    /** Lo mas alto que se puede poner el tope. Mismo limite que el formulario de la institucion. */
+    private static final short TOPE_MAXIMO = 50;
+
+    /**
+     * Cambia cuantos equipos puede tener autorizados la institucion a la vez.
+     *
+     * <p>Vive aca --y no solo en "Mi institucion"-- porque el limite se siente en la pantalla
+     * de equipos: se topa autorizando una maquina y hasta ahora habia que irse a otra
+     * pantalla, cambiarlo y volver.
+     *
+     * <p><b>No se puede poner por debajo de lo que ya hay autorizado.</b> El control que mira
+     * el tope corre al autorizar, no sobre lo existente, asi que bajarlo a dos con tres
+     * equipos vivos no revoca ninguno: dejaria la pantalla diciendo "3 de un tope de 2", un
+     * limite que el propio sistema esta incumpliendo. Se rechaza y se dice que revoque
+     * primero, que es la unica forma de que el numero signifique algo.
+     *
+     * @param tope cuantos, o null para sacar el tope
+     */
+    @Transactional
+    public void cambiarTope(Long institucionId, Short tope) {
+        if (tope != null && tope < 1) {
+            throw new IllegalArgumentException("El tope de equipos no puede ser menor que 1.");
+        }
+        if (tope != null && tope > TOPE_MAXIMO) {
+            throw new IllegalArgumentException(
+                "El tope de equipos no puede superar los " + TOPE_MAXIMO + ".");
+        }
+
+        long habilitados = contarHabilitados(institucionId);
+        if (tope != null && habilitados > tope) {
+            throw new IllegalArgumentException(
+                "Ya hay " + habilitados + " equipo(s) autorizado(s), asi que el tope no puede "
+                + "quedar en " + tope + ". Revoca los que sobren y despues bajalo.");
+        }
+
+        Institucion institucion = institucionRepository.findById(institucionId)
+            .orElseThrow(() -> new IllegalArgumentException("La institucion no existe."));
+        institucion.setMaxPuestosHabilitados(tope);
+        institucionRepository.save(institucion);
+
+        log.info("Tope de equipos de la institucion {}: {}", institucionId,
+                 tope == null ? "sin tope" : tope);
+    }
+
     private void revocarSinControles(Long puestoId, Long institucionId) {
         PuestoCaptura puesto = puestoRepository.porIdEnInstitucion(puestoId, institucionId)
             .orElseThrow(() -> new IllegalArgumentException("El puesto no existe en esta institución."));

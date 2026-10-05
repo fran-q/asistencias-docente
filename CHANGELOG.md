@@ -7,6 +7,40 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
 
 ---
 
+## Dos pasos menos en la carga
+
+**Período:** octubre de 2026.
+
+### Agregado
+
+- **El código de una comisión nueva viene sugerido.** Al elegir la materia y el período, el
+  campo se completa con el siguiente libre. Saberlo antes obligaba a abrir el listado,
+  filtrar por esa materia, ver qué había y volver.
+
+  **Sugiere, no impone.** Si la materia no tiene comisiones arranca en *A*; si las que hay son
+  letras, ofrece **la primera libre** y no la siguiente a la última —con A y C cargadas, lo que
+  falta es la B—; si son números, el siguiente. Y si la institución usa nombres de turno
+  —"Mañana", "Noche"— **no sugiere nada**, porque cualquier letra pelearía con esa convención.
+  El campo siempre se puede reemplazar.
+
+  Las comisiones dadas de baja siguen ocupando su código: el índice único no mira `activo`, así
+  que sugerir el de una inactiva daría un error recién al guardar.
+
+### Cambiado
+
+- **El tope de equipos se edita desde la pantalla de equipos.** Seguía estando en "Mi
+  institución", pero el límite se siente al autorizar una máquina: toparse ahí y tener que
+  irse a otra pantalla a cambiar un número eran tres pasos. Ahora el campo está donde se topa.
+
+- **No se puede dejar el tope por debajo de los equipos ya autorizados.** Bajarlo no revoca
+  ninguno, así que la pantalla quedaría mostrando un límite que el propio sistema incumple. Se
+  rechaza y se explica que hay que revocar primero.
+
+- **Sigue siendo del rol institucional.** El tope es una contención —cada equipo autorizado
+  guarda una credencial— y la cuenta operativa no se amplía sola su propio límite.
+
+---
+
 ## Los reportes, en gráficos
 
 **Período:** septiembre de 2026.

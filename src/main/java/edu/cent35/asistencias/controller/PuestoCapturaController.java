@@ -185,6 +185,32 @@ public class PuestoCapturaController {
         return "redirect:" + VUELTA;
     }
 
+    /**
+     * Cambia el tope de equipos desde esta misma pantalla.
+     *
+     * <p>El tope tambien se edita en "Mi institucion", junto al resto de los datos. Esta
+     * entrada existe porque el limite se siente aca: se topa al autorizar una maquina, y
+     * mandar a otra pantalla a cambiarlo y volver son tres pasos para un numero.
+     *
+     * <p>Sigue pidiendo el rol institucional, igual que autorizar y revocar. El tope es una
+     * contencion --cada equipo autorizado guarda una credencial-- y la cuenta operativa no
+     * se amplia sola su propio limite.
+     */
+    @PostMapping("/puestos/tope")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String cambiarTope(@RequestParam(required = false) Short tope,
+                              RedirectAttributes redirect) {
+        try {
+            puestoService.cambiarTope(TenantContext.getRequired(), tope);
+            redirect.addFlashAttribute("flashMensaje", tope == null
+                ? "Listo: la institucion queda sin tope de equipos."
+                : "Listo: el tope quedo en " + tope + " equipo(s).");
+        } catch (IllegalArgumentException e) {
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        }
+        return "redirect:" + VUELTA;
+    }
+
     // ========================================================================
     //  Modo kiosco: operar sin sesion abierta (RF-85, ADR-0019)
     // ========================================================================

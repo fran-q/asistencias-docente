@@ -27,7 +27,8 @@
             <form th:action="${modo == 'crear'}
                               ? @{/comisiones/nueva}
                               : @{/comisiones/{id}/editar(id=${comision.id})}"
-                  th:object="${form}" method="post" novalidate>
+                  th:object="${form}" method="post" novalidate
+                  th:attr="data-codigo-sugerido=${modo == 'crear'} ? @{/comisiones/codigo-sugerido} : null">
 
                 <div th:if="${#fields.hasGlobalErrors()}" class="alert alert--error" role="alert">
                     <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
@@ -39,7 +40,8 @@
                         <input type="text" id="codigo" th:field="*{codigo}" required
                                maxlength="30" autocomplete="off"
                                th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
-                        <small class="form-hint">Ej: <code>A</code>, <code>Mañana</code>, <code>Turno noche B</code>. Hasta 30 caracteres, único dentro de la materia.</small>
+                        <small class="form-hint">Ej: <code>A</code>, <code>Mañana</code>, <code>Turno noche B</code>. Hasta 30 caracteres, único dentro de la materia y el período.
+                            <span th:if="${modo == 'crear'}">Al elegir la materia se completa solo con el siguiente libre; se puede reemplazar.</span></small>
                         <span class="form-error" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}">err</span>
                     </div>
                     <div class="form-group">
@@ -108,6 +110,7 @@
                 </div>
             </form>
         <script th:src="@{/js/academico/academico-form.js}" defer></script>
+        <script th:src="@{/js/academico/comision-codigo.js}" defer></script>
         </div>
 
         <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene

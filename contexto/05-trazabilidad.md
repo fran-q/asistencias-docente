@@ -69,6 +69,7 @@ en ADR-0007.
 |---|---|---|---|
 | RF-11 | Gestión de carreras | ✅ | `CarreraController` → `/carreras` |
 | RF-12 | Gestión de materias | ✅ | `MateriaController` → `/materias` |
+| RF-13-bis | Código sugerido para una comisión nueva | ✅ | `ComisionService.codigoSugerido` + `GET /comisiones/codigo-sugerido` + `js/academico/comision-codigo.js`. Sugiere la primera letra libre, o el siguiente número, o nada si la institución usa nombres de turno |
 | RF-13 | Gestión de comisiones | ✅ | `ComisionController` → `/comisiones` |
 | RF-14 | Gestión de horarios | ✅ | `HorarioController` → `/horarios`, `GrillaController` (grilla semanal), `ManejadorDeColisiones` |
 

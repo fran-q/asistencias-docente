@@ -113,6 +113,29 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
                                        @Param("tenantId") Long tenantId);
 
     /**
+     * Los codigos ya usados en esa materia y ese periodo, para sugerir el siguiente libre.
+     *
+     * <p><b>Incluye las dadas de baja.</b> El indice unico
+     * {@code uq_comisiones_materia_codigo_periodo} no mira {@code activo}, asi que el codigo
+     * de una comision inactiva sigue ocupado: sugerirlo daria un error recien al guardar.
+     *
+     * <p><b>Donde queda el WHERE del tenant.</b> {@code m.institucionId} y
+     * {@code p.institucionId} (TD-003).
+     */
+    @Query("""
+        SELECT c.codigo FROM Comision c
+        JOIN c.materia m
+        JOIN c.periodo p
+        WHERE m.institucionId = :tenantId
+          AND p.institucionId = :tenantId
+          AND m.id = :materiaId
+          AND p.id = :periodoId
+        """)
+    List<String> codigosUsados(@Param("materiaId") Long materiaId,
+                               @Param("periodoId") Long periodoId,
+                               @Param("tenantId") Long tenantId);
+
+    /**
      * Las activas con materia activa, para los combos de los formularios.
      *
      * <p>Acotadas al ciclo que contiene la fecha desde V023: un combo que ofreciera las

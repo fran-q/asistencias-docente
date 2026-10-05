@@ -20,6 +20,8 @@ import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * ABM de las comisiones del tenant actual (RF-13), con docente asignado opcional.
@@ -153,6 +155,64 @@ public class ComisionService {
         // Se toca el ciclo, que la plantilla lee para armar la etiqueta "2026 - 1er cuatrimestre".
         ps.forEach(p -> p.getCiclo().getAnio());
         return ps;
+    }
+
+    /**
+     * El codigo que se le ofrece a una comision nueva de esa materia y ese periodo.
+     *
+     * <p><b>Sugiere, no impone.</b> El campo sigue siendo editable y el formulario valida lo
+     * que quede escrito. Eso importa porque aca el codigo no siempre es un identificador: en
+     * este sistema suele ser texto --"Manana", "Noche", "Atencion"-- y la validacion acepta
+     * acentos y espacios a proposito.
+     *
+     * <p>De ahi las tres ramas. Si la materia no tiene ninguna comision en ese periodo,
+     * arranca en <b>A</b>. Si las que hay son todas una letra sola, devuelve <b>la primera
+     * libre</b> y no la siguiente a la ultima: con A y C cargadas, lo que falta es la B. Si
+     * son todas numeros, el siguiente. Y si son palabras, <b>no sugiere nada</b>, porque
+     * cualquier letra que proponga pelearia con la convencion que esa institucion ya eligio.
+     *
+     * <p>Devuelve vacio, nunca null: lo consume un campo de texto.
+     */
+    @Transactional(readOnly = true)
+    public String codigoSugerido(Long materiaId, Long periodoId) {
+        if (materiaId == null || periodoId == null) {
+            return "";
+        }
+        List<String> usados = comisionRepository.codigosUsados(
+            materiaId, periodoId, TenantContext.getRequired());
+        if (usados.isEmpty()) {
+            return "A";
+        }
+
+        if (usados.stream().allMatch(ComisionService::esUnaLetra)) {
+            Set<Character> tomadas = usados.stream()
+                .map(c -> Character.toUpperCase(c.charAt(0)))
+                .collect(Collectors.toSet());
+            for (char letra = 'A'; letra <= 'Z'; letra++) {
+                if (!tomadas.contains(letra)) {
+                    return String.valueOf(letra);
+                }
+            }
+            return "";                      // las 26 tomadas: que lo escriba quien sabe
+        }
+
+        if (usados.stream().allMatch(ComisionService::esEntero)) {
+            int mayor = usados.stream().mapToInt(Integer::parseInt).max().orElse(0);
+            return String.valueOf(mayor + 1);
+        }
+
+        return "";                          // texto libre: no hay nada que adivinar
+    }
+
+    private static boolean esUnaLetra(String codigo) {
+        return codigo != null && codigo.length() == 1 && Character.isLetter(codigo.charAt(0));
+    }
+
+    private static boolean esEntero(String codigo) {
+        if (codigo == null || codigo.isBlank() || codigo.length() > 9) {
+            return false;
+        }
+        return codigo.chars().allMatch(Character::isDigit);
     }
 
     @Transactional(readOnly = true)

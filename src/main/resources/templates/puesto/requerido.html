@@ -99,8 +99,36 @@
             <p>
                 Tu institución tiene <strong th:text="${habilitados}">3</strong> equipos
                 autorizados y su tope es <strong th:text="${tope}">3</strong>. Para autorizar
-                esta computadora, revocá uno de la tabla o subí el tope en
-                <a th:href="@{/mi-institucion}">Mi institución</a>.
+                esta computadora, revocá uno de la tabla o subí el tope acá abajo.
+            </p>
+        </div>
+
+        <!-- El tope se edita donde se siente. Tambien esta en "Mi institucion", junto al
+             resto de los datos; esta copia existe porque contra el limite se choca aca, y
+             mandar a otra pantalla a cambiar un numero y volver son tres pasos. -->
+        <div class="card" th:if="${puedeDesignar}">
+            <h2>Cuántos equipos pueden tomar asistencia</h2>
+            <p class="text-muted">
+                Hoy hay <strong th:text="${habilitados}">2</strong> autorizado(s).
+                Dejalo vacío para no poner ningún tope.
+            </p>
+            <form th:action="@{/puestos/tope}" method="post"
+                  style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap;">
+                <div class="form-group" style="margin:0;">
+                    <label for="tope">Tope de equipos</label>
+                    <input type="number" id="tope" name="tope" min="1" max="50"
+                           th:value="${tope}" autocomplete="off" style="max-width:8rem;"
+                           placeholder="Sin tope">
+                </div>
+                <div class="form-actions" style="margin:0;">
+                    <button type="submit" class="btn btn--primary"
+                            data-texto-enviando="Guardando...">Guardar</button>
+                </div>
+            </form>
+            <p class="text-muted" style="margin-bottom:0;">
+                No se puede dejar por debajo de los que ya están autorizados: bajarlo no
+                revoca ninguno, y la pantalla quedaría mostrando un límite que el propio
+                sistema no cumple. Revocá primero y después bajalo.
             </p>
         </div>
 

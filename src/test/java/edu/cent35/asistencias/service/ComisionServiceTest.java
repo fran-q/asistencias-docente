@@ -49,6 +49,76 @@ class ComisionServiceTest {
     @Mock private CicloLectivoService cicloLectivoService;
     @InjectMocks private ComisionService service;
 
+    // ========================================================================
+    //  Codigo sugerido para una comision nueva
+    // ========================================================================
+
+    @Test
+    @DisplayName("Sin comisiones en ese periodo, la primera se llama A")
+    void laPrimeraEsA() {
+        TenantContext.set(TENANT_A);
+        when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
+            .thenReturn(java.util.List.of());
+
+        assertThat(service.codigoSugerido(MATERIA_ID, PERIODO_ID)).isEqualTo("A");
+    }
+
+    @Test
+    @DisplayName("Con letras cargadas sugiere la primera LIBRE, no la siguiente a la ultima")
+    void sugiereElHueco() {
+        TenantContext.set(TENANT_A);
+        when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
+            .thenReturn(java.util.List.of("A", "C"));
+
+        assertThat(service.codigoSugerido(MATERIA_ID, PERIODO_ID))
+            .as("con A y C cargadas, lo que falta es la B")
+            .isEqualTo("B");
+    }
+
+    @Test
+    @DisplayName("Si la institucion numera sus comisiones, sigue numerando")
+    void sigueLaNumeracion() {
+        TenantContext.set(TENANT_A);
+        when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
+            .thenReturn(java.util.List.of("1", "2"));
+
+        assertThat(service.codigoSugerido(MATERIA_ID, PERIODO_ID)).isEqualTo("3");
+    }
+
+    @Test
+    @DisplayName("Si usa nombres de turno no sugiere nada, para no pelearle a su convencion")
+    void conNombresNoSugiere() {
+        TenantContext.set(TENANT_A);
+        when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
+            .thenReturn(java.util.List.of("Mañana", "Noche"));
+
+        assertThat(service.codigoSugerido(MATERIA_ID, PERIODO_ID))
+            .as("una letra sugerida al lado de 'Mañana' y 'Noche' es peor que un campo vacio")
+            .isEmpty();
+    }
+
+    @Test
+    @DisplayName("El codigo de una comision dada de baja sigue ocupado")
+    void laDeBajaSigueOcupandoSuCodigo() {
+        // El indice unico no mira 'activo': sugerir el codigo de una comision inactiva daria
+        // un error recien al guardar. La consulta las trae a todas, y esto lo sostiene.
+        TenantContext.set(TENANT_A);
+        when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
+            .thenReturn(java.util.List.of("A", "B"));
+
+        assertThat(service.codigoSugerido(MATERIA_ID, PERIODO_ID)).isEqualTo("C");
+    }
+
+    @Test
+    @DisplayName("Sin materia o sin periodo todavia no hay nada que sugerir")
+    void sinContextoNoSugiere() {
+        TenantContext.set(TENANT_A);
+
+        assertThat(service.codigoSugerido(null, PERIODO_ID)).isEmpty();
+        assertThat(service.codigoSugerido(MATERIA_ID, null)).isEmpty();
+        verify(comisionRepository, never()).codigosUsados(any(), any(), any());
+    }
+
     // La comision vive en un periodo desde V023. El de los tests es de un ciclo abierto: los
     // casos de ciclo cerrado se prueban aparte, en CicloLectivoServiceTest.
     private static final Long PERIODO_ID = 70L;

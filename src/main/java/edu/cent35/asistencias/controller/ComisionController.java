@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -105,6 +106,23 @@ public class ComisionController {
             model.addAttribute("modo", "crear");
             return "academico/comision-form";
         }
+    }
+
+    /**
+     * El codigo que se le ofrece a una comision nueva, para el formulario.
+     *
+     * <p>Va por pedido aparte y no precalculado en el GET del formulario porque la materia y
+     * el periodo se eligen <b>dentro</b> del formulario: cuando se abre todavia no se sabe
+     * para que materia va a ser.
+     *
+     * <p>Devuelve texto pelado y no JSON: es un solo valor, y envolverlo obligaria a un DTO y
+     * a que el navegador lo desarme para sacar un string.
+     */
+    @GetMapping(value = "/codigo-sugerido", produces = "text/plain;charset=UTF-8")
+    @ResponseBody
+    public String codigoSugerido(@RequestParam(required = false) Long materiaId,
+                                 @RequestParam(required = false) Long periodoId) {
+        return service.codigoSugerido(materiaId, periodoId);
     }
 
     // Abre el formulario de edición con los datos actuales.
