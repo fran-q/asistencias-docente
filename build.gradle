@@ -264,3 +264,64 @@ tasks.register('armarInstalable') {
 		}
 	}
 }
+
+// El .msi: un solo archivo que copia todo a la maquina y deja elegir la carpeta.
+//
+// Toma la carpeta que ya armo armarInstalable y la envuelve --modo --app-image de
+// jpackage-- en vez de rehacerla: asi el instalador lleva exactamente lo que se probo.
+//
+// NECESITA WiX 3, que jpackage busca en el PATH (candle.exe y light.exe). Va en
+// vendor/wix/, que no se versiona. Sin el, jpackage falla diciendo que no lo encuentra.
+//
+// OJO: el .msi copia archivos y nada mas. NO registra los servicios ni crea la base: eso
+// lo hace Instalar-Visum.bat, que queda en la carpeta instalada. Un .msi no puede correr
+// un script de post-instalacion, y disfrazarlo seria peor: alguien instalaria el paquete,
+// veria "instalacion completa" y despues nada funcionaria.
+tasks.register('armarMsi', Exec) {
+	group = 'distribution'
+	description = 'Envuelve la carpeta instalable en un .msi (requiere WiX en vendor/wix)'
+	dependsOn tasks.named('armarInstalable')
+
+	def jdk = javaToolchains.launcherFor(java.toolchain).get().metadata.installationPath
+	def imagen = layout.buildDirectory.dir('empaquetado/salida/Visum').get().asFile
+	def destino = layout.buildDirectory.dir('empaquetado/instalador').get().asFile
+	def wix = layout.projectDirectory.dir('vendor/wix').asFile
+
+	doFirst {
+		if (!new File(wix, 'candle.exe').exists()) {
+			throw new GradleException(
+				"Falta WiX en ${wix}. Ver instalador/README.md: sin candle.exe y light.exe, " +
+				"jpackage no puede armar el .msi.")
+		}
+		delete destino
+		destino.mkdirs()
+	}
+
+	// jpackage busca WiX en el PATH del proceso, no en una opcion propia.
+	environment 'PATH', "${wix}${File.pathSeparator}${System.getenv('PATH')}"
+
+	commandLine(
+		"${jdk}/bin/jpackage",
+		'--type', 'msi',
+		'--app-image', imagen.absolutePath,
+		'--name', 'Visum',
+		'--app-version', versionDelPaquete,
+		'--vendor', 'CENT 35',
+		'--description', 'Registro de asistencia docente por reconocimiento facial',
+		'--dest', destino.absolutePath,
+		// Entrada en el menu inicio y eleccion de carpeta al instalar. NO se pide
+		// --win-shortcut: el acceso directo util es el que crea Instalar-Visum.bat, que abre
+		// el navegador. Uno que lance el ejecutable arrancaria una segunda copia por fuera
+		// del servicio, y serian dos Visum peleando por el mismo puerto.
+		'--win-menu',
+		'--win-dir-chooser',
+		'--win-upgrade-uuid', '7b1f3a52-9c4d-4e18-8f6a-2d5b0c7e9a31'
+	)
+
+	doLast {
+		logger.lifecycle('')
+		logger.lifecycle("  Instalador en: ${destino}")
+		logger.lifecycle('  Despues de instalarlo hay que correr UNA VEZ Instalar-Visum.bat')
+		logger.lifecycle('  desde la carpeta instalada, para registrar los servicios.')
+	}
+}

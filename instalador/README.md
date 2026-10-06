@@ -12,6 +12,7 @@ saber nada de Gradle.
 | Archivo | Qué es |
 |---|---|
 | `GUIA-DE-INSTALACION.md` | La guía paso a paso para la máquina de la institución |
+| `Instalar-Visum.bat` | El doble clic que usa quien instala: se eleva solo y llama al script |
 | `instalar.ps1` | Inicializa la base, genera los secretos, registra los dos servicios y deja el acceso directo |
 | `desinstalar.ps1` | Saca los servicios y los accesos directos. **No borra datos ni secretos**, a propósito |
 | `visum-servicio.xml.plantilla` | Definición del servicio para WinSW. `instalar.ps1` la completa |
@@ -43,6 +44,10 @@ asistencias/vendor/
 - **WinSW 2.12.0**, licencia MIT, archivo `WinSW.NET4.exe` de su página de releases en GitHub,
   renombrado a `WinSW.exe`. Alcanza el ejecutable suelto (0,8 MB).
 
+- **WiX 3.14** (`wix314-binaries.zip` de `github.com/wixtoolset/wix3`), descomprimido en
+  `vendor/wix/`. Solo hace falta para armar el `.msi`: `jpackage` busca `candle.exe` y
+  `light.exe` en el PATH. No se instala nada en el sistema, alcanza con la carpeta.
+
 Con eso puesto:
 
 ```
@@ -51,6 +56,20 @@ Con eso puesto:
 
 deja en `build/empaquetado/salida/Visum` la carpeta completa. Si falta alguno de los dos, la
 tarea lo dice y arma igual lo que puede, pero el paquete **no se instala**.
+
+Y con WiX puesto:
+
+```
+./gradlew armarMsi
+```
+
+deja el instalador en `build/empaquetado/instalador/Visum-0.0.1.msi` (unos 244 MB). Envuelve la
+carpeta que ya armó la tarea anterior, así que el `.msi` lleva exactamente lo que se probó.
+
+**El `.msi` copia archivos y nada más.** No registra los servicios ni crea la base: eso lo hace
+`Instalar-Visum.bat`, que queda en la carpeta instalada y hay que correr una vez. Un `.msi`
+generado con `jpackage` no puede ejecutar un script de post-instalación, y disfrazarlo sería
+peor: alguien vería "instalación completa" y después nada funcionaría.
 
 ## Cómo queda la máquina
 

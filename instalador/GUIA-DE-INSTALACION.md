@@ -35,31 +35,31 @@ captura del rostro ocurre solo en los equipos autorizados.
 
 ## 2. Instalación
 
-### Paso 1 — Copiar la carpeta
+Son dos pasos: el instalador copia los archivos, y un segundo doble clic deja el sistema
+andando. **Hacen falta los dos.**
 
-Copiá la carpeta `Visum` completa a donde vaya a quedar instalada. La recomendación es:
+### Paso 1 — Ejecutar `Visum-0.0.1.msi`
+
+Doble clic. Windows va a pedir confirmación para instalar.
+
+Cuando pregunte dónde instalarlo, la recomendación es:
 
 ```
 C:\Visum
 ```
 
-No la dejes en el Escritorio ni en Descargas: ahí adentro va a vivir la base de datos con el
-registro de asistencia de la institución, y esas carpetas se vacían sin pensar.
+No lo dejes bajo *Archivos de programa*: ahí adentro va a vivir la base de datos con el
+registro de asistencia, y esa carpeta tiene permisos que complican los respaldos.
 
-### Paso 2 — Abrir PowerShell como administrador
+Cuando termina, los archivos están en la máquina **pero el sistema todavía no funciona**: falta
+crear la base y registrar los servicios. Eso es el paso 2.
 
-Botón derecho sobre el menú de inicio → **Terminal (Administrador)** o **Windows PowerShell
-(Administrador)**. Tiene que decir *Administrador* en el título de la ventana.
+### Paso 2 — Ejecutar `Instalar-Visum.bat`
 
-### Paso 3 — Correr el instalador
+Entrá a la carpeta donde lo instalaste, abrí la subcarpeta `instalador` y hacé **doble clic en
+`Instalar-Visum.bat`**.
 
-```powershell
-cd C:\Visum\instalador
-powershell -ExecutionPolicy Bypass -File .\instalar.ps1
-```
-
-El `-ExecutionPolicy Bypass` es necesario porque Windows, por defecto, no deja correr scripts
-descargados. Vale solo para esta ejecución; no cambia la configuración de la máquina.
+Windows va a pedir permiso de administrador: hay que dárselo, porque registra dos servicios.
 
 **Qué vas a ver**, en este orden: inicializando la base, secretos, esquemas y usuario, servicio
 de Visum, acceso directo. Al final, un resumen en verde con la dirección donde atiende.
@@ -68,13 +68,19 @@ La primera vez tarda un poco: tiene que crear la base desde cero.
 
 ### Si el puerto 8080 está ocupado
 
+Abrí PowerShell **como administrador** y corré el script con otro puerto:
+
 ```powershell
+cd C:\Visum\instalador
 powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Puerto 8090
 ```
 
 Y entonces la dirección pasa a ser `http://localhost:8090`.
 
----
+### Sin el `.msi`
+
+Si en vez del instalador tenés la carpeta `Visum` suelta, sirve igual: copiala a `C:\Visum` y
+hacé el paso 2. Es exactamente lo mismo; el `.msi` solo se ocupa de la copia.
 
 ## 3. Primer arranque
 
@@ -187,14 +193,23 @@ Get-Content C:\Visum\logs\visum.log -Tail 50
 
 ## 9. Desinstalar
 
+**El orden importa.** Primero los servicios, después los archivos.
+
+**1.** Abrí PowerShell como administrador y corré:
+
 ```powershell
 cd C:\Visum\instalador
 powershell -ExecutionPolicy Bypass -File .\desinstalar.ps1
 ```
 
-Saca los dos servicios y los accesos directos. **No borra la base ni los secretos**, a propósito:
-ahí está el registro de asistencia. Si de verdad hay que borrarlos, sacá un respaldo primero y
-después borrá la carpeta a mano.
+**2.** Recién entonces, desinstalá *Visum* desde **Configuración → Aplicaciones**.
+
+Al revés no: si borrás los archivos primero, los dos servicios quedan registrados apuntando a un
+ejecutable que ya no existe, y hay que sacarlos a mano con `sc.exe delete`.
+
+`desinstalar.ps1` **no borra la base ni los secretos**, a propósito: ahí está el registro de
+asistencia. Si de verdad hay que borrarlos, sacá un respaldo primero y después borrá la carpeta
+a mano.
 
 ---
 
