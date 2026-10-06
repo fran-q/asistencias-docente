@@ -54,7 +54,7 @@ del CSV.
 **TD-011 es el hallazgo que más lejos llega.** `V001` no aplica sobre MariaDB 10.6 ni 10.11:
 rechazan que una columna esté a la vez en un `CHECK` y en una foránea con `ON DELETE SET NULL`,
 que es el caso de `asistencias.modelo_facial_id`. Comprobado con un caso mínimo en 10.6.21 y
-10.11.11, y las 16 migraciones aplican enteras sobre 10.4.34. Por eso el instalable lleva 10.4,
+10.11.11, y las 18 migraciones aplican enteras sobre 10.4.34. Por eso el instalable lleva 10.4,
 que **no tiene soporte desde junio de 2024**. No es solo un problema del instalable: el punto 1
 del rumbo (nube) y el punto 2 (base más robusta) pasan por acá. El detalle y los dos caminos
 posibles están en `TECH_DEBT.md`.

@@ -89,7 +89,7 @@ le corresponde.
 
 **Verificado:**
 
-- Las **16 migraciones aplican de cero** sobre la MariaDB que lleva el paquete (10.4.34), y el
+- Las **18 migraciones aplican de cero** sobre la MariaDB que lleva el paquete (10.4.34), y el
   esquema que producen es el que esperan las entidades. Es `MigracionesIT` corriendo contra una
   instancia levantada desde `vendor/mariadb`, no contra el XAMPP de desarrollo.
 - La aplicación empaquetada **arranca con el perfil de instalación** y falla donde corresponde
