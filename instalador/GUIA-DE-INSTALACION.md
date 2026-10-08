@@ -24,12 +24,29 @@ La computadora donde se instala es la que tiene la cámara: es donde los docente
 Desde otras computadoras de la institución se puede entrar a consultar y cargar, pero la
 captura del rostro ocurre solo en los equipos autorizados.
 
-**Antes de empezar, dos cosas que conviene mirar:**
+### Los dos puertos que usa
 
-- Que el **puerto 8080** esté libre. Si en esa computadora hay otro sistema web andando, puede
-  estar ocupado. Más abajo está cómo cambiarlo.
-- Si la máquina ya tiene **XAMPP o MySQL**, no hay problema: Visum trae su propia base y la
-  hace escuchar en el puerto 3307, así que no se pisan.
+Visum ocupa dos puertos en la computadora donde se instala:
+
+| Puerto | Para qué | Cómo cambiarlo |
+|---|---|---|
+| **8080** | La pantalla del sistema, en el navegador | `-Puerto 8090` |
+| **3307** | Su base de datos, solo desde la misma máquina | `-PuertoBase 3399` |
+
+**Si la máquina ya tiene XAMPP o MySQL, no hay problema:** esos usan el 3306, y Visum trae su
+propia base en el 3307, con su propio servicio y su propia carpeta de datos. No se pisan y no se
+tocan entre sí.
+
+**Donde sí hay que prestar atención es en una computadora de desarrollo.** El 8080 es el puerto
+que usa media herramienta: Spring Boot, Tomcat, un montón de servidores de prueba. Si en esa
+máquina se programa, lo más probable es que ya esté tomado, y Visum queda instalado como servicio
+—o sea, arrancando solo con Windows— peleando por ese puerto todos los días.
+
+En esa máquina conviene instalarlo directamente en puertos que nadie más use. El paso 2 de abajo
+explica cómo.
+
+**El instalador los revisa antes de empezar.** Si alguno está ocupado, corta, dice qué programa
+lo está usando y no instala nada.
 
 ---
 
@@ -66,16 +83,21 @@ de Visum, acceso directo. Al final, un resumen en verde con la dirección donde 
 
 La primera vez tarda un poco: tiene que crear la base desde cero.
 
-### Si el puerto 8080 está ocupado
+### Si algún puerto está ocupado
 
-Abrí PowerShell **como administrador** y corré el script con otro puerto:
+El instalador corta y te dice cuál y quién lo tiene. Para instalarlo en otros puertos, abrí
+PowerShell **como administrador**:
 
 ```powershell
 cd C:\Visum\instalador
-powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Puerto 8090
+powershell -ExecutionPolicy Bypass -File .\instalar.ps1 -Puerto 8090 -PuertoBase 3399
 ```
 
-Y entonces la dirección pasa a ser `http://localhost:8090`.
+Se pueden pasar los dos o uno solo. Si cambiás el de la aplicación, la dirección pasa a ser
+`http://localhost:8090`, y el acceso directo que crea el instalador ya apunta ahí.
+
+En una computadora donde se programa, conviene elegir de entrada algo que nadie más vaya a usar
+—por ejemplo `-Puerto 8099 -PuertoBase 3399`— en lugar de esperar al choque.
 
 ### Sin el `.msi`
 

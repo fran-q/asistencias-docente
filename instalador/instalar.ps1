@@ -95,6 +95,59 @@ function ValorAnterior([string]$nombre) {
     return $nodo.value
 }
 
+# Que procesos estan escuchando en un puerto. Vacio = libre.
+function PidsEscuchando([int]$puerto) {
+    $encontrados = @()
+    $conexiones = Get-NetTCPConnection -State Listen -LocalPort $puerto -ErrorAction SilentlyContinue
+    if ($null -ne $conexiones) {
+        foreach ($c in $conexiones) { $encontrados += [int]$c.OwningProcess }
+    } else {
+        # Windows sin Get-NetTCPConnection: netstat dice lo mismo, mas incomodo.
+        $lineas = netstat -ano | Select-String ":$puerto\s" | Select-String 'LISTENING'
+        foreach ($l in $lineas) {
+            $partes = ($l.ToString().Trim() -split '\s+')
+            $encontrados += [int]$partes[-1]
+        }
+    }
+    return ($encontrados | Select-Object -Unique)
+}
+
+function PidDelServicio([string]$nombre) {
+    $s = Get-CimInstance Win32_Service -Filter "Name='$nombre'" -ErrorAction SilentlyContinue
+    if ($null -eq $s) { return 0 }
+    return [int]$s.ProcessId
+}
+
+function NombreDelProceso([int]$procId) {
+    $p = Get-Process -Id $procId -ErrorAction SilentlyContinue
+    if ($null -eq $p) { return "PID $procId" }
+    return "$($p.ProcessName) (PID $procId)"
+}
+
+<#
+    Corta la instalacion si el puerto esta tomado por algo que no sea Visum.
+
+    Por que antes de tocar nada: sin esto, el puerto ocupado no se nota en la instalacion
+    --el servicio se registra igual-- y aparece despues, cuando la aplicacion no levanta y
+    el servicio se reintenta solo cada diez segundos. El sintoma queda lejos de la causa.
+
+    Los puertos de los propios servicios de Visum no cuentan: en una reinstalacion son
+    justamente ellos los que estan escuchando.
+#>
+function ExigirPuertoLibre([int]$puerto, [string]$para, [string]$comoCambiarlo) {
+    $propios = @((PidDelServicio $NOMBRE_SERVICIO_APP), (PidDelServicio $NOMBRE_SERVICIO_BASE))
+    $ajenos = @()
+    foreach ($procId in (PidsEscuchando $puerto)) {
+        if ($propios -notcontains $procId) { $ajenos += $procId }
+    }
+    if ($ajenos.Count -gt 0) {
+        $quien = ($ajenos | ForEach-Object { NombreDelProceso $_ }) -join ', '
+        Fallar ("El puerto $puerto ($para) ya lo esta usando: $quien.`n" +
+                "  No se instalo nada. Cerra ese programa, o instala en otro puerto:`n" +
+                "    $comoCambiarlo")
+    }
+}
+
 function ServicioExiste([string]$nombre) {
     $s = Get-Service -Name $nombre -ErrorAction SilentlyContinue
     return $null -ne $s
@@ -140,6 +193,13 @@ New-Item -ItemType Directory -Force -Path $logs | Out-Null
 
 # Con la version vieja corriendo no se pueden reemplazar archivos ni tocar la base.
 DetenerSiCorre $NOMBRE_SERVICIO_APP
+
+# Los dos puertos, antes de crear la base y antes de registrar nada. Si alguno esta tomado,
+# esto corta sin dejar la maquina a medio instalar.
+Escribir 'Revisando que los puertos esten libres...'
+ExigirPuertoLibre $Puerto 'la aplicacion' ".\instalar.ps1 -Puerto 8090"
+ExigirPuertoLibre $PuertoBase 'la base de datos' ".\instalar.ps1 -PuertoBase 3399"
+Escribir "Libres: $Puerto y $PuertoBase."
 
 # ---------------------------------------------------------------------------
 #  1. La base: carpeta de datos, configuracion y servicio
