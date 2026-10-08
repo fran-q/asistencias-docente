@@ -213,13 +213,22 @@ class ComodidadesDeCargaIT {
     }
 
     @Test
-    @DisplayName("La pantalla de equipos ofrece el campo, en vez de mandar a otra pantalla")
-    void laPantallaOfreceElCampo() throws Exception {
-        assertThat(pedir("/puestos"))
+    @DisplayName("El tope se cambia en la misma pantalla, pero no queda editable a la vista")
+    void laPantallaOfreceElCampoCerrado() throws Exception {
+        String html = pedir("/puestos");
+
+        assertThat(html)
             .contains("Cuántos equipos pueden tomar asistencia")
             .contains("/puestos/tope")
             .as("el mensaje ya no manda a Mi institución a cambiar un número")
             .doesNotContain("subí el tope en");
+
+        // Sin el atributo 'open': el campo arranca cerrado y hay que abrirlo con el botón.
+        // Un número editable a la vista se cambia sin querer, y éste gobierna cuántas
+        // máquinas pueden tener una credencial de captura.
+        assertThat(html)
+            .contains("<details class=\"puesto__tope\">")
+            .contains("Cambiar el tope");
     }
 
     // ------------------------------------------------------------------------

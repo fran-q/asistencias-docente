@@ -109,27 +109,41 @@
         <div class="card" th:if="${puedeDesignar}">
             <h2>Cuántos equipos pueden tomar asistencia</h2>
             <p class="text-muted">
-                Hoy hay <strong th:text="${habilitados}">2</strong> autorizado(s).
-                Dejalo vacío para no poner ningún tope.
+                Hoy hay <strong th:text="${habilitados}">2</strong> autorizado(s)<span
+                    th:if="${tope != null}">, con un tope de <strong th:text="${tope}">3</strong></span><span
+                    th:if="${tope == null}">, sin ningún tope puesto</span>.
             </p>
-            <form th:action="@{/puestos/tope}" method="post"
-                  style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap;">
-                <div class="form-group" style="margin:0;">
-                    <label for="tope">Tope de equipos</label>
-                    <input type="number" id="tope" name="tope" min="1" max="50"
-                           th:value="${tope}" autocomplete="off" style="max-width:8rem;"
-                           placeholder="Sin tope">
-                </div>
-                <div class="form-actions" style="margin:0;">
-                    <button type="submit" class="btn btn--primary"
-                            data-texto-enviando="Guardando...">Guardar</button>
-                </div>
-            </form>
-            <p class="text-muted" style="margin-bottom:0;">
-                No se puede dejar por debajo de los que ya están autorizados: bajarlo no
-                revoca ninguno, y la pantalla quedaría mostrando un límite que el propio
-                sistema no cumple. Revocá primero y después bajalo.
-            </p>
+
+            <!-- El campo arranca cerrado y se abre con el boton. Un numero editable a la
+                 vista se cambia sin querer, y este gobierna cuantas maquinas pueden tener
+                 una credencial de captura: abrirlo es el paso deliberado que faltaba.
+                 <details> es nativo, asi que anda sin JS y es lo que esta pantalla ya usa
+                 mas abajo para la nota de la camara de red. -->
+            <details class="puesto__tope">
+                <summary class="btn btn--ghost">Cambiar el tope</summary>
+
+                <form th:action="@{/puestos/tope}" method="post"
+                      style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap;
+                             margin-top:var(--space);">
+                    <div class="form-group" style="margin:0;">
+                        <label for="tope">Tope de equipos</label>
+                        <input type="number" id="tope" name="tope" min="1" max="50"
+                               th:value="${tope}" autocomplete="off" style="max-width:8rem;"
+                               placeholder="Sin tope">
+                    </div>
+                    <div class="form-actions" style="margin:0;">
+                        <button type="submit" class="btn btn--primary"
+                                data-texto-enviando="Guardando...">Guardar</button>
+                    </div>
+                </form>
+
+                <p class="text-muted" style="margin-bottom:0;">
+                    Dejalo vacío para no poner ningún tope. No se puede dejar por debajo de
+                    los que ya están autorizados: bajarlo no revoca ninguno, y la pantalla
+                    quedaría mostrando un límite que el propio sistema no cumple. Revocá
+                    primero y después bajalo.
+                </p>
+            </details>
         </div>
 
         <!-- Sin esto, quien mira la tabla desde otra maquina ve un boton que no esta y no

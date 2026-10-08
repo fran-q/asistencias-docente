@@ -32,6 +32,11 @@ Highlights de cada sprint del proyecto, en orden cronológico inverso.
   institución", pero el límite se siente al autorizar una máquina: toparse ahí y tener que
   irse a otra pantalla a cambiar un número eran tres pasos. Ahora el campo está donde se topa.
 
+- **Y no queda editable a la vista: se abre con un botón.** La pantalla muestra cuántos
+  equipos hay y cuál es el tope como texto; el campo aparece recién al tocar "Cambiar el
+  tope". Un número editable ahí nomás se cambia sin querer, y éste gobierna cuántas máquinas
+  pueden tener una credencial de captura.
+
 - **No se puede dejar el tope por debajo de los equipos ya autorizados.** Bajarlo no revoca
   ninguno, así que la pantalla quedaría mostrando un límite que el propio sistema incumple. Se
   rechaza y se explica que hay que revocar primero.
