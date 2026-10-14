@@ -59,7 +59,18 @@ class MigracionesIT {
     private static final String USUARIO = credencial("spring.datasource.username", "MARIADB_USER");
     private static final String CLAVE   = credencial("spring.datasource.password", "MARIADB_PASSWORD");
 
+    /**
+     * En el CI el motor tiene que estar: el workflow levanta un mariadb:10.4 y fija
+     * {@code MARIADB_OBLIGATORIA=si}. Ahí saltearse sería esconder justo lo que este test vino a
+     * cubrir --el CI en verde sin haber aplicado una sola migración--, así que falla. En una
+     * máquina sin MariaDB, sin la variable, se sigue salteando.
+     */
+    private static final boolean MOTOR_OBLIGATORIO =
+        "si".equalsIgnoreCase(System.getenv("MARIADB_OBLIGATORIA"));
+
     private static boolean hayMotor;
+    // Por qué no se pudo conectar, para que el fallo del CI lo diga sin abrir el log.
+    private static String porQueNoHayMotor;
 
     /**
      * Busca una credencial en application-local.properties y, si no está, en el entorno.
@@ -105,8 +116,10 @@ class MigracionesIT {
             hayMotor = true;
         } catch (Exception e) {
             // Sin MariaDB a mano el test no puede correr. Se saltea, no falla: un test rojo
-            // por falta de infraestructura entrena a ignorar los tests rojos.
+            // por falta de infraestructura entrena a ignorar los tests rojos. Salvo en el CI,
+            // ver MOTOR_OBLIGATORIO.
             hayMotor = false;
+            porQueNoHayMotor = e.getMessage();
         }
     }
 
@@ -124,7 +137,13 @@ class MigracionesIT {
     @Test
     @DisplayName("Las migraciones aplican de cero y dejan el esquema que las entidades esperan")
     void migracionesDesdeCero() throws Exception {
-        assumeTrue(hayMotor, "Sin MariaDB en localhost:3306; se saltea la verificación de migraciones");
+        if (MOTOR_OBLIGATORIO) {
+            assertThat(hayMotor)
+                .as("MARIADB_OBLIGATORIA=si y no hay MariaDB en localhost:%s: %s", PUERTO, porQueNoHayMotor)
+                .isTrue();
+        }
+        assumeTrue(hayMotor,
+            "Sin MariaDB en localhost:" + PUERTO + "; se saltea la verificación de migraciones");
 
         Flyway flyway = Flyway.configure()
             .dataSource(URL_BASE + BASE, USUARIO, CLAVE)

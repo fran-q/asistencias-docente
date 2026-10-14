@@ -11,6 +11,24 @@ jobs:
     name: Build & Test
     runs-on: ubuntu-latest
 
+    # MariaDB para que MigracionesIT corra acá y no solo en la máquina de desarrollo: el resto
+    # de la suite usa H2 con el esquema que arma Hibernate, así que una migración desalineada
+    # de su entidad pasaría igual. 10.4 y no otra: el esquema solo aplica sobre esa (TD-011).
+    # La base es descartable y dura lo que el job, por eso va sin contraseña: no hay nada que
+    # proteger, y así no queda ninguna clave escrita en un repositorio público.
+    services:
+      mariadb:
+        image: mariadb:10.4
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,8 +51,14 @@ jobs:
       - name: Permisos al gradlew
         run: chmod +x ./gradlew
 
-      - name: Build (compile + tests con H2 en memoria)
+      - name: Build (compila, Checkstyle, tests sobre H2 y migraciones sobre MariaDB)
         run: ./gradlew build --no-daemon
+        env:
+          MARIADB_USER: root
+          MARIADB_PASSWORD: ""
+          # Acá el motor tiene que estar: si el servicio no levantó, MigracionesIT falla en vez
+          # de saltearse y dejar el CI en verde sin haber aplicado una sola migración.
+          MARIADB_OBLIGATORIA: si
 
       - name: Subir reporte de tests si falla
         if: failure()

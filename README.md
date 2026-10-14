@@ -89,7 +89,7 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 | `./gradlew build` | Las dos cosas, más Checkstyle (`config/checkstyle/`). Es lo que corre el CI en cada push y en cada pull request |
 
 `MigracionesIT` aplica las migraciones contra un MariaDB real y se saltea si no hay uno en
-`localhost:3306`.
+`localhost:3306`. En el CI corre siempre: el workflow levanta un `mariadb:10.4`.
 
 ## Estructura
 

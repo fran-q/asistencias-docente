@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.4 · **Actualizado:** 2026-08-25 · **Estado:** vigente
+> **Versión:** 1.5 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -296,8 +296,11 @@ comparten nombre (ADR-0022).
 verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/Ushuaia`.
 
 **CI:** GitHub Actions sobre `push` y `pull_request` a `main`. JDK 21 Temurin,
-`./gradlew build --no-daemon` sobre H2. Sube el reporte si falla. Ese `build` corre las
-dos suites —unitarios e integración— porque `check` depende de ambas; ver `04-convenciones.md`.
+`./gradlew build --no-daemon`: compila, corre Checkstyle y las dos suites —unitarios e
+integración—, porque `check` depende de todo eso; ver `04-convenciones.md`. Los tests van
+sobre H2, salvo `MigracionesIT`, que aplica las migraciones contra un `mariadb:10.4` que
+levanta el propio workflow. Ahí el motor es obligatorio (`MARIADB_OBLIGATORIA=si`): si no
+levantó, el test falla en vez de saltearse. Sube el reporte si falla.
 
 ## Los 23 ADR
 

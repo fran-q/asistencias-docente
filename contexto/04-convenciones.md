@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.10 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.11 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -352,7 +352,9 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
   Lo que identifica al caso —códigos, DNI, horas, el estado que se prueba— se escribe a
   la vista en cada test. Si un IT necesita algo que el escenario no arma, lo arma él y lo
   borra él después de `borrarTodoDe`.
-- El CI corre `./gradlew build` completo sobre cada push y PR a `main`.
+- El CI corre `./gradlew build` completo sobre cada push y PR a `main`, con un
+  `mariadb:10.4` de servicio: `MigracionesIT` corre ahí siempre, y si el motor no está
+  falla en vez de saltearse. En una máquina sin MariaDB se sigue salteando.
 
 ## Documentación
 
