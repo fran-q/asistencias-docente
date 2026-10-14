@@ -125,6 +125,7 @@ Los ADR, los requerimientos, el marco legal y el material de la defensa viven en
 `Documentacion/`, **fuera de este repositorio**, un nivel arriba del proyecto. Se sacaron a
 propósito: el push dejaba de arrastrar documentos de Word y PDF que cambian enteros en cada
 guardada aunque se toque una coma. El historial anterior a agosto de 2026 los conserva.
+Desde octubre de 2026 se versionan aparte, en un repositorio privado.
 
 ```
 Documentacion/
