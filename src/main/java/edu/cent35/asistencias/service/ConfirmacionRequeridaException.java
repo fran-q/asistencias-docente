@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.ImpactoIdentidadDto;
+import edu.cent35.asistencias.dto.persona.ImpactoIdentidadDto;
 import lombok.Getter;
 
 /**

@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.CapturaImagenDto;
-import edu.cent35.asistencias.dto.DeteccionRostroDto;
+import edu.cent35.asistencias.dto.biometria.CapturaImagenDto;
+import edu.cent35.asistencias.dto.biometria.DeteccionRostroDto;
 import edu.cent35.asistencias.service.DeteccionRostroService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

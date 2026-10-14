@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.model.EstadoCiclo;
-import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.model.academico.EstadoCiclo;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.CicloLectivoService;
 import jakarta.persistence.EntityNotFoundException;

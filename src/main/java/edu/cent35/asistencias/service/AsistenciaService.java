@@ -1,18 +1,19 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Asistencia;
-import edu.cent35.asistencias.model.AsistenciaManual;
-import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.DiaSemana;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoAsistencia;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.JustificacionAusencia;
-import edu.cent35.asistencias.model.MetodoAsistencia;
-import edu.cent35.asistencias.model.ModeloFacial;
-import edu.cent35.asistencias.model.MotivoCargaManual;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaListItemDto;
+import edu.cent35.asistencias.model.academico.DiaSemana;
+import edu.cent35.asistencias.model.academico.Horario;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.AsistenciaManual;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.JustificacionAusencia;
+import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
+import edu.cent35.asistencias.model.biometria.ModeloFacial;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -20,7 +21,6 @@ import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edu.cent35.asistencias.dto.AsistenciaListItemDto;
+import edu.cent35.asistencias.repository.UsuarioRepository;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

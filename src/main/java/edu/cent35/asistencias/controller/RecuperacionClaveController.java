@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.RecuperacionPorClaveFormDto;
+import edu.cent35.asistencias.dto.institucion.RecuperacionPorClaveFormDto;
 import edu.cent35.asistencias.service.ClaveRecuperacionService;
 import edu.cent35.asistencias.service.InstalacionService;
 import jakarta.validation.Valid;

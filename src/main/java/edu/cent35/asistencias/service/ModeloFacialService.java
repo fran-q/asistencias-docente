@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoConsentimiento;
-import edu.cent35.asistencias.model.ModeloFacial;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.biometria.EstadoConsentimiento;
+import edu.cent35.asistencias.model.biometria.ModeloFacial;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;

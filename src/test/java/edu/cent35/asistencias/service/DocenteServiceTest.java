@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.ImpactoIdentidadDto;
-import edu.cent35.asistencias.repository.PersonaRepository;
-import edu.cent35.asistencias.model.Persona;
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.dto.persona.ImpactoIdentidadDto;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
+import edu.cent35.asistencias.repository.PersonaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

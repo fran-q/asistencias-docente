@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.interceptor;
 
-import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

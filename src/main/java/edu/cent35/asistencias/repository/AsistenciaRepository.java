@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.Asistencia;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -66,8 +66,8 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("docenteId") Long docenteId,
         @Param("materiaId") Long materiaId,
         @Param("carreraId") Long carreraId,
-        @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
-        @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
+        @Param("estado")    edu.cent35.asistencias.model.asistencia.EstadoAsistencia estado,
+        @Param("metodo")    edu.cent35.asistencias.model.asistencia.MetodoAsistencia metodo);
 
     // Cuántas filas daría el reporte sin el tope. Se cuenta en la base en vez de traerlas
     // y medir la lista: contar es justamente lo que hay que poder hacer sin traer nada.
@@ -92,8 +92,8 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("docenteId") Long docenteId,
         @Param("materiaId") Long materiaId,
         @Param("carreraId") Long carreraId,
-        @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
-        @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
+        @Param("estado")    edu.cent35.asistencias.model.asistencia.EstadoAsistencia estado,
+        @Param("metodo")    edu.cent35.asistencias.model.asistencia.MetodoAsistencia metodo);
 
     /**
      * Los bordes de las clases que cubre cada jornada: la que empieza más temprano y la que

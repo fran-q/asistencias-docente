@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.academico.Horario;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -90,7 +90,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
           AND m.institucionId  = :tenantId
           AND p.institucionId  = :tenantId
           AND cl.institucionId = :tenantId
-          AND cl.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND cl.estado = edu.cent35.asistencias.model.academico.EstadoCiclo.ACTIVO
           AND :fecha BETWEEN p.fechaInicio AND p.fechaFin
         ORDER BY h.horaInicio, c.codigo
         """)
@@ -123,7 +123,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
           AND m.institucionId  = :tenantId
           AND p.institucionId  = :tenantId
           AND cl.institucionId = :tenantId
-          AND cl.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND cl.estado = edu.cent35.asistencias.model.academico.EstadoCiclo.ACTIVO
           AND :fecha BETWEEN p.fechaInicio AND p.fechaFin
         """)
     long contarDelDiaSinDocente(@Param("dia") Byte diaSemana,
@@ -154,7 +154,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
           AND m.institucionId  = :tenantId
           AND p.institucionId  = :tenantId
           AND cl.institucionId = :tenantId
-          AND cl.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND cl.estado = edu.cent35.asistencias.model.academico.EstadoCiclo.ACTIVO
           AND :fecha BETWEEN p.fechaInicio AND p.fechaFin
         """)
     List<Horario> findHoyParaDocente(

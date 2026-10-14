@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
-import edu.cent35.asistencias.dto.GraficosDeAsistenciaDto;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.GraficosDeAsistenciaDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

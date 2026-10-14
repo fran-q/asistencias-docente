@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.interceptor;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.PuestoCaptura;
+import edu.cent35.asistencias.model.biometria.PuestoCaptura;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,11 +1,11 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.dto.CodigoFormDto;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.dto.institucion.CambioPasswordFormDto;
+import edu.cent35.asistencias.dto.institucion.CodigoFormDto;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.CodigoVerificacionService;
-import edu.cent35.asistencias.service.VerificacionCuentaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import edu.cent35.asistencias.dto.CambioPasswordFormDto;
 import edu.cent35.asistencias.service.UsuarioService;
+import edu.cent35.asistencias.service.VerificacionCuentaService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestParam;

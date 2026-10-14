@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.DeteccionRostroDto;
+import edu.cent35.asistencias.dto.biometria.DeteccionRostroDto;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

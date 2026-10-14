@@ -2,14 +2,14 @@ package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.ConsentimientoBiometrico;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.model.MetodoConsentimiento;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.biometria.ConsentimientoBiometrico;
+import edu.cent35.asistencias.model.biometria.MetodoConsentimiento;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
@@ -177,13 +177,13 @@ class PasePresenciaIT {
     //  helpers
     // ========================================================================
 
-    private List<edu.cent35.asistencias.model.BloquePresencia> bloquesDelTenant() {
+    private List<edu.cent35.asistencias.model.asistencia.BloquePresencia> bloquesDelTenant() {
         return bloqueRepository.findAll().stream()
             .filter(b -> tenantId.equals(b.getInstitucionId()))
             .toList();
     }
 
-    private List<edu.cent35.asistencias.model.Asistencia> asistenciasDe(LocalDate fecha) {
+    private List<edu.cent35.asistencias.model.asistencia.Asistencia> asistenciasDe(LocalDate fecha) {
         return asistenciaRepository.findDelDia(tenantId, fecha);
     }
 

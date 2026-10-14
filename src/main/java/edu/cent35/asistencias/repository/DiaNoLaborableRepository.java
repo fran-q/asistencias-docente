@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.DiaNoLaborable;
+import edu.cent35.asistencias.model.academico.DiaNoLaborable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

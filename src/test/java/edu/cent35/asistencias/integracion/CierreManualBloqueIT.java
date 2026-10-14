@@ -2,14 +2,14 @@ package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoCierre;
-import edu.cent35.asistencias.model.EstadoSalida;
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.model.OrigenMarca;
-import edu.cent35.asistencias.model.Rol;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.model.asistencia.EstadoCierre;
+import edu.cent35.asistencias.model.asistencia.EstadoSalida;
+import edu.cent35.asistencias.model.asistencia.OrigenMarca;
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
@@ -75,10 +75,10 @@ class CierreManualBloqueIT {
 
         // El catálogo de motivos se siembra en V001, y el perfil test corre sobre H2 con
         // Flyway apagado: acá no existe si no se crea a mano.
-        motivoFallaId = motivoRepository.save(edu.cent35.asistencias.model.MotivoCargaManual.builder()
+        motivoFallaId = motivoRepository.save(edu.cent35.asistencias.model.asistencia.MotivoCargaManual.builder()
             .codigo("FALLA_RECONOCIMIENTO_" + SECUENCIA.get())
             .descripcion("Falla en el reconocimiento facial").activo(true).build()).getId();
-        motivoOtroId = motivoRepository.save(edu.cent35.asistencias.model.MotivoCargaManual.builder()
+        motivoOtroId = motivoRepository.save(edu.cent35.asistencias.model.asistencia.MotivoCargaManual.builder()
             .codigo("OTRO").descripcion("Otro motivo").activo(true).build()).getId();
         Institucion i = institucionRepository.save(Institucion.builder()
             .nombre("Instituto cierre " + SECUENCIA.incrementAndGet())

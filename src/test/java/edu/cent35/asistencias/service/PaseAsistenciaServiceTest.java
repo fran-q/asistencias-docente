@@ -1,16 +1,16 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
-import edu.cent35.asistencias.dto.IdentificacionResultadoDto;
-import edu.cent35.asistencias.dto.KioscoResultadoDto;
-import edu.cent35.asistencias.dto.PaseAsistenciaResultadoDto;
-import edu.cent35.asistencias.model.Asistencia;
-import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.EstadoAsistencia;
-import edu.cent35.asistencias.model.EstadoSalida;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.dto.asistencia.KioscoResultadoDto;
+import edu.cent35.asistencias.dto.asistencia.PaseAsistenciaResultadoDto;
+import edu.cent35.asistencias.dto.biometria.ConfirmacionIdentidad;
+import edu.cent35.asistencias.dto.biometria.IdentificacionResultadoDto;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Horario;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoSalida;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

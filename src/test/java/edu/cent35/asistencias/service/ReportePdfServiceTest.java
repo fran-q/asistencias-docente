@@ -2,7 +2,7 @@ package edu.cent35.asistencias.service;
 
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

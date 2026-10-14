@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.RecuperacionCompletarFormDto;
-import edu.cent35.asistencias.dto.RecuperacionInicioFormDto;
+import edu.cent35.asistencias.dto.institucion.RecuperacionCompletarFormDto;
+import edu.cent35.asistencias.dto.institucion.RecuperacionInicioFormDto;
 import edu.cent35.asistencias.service.CodigoVerificacionService;
 import edu.cent35.asistencias.service.VerificacionCuentaService;
 import jakarta.servlet.http.HttpServletRequest;

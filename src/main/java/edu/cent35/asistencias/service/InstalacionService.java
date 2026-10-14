@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.ModalidadInstalacion;
-import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.dto.institucion.AltaInstitucionFormDto;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

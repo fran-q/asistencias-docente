@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.Comision;
+import edu.cent35.asistencias.model.academico.Comision;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -107,7 +107,7 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
           AND cl.institucionId = :tenantId
           AND m.id = :materiaId
           AND c.activo = true
-          AND cl.estado <> edu.cent35.asistencias.model.EstadoCiclo.CERRADO
+          AND cl.estado <> edu.cent35.asistencias.model.academico.EstadoCiclo.CERRADO
         """)
     long contarActivasEnCiclosAbiertos(@Param("materiaId") Long materiaId,
                                        @Param("tenantId") Long tenantId);

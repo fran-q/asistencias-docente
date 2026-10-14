@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.institucion.AltaInstitucionFormDto;
 import edu.cent35.asistencias.service.InstalacionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.EstadoCiclo;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.EstadoCiclo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -59,7 +59,7 @@ public interface CicloLectivoRepository extends JpaRepository<CicloLectivo, Long
     @Query("""
         SELECT c FROM CicloLectivo c
         WHERE c.institucionId = :institucionId
-          AND c.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND c.estado = edu.cent35.asistencias.model.academico.EstadoCiclo.ACTIVO
           AND :fecha BETWEEN c.fechaInicio AND c.fechaFin
         """)
     Optional<CicloLectivo> activoEnFecha(@Param("institucionId") Long institucionId,

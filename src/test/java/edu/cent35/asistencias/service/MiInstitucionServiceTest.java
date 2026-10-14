@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-
-import edu.cent35.asistencias.dto.InstitucionFormDto;
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.dto.institucion.InstitucionFormDto;
+
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.repository.InstitucionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

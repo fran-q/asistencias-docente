@@ -1,10 +1,10 @@
 package edu.cent35.asistencias;
 
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.EstadoCiclo;
-import edu.cent35.asistencias.model.PeriodoLectivo;
-import edu.cent35.asistencias.model.Persona;
-import edu.cent35.asistencias.model.Rol;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.EstadoCiclo;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.RolRepository;
 import org.springframework.data.repository.CrudRepository;
 

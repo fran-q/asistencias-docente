@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.CierreManualFormDto;
-import edu.cent35.asistencias.model.BloquePresencia;
+import edu.cent35.asistencias.dto.asistencia.CierreManualFormDto;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.AsistenciaService;
 import edu.cent35.asistencias.service.BloquePresenciaService;
-import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

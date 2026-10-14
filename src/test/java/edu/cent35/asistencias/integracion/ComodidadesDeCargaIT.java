@@ -2,12 +2,12 @@ package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.model.PeriodoLectivo;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.PuestoCapturaService;

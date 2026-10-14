@@ -95,10 +95,10 @@ class SesionesActivasServiceTest {
 
     // Un principal nuevo por ingreso, como los que arma el login: misma cuenta, otro objeto.
     private UsuarioAutenticado principal(String username) {
-        edu.cent35.asistencias.model.Rol rol = new edu.cent35.asistencias.model.Rol();
+        edu.cent35.asistencias.model.institucion.Rol rol = new edu.cent35.asistencias.model.institucion.Rol();
         rol.setCodigo("ADMIN");
         rol.setDescripcion("Administrador");
-        edu.cent35.asistencias.model.Usuario u = edu.cent35.asistencias.model.Usuario.builder()
+        edu.cent35.asistencias.model.institucion.Usuario u = edu.cent35.asistencias.model.institucion.Usuario.builder()
             .id(1L).username(username).email(username + "@x.test")
             .passwordHash("no-se-usa").activo(true).rol(rol)
             .build();

@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.seguridad;
 
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.institucion.Usuario;
 
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;

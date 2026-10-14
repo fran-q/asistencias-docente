@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
+import edu.cent35.asistencias.dto.biometria.ConfirmacionIdentidad;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

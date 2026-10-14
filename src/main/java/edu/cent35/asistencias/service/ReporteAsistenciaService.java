@@ -1,12 +1,12 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
-import edu.cent35.asistencias.dto.ReporteFiltroDto;
-import edu.cent35.asistencias.model.Asistencia;
-import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.AsistenciaManual;
-import edu.cent35.asistencias.model.JustificacionAusencia;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.ReporteFiltroDto;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.AsistenciaManual;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.model.asistencia.JustificacionAusencia;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;

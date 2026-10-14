@@ -101,8 +101,10 @@ asistencias/
 │   ├── controller/        Pantallas y endpoints
 │   ├── service/           Lógica de negocio
 │   ├── repository/        Acceso a datos (Spring Data JPA)
-│   ├── model/             Entidades JPA y enums
-│   ├── dto/               Formularios, filas de pantalla y estado de la sesión
+│   ├── model/             Entidades JPA y enums, por dominio: academico/, asistencia/,
+│   │                      biometria/, institucion/, persona/ (ADR-0024)
+│   ├── dto/               Formularios, filas de pantalla y estado de la sesión, con los
+│   │                      mismos cinco dominios
 │   ├── validacion/        Validaciones propias de Bean Validation
 │   ├── seguridad/         Autenticación, sesiones y la credencial del equipo de captura
 │   ├── interceptor/       Controles por petición: institución, equipo autorizado, verificación

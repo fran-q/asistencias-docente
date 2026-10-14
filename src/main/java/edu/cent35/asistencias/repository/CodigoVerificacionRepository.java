@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.CodigoVerificacion;
-import edu.cent35.asistencias.model.PropositoCodigo;
+import edu.cent35.asistencias.model.institucion.CodigoVerificacion;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

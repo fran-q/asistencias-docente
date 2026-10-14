@@ -1,11 +1,11 @@
 package edu.cent35.asistencias.controller;
 
+import edu.cent35.asistencias.dto.asistencia.AsistenciaListItemDto;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaManualFormDto;
+import edu.cent35.asistencias.dto.asistencia.JustificacionAusenciaFormDto;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.dto.AsistenciaListItemDto;
-import edu.cent35.asistencias.dto.AsistenciaManualFormDto;
-import edu.cent35.asistencias.dto.JustificacionAusenciaFormDto;
-import edu.cent35.asistencias.model.Asistencia;
-import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.service.AsistenciaService;
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.HorarioService;

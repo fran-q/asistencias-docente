@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.service;
 
 import java.util.Objects;
-import edu.cent35.asistencias.repository.CambioIdentidadRepository;
-import edu.cent35.asistencias.model.CambioIdentidad;
-import edu.cent35.asistencias.dto.InstantaneaIdentidad;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.dto.ImpactoIdentidadDto;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.Persona;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.dto.persona.ImpactoIdentidadDto;
+import edu.cent35.asistencias.dto.persona.InstantaneaIdentidad;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.CambioIdentidad;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.Persona;
+import edu.cent35.asistencias.repository.CambioIdentidadRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;

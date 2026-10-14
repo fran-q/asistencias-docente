@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.model.academico.Carrera;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

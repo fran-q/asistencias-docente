@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.PuestoCaptura;
+import edu.cent35.asistencias.model.biometria.PuestoCaptura;
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;

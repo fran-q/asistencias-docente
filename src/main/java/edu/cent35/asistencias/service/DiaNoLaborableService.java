@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.DiaNoLaborable;
-import edu.cent35.asistencias.model.TipoDiaNoLaborable;
+import edu.cent35.asistencias.model.academico.DiaNoLaborable;
+import edu.cent35.asistencias.model.academico.TipoDiaNoLaborable;
 import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

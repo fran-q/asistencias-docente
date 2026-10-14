@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.PropositoCodigo;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
+import edu.cent35.asistencias.model.institucion.Usuario;
 
 /**
  * Por dónde sale el código de un solo uso hacia la persona.

@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.InstitucionFormDto;
-import edu.cent35.asistencias.model.Institucion;
+import edu.cent35.asistencias.dto.institucion.InstitucionFormDto;
+import edu.cent35.asistencias.model.institucion.Institucion;
 
 import edu.cent35.asistencias.service.ClaveRecuperacionService;
 import edu.cent35.asistencias.service.InstalacionService;

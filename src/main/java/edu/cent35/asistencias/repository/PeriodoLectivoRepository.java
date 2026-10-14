@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,7 +29,7 @@ public interface PeriodoLectivoRepository extends JpaRepository<PeriodoLectivo, 
         SELECT p FROM PeriodoLectivo p
         JOIN FETCH p.ciclo c
         WHERE p.institucionId = :institucionId
-          AND c.estado <> edu.cent35.asistencias.model.EstadoCiclo.CERRADO
+          AND c.estado <> edu.cent35.asistencias.model.academico.EstadoCiclo.CERRADO
         ORDER BY c.anio DESC, p.orden ASC
         """)
     List<PeriodoLectivo> seleccionablesDelTenant(@Param("institucionId") Long institucionId);
@@ -56,7 +56,7 @@ public interface PeriodoLectivoRepository extends JpaRepository<PeriodoLectivo, 
         SELECT p FROM PeriodoLectivo p
         JOIN p.ciclo c
         WHERE p.institucionId = :institucionId
-          AND c.estado = edu.cent35.asistencias.model.EstadoCiclo.ACTIVO
+          AND c.estado = edu.cent35.asistencias.model.academico.EstadoCiclo.ACTIVO
           AND :fecha BETWEEN p.fechaInicio AND p.fechaFin
         """)
     List<PeriodoLectivo> vigentesEnFecha(@Param("institucionId") Long institucionId,

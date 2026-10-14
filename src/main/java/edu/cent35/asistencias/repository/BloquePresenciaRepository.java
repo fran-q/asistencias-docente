@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.EstadoCierre;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
+import edu.cent35.asistencias.model.asistencia.EstadoCierre;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -49,7 +49,7 @@ public interface BloquePresenciaRepository extends JpaRepository<BloquePresencia
         JOIN FETCH b.docente d
         JOIN FETCH d.persona
         WHERE b.institucionId = :tenantId
-          AND b.estadoCierre  = edu.cent35.asistencias.model.EstadoCierre.SIN_CIERRE
+          AND b.estadoCierre  = edu.cent35.asistencias.model.asistencia.EstadoCierre.SIN_CIERRE
         ORDER BY b.fecha ASC, b.horaEntrada ASC
         """)
     List<BloquePresencia> findPendientesDeCierre(@Param("tenantId") Long tenantId);
@@ -66,7 +66,7 @@ public interface BloquePresenciaRepository extends JpaRepository<BloquePresencia
         JOIN FETCH b.docente d
         JOIN FETCH d.persona
         WHERE b.institucionId = :tenantId
-          AND b.estadoCierre  = edu.cent35.asistencias.model.EstadoCierre.ABIERTO
+          AND b.estadoCierre  = edu.cent35.asistencias.model.asistencia.EstadoCierre.ABIERTO
           AND b.fecha        <= :hasta
         ORDER BY b.fecha ASC, b.horaEntrada ASC
         """)
@@ -82,7 +82,7 @@ public interface BloquePresenciaRepository extends JpaRepository<BloquePresencia
     @Query("""
         SELECT COUNT(b) FROM BloquePresencia b
         WHERE b.institucionId = :tenantId
-          AND b.estadoCierre  = edu.cent35.asistencias.model.EstadoCierre.SIN_CIERRE
+          AND b.estadoCierre  = edu.cent35.asistencias.model.asistencia.EstadoCierre.SIN_CIERRE
         """)
     long countPendientesDeCierre(@Param("tenantId") Long tenantId);
 }

@@ -1,14 +1,14 @@
 package edu.cent35.asistencias;
 
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.model.Persona;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Horario;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.CarreraRepository;

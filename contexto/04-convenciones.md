@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.11 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.12 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -33,17 +33,26 @@ Fuera de esos dos, un comentario sin tildes ("asi", "aca") es un error, no un es
 
 ## Estructura
 
-Package-by-layer (ADR-0006). Un archivo nuevo va a `controller/`, `service/`,
-`repository/`, `model/`, `dto/`, `validacion/`, `interceptor/`, `seguridad/` o `config/`
-según **qué hace**, no según a qué funcionalidad pertenece.
+Package-by-layer (ADR-0006), con una excepción acotada (ADR-0024). Un archivo nuevo va a
+`controller/`, `service/`, `repository/`, `model/`, `dto/`, `validacion/`, `interceptor/`,
+`seguridad/` o `config/` según **qué hace**, no según a qué funcionalidad pertenece.
 
-No crear subpaquetes por feature dentro de las capas. Se probó y se abandonó.
+**`model/` y `dto/` se dividen por dominio** (ADR-0024): `academico/`, `asistencia/`,
+`biometria/`, `institucion/` y `persona/`, los mismos cinco en las dos. Una clase nueva va al
+dominio de la pantalla o el flujo al que sirve; si cruza dominios, a la raíz de la capa, como
+`BaseTenantEntity` o `PanelInicioDto`. Son las dos capas que el ADR-0006 dejó para revisar al
+pasar las veinte entidades, y las que más se buscan por tema.
+
+**Las demás capas siguen planas**: nada de subpaquetes por funcionalidad en `controller/`,
+`service/`, `repository/` y el resto. Un servicio orquesta entidades de varias áreas, y
+partirlo por dominio obliga a elegirle una. Si `service/` crece, se evalúa con el mismo
+criterio y se escribe otro ADR.
 
 Sumar una capa nueva es otra cosa y es legítimo, siempre que agrupe por **tipo de
 artefacto** y no por funcionalidad: así nació `validacion/`, con las anotaciones de Bean
 Validation y sus `ConstraintValidator`, que hasta entonces vivían en `dto/` sin ser DTO de
-nada. La prueba a pasar es simple: si el nombre de la carpeta es un sustantivo del dominio
-(`docentes/`, `asistencia/`), está mal.
+nada. La prueba a pasar: en el primer nivel, si el nombre de la carpeta es un sustantivo del
+dominio (`docentes/`), está mal. Los dominios aparecen solo adentro de `model/` y `dto/`.
 
 Dos aclaraciones sobre capas que ya existían y se prestaban a duda:
 
@@ -175,8 +184,8 @@ intento con `log.warn`.
 - Las tenant-scoped extienden `BaseTenantEntity` y suman `@Filter(name = "tenant")`.
 - El `@FilterDef` global está en `model/package-info.java`. No duplicarlo.
 - Lombok `@Getter` / `@Setter`. Evitar `@Data` en entidades JPA.
-- Los enums del dominio viven en `model/` junto a las entidades: `EstadoAsistencia`,
-  `MetodoAsistencia`, `DiaSemana`, `Rol`, `MotivoCargaManual`, etc.
+- Los enums viven junto a las entidades de su dominio: `asistencia/EstadoAsistencia`,
+  `academico/DiaSemana`, `institucion/RolCodigo`.
 
 ## DTO
 
@@ -318,7 +327,8 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 - JUnit 5. Unitarios con Mockito, integración con `@SpringBootTest` sobre H2 en memoria
   y `@ActiveProfiles("test")`.
 - **Los dos tipos viven separados y se corren por separado.** Los unitarios se llaman
-  `*Test` y van en la carpeta de la capa que prueban. Los de integración se llaman `*IT`
+  `*Test` y van en el mismo paquete que lo que prueban (`model/academico/HorarioTest`).
+  Los de integración se llaman `*IT`
   y van todos en `integracion/`, sin importar qué capa ejerciten: lo que los define es
   que levantan el contexto, no dónde pega el flujo que prueban.
 

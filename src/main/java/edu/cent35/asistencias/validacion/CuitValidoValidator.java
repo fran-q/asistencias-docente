@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.validacion;
 
-import edu.cent35.asistencias.model.Cuit;
+import edu.cent35.asistencias.model.institucion.Cuit;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

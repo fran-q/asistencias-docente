@@ -1,12 +1,12 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.CapturaImagenDto;
-import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
-import edu.cent35.asistencias.dto.MarcaSinCamaraDto;
-import edu.cent35.asistencias.dto.MarcaSinCamaraResultadoDto;
-import edu.cent35.asistencias.dto.PaseAsistenciaResultadoDto;
-import edu.cent35.asistencias.model.PuestoCaptura;
+import edu.cent35.asistencias.dto.asistencia.MarcaSinCamaraDto;
+import edu.cent35.asistencias.dto.asistencia.MarcaSinCamaraResultadoDto;
+import edu.cent35.asistencias.dto.asistencia.PaseAsistenciaResultadoDto;
+import edu.cent35.asistencias.dto.biometria.CapturaImagenDto;
+import edu.cent35.asistencias.dto.biometria.ConfirmacionIdentidad;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.model.biometria.PuestoCaptura;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.AsistenciaService;
 import edu.cent35.asistencias.service.PanelInicioService;

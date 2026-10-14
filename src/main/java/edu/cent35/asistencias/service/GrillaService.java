@@ -1,13 +1,13 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.dto.academico.GrillaSemanalDto;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.Horario;
+
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
-
-import edu.cent35.asistencias.dto.GrillaSemanalDto;
-import edu.cent35.asistencias.config.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.RegistroFacialDto;
-import edu.cent35.asistencias.dto.RegistroFacialResultadoDto;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoConsentimiento;
-import edu.cent35.asistencias.model.EtapaCaptura;
+import edu.cent35.asistencias.dto.biometria.RegistroFacialDto;
+import edu.cent35.asistencias.dto.biometria.RegistroFacialResultadoDto;
+import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.model.biometria.EstadoConsentimiento;
+import edu.cent35.asistencias.model.biometria.EtapaCaptura;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
 import edu.cent35.asistencias.service.DocenteService;
-import edu.cent35.asistencias.service.ModeloFacialService;
-import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Base64;
 import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
-import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
+import edu.cent35.asistencias.service.ModeloFacialService;
 
 /**
  * Pantalla de registro del modelo facial de un docente (RF-08, RF-09), para los roles

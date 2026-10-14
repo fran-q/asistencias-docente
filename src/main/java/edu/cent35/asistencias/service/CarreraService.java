@@ -1,11 +1,11 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
-
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.repository.CarreraRepository;
+
+import edu.cent35.asistencias.repository.MateriaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

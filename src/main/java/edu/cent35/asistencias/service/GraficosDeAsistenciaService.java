@@ -1,11 +1,11 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
-import edu.cent35.asistencias.dto.GraficosDeAsistenciaDto;
-import edu.cent35.asistencias.dto.GraficosDeAsistenciaDto.ColumnaSemanal;
-import edu.cent35.asistencias.dto.GraficosDeAsistenciaDto.FilaDeRanking;
-import edu.cent35.asistencias.dto.GraficosDeAsistenciaDto.RepartoDeEstados;
-import edu.cent35.asistencias.model.EstadoAsistencia;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.GraficosDeAsistenciaDto.ColumnaSemanal;
+import edu.cent35.asistencias.dto.asistencia.GraficosDeAsistenciaDto.FilaDeRanking;
+import edu.cent35.asistencias.dto.asistencia.GraficosDeAsistenciaDto.RepartoDeEstados;
+import edu.cent35.asistencias.dto.asistencia.GraficosDeAsistenciaDto;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

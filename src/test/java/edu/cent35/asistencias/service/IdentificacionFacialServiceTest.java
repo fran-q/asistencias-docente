@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.dto.IdentificacionResultadoDto;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.ModeloFacial;
+import edu.cent35.asistencias.dto.biometria.IdentificacionResultadoDto;
+import edu.cent35.asistencias.model.biometria.ModeloFacial;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.junit.jupiter.api.AfterEach;

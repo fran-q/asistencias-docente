@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.model.TipoDiaNoLaborable;
+import edu.cent35.asistencias.model.academico.TipoDiaNoLaborable;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.DiaNoLaborableService;
 import jakarta.persistence.EntityNotFoundException;

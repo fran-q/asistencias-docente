@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.PropositoCodigo;
-import edu.cent35.asistencias.model.Rol;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;

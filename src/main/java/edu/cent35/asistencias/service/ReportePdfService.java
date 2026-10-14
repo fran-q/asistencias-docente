@@ -13,7 +13,7 @@ import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

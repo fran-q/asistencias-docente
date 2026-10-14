@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.CapturaImagenDto;
-import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
-import edu.cent35.asistencias.dto.KioscoResultadoDto;
+import edu.cent35.asistencias.dto.asistencia.KioscoResultadoDto;
+import edu.cent35.asistencias.dto.biometria.CapturaImagenDto;
+import edu.cent35.asistencias.dto.biometria.ConfirmacionIdentidad;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
-import edu.cent35.asistencias.model.PuestoCaptura;
+import edu.cent35.asistencias.model.biometria.PuestoCaptura;
 import edu.cent35.asistencias.service.FrenoDeKioscoService;
 import edu.cent35.asistencias.service.PaseAsistenciaService;
 import jakarta.servlet.http.HttpServletRequest;

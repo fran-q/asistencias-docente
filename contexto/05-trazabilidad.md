@@ -37,7 +37,7 @@
 |---|---|---|---|
 | RF-01 | Inicio de sesión | ✅ | `config/SecurityConfig`, `seguridad/CargadorDeUsuarios`, `HomeController` → `/login`. Con el usuario o con el correo: se distinguen por la "@", que un usuario no puede llevar (`UsuarioValido`). Una cuenta se usa en un equipo por vez: entrar desde otro muestra qué se va a cerrar y lo decide quien entra (`SesionesActivasService`, ADR-0020) |
 | RF-02 | Gestión de contraseñas | ✅ | `CuentaController` → `/mi-cuenta/password`; `RecuperacionController` → `/recuperar/codigo` |
-| RF-03 | Control de acceso por rol | ✅ | `SecurityConfig`, `model/Rol`, `seguridad/UsuarioAutenticado` |
+| RF-03 | Control de acceso por rol | ✅ | `SecurityConfig`, `model/institucion/Rol`, `seguridad/UsuarioAutenticado` |
 | RF-04 | Aislamiento multi-tenant | ✅ | `TenantContext`, `TenantInterceptor`, `TenantFilterAspect`, `BaseTenantEntity` |
 
 ## Gestión de instituciones
@@ -45,7 +45,7 @@
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
 | RF-05 | Alta de institución | ✅ | `AltaInstitucionController`, `AltaInstitucionService` (ADR-0010) |
-| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/NombrePropio`). Cada cuenta corrige su usuario, su nombre y su correo desde Mi cuenta (`DatosCuentaController`): el correo cambia recién con un código al actual y otro al nuevo. La baja de una cuenta es una acción con confirmación (`UsuarioService.darDeBaja` / `reactivar`), no una casilla del formulario de datos |
+| RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/persona/NombrePropio`). Cada cuenta corrige su usuario, su nombre y su correo desde Mi cuenta (`DatosCuentaController`): el correo cambia recién con un código al actual y otro al nuevo. La baja de una cuenta es una acción con confirmación (`UsuarioService.darDeBaja` / `reactivar`), no una casilla del formulario de datos |
 
 ## Gestión de docentes
 

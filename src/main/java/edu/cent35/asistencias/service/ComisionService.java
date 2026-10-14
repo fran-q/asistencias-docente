@@ -1,17 +1,17 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.CicloLectivo;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.model.PeriodoLectivo;
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.academico.CicloLectivo;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 
-import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

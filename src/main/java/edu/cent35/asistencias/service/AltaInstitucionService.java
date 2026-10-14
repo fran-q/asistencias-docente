@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.repository.PersonaRepository;
-import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
-import edu.cent35.asistencias.dto.AltaPendiente;
-import edu.cent35.asistencias.model.Cuit;
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.model.Rol;
-import edu.cent35.asistencias.model.RolCodigo;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.dto.institucion.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.institucion.AltaPendiente;
+import edu.cent35.asistencias.model.institucion.Cuit;
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.institucion.RolCodigo;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
+import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -91,7 +91,7 @@ public class AltaInstitucionService {
 
         try {
             notificador.enviarCodigo(destinatario,
-                edu.cent35.asistencias.model.PropositoCodigo.VERIFICACION_EMAIL,
+                edu.cent35.asistencias.model.institucion.PropositoCodigo.VERIFICACION_EMAIL,
                 email, codigoEnClaro);
         } catch (RuntimeException ex) {
             // Si no salió, el cupo no se consumió: devolverlo evita castigar a quien no

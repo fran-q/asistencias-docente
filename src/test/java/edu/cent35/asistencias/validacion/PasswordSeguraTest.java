@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.validacion;
 
-import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
-import edu.cent35.asistencias.dto.CambioPasswordFormDto;
-import edu.cent35.asistencias.dto.RecuperacionCompletarFormDto;
-import edu.cent35.asistencias.dto.UsuarioCreateFormDto;
+import edu.cent35.asistencias.dto.institucion.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.institucion.CambioPasswordFormDto;
+import edu.cent35.asistencias.dto.institucion.RecuperacionCompletarFormDto;
+import edu.cent35.asistencias.dto.institucion.UsuarioCreateFormDto;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;

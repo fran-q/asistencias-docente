@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.HorarioFormDto;
-import edu.cent35.asistencias.dto.HorarioListItemDto;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.DiaSemana;
-import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.dto.academico.HorarioFormDto;
+import edu.cent35.asistencias.dto.academico.HorarioListItemDto;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.DiaSemana;
+import edu.cent35.asistencias.model.academico.Horario;
 
 import edu.cent35.asistencias.service.ComisionService;
 import edu.cent35.asistencias.service.HorarioService;

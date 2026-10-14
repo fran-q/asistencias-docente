@@ -1,15 +1,15 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.InstantaneaIdentidad;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.NombrePropio;
-import edu.cent35.asistencias.model.Persona;
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.dto.persona.InstantaneaIdentidad;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.NombrePropio;
+import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PersonaRepository;
 
-import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.repository.PersonaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

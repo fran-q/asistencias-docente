@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.dto.ConfirmacionIdentidad;
+import edu.cent35.asistencias.dto.biometria.ConfirmacionIdentidad;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

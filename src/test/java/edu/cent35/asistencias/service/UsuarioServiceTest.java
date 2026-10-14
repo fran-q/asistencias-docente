@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.DatosDePrueba;
-import edu.cent35.asistencias.model.Rol;
-import edu.cent35.asistencias.model.RolCodigo;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.institucion.RolCodigo;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 
-import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.repository.UsuarioRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

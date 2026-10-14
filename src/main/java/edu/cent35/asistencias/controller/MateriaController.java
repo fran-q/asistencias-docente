@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.MateriaFormDto;
-import edu.cent35.asistencias.dto.MateriaListItemDto;
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.dto.academico.MateriaFormDto;
+import edu.cent35.asistencias.dto.academico.MateriaListItemDto;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Horario;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.persona.Docente;
 
-import edu.cent35.asistencias.service.MateriaService;
+import edu.cent35.asistencias.service.HorarioService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
-import edu.cent35.asistencias.service.HorarioService;
+import edu.cent35.asistencias.service.MateriaService;
 import java.util.Map;
 import java.util.LinkedHashMap;
 

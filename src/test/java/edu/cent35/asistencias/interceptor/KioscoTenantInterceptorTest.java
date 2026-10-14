@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.interceptor;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.PuestoCaptura;
-import edu.cent35.asistencias.model.Rol;
-import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.model.biometria.PuestoCaptura;
+import edu.cent35.asistencias.model.institucion.Rol;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.PuestoCapturaService;

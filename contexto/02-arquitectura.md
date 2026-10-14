@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.5 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.6 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -38,15 +38,18 @@ Los únicos endpoints que devuelven JSON son los del ciclo de la cámara:
 
 ## Organización del código
 
-**Package-by-layer** (ADR-0006, reemplazó al package-by-feature del ADR-0001):
+**Package-by-layer** (ADR-0006, reemplazó al package-by-feature del ADR-0001), con
+`model/` y `dto/` divididos por dominio adentro (ADR-0024):
 
 ```
 edu.cent35.asistencias
 ├── controller/   @Controller de Spring MVC y los @ControllerAdvice. Uno por área.
 ├── service/      Lógica de negocio. @Service + @Transactional.
 ├── repository/   Spring Data JPA.
-├── model/        @Entity, enums, BaseTenantEntity, y el @FilterDef del tenant.
-├── dto/          Transporte entre UI y controller, más el estado que vive en sesión.
+├── model/        @Entity y enums, en academico/ asistencia/ biometria/ institucion/ persona/;
+│                 en la raíz, BaseTenantEntity y el @FilterDef del tenant.
+├── dto/          Transporte entre UI y controller, más el estado que vive en sesión. Los
+│                 mismos cinco dominios; en la raíz, lo que los cruza (panel, menú).
 ├── validacion/   Anotaciones de Bean Validation y sus ConstraintValidator.
 ├── interceptor/  Los HandlerInterceptor: tenant, verificación de cuenta, puesto.
 ├── seguridad/    Spring Security: el principal, el cargador y la cookie del puesto.
@@ -54,8 +57,9 @@ edu.cent35.asistencias
 ```
 
 `validacion/`, `interceptor/` y `seguridad/` son capas, no subpaquetes por feature: agrupan
-por **tipo de artefacto** igual que las demás. La regla que sigue vigente es la de no partir
-una capa por funcionalidad. Las tres salieron de carpetas donde no pertenecían — las
+por **tipo de artefacto** igual que las demás. Ninguna capa se parte por funcionalidad,
+salvo `model/` y `dto/` (ADR-0024): las dos que el ADR-0006 había dejado para revisar al
+pasar las veinte entidades. Las tres salieron de carpetas donde no pertenecían — las
 anotaciones estaban en `dto/` sin ser DTO de nada, y los interceptores y las clases de
 Spring Security estaban en `config/` sin ser configuración.
 
@@ -302,7 +306,7 @@ sobre H2, salvo `MigracionesIT`, que aplica las migraciones contra un `mariadb:1
 levanta el propio workflow. Ahí el motor es obligatorio (`MARIADB_OBLIGATORIA=si`): si no
 levantó, el test falla en vez de saltearse. Sube el reporte si falla.
 
-## Los 23 ADR
+## Los 24 ADR
 
 Viven en `Documentacion/4-arquitectura/adr/`. Un ADR dice **por qué** se decidió algo y
 qué se descartó.
@@ -314,7 +318,7 @@ qué se descartó.
 | 0003 | Sesión con cookie vs JWT | Vigente |
 | 0004 | Tenant filter en JOINs | Vigente |
 | 0005 | Consentimiento biométrico | Vigente |
-| 0006 | Organización por capas | Vigente |
+| 0006 | Organización por capas | Vigente — su regla de paquetes planos, modificada por 0024 |
 | 0007 | Reconocimiento facial con LBPH | Vigente |
 | 0008 | Asistencia automática | Vigente |
 | 0009 | Verificación de correo y recuperación | Vigente |
@@ -332,3 +336,4 @@ qué se descartó.
 | 0021 | La marca sin cámara la carga el admin, en el momento | Propuesta |
 | 0022 | Instalación autónoma: instalador, servicio y primera cuenta sin correo | Propuesta |
 | 0023 | Autoría de cada cambio y acciones sensibles | Propuesta |
+| 0024 | `model/` y `dto/` se dividen por dominio | Vigente |

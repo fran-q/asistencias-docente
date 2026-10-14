@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.MotivoCargaManual;
+import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

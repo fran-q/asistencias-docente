@@ -1,12 +1,12 @@
 package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Asistencia;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoAsistencia;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.model.MetodoAsistencia;
+import edu.cent35.asistencias.model.academico.Horario;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;

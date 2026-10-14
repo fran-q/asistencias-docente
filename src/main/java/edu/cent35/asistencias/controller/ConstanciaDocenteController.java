@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.controller;
 
+import edu.cent35.asistencias.model.biometria.ConsentimientoBiometrico;
+import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.model.ConsentimientoBiometrico;
-import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
 import edu.cent35.asistencias.service.ConstanciaArcoService;
 import edu.cent35.asistencias.service.DocenteService;

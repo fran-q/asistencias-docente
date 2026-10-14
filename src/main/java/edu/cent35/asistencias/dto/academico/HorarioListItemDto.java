@@ -1,0 +1,59 @@
+package edu.cent35.asistencias.dto.academico;
+
+import edu.cent35.asistencias.model.academico.DiaSemana;
+import edu.cent35.asistencias.model.academico.Horario;
+
+import lombok.Builder;
+import lombok.Value;
+
+import java.time.LocalTime;
+
+/**
+ * Fila ya preparada de los horarios para la tabla del listado. Se arma dentro de la transacción
+ * para que el template no tenga que tocar entidades ni disparar consultas perezosas.
+ */
+@Value
+@Builder
+public class HorarioListItemDto {
+    Long id;
+    Byte diaSemanaNum;
+    String diaEtiqueta;
+    LocalTime horaInicio;
+    LocalTime horaFin;
+    Short toleranciaMin;
+    Long comisionId;
+    String comisionCodigo;
+    String materiaCodigo;
+    String materiaNombre;
+    // El año del plan y la carrera no son columnas del listado: los usan los filtros, que
+    // comparan contra el data-* de la fila.
+    Short materiaAnio;
+    String carreraCodigo;
+    String carreraNombre;
+    boolean activo;
+    boolean comisionActiva;
+
+    // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
+    public static HorarioListItemDto from(Horario h) {
+        DiaSemana dia = h.getDia();
+        return HorarioListItemDto.builder()
+            .id(h.getId())
+            .diaSemanaNum(h.getDiaSemana())
+            .diaEtiqueta(dia != null ? dia.getEtiqueta() : "—")
+            .horaInicio(h.getHoraInicio())
+            .horaFin(h.getHoraFin())
+            .toleranciaMin(h.getToleranciaMin())
+            .comisionId(h.getComision().getId())
+            .comisionCodigo(h.getComision().getCodigo())
+            .materiaCodigo(h.getComision().getMateria().getCodigo())
+            .materiaNombre(h.getComision().getMateria().getNombre())
+            .materiaAnio(h.getComision().getMateria().getAnio())
+            .carreraCodigo(h.getComision().getMateria().getCarrera() != null
+                           ? h.getComision().getMateria().getCarrera().getCodigo() : null)
+            .carreraNombre(h.getComision().getMateria().getCarrera() != null
+                           ? h.getComision().getMateria().getCarrera().getNombre() : null)
+            .activo(Boolean.TRUE.equals(h.getActivo()))
+            .comisionActiva(Boolean.TRUE.equals(h.getComision().getActivo()))
+            .build();
+    }
+}

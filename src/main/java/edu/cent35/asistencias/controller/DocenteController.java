@@ -1,19 +1,19 @@
 package edu.cent35.asistencias.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import edu.cent35.asistencias.dto.persona.DocenteFormDto;
 import java.time.Clock;
 import java.util.Objects;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import edu.cent35.asistencias.dto.persona.DocenteListItemDto;
+import edu.cent35.asistencias.model.biometria.EstadoConsentimiento;
+import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.ConfirmacionRequeridaException;
-import edu.cent35.asistencias.dto.DocenteFormDto;
-import edu.cent35.asistencias.dto.DocenteListItemDto;
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.EstadoConsentimiento;
 
-import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
+import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ModeloFacialService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;

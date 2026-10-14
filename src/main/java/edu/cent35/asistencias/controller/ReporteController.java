@@ -1,14 +1,14 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.AsistenciaReporteRowDto;
-import edu.cent35.asistencias.dto.ReporteFiltroDto;
-import edu.cent35.asistencias.model.EstadoAsistencia;
-import edu.cent35.asistencias.model.MetodoAsistencia;
-import edu.cent35.asistencias.service.DocenteService;
-import edu.cent35.asistencias.service.MateriaService;
+import edu.cent35.asistencias.dto.asistencia.AsistenciaReporteRowDto;
+import edu.cent35.asistencias.dto.asistencia.ReporteFiltroDto;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
 import edu.cent35.asistencias.service.CarreraService;
-import edu.cent35.asistencias.service.MiInstitucionService;
+import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.GraficosDeAsistenciaService;
+import edu.cent35.asistencias.service.MateriaService;
+import edu.cent35.asistencias.service.MiInstitucionService;
 import edu.cent35.asistencias.service.ReporteAsistenciaService;
 import edu.cent35.asistencias.service.ReportePdfService;
 import jakarta.servlet.http.HttpServletRequest;

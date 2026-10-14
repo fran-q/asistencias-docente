@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.ConsentimientoBiometrico;
+import edu.cent35.asistencias.model.biometria.ConsentimientoBiometrico;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

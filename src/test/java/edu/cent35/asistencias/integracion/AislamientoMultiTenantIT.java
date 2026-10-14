@@ -1,16 +1,16 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.DatosDePrueba;
-import edu.cent35.asistencias.model.PeriodoLectivo;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
-import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.academico.Carrera;
+import edu.cent35.asistencias.model.academico.Comision;
+import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.academico.PeriodoLectivo;
 import edu.cent35.asistencias.repository.CarreraRepository;
+import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.service.CarreraService;
 import edu.cent35.asistencias.service.CicloLectivoService;
 import edu.cent35.asistencias.service.ComisionService;

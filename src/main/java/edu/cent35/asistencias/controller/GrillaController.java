@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.GrillaSemanalDto;
-import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.dto.academico.GrillaSemanalDto;
+import edu.cent35.asistencias.model.academico.Carrera;
 
 import edu.cent35.asistencias.service.GrillaService;
 import jakarta.persistence.EntityNotFoundException;
@@ -62,7 +62,7 @@ public class GrillaController {
         model.addAttribute("cicloIdSeleccionado", cicloId);
 
         // Días para el header de la grilla (1=Lunes ... 7=Domingo)
-        model.addAttribute("dias", edu.cent35.asistencias.model.DiaSemana.values());
+        model.addAttribute("dias", edu.cent35.asistencias.model.academico.DiaSemana.values());
 
         return "academico/grilla";
     }

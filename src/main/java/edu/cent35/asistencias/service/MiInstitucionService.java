@@ -1,10 +1,10 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.Institucion;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-
-import edu.cent35.asistencias.dto.InstitucionFormDto;
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.dto.institucion.InstitucionFormDto;
+
+import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.repository.InstitucionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class MiInstitucionService {
                 "Institucion no encontrada para tenantId=" + tenantId));
 
         inst.setNombre(dto.getNombre().trim());
-        inst.setCuit(edu.cent35.asistencias.model.Cuit.normalizar(dto.getCuit()));
+        inst.setCuit(edu.cent35.asistencias.model.institucion.Cuit.normalizar(dto.getCuit()));
         inst.setDireccion(blankToNull(dto.getDireccion()));
         inst.setEmailContacto(blankToNull(dto.getEmailContacto()));
         inst.setTelefonoContacto(blankToNull(dto.getTelefonoContacto()));

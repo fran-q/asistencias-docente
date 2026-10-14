@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.repository;
 
-import edu.cent35.asistencias.model.JustificacionAusencia;
+import edu.cent35.asistencias.model.asistencia.JustificacionAusencia;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Collection;
