@@ -192,7 +192,6 @@ public class ModeloFacialService {
             modeloFacialRepository.findByDocenteIdAndActivoTrue(docenteId)
                 .ifPresent(anterior -> {
                     anterior.setActivo(false);
-                    anterior.setFechaBaja(java.time.LocalDateTime.now());
                     anterior.setFechaBaja(LocalDateTime.now());
                     modeloFacialRepository.save(anterior);
                     log.info("Modelo facial anterior dado de baja: id={}", anterior.getId());

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -27,6 +28,14 @@ public class FrenoDeEnviosService {
     // defensa contra el abuso casual, no un registro que deba sobrevivir a un reinicio.
     private final Map<String, Deque<LocalDateTime>> envios = new ConcurrentHashMap<>();
 
+    // El reloj de la ventana: se cuentan los envíos de la última hora.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     /**
      * Anota un envío hacia esa dirección y responde si estaba permitido.
      *
@@ -34,7 +43,7 @@ public class FrenoDeEnviosService {
      */
     public boolean permitirEnvio(String email) {
         String clave = email == null ? "" : email.trim().toLowerCase();
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(clock);
 
         Deque<LocalDateTime> recientes = envios.computeIfAbsent(clave, k -> new ArrayDeque<>());
         synchronized (recientes) {

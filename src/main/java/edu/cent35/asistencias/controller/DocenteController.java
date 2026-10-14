@@ -2,6 +2,7 @@ package edu.cent35.asistencias.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import java.time.Clock;
 import java.util.Objects;
 import java.util.Map;
 import java.util.LinkedHashMap;
@@ -51,6 +52,9 @@ public class DocenteController {
     private final ConsentimientoBiometricoService consentimientoService;
     private final ModeloFacialService modeloFacialService;
 
+    // El reloj del "hoy": el tope de las fechas de los formularios y la baja por defecto.
+    private Clock clock = Clock.systemDefaultZone();
+
     // Muestra el listado de los docentes.
     @GetMapping
     public String listar(Model model) {
@@ -66,7 +70,7 @@ public class DocenteController {
         model.addAttribute("docentes", items);
         // Tope del selector de fecha de baja: se resuelve en el servidor porque la fecha de
         // la máquina del cliente puede estar corrida.
-        model.addAttribute("hoy", LocalDate.now());
+        model.addAttribute("hoy", LocalDate.now(clock));
         return "docente/list";
     }
 
@@ -197,7 +201,7 @@ public class DocenteController {
         model.addAttribute("motivoQueImpideLaBaja", service.motivoQueImpideLaBaja(id));
         // Tope del selector de fecha de baja, resuelto en el servidor: el reloj del
         // cliente puede estar corrido.
-        model.addAttribute("hoy", LocalDate.now());
+        model.addAttribute("hoy", LocalDate.now(clock));
     }
 
     // Da de baja el docente en la fecha indicada y vuelve al listado con el resultado.
@@ -209,7 +213,7 @@ public class DocenteController {
                             @AuthenticationPrincipal UsuarioAutenticado actual,
                             RedirectAttributes redirect) {
         try {
-            service.darDeBaja(id, fechaBaja != null ? fechaBaja : LocalDate.now(),
+            service.darDeBaja(id, fechaBaja != null ? fechaBaja : LocalDate.now(clock),
                 actual.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje", "Docente dado de baja.");
         } catch (IllegalArgumentException ex) {

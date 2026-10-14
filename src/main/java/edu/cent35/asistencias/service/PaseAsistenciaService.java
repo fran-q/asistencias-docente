@@ -93,7 +93,7 @@ public class PaseAsistenciaService {
         // reconocimiento suelto es demasiado frágil ante un cambio de luz, y una marca
         // equivocada queda asentada como si fuera un hecho.
         VentanaConfirmacionService.Estado confirmado =
-            ventanaConfirmacion.registrar(confirmacion, id.docenteId(), System.currentTimeMillis());
+            ventanaConfirmacion.registrar(confirmacion, id.docenteId(), clock.millis());
 
         if (!confirmado.confirmado()) {
             return new Paso(id, confirmado, null);

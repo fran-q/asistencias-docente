@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -38,6 +39,14 @@ public class FrenoDeKioscoService {
     // Puesto -> instantes de las últimas peticiones.
     private final Map<Long, Deque<LocalDateTime>> peticiones = new ConcurrentHashMap<>();
 
+    // El reloj de la ventana: se cuentan las peticiones del último minuto.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     /**
      * Anota una petición de ese equipo y responde si estaba permitida.
      *
@@ -47,7 +56,7 @@ public class FrenoDeKioscoService {
         if (puestoId == null) {
             return false;
         }
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(clock);
         Deque<LocalDateTime> recientes =
             peticiones.computeIfAbsent(puestoId, k -> new ArrayDeque<>());
 

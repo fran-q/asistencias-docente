@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -44,10 +45,18 @@ public class ReporteAsistenciaService {
     @Value("${app.reportes.max-filas}")
     private int maxFilas;
 
+    // El reloj del "hoy": sin fechas, el reporte va del primero del mes a hoy.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     // Cuántas filas devolvería el reporte sin el tope; la pantalla lo usa para avisar.
     @Transactional(readOnly = true)
     public long contar(ReporteFiltroDto filtro) {
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(clock);
         LocalDate desde = filtro.getDesde() != null ? filtro.getDesde() : hoy.withDayOfMonth(1);
         LocalDate hasta = filtro.getHasta() != null ? filtro.getHasta() : hoy;
         if (desde.isAfter(hasta)) return 0;
@@ -99,11 +108,11 @@ public class ReporteAsistenciaService {
     // El rango que se usa si el filtro no lo trae: el mes actual hasta hoy.
     private LocalDate desdeEfectivo(ReporteFiltroDto filtro) {
         return filtro.getDesde() != null
-            ? filtro.getDesde() : LocalDate.now().withDayOfMonth(1);
+            ? filtro.getDesde() : LocalDate.now(clock).withDayOfMonth(1);
     }
 
     private LocalDate hastaEfectivo(ReporteFiltroDto filtro) {
-        return filtro.getHasta() != null ? filtro.getHasta() : LocalDate.now();
+        return filtro.getHasta() != null ? filtro.getHasta() : LocalDate.now(clock);
     }
 
     private void validarRango(LocalDate desde, LocalDate hasta) {

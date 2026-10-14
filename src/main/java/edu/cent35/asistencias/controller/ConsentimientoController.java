@@ -28,8 +28,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.time.LocalDateTime;
-
 /**
  * Pantallas para otorgar y revocar el consentimiento biométrico del docente (RF-10), como
  * exigen la Ley 25.326 y la Resolución AAIP 255/2022. Cada operación queda auditada con la
@@ -97,13 +95,14 @@ public class ConsentimientoController {
         }
 
         try {
-            // Form simplificado: por ahora siempre ESCRITO + fecha = ahora.
-            // Cuando se necesite cargar consentimientos retroactivos o
-            // distinguir métodos, se expanden los campos del DTO.
+            // Form simplificado: por ahora siempre ESCRITO y sin fecha, que el servicio
+            // completa con la de este momento según su reloj. Cuando se necesite cargar
+            // consentimientos retroactivos o distinguir métodos, se expanden los campos
+            // del DTO.
             consentimientoService.otorgar(
                 docenteId,
                 MetodoConsentimiento.ESCRITO,
-                LocalDateTime.now(),
+                null,
                 extraerIp(request),
                 request.getHeader("User-Agent"),
                 null, // documentoUrl - opcional, se podra cargar después

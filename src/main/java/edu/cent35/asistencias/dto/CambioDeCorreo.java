@@ -41,13 +41,13 @@ public class CambioDeCorreo implements Serializable {
     }
 
     // Si el correo actual ya se confirmó y la ventana sigue abierta.
-    public boolean estaAutorizado() {
-        return autorizadoHasta != null && LocalDateTime.now().isBefore(autorizadoHasta);
+    public boolean estaAutorizado(LocalDateTime ahora) {
+        return autorizadoHasta != null && ahora.isBefore(autorizadoHasta);
     }
 
     // Si el correo actual se había confirmado pero la ventana ya paso: hay que volver a empezar.
-    public boolean autorizacionVencida() {
-        return autorizadoHasta != null && !estaAutorizado();
+    public boolean autorizacionVencida(LocalDateTime ahora) {
+        return autorizadoHasta != null && !estaAutorizado(ahora);
     }
 
     // Vuelve al primer paso, el del correo actual.

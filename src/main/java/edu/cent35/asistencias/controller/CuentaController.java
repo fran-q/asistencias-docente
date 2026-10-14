@@ -22,6 +22,7 @@ import edu.cent35.asistencias.service.UsuarioService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.RequestParam;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -42,6 +43,9 @@ public class CuentaController {
     private final VerificacionCuentaService verificacionService;
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
+
+    // El reloj de la ventana que abre el código para cambiar la contraseña.
+    private Clock clock = Clock.systemDefaultZone();
 
     // Muestra los datos de la cuenta y si el correo ya fue confirmado.
     @GetMapping
@@ -196,7 +200,7 @@ public class CuentaController {
         }
 
         sesion.setAttribute(AUTORIZACION, principal.getUsuarioId());
-        sesion.setAttribute(AUTORIZACION_VENCE, LocalDateTime.now().plus(VENTANA_CAMBIO));
+        sesion.setAttribute(AUTORIZACION_VENCE, LocalDateTime.now(clock).plus(VENTANA_CAMBIO));
         redirect.addFlashAttribute("pasoPassword", "nueva");
         return "redirect:/mi-cuenta";
     }
@@ -258,6 +262,6 @@ public class CuentaController {
         return para instanceof Long id
             && id.equals(principal.getUsuarioId())
             && vence instanceof LocalDateTime cuando
-            && LocalDateTime.now().isBefore(cuando);
+            && LocalDateTime.now(clock).isBefore(cuando);
     }
 }

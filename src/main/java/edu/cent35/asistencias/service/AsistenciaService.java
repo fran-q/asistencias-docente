@@ -33,6 +33,7 @@ import edu.cent35.asistencias.dto.AsistenciaListItemDto;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -70,6 +71,15 @@ public class AsistenciaService {
     @Value("${app.biometria.umbral-confianza}")
     private double umbralDistancia;
 
+    // El reloj de "ahora": la hora de la marca, la fecha que no puede ser futura y qué clases
+    // del día ya terminaron.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     // Resultado de un intento de marcado: si quedó marca, cuál es, si ya existía y si no, por qué.
     public record ResultadoMarca(
         boolean marcada,
@@ -93,7 +103,7 @@ public class AsistenciaService {
     public ResultadoMarca marcarAutomatica(Long docenteId,
                                            Long modeloFacialId,
                                            Double distanciaLbph) {
-        return marcarAutomatica(docenteId, modeloFacialId, distanciaLbph, LocalDateTime.now());
+        return marcarAutomatica(docenteId, modeloFacialId, distanciaLbph, LocalDateTime.now(clock));
     }
 
     // Misma marca pero con el instante recibido por parámetro, para poder testearla.
@@ -258,7 +268,7 @@ public class AsistenciaService {
         Horario horario = obtenerHorarioValidado(horarioId, tenantId);
 
         // La hora del asiento es AHORA: es cuando el administrador lo declara.
-        LocalTime horaRegistrada = LocalTime.now();
+        LocalTime horaRegistrada = LocalTime.now(clock);
 
         if (estado == null) {
             throw new IllegalArgumentException("Hay que indicar el estado de la asistencia.");
@@ -279,7 +289,7 @@ public class AsistenciaService {
                 + "asignado este docente.");
         }
 
-        if (fecha == null || fecha.isAfter(java.time.LocalDate.now())) {
+        if (fecha == null || fecha.isAfter(java.time.LocalDate.now(clock))) {
             throw new IllegalArgumentException("La fecha no puede ser futura.");
         }
         // La clase solo existe el día que está programado el horario, y acá la fecha la
@@ -389,8 +399,8 @@ public class AsistenciaService {
     public List<AsistenciaListItemDto> listarDelDia(LocalDate fecha) {
         Long tenantId = TenantContext.getRequired();
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
-        boolean esHoy = fecha.equals(LocalDate.now());
-        LocalTime ahora = LocalTime.now();
+        boolean esHoy = fecha.equals(LocalDate.now(clock));
+        LocalTime ahora = LocalTime.now(clock);
 
         // 1) Asistencias realmente persistidas para esa fecha.
         List<AsistenciaListItemDto> resultado = new ArrayList<>();

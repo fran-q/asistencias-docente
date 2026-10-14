@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.0 · **Actualizado:** 2026-08-14 · **Estado:** vigente
+> **Versión:** 1.1 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -25,10 +25,11 @@ va el resumen operativo.
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 | TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
 | TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy; **alta para el rumbo** | Abierta — bloquea mover el motor |
-| TD-012 | Servicios que deciden según la hora y leen `now()` suelto, sin `Clock` | Baja | Abierta — se pasan cuando se los toca (`04-convenciones`, *Servicios*) |
 
-**Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB) y TD-007 (el
-aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes).
+**Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB), TD-007 (el
+aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes) y TD-012
+(lógica que leía `now()` suelto: desde el 2026-10-14 todo lo que decide según la hora sale
+de un `Clock`; ver `04-convenciones`, *Servicios*).
 
 ### Las que importan de verdad
 

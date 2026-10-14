@@ -17,6 +17,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -48,6 +49,14 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
     private static final Duration REFRESCO_USO = Duration.ofMinutes(5);
 
     private final PuestoCapturaService puestoService;
+
+    // El reloj del último uso: se refresca como mucho cada REFRESCO_USO.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
@@ -135,7 +144,7 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
     /** Anota que el puesto se usó, pero espaciado: sirve para identificar equipos, no para auditar cuadros. */
     private void refrescarUso(PuestoCaptura puesto, Long institucionId) {
         LocalDateTime ultimo = puesto.getUltimoUsoEn();
-        if (ultimo != null && ultimo.isAfter(LocalDateTime.now().minus(REFRESCO_USO))) {
+        if (ultimo != null && ultimo.isAfter(LocalDateTime.now(clock).minus(REFRESCO_USO))) {
             return;
         }
         try {

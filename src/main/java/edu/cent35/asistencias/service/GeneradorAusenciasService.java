@@ -17,6 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -45,6 +46,14 @@ public class GeneradorAusenciasService {
     @Value("${app.asistencia.ausencias-habilitado:true}")
     private boolean habilitado;
 
+    // El reloj del job: decide qué clases de hoy ya terminaron sin marca.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     // Entrada del cron (por defecto cada 30 minutos): recorre todas las instituciones activas.
     @Scheduled(cron = "${app.asistencia.ausencias-cron:0 */30 * * * *}")
     public void ejecutar() {
@@ -52,8 +61,8 @@ public class GeneradorAusenciasService {
             log.debug("Job de ausencias deshabilitado por configuracion.");
             return;
         }
-        LocalDate hoy = LocalDate.now();
-        LocalTime ahora = LocalTime.now();
+        LocalDate hoy = LocalDate.now(clock);
+        LocalTime ahora = LocalTime.now(clock);
         int totalCreadas = 0;
         int totalCerrados = 0;
 

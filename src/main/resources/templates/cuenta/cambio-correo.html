@@ -12,7 +12,7 @@
       Hasta que entra el segundo código la cuenta sigue con su correo de siempre, así que salir
       de acá no rompe nada: un correo mal tipeado no deja a nadie sin poder recuperar la cuenta.
     -->
-    <section class="mi-cuenta" th:with="segundo=${cambio.estaAutorizado()}">
+    <section class="mi-cuenta">
         <header class="page-header">
             <h1>Cambiar el correo</h1>
             <p class="page-header__subtitle">
@@ -31,7 +31,7 @@
 
             <th:block th:unless="${segundo}">
                 <h2>Confirmá que sos vos</h2>
-                <div th:if="${cambio.autorizacionVencida()}" class="alert alert--warning" role="alert">
+                <div th:if="${autorizacionVencida}" class="alert alert--warning" role="alert">
                     Pasaron más de diez minutos desde que confirmaste tu correo actual, así que la
                     autorización venció. Pedí un código nuevo y empezá otra vez.
                 </div>

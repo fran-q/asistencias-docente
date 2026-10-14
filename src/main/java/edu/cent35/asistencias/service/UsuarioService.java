@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,6 +60,14 @@ public class UsuarioService {
     // Horas entre una contraseña nueva y la siguiente. En cero, sin límite.
     @Value("${app.password.horas-entre-cambios}")
     private long horasEntreCambios;
+
+    // El reloj de las 24 horas entre cambios de contraseña.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     // Lista los usuarios de la institución actual (activos + inactivos, ordenados).
     @Transactional(readOnly = true)
@@ -126,7 +135,7 @@ public class UsuarioService {
             // verificarla: sin SMTP, el código no llega, y VerificacionInterceptor la deja
             // bloqueada en /mi-cuenta para siempre. La cuenta se creaba bien, entraba al login
             // bien, y recién ahí se descubria que no podía hacer nada (ADR-0022).
-            .emailVerificadoEn(modalidad.esAutonoma() ? LocalDateTime.now() : null)
+            .emailVerificadoEn(modalidad.esAutonoma() ? LocalDateTime.now(clock) : null)
             .build();
         nuevo.setInstitucionId(tenantId);
 
@@ -429,7 +438,7 @@ public class UsuarioService {
         if (horasEntreCambios <= 0) {
             return null;                              // límite desactivado por configuración
         }
-        if (u.puedeCambiarPassword(LocalDateTime.now(), Duration.ofHours(horasEntreCambios))) {
+        if (u.puedeCambiarPassword(LocalDateTime.now(clock), Duration.ofHours(horasEntreCambios))) {
             return null;
         }
         return "Ya cambiaste tu contraseña hace menos de " + horasEntreCambios + " horas. "
@@ -445,7 +454,7 @@ public class UsuarioService {
      * ventana abierta, y un sello sin contraseña nueva la cerraría por nada—.
      */
     public void sellarCambioDePassword(Usuario u) {
-        u.setPasswordCambiadaEn(LocalDateTime.now());
+        u.setPasswordCambiadaEn(LocalDateTime.now(clock));
         u.setCambioPasswordHabilitadoEn(null);
         u.setCambioPasswordHabilitadoPor(null);
     }
@@ -472,7 +481,7 @@ public class UsuarioService {
         // buscarPorId valida el tenant y responde "no encontrado" si es de otra institución.
         Usuario objetivo = buscarPorId(objetivoId);
 
-        objetivo.setCambioPasswordHabilitadoEn(LocalDateTime.now());
+        objetivo.setCambioPasswordHabilitadoEn(LocalDateTime.now(clock));
         objetivo.setCambioPasswordHabilitadoPor(quienHabilitaId);
         usuarioRepository.save(objetivo);
 

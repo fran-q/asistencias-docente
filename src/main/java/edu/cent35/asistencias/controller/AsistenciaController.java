@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -48,6 +49,9 @@ public class AsistenciaController {
     private final DocenteService docenteService;
     private final HorarioService horarioService;
 
+    // El reloj del "hoy": el listado y la carga manual arrancan en la fecha de hoy.
+    private Clock clock = Clock.systemDefaultZone();
+
     // ========================================================================
     //  Listado
     // ========================================================================
@@ -60,7 +64,7 @@ public class AsistenciaController {
             @RequestParam(name = "docenteId", required = false) Long docenteId,
             Model model) {
 
-        LocalDate fechaFiltro = (fecha != null) ? fecha : LocalDate.now();
+        LocalDate fechaFiltro = (fecha != null) ? fecha : LocalDate.now(clock);
 
         List<AsistenciaListItemDto> todas = asistenciaService.listarDelDia(fechaFiltro);
         List<AsistenciaListItemDto> filtradas = todas.stream()
@@ -84,7 +88,7 @@ public class AsistenciaController {
     public String formManual(Model model) {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", AsistenciaManualFormDto.builder()
-                .fecha(LocalDate.now())
+                .fecha(LocalDate.now(clock))
                 .estado(EstadoAsistencia.PRESENTE)
                 .build());
         }

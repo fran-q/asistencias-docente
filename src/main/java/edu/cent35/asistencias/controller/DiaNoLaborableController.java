@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.LocalDate;
 
 /**
@@ -38,6 +39,9 @@ public class DiaNoLaborableController {
 
     private final DiaNoLaborableService service;
 
+    // El reloj del año en curso, que es el que se muestra si no se elige otro.
+    private Clock clock = Clock.systemDefaultZone();
+
     /**
      * El listado de un año.
      *
@@ -48,10 +52,10 @@ public class DiaNoLaborableController {
     @GetMapping
     public String listar(@RequestParam(name = "anio", required = false) Integer anio,
                          Model model) {
-        int elegido = anio != null ? anio : LocalDate.now().getYear();
+        int elegido = anio != null ? anio : LocalDate.now(clock).getYear();
         model.addAttribute("anioSeleccionado", elegido);
         model.addAttribute("dias", service.listarDelAnio(elegido));
-        model.addAttribute("anioActual", LocalDate.now().getYear());
+        model.addAttribute("anioActual", LocalDate.now(clock).getYear());
         model.addAttribute("tipos", TipoDiaNoLaborable.values());
         return "academico/dia-sin-clase-list";
     }
@@ -61,7 +65,7 @@ public class DiaNoLaborableController {
     @GetMapping("/nuevo")
     public String formNuevo(@RequestParam(name = "anio", required = false) Integer anio,
                             Model model) {
-        model.addAttribute("anio", anio != null ? anio : LocalDate.now().getYear());
+        model.addAttribute("anio", anio != null ? anio : LocalDate.now(clock).getYear());
         model.addAttribute("tipos", TipoDiaNoLaborable.values());
         return "academico/dia-sin-clase-form";
     }
@@ -96,7 +100,7 @@ public class DiaNoLaborableController {
             model.addAttribute("hasta", hasta);
             model.addAttribute("tipo", tipo);
             model.addAttribute("motivo", motivo);
-            model.addAttribute("anio", anio != null ? anio : LocalDate.now().getYear());
+            model.addAttribute("anio", anio != null ? anio : LocalDate.now(clock).getYear());
             model.addAttribute("tipos", TipoDiaNoLaborable.values());
             return "academico/dia-sin-clase-form";
         }

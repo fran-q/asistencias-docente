@@ -39,8 +39,8 @@ public class AltaPendiente implements Serializable {
     }
 
     // true si paso la ventana de vigencia y el alta ya no se puede confirmar.
-    public boolean estaVencida() {
-        return LocalDateTime.now().isAfter(expiraEn);
+    public boolean estaVencida(LocalDateTime ahora) {
+        return ahora.isAfter(expiraEn);
     }
 
     // Suma un intento fallido y responde cuántos van.

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,14 @@ public class ComisionService {
     private final MateriaRepository materiaRepository;
     private final HorarioRepository horarioRepository;
     private final DocenteRepository docenteRepository;
+
+    // El reloj del "hoy": las comisiones que se ofrecen son las del ciclo en curso.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     @Transactional(readOnly = true)
     // Lista las comisiones del tenant, resolviendo el tenant por JOIN con materia.
@@ -116,7 +125,7 @@ public class ComisionService {
         Long tenantId = TenantContext.getRequired();
         // Acotado al ciclo de hoy: ofrecer comisiones de un año que ya terminó deja elegir
         // una clase que no existe, y el rechazo llegaría recién al guardar.
-        List<Comision> cs = comisionRepository.findActivasEnFecha(LocalDate.now(), tenantId);
+        List<Comision> cs = comisionRepository.findActivasEnFecha(LocalDate.now(clock), tenantId);
         cs.forEach(c -> {
             if (c.getMateria() != null) {
                 c.getMateria().getCodigo();
@@ -337,7 +346,7 @@ public class ComisionService {
                 " horario(s) activo(s). Dales de baja primero.");
         }
         c.setActivo(false);
-        c.setFechaBaja(java.time.LocalDate.now());
+        c.setFechaBaja(java.time.LocalDate.now(clock));
         comisionRepository.save(c);
         log.info("Comision dada de baja: id={}", id);
     }

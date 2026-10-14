@@ -30,6 +30,7 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -68,6 +69,9 @@ public class ReporteController {
     private final MiInstitucionService miInstitucionService;
     private final CarreraService carreraService;
 
+    // El reloj del "hoy": el período por defecto de la tabla, los gráficos y las descargas.
+    private Clock clock = Clock.systemDefaultZone();
+
     // Pantalla del reporte con filtros + tabla.
     @GetMapping
     public String pantalla(
@@ -83,7 +87,7 @@ public class ReporteController {
             Model model) {
 
         // Default: mes actual hasta hoy.
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(clock);
         if (desde == null) desde = hoy.withDayOfMonth(1);
         if (hasta == null) hasta = hoy;
 
@@ -142,7 +146,7 @@ public class ReporteController {
             @RequestParam(name = "metodo",    required = false) MetodoAsistencia metodo,
             Model model) {
 
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(clock);
         if (desde == null) desde = hoy.withDayOfMonth(1);
         if (hasta == null) hasta = hoy;
 
@@ -171,7 +175,7 @@ public class ReporteController {
             HttpServletResponse response) throws IOException {
 
         // Default: mes actual hasta hoy.
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(clock);
         if (filtro.getDesde() == null) filtro.setDesde(hoy.withDayOfMonth(1));
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 
@@ -224,7 +228,7 @@ public class ReporteController {
             HttpServletResponse response) throws IOException {
 
         // Mismo default que el CSV: mes actual hasta hoy.
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy = LocalDate.now(clock);
         if (filtro.getDesde() == null) filtro.setDesde(hoy.withDayOfMonth(1));
         if (filtro.getHasta() == null) filtro.setHasta(hoy);
 

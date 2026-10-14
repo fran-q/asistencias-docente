@@ -30,6 +30,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -80,6 +81,14 @@ public class BloquePresenciaService {
     // Minutos que tienen que pasar desde la entrada para aceptar una salida (RF-77).
     @Value("${app.asistencia.permanencia-minima-min}")
     private int permanenciaMinimaMin;
+
+    // El reloj de "ahora": una salida cargada a mano no puede ser posterior a este momento.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     // Qué hizo el sistema con la pasada por la cámara.
     public enum TipoDeMarca { ENTRADA, SALIDA, RECHAZADA }
@@ -570,7 +579,7 @@ public class BloquePresenciaService {
         }
         // Una salida futura acreditaria una permanencia que todavía no ocurrió. Solo aplica
         // al bloque de hoy: los de días anteriores ya terminaron enteros.
-        if (bloque.getFecha().equals(LocalDate.now()) && horaSalida.isAfter(LocalTime.now())) {
+        if (bloque.getFecha().equals(LocalDate.now(clock)) && horaSalida.isAfter(LocalTime.now(clock))) {
             throw new IllegalArgumentException("La hora de salida no puede ser futura.");
         }
 

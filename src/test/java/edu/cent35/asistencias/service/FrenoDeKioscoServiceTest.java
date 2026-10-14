@@ -5,6 +5,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -18,6 +22,7 @@ class FrenoDeKioscoServiceTest {
 
     private static final Long PUESTO_A = 1L;
     private static final Long PUESTO_B = 2L;
+    private static final ZoneId ZONA = ZoneId.of("America/Argentina/Ushuaia");
 
     private FrenoDeKioscoService service;
 
@@ -36,6 +41,24 @@ class FrenoDeKioscoServiceTest {
         assertThat(service.permitir(PUESTO_A))
             .as("la cuarta en el mismo minuto ya pasa el tope de 3")
             .isFalse();
+    }
+
+    @Test
+    @DisplayName("pasado el minuto, el equipo vuelve a tener cupo")
+    void laVentanaEsDeUnMinuto() {
+        // Con el reloj fijo y movido a mano: sin él, probar que la ventana se corre exigía
+        // dormir el test un minuto entero.
+        Instant inicio = Instant.parse("2026-10-14T21:00:00Z");
+        service.setClock(Clock.fixed(inicio, ZONA));
+        service.permitir(PUESTO_A);
+        service.permitir(PUESTO_A);
+        service.permitir(PUESTO_A);
+
+        service.setClock(Clock.fixed(inicio.plusSeconds(59), ZONA));
+        assertThat(service.permitir(PUESTO_A)).as("a los 59 segundos sigue el tope").isFalse();
+
+        service.setClock(Clock.fixed(inicio.plusSeconds(60), ZONA));
+        assertThat(service.permitir(PUESTO_A)).as("al minuto las tres primeras ya salieron").isTrue();
     }
 
     @Test

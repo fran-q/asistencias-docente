@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -36,6 +37,14 @@ public class DocenteService {
     private final PersonaService personaService;
     private final MateriaRepository materiaRepository;
     private final ComisionRepository comisionRepository;
+
+    // El reloj del "hoy": la baja no puede ser futura y el alta nace con la fecha de hoy.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     @Transactional(readOnly = true)
     // Lista los vínculos del tenant, vigentes primero.
@@ -137,7 +146,7 @@ public class DocenteService {
             .legajo(legajoNorm)
             // La fecha de alta es el momento en que se carga, no un dato a tipear: quien
             // está cargando al docente está acá ahora, y pedírsela solo habilita el error.
-            .fechaAlta(LocalDate.now())
+            .fechaAlta(LocalDate.now(clock))
             .activo(true)
             .build();
         d.setInstitucionId(tenantId);
@@ -303,7 +312,7 @@ public class DocenteService {
         if (fechaBaja == null) {
             throw new IllegalArgumentException("La fecha de baja es obligatoria.");
         }
-        if (fechaBaja.isAfter(LocalDate.now())) {
+        if (fechaBaja.isAfter(LocalDate.now(clock))) {
             throw new IllegalArgumentException("La fecha de baja no puede ser futura.");
         }
         if (fechaAlta != null && fechaBaja.isBefore(fechaAlta)) {

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 /**
@@ -49,6 +50,14 @@ public class AltaInstitucionService {
 
     @Value("${app.verificacion.max-intentos}")
     private int maxIntentos;
+
+    // El reloj del alta: de él sale hasta cuándo vale el código y si ya venció.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     /** Por qué se rechazó un código. */
     public enum Rechazo { CORRECTO, INCORRECTO, VENCIDO, SIN_INTENTOS }
@@ -97,12 +106,12 @@ public class AltaInstitucionService {
         log.info("Alta de institucion iniciada: nombre='{}', a la espera del codigo",
                  form.getNombreInstitucion().trim());
         return new AltaPendiente(form, passwordEncoder.encode(codigoEnClaro),
-                                 LocalDateTime.now().plusMinutes(minutosVigencia));
+                                 LocalDateTime.now(clock).plusMinutes(minutosVigencia));
     }
 
     // Comprueba el código tipeado contra el que espera, sumando el intento si falla.
     public Rechazo comprobarCodigo(AltaPendiente pendiente, String codigoTipeado) {
-        if (pendiente.estaVencida()) {
+        if (pendiente.estaVencida(LocalDateTime.now(clock))) {
             return Rechazo.VENCIDO;
         }
         if (pendiente.getIntentos() >= maxIntentos) {
@@ -172,7 +181,7 @@ public class AltaInstitucionService {
             .passwordHash(passwordEncoder.encode(form.getPassword()))
             .rol(rol)
             .activo(true)
-            .emailVerificadoEn(LocalDateTime.now())
+            .emailVerificadoEn(LocalDateTime.now(clock))
             .build();
         usuario.setInstitucionId(institucion.getId());
 

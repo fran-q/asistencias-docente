@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.8 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.9 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -149,10 +149,18 @@ intento con `log.warn`.
   `LocalDate.now(clock)` de un campo `private Clock clock = Clock.systemDefaultZone();`, no
   un `now()` suelto. En producción es el mismo reloj; la diferencia es que un test puede
   fijarlo. Sin eso, un test que arma su escenario alrededor de la hora de la máquina se
-  rompe cerca de medianoche: `MarcaPorCamaraIT` se salteaba tres horas por día por eso.
-  Lo siguen `CicloLectivoService`, `CodigoVerificacionService`, `PanelInicioService` y
-  `PaseAsistenciaService`. Los que todavía llaman `now()` directo están en
-  `07-pendientes.md`, y se pasan cuando se los toca.
+  rompe cerca de medianoche (`MarcaPorCamaraIT` se salteaba tres horas por día por eso), y
+  probar que una ventana de una hora se libera exige esperar una hora.
+  - Vale igual para interceptores y controladores: la ventana del cambio de contraseña o
+    el "hoy" por defecto de un listado también son lógica. Los servicios suman un
+    `setClock` de paquete para sus tests; a los controladores los IT los fijan por
+    reflexión (`AopTestUtils` + `ReflectionTestUtils`).
+  - Lo que no tiene dónde guardar un reloj —un DTO de sesión, una entidad— recibe el
+    instante como parámetro: `estaDisponible(ahora)`, `estaVencida(ahora)`. Y la plantilla
+    no pregunta la hora: el controlador le pasa lo que ya resolvió.
+  - Quedan con `now()` solo los sellos, la fecha que se guarda o se imprime para decir
+    cuándo pasó algo: `fechaBaja`, "emitido el", el nombre del respaldo. En una clase que
+    ya tiene reloj, hasta los sellos salen de él.
 
 ## Entidades
 

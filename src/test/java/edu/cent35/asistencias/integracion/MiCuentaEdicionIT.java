@@ -2,6 +2,7 @@ package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.controller.DatosCuentaController;
 import edu.cent35.asistencias.dto.CambioDeCorreo;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.Institucion;
@@ -29,10 +30,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -70,6 +75,7 @@ class MiCuentaEdicionIT {
     private static final AtomicInteger SEC = new AtomicInteger();
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private DatosCuentaController datosCuentaController;
     @Autowired private InstitucionRepository institucionRepository;
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PersonaRepository personaRepository;
@@ -319,6 +325,43 @@ class MiCuentaEdicionIT {
 
         verify(notificador, never()).enviarCodigo(any(), eq(PropositoCodigo.EMAIL_NUEVO), any(), any());
         assertThat(correoDeLaCuenta()).isEqualTo(correoAdmin);
+    }
+
+    @Test
+    @DisplayName("Pasados los diez minutos, la autorización vence y la pantalla vuelve al primer paso")
+    void laAutorizacionDelCorreoVence() throws Exception {
+        UsuarioAutenticado yo = principalDe(adminId);
+        MockHttpSession sesion = new MockHttpSession();
+
+        mockMvc.perform(post("/mi-cuenta/editar").session(sesion).with(user(yo)).with(csrf())
+                .param("username", "adm.cuenta" + n)
+                .param("email", "tarde" + n + "@x.test")
+                .param("nombre", "Marcelo")
+                .param("apellido", "Quinteros"))
+            .andExpect(redirectedUrl("/mi-cuenta/correo"));
+        ArgumentCaptor<String> primero = ArgumentCaptor.forClass(String.class);
+        verify(notificador).enviarCodigo(any(), eq(PropositoCodigo.CAMBIO_EMAIL), any(), primero.capture());
+        mockMvc.perform(post("/mi-cuenta/correo/actual").session(sesion).with(user(yo)).with(csrf())
+                .param("codigo", primero.getValue()))
+            .andExpect(redirectedUrl("/mi-cuenta/correo"));
+
+        mockMvc.perform(get("/mi-cuenta/correo").session(sesion).with(user(yo)))
+            .andExpect(content().string(containsString("2 de 2")));
+
+        // Once minutos después. El controlador decide con su reloj y le pasa a la plantilla lo
+        // que resolvió: la plantilla ya no pregunta la hora por su cuenta.
+        DatosCuentaController real = AopTestUtils.getTargetObject(datosCuentaController);
+        ReflectionTestUtils.setField(real, "clock",
+            Clock.offset(Clock.systemDefaultZone(), Duration.ofMinutes(11)));
+        try {
+            mockMvc.perform(get("/mi-cuenta/correo").session(sesion).with(user(yo)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("1 de 2")))
+                .andExpect(content().string(containsString("autorización venció. Pedí un código nuevo")));
+        } finally {
+            // El contexto lo comparten otros tests: el reloj corrido no puede quedar puesto.
+            ReflectionTestUtils.setField(real, "clock", Clock.systemDefaultZone());
+        }
     }
 
     @Test

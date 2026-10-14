@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -53,6 +54,15 @@ public class PuestoCapturaService {
     private final PuestoCapturaRepository puestoRepository;
     // Para leer el tope de equipos de la institución (V030).
     private final InstitucionRepository institucionRepository;
+
+    // El reloj de la credencial: un puesto sin uso por más de diasDeInactividad deja de
+    // servir para el kiosco.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
     // Revocar a distancia exige un código de un solo uso. Se reusan las defensas que ya
     // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
     // inventar un segundo mecanismo que habría que endurecer por separado.
@@ -176,7 +186,7 @@ public class PuestoCapturaService {
         if (referencia == null) {
             return false;
         }
-        boolean vigente = referencia.isAfter(LocalDateTime.now().minusDays(diasDeInactividad));
+        boolean vigente = referencia.isAfter(LocalDateTime.now(clock).minusDays(diasDeInactividad));
         if (!vigente) {
             log.warn("Credencial de kiosco vencida: puesto={}, institucion={}, ultimo uso={}",
                      puesto.getId(), puesto.getInstitucionId(), referencia);
@@ -187,7 +197,7 @@ public class PuestoCapturaService {
     /** Deja constancia de que el puesto se usó. Va aparte de {@link #verificar} para no escribir en una consulta de solo lectura. */
     @Transactional
     public void registrarUso(Long puestoId, Long institucionId) {
-        puestoRepository.registrarUso(puestoId, institucionId, LocalDateTime.now());
+        puestoRepository.registrarUso(puestoId, institucionId, LocalDateTime.now(clock));
     }
 
     @Transactional(readOnly = true)
@@ -250,7 +260,7 @@ public class PuestoCapturaService {
         }
 
         puesto.setKioscoHabilitado(true);
-        puesto.setKioscoHabilitadoEn(LocalDateTime.now());
+        puesto.setKioscoHabilitadoEn(LocalDateTime.now(clock));
         puesto.setKioscoHabilitadoPor(quien);
         puestoRepository.save(puesto);
 
@@ -372,7 +382,7 @@ public class PuestoCapturaService {
             return;                                  // ya estaba revocado: no hay nada que hacer
         }
         puesto.setActivo(false);
-        puesto.setFechaBaja(LocalDate.now());
+        puesto.setFechaBaja(LocalDate.now(clock));
         puestoRepository.save(puesto);
 
         log.info("Puesto de captura revocado: id={}, institucion={}", puestoId, institucionId);
@@ -421,7 +431,7 @@ public class PuestoCapturaService {
             puesto.setCamaraDispositivoId(id);
             puesto.setCamaraEtiqueta(nombre.length() > 120 ? nombre.substring(0, 120) : nombre);
         }
-        puesto.setCamaraElegidaEn(LocalDateTime.now());
+        puesto.setCamaraElegidaEn(LocalDateTime.now(clock));
         puestoRepository.save(puesto);
 
         log.info("Camara del puesto {}: {} (institucion {})", puestoId,

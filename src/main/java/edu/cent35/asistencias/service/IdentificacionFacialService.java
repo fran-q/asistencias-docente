@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,6 +65,14 @@ public class IdentificacionFacialService {
     // Cuántos minutos puede quedar un modelo descifrado en memoria sin que nadie lo use.
     @Value("${app.biometria.cache-minutos-inactividad}")
     private long minutosInactividad;
+
+    // El reloj del cache: un modelo sin uso por más de minutosInactividad se suelta.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una línea
     // CALIBRACION con distancia y tiempos, que es la fuente de Documentacion/5-informes/calibracion-umbral.md.
@@ -220,7 +229,7 @@ public class IdentificacionFacialService {
      */
     @Scheduled(fixedDelayString = "${app.biometria.cache-barrido-ms}")
     public void descartarModelosInactivos() {
-        long limite = System.currentTimeMillis() - minutosInactividad * 60_000L;
+        long limite = clock.millis() - minutosInactividad * 60_000L;
         for (Map.Entry<Long, Long> e : ultimoUso.entrySet()) {
             if (e.getValue() > limite) continue;
             LBPHFaceRecognizer rec = cache.remove(e.getKey());
@@ -264,7 +273,7 @@ public class IdentificacionFacialService {
 
         // Cargar los nuevos y marcar a todos como usados recién: si están sincronizados es
         // porque alguien acaba de identificar contra ellos.
-        long ahora = System.currentTimeMillis();
+        long ahora = clock.millis();
         for (ModeloFacial m : modelosActivos) {
             cache.computeIfAbsent(m.getId(), id -> cargar(m));
             ultimoUso.put(m.getId(), ahora);

@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +53,14 @@ public class ConsentimientoBiometricoService {
     private final UsuarioRepository usuarioRepository;
     private final ModeloFacialRepository modeloFacialRepository;
     private final IdentificacionFacialService identificacionFacialService;
+
+    // El reloj de "ahora": la firma no puede ser futura, y sin fecha es la de este momento.
+    private Clock clock = Clock.systemDefaultZone();
+
+    // Solo para tests: fija el reloj.
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
 
     // Estado del consentimiento del docente según su último registro, o NUNCA_OTORGADO si no hay.
     @Transactional(readOnly = true)
@@ -132,7 +141,7 @@ public class ConsentimientoBiometricoService {
             throw new IllegalArgumentException("El método de firma es obligatorio.");
         }
 
-        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime ahora = LocalDateTime.now(clock);
         LocalDateTime fechaConsentimiento = (fechaFirma != null) ? fechaFirma : ahora;
         if (fechaConsentimiento.isAfter(ahora)) {
             throw new IllegalArgumentException(
@@ -180,7 +189,7 @@ public class ConsentimientoBiometricoService {
             .orElseThrow(() -> new EntityNotFoundException("Usuario actual no encontrado: " + usuarioActualId));
 
         vigente.setVigente(false);
-        vigente.setFechaRevocacion(LocalDateTime.now());
+        vigente.setFechaRevocacion(LocalDateTime.now(clock));
         vigente.setMotivoRevocacion(trimToNull(motivo));
         vigente.setRevocadoPor(admin);
         vigente.setIpRevocacion(trimToNull(ip));
@@ -222,7 +231,7 @@ public class ConsentimientoBiometricoService {
             identificacionFacialService.evictarModelo(modelo.getId());
 
             modelo.setActivo(false);
-            modelo.setFechaBaja(LocalDateTime.now());
+            modelo.setFechaBaja(LocalDateTime.now(clock));
             modeloFacialRepository.save(modelo);
 
             log.info("Modelo facial dado de baja por revocacion de consentimiento: "

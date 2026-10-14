@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -55,6 +56,9 @@ public class DatosCuentaController {
 
     private final UsuarioService usuarioService;
     private final VerificacionCuentaService verificacionService;
+
+    // El reloj de la ventana que abre el código del correo actual.
+    private Clock clock = Clock.systemDefaultZone();
 
     // ========================================================================
     //  Los datos: usuario, nombre y correo
@@ -194,7 +198,10 @@ public class DatosCuentaController {
         if (cambio == null) {
             return "redirect:/mi-cuenta";
         }
+        LocalDateTime ahora = LocalDateTime.now(clock);
         model.addAttribute("cambio", cambio);
+        model.addAttribute("segundo", cambio.estaAutorizado(ahora));
+        model.addAttribute("autorizacionVencida", cambio.autorizacionVencida(ahora));
         model.addAttribute("correoActual",
             usuarioService.buscarPorId(principal.getUsuarioId()).getEmail());
         return VISTA_CORREO;
@@ -219,7 +226,7 @@ public class DatosCuentaController {
             return "redirect:/mi-cuenta/correo";
         }
 
-        cambio.autorizarHasta(LocalDateTime.now().plus(VENTANA));
+        cambio.autorizarHasta(LocalDateTime.now(clock).plus(VENTANA));
         // Se vuelve a poner para que la sesión registre que el objeto cambio.
         sesion.setAttribute(CambioDeCorreo.SESION, cambio);
         enviarAlCorreoNuevo(principal.getUsuarioId(), cambio, request, redirect);
@@ -236,7 +243,7 @@ public class DatosCuentaController {
         if (cambio == null) {
             return "redirect:/mi-cuenta";
         }
-        if (!cambio.estaAutorizado()) {
+        if (!cambio.estaAutorizado(LocalDateTime.now(clock))) {
             // Se comprueba en el servidor y no confiando en que la pantalla haya mostrado el paso
             // correcto: este formulario se puede mandar sin haber pasado por el anterior, y
             // saltearlo es justo lo que el código al correo actual existe para impedir.
@@ -277,7 +284,7 @@ public class DatosCuentaController {
         if (cambio == null) {
             return "redirect:/mi-cuenta";
         }
-        if (cambio.estaAutorizado()) {
+        if (cambio.estaAutorizado(LocalDateTime.now(clock))) {
             enviarAlCorreoNuevo(principal.getUsuarioId(), cambio, request, redirect);
         } else {
             // Sin autorización vigente se vuelve al primer paso: una ventana vencida no se

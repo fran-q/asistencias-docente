@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,12 +59,15 @@ public class CicloLectivoController {
 
     private final CicloLectivoService service;
 
+    // El reloj del "hoy": el ciclo que se propone crear es el del año que viene.
+    private Clock clock = Clock.systemDefaultZone();
+
     // Listado con sus períodos: los ciclos son pocos --uno por año--, así que entran todos en
     // una pantalla. Lo que cuelga de cada uno se ve en su detalle.
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("ciclos", service.listar());
-        model.addAttribute("hoy", LocalDate.now());
+        model.addAttribute("hoy", LocalDate.now(clock));
         return "academico/ciclo-list";
     }
 
@@ -78,7 +82,7 @@ public class CicloLectivoController {
         model.addAttribute("ciclo", detalle.ciclo());
         model.addAttribute("cerrado", detalle.ciclo().getEstado() == EstadoCiclo.CERRADO);
         model.addAttribute("enPreparacion", detalle.ciclo().getEstado() == EstadoCiclo.PREPARACION);
-        model.addAttribute("hoy", LocalDate.now());
+        model.addAttribute("hoy", LocalDate.now(clock));
         return "academico/ciclo-detalle";
     }
 
@@ -86,7 +90,7 @@ public class CicloLectivoController {
     // siempre: el en curso ya tiene su ciclo desde marzo.
     @GetMapping("/nuevo")
     public String formNuevo(Model model) {
-        model.addAttribute("anio", LocalDate.now().getYear() + 1);
+        model.addAttribute("anio", LocalDate.now(clock).getYear() + 1);
         model.addAttribute("periodos", List.of());
         return "academico/ciclo-form";
     }
