@@ -92,7 +92,7 @@
                  es justamente lo que se está viendo en la tabla.
 
                  Los dos botones van agrupados entre sí: son la misma decisión, en qué
-                 formato me lo llevo. -->
+                 formato me lo llevó. -->
             <div class="reporte__acciones">
                 <span class="reporte__recuento">
                     Resultados:
@@ -103,7 +103,7 @@
                           th:text="|de ${totalSinTope} · acotá el rango o los filtros|">de N</span>
                 </span>
                 <!-- Sin reporte no hay nada que bajar. Los botones siguen siendo links con
-                     las fechas adentro, asi que el servidor igual valida: esto es para que no
+                     las fechas adentro, así que el servidor igual valida: esto es para que no
                      se ofrezca una descarga que se sabe que no va a salir. -->
                 <div class="reporte__descargas" th:if="${error == null}">
                     <a th:href="@{/reportes/pdf(desde=${filtro.desde}, hasta=${filtro.hasta},
@@ -194,7 +194,7 @@
                                 <span th:unless="${f.minutosEfectivos != null}"
                                       class="text-muted" title="Sin marca de salida para esta clase">—</span>
                             </td>
-                            <!-- Por que puerta entro y por cual salio (V031). Con una camara por
+                            <!-- Por qué puerta entró y por cuál salió (V031). Con una cámara por
                                  entrada, la hora sola no dice donde estuvo la persona. La regla
                                  --un nombre si coinciden, los dos si no-- vive en el DTO,
                                  porque la comparte con el PDF. -->

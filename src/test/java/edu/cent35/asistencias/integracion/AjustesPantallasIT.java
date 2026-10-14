@@ -150,7 +150,7 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
-    //  Anio de la materia y duracion de la carrera
+    //  Año de la materia y duración de la carrera
     // ========================================================================
 
     @Test
@@ -160,8 +160,8 @@ class AjustesPantallasIT {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Año de la carrera")))
             .andExpect(content().string(containsString("id=\"anio\"")))
-            // El JS recorta los años con este dato; sin el atributo ofreceria los diez
-            // siempre y el rechazo llegaria recien al guardar.
+            // El JS recorta los años con este dato; sin el atributo ofrecería los diez
+            // siempre y el rechazo llegaría recién al guardar.
             .andExpect(content().string(containsString("data-duracion=\"3\"")));
     }
 
@@ -187,7 +187,7 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
-    //  Comision: sin cupo, con el titular a mano
+    //  Comisión: sin cupo, con el titular a mano
     // ========================================================================
 
     @Test
@@ -226,7 +226,7 @@ class AjustesPantallasIT {
             .andExpect(content().string(containsString("data-hora-picker=\"horaInicio\"")))
             .andExpect(content().string(containsString("data-hora-picker=\"horaFin\"")))
             .andExpect(content().string(containsString("hora-picker.js")))
-            // El input sigue existiendo: es el que se envia y el que el servidor valida.
+            // El input sigue existiendo: es el que se envía y el que el servidor valida.
             .andExpect(content().string(containsString("type=\"time\"")));
     }
 
@@ -236,9 +236,9 @@ class AjustesPantallasIT {
 
     /*
      * La pantalla tiene los dos campos de fecha y nada impide poner diciembre en "desde" y
-     * enero en "hasta". Ahi el error se muestra; pidiendo la descarga con esas mismas fechas
-     * --el boton esta al lado, y la URL se guarda en favoritos-- la excepcion del servicio
-     * salia sin manejar y terminaba en una pantalla de error del servidor.
+     * enero en "hasta". Ahí el error se muestra; pidiendo la descarga con esas mismas fechas
+     * --el botón esta al lado, y la URL se guarda en favoritos-- la excepción del servicio
+     * salía sin manejar y terminaba en una pantalla de error del servidor.
      */
 
     @Test
@@ -330,8 +330,8 @@ class AjustesPantallasIT {
                 .andExpect(content().string(containsString("Datos del sistema")))
                 .andExpect(content().string(containsString("<dt>Estado</dt>")))
                 .andExpect(content().string(containsString("<dt>Alta</dt>")))
-                // El horario era el unico que mostraba solo el estado: una pantalla que
-                // informa menos que las demas hace dudar de si el dato no existe o si
+                // El horario era el único que mostraba solo el estado: una pantalla que
+                // informa menos que las demás hace dudar de si el dato no existe o si
                 // simplemente se olvidaron de mostrarlo.
                 .andExpect(content().string(containsString("Última actualización")));
         }
@@ -353,7 +353,7 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
-    //  Selects con busqueda
+    //  Selects con búsqueda
     // ========================================================================
 
     @Test
@@ -379,7 +379,7 @@ class AjustesPantallasIT {
     @Test
     @DisplayName("Los desplegables de opciones fijas no llevan buscador")
     void desplegablesCortosNoLlevanBuscador() throws Exception {
-        // El estado tiene tres valores: un buscador ahi estorba mas de lo que ayuda.
+        // El estado tiene tres valores: un buscador ahí estorba más de lo que ayuda.
         mockMvc.perform(get("/reportes").with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andExpect(content().string(not(containsString(
@@ -453,7 +453,7 @@ class AjustesPantallasIT {
         assertThat(r.getResponse().getContentType()).isEqualTo("application/pdf");
         assertThat(r.getResponse().getHeader("Content-Disposition"))
             .contains("constancia_arco_");
-        // Un PDF valido empieza con %PDF; sin esto el test pasaria con un archivo vacio.
+        // Un PDF válido empieza con %PDF; sin esto el test pasaría con un archivo vacío.
         assertThat(r.getResponse().getContentAsByteArray())
             .as("el archivo tiene que ser un PDF de verdad, no una respuesta vacía")
             .startsWith("%PDF".getBytes());
@@ -466,7 +466,7 @@ class AjustesPantallasIT {
     @Test
     @DisplayName("Un error de formulario se queda sobre el formulario, no sale por toast")
     void errorDeFormularioVaEnElFormulario() throws Exception {
-        // Codigo repetido: es una regla de negocio que se descubre al guardar, pero sigue
+        // Código repetido: es una regla de negocio que se descubre al guardar, pero sigue
         // siendo un problema del formulario que hay que poder releer mientras se corrige.
         MvcResult r = mockMvc.perform(post("/carreras/nueva")
                 .with(user(principal("INSTITUCION"))).with(csrf())
@@ -490,8 +490,8 @@ class AjustesPantallasIT {
     @Test
     @DisplayName("Un error de sistema sale por toast, no sobre una pantalla")
     void errorDeSistemaVaPorToast() throws Exception {
-        // Dar de baja algo que no existe no es un problema de ningun formulario: es el
-        // resultado de una accion, y el lugar de eso es el aviso flotante.
+        // Dar de baja algo que no existe no es un problema de ningún formulario: es el
+        // resultado de una acción, y el lugar de eso es el aviso flotante.
         mockMvc.perform(post("/carreras/999999/baja")
                 .with(user(principal("INSTITUCION"))).with(csrf()))
             .andExpect(status().is3xxRedirection())
@@ -535,8 +535,8 @@ class AjustesPantallasIT {
     @DisplayName("Ninguna pantalla deja un script afuera de su section")
     void ningunScriptQuedaAfueraDeLaSection() throws Exception {
         // Las plantillas se insertan en el layout por su <section>, y lo que queda afuera se
-        // descarta sin ningun aviso. Paso en Ciclos lectivos: el boton de agregar periodo no
-        // hacia nada y ningun test lo vio, porque el HTML se renderizaba bien -solo faltaba el
+        // descarta sin ningún aviso. Pasó en Ciclos lectivos: el botón de agregar período no
+        // hacía nada y ningún test lo vio, porque el HTML se renderizaba bien -solo faltaba el
         // script-. Se revisan las plantillas y no la salida, igual que el test de arriba.
         java.nio.file.Path base = java.nio.file.Path.of("src/main/resources/templates");
         try (java.util.stream.Stream<java.nio.file.Path> archivos =
@@ -582,15 +582,15 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
-    //  Pantallas intermedias de cada grupo del menu
+    //  Pantallas intermedias de cada grupo del menú
     // ========================================================================
 
     @Test
     @DisplayName("La miga 'Asistencias' ahora lleva a una página que existe")
     void laMigaDeAsistenciasLlevaAAlgo() throws Exception {
-        // Este es el bug que las origino: /asistencia/pase mostraba la miga
+        // Este es el bug que las originó: /asistencia/pase mostraba la miga
         // "Inicio / Asistencias / Pase de asistencia" y al hacer click en "Asistencias"
-        // se llegaba a una URL sin pantalla detras.
+        // se llegaba a una URL sin pantalla detrás.
         mockMvc.perform(get("/asistencia").with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Pase de asistencia")))
@@ -617,7 +617,7 @@ class AjustesPantallasIT {
     @DisplayName("Como ADMIN, Personal va derecho a Docentes en vez de a una lista de uno")
     void personalDeAdminVaDerechoADocentes() throws Exception {
         // El ADMIN solo ve Docentes en ese grupo: una pantalla intermedia que ofrece una
-        // unica opcion es un click que no decide nada.
+        // única opción es un click que no decide nada.
         mockMvc.perform(get("/personal").with(user(principal("ADMIN"))))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/docentes"));
@@ -1041,10 +1041,10 @@ class AjustesPantallasIT {
 
     /**
      * El alta pide dos nombres seguidos: el completo, que es el dato legal, y uno corto que
-     * sirve para entrar. Para que el segundo no se lea como un tramite repetido, se propone
+     * sirve para entrar. Para que el segundo no se lea como un trámite repetido, se propone
      * a partir del primero.
      *
-     * <p>Se comprueba el cableado y no el resultado: la derivacion vive en JavaScript y corre
+     * <p>Se comprueba el cableado y no el resultado: la derivación vive en JavaScript y corre
      * en el navegador. Lo que puede romperse en silencio desde acá es que el campo pierda el
      * atributo que lo conecta con el nombre, o que la pantalla deje de cargar el script; en
      * los dos casos el formulario sigue funcionando y la sugerencia simplemente no aparece,
@@ -1069,7 +1069,7 @@ class AjustesPantallasIT {
     }
 
     // ========================================================================
-    //  Umbral de separacion de bloques (RF-76)
+    //  Umbral de separación de bloques (RF-76)
     // ========================================================================
 
     @Test
@@ -1125,9 +1125,9 @@ class AjustesPantallasIT {
     @Test
     @DisplayName("Un umbral fuera de rango se rechaza en el formulario, no en la base")
     void umbralFueraDeRangoSeRechazaEnElFormulario() throws Exception {
-        // El CHECK ck_instituciones_umbral_separacion de V019 no existe en H2, asi que este
-        // test no lo prueba: prueba que la validacion del DTO frena el valor ANTES de llegar
-        // a la base. Es justamente lo que evita que el limite se manifieste como un error de
+        // El CHECK ck_instituciones_umbral_separacion de V019 no existe en H2, así que este
+        // test no lo prueba: prueba que la validación del DTO frena el valor ANTES de llegar
+        // a la base. Es justamente lo que evita que el límite se manifieste como un error de
         // integridad ilegible en vez de un mensaje al lado del campo.
         Institucion antes = institucionRepository.findById(tenantId).orElseThrow();
 
@@ -1177,11 +1177,11 @@ class AjustesPantallasIT {
     // ------------------------------------------------------------------------
     //  Ciclo lectivo para los datos de prueba (V023)
     // ------------------------------------------------------------------------
-    //  La comision tiene periodo_id NOT NULL desde V023, asi que persistir una exige antes un
-    //  ciclo con al menos un periodo. Se crea uno anual por tenant, reutilizado por todo el
+    //  La comisión tiene periodo_id NOT NULL desde V023, así que persistir una exige antes un
+    //  ciclo con al menos un período. Se crea uno anual por tenant, reutilizado por todo el
     //  test: lo que estos casos prueban no es el calendario.
-    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un metodo
-    //  al siguiente pero la instancia del test no, asi que un cache por instancia intentaba
+    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un método
+    //  al siguiente pero la instancia del test no, así que un cache por instancia intentaba
     //  crear el mismo ciclo otra vez y chocaba contra uq_ciclos_inst_anio.
     private PeriodoLectivo periodoDe(Long tenantId) {
         return periodoLectivoRepository.seleccionablesDelTenant(tenantId).stream()

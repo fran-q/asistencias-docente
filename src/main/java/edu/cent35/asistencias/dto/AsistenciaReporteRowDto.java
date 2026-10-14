@@ -284,7 +284,7 @@ public class AsistenciaReporteRowDto {
         return Math.min(programados, Math.max(0, tarde));
     }
 
-    // Cuantos minutos de la clase se perdieron por irse antes. Mismo tope que el retraso.
+    // Cuántos minutos de la clase se perdieron por irse antes. Mismo tope que el retraso.
     private static Integer minutosSalidaAnticipada(Asistencia a) {
         BloquePresencia b = a.getBloque();
         if (b == null || b.getHoraSalida() == null) {
@@ -308,7 +308,7 @@ public class AsistenciaReporteRowDto {
             || a.getHorario().salidaEnHora(b.getHoraSalida());
     }
 
-    // El nombre con el que la institucion reconoce ese equipo ("Entrada norte"), o null.
+    // El nombre con el que la institución reconoce ese equipo ("Entrada norte"), o null.
     private static String nombreDelEquipo(edu.cent35.asistencias.model.PuestoCaptura puesto) {
         return puesto == null ? null : puesto.getNombre();
     }

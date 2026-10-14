@@ -13,7 +13,7 @@
  *  1. Una escala de medidas única. Antes cada pantalla resolvía su propio alto
  *     de control y su propio padding, así que dos cajas que debían medir igual
  *     medían distinto. Ahora hay --h-ctl (alto de TODO control: input, select,
- *     boton, botón de icono), --card-pad, --gap y --r*. Nada declara un alto o
+ *     botón, botón de icono), --card-pad, --gap y --r*. Nada declara un alto o
  *     un radio suelto.
  *
  *  2. Navegación lateral. El navbar horizontal se quedaba sin ancho con doce
@@ -553,10 +553,10 @@ input, select, button, textarea { font-family: inherit; }
 :root[data-lateral="cerrado"] .lateral__texto   { opacity: 0; }
 :root[data-lateral="cerrado"] .lateral__link,
 :root[data-lateral="cerrado"] .lateral__colapsar { padding: 0 16px; }
-/* Colapsada, el titulo se vuelve un separador. pointer-events none porque sigue
+/* Colapsada, el título se vuelve un separador. pointer-events none porque sigue
    siendo un enlace: sin esto queda una franja de 1px apretable entre dos iconos,
    que solo se puede acertar de casualidad y lleva a una pantalla que no se
-   pidio. El acceso al grupo no se pierde: esta a un clic de expandir el menu. */
+   pidió. El acceso al grupo no se pierde: esta a un clic de expandir el menú. */
 :root[data-lateral="cerrado"] .lateral__grupo {
     height: 1px; margin: 10px 12px; padding: 0;
     background: var(--border); overflow: hidden; color: transparent;
@@ -1056,10 +1056,10 @@ input, select, button, textarea { font-family: inherit; }
 /* Tres campos que van juntos (año, desde, hasta; nombre, desde, hasta). En la grilla de
    dos columnas el tercero caía solo en una fila nueva y la fila se leía rota. */
 .form-row--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: var(--space); }
-/* Cada campo traia su margen y el ultimo de la fila no: al pasar a una columna quedaban
-   separados de mas entre si y pegados al campo que sigue. El espacio lo pone el gap. */
+/* Cada campo traía su margen y el último de la fila no: al pasar a una columna quedaban
+   separados de más entre sí y pegados al campo que sigue. El espacio lo pone el gap. */
 .form-row--3 > .form-group { margin-bottom: 0; }
-/* El menu propio (select-menu.js) mide lo que su texto: en una columna de la grilla ocupa el
+/* El menú propio (select-menu.js) mide lo que su texto: en una columna de la grilla ocupa el
    ancho, como las fechas de al lado. */
 .form-row > .form-group > .menu { display: block; }
 @media (max-width: 1000px) { .form-row--3 { grid-template-columns: 1fr; } }
@@ -1091,8 +1091,8 @@ input, select, button, textarea { font-family: inherit; }
     border-color: var(--danger);
 }
 .form-group input.is-invalid:focus { box-shadow: 0 0 0 3px var(--t-danger); }
-/* El aviso marca el select, que el menu propio (select-menu.js) guarda oculto adentro:
-   el borde rojo va al boton, que es lo que se ve. */
+/* El aviso marca el select, que el menú propio (select-menu.js) guarda oculto adentro:
+   el borde rojo va al botón, que es lo que se ve. */
 .menu:has(> select.is-invalid) > .menu__boton { border-color: var(--danger); }
 
 .required { color: var(--danger); margin-left: 2px; }
@@ -1250,7 +1250,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     font-size: .89rem;
 }
 .alert p { margin: 0; }
-/* Mas de un parrafo: van envueltos, porque la alerta es flex y los pondria uno al lado del otro. */
+/* Más de un párrafo: van envueltos, porque la alerta es flex y los pondría uno al lado del otro. */
 .alert__cuerpo p + p { margin-top: 6px; }
 .alert--error   { background: var(--t-danger);  border-color: var(--borde-danger);  color: var(--on-danger); }
 .alert--success { background: var(--t-success); border-color: var(--borde-success); color: var(--on-success); }
@@ -1260,8 +1260,8 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 /* ============================================================================
  *  AYUDA DE PANTALLA (ayuda.js)
  *  Como funciona una pantalla: se lee una vez, se cierra con la cruz y se vuelve
- *  a abrir con la "i" del titulo. Del azul de un aviso informativo, pero con el
- *  texto en el color de lectura: son dos o tres lineas, y en azul costaban mas
+ *  a abrir con la "i" del título. Del azul de un aviso informativo, pero con el
+ *  texto en el color de lectura: son dos o tres líneas, y en azul costaban más
  *  que un aviso de una sola.
  * ========================================================================== */
 .ayuda {
@@ -1283,7 +1283,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .ayuda__cerrar:hover { color: var(--text); background: var(--surface-2); }
 
-/* La "i" junto al titulo. Discreta a proposito: la explicacion ya se leyo, y esta
+/* La "i" junto al título. Discreta a propósito: la explicación ya se leyó, y está
    para cuando haga falta releerla. La letra va por CSS (ver ayuda.js). */
 .ayuda-boton {
     display: inline-flex; align-items: center; justify-content: center;
@@ -1659,7 +1659,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     border: 1px solid var(--border); border-radius: var(--r);
     font-size: .88rem; cursor: pointer;
 }
-/* El boton de un filtro por columna esta topeado (data-menu-ancho-max), pero su lista no:
+/* El botón de un filtro por columna está topeado (data-menu-ancho-max), pero su lista no:
    para elegir hay que poder leer el nombre entero de la carrera o del docente. */
 .filtro .menu:has(> select.filtro__campo) > .buscable__lista {
     right: auto; min-width: 100%; width: max-content; max-width: min(88vw, 24rem);
@@ -1820,15 +1820,15 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
  *  pantalla no puede ser decorativa— y el logo pasa arriba del formulario.
  * ========================================================================== */
 /* Alto fijo de ventana, no min-height. Con min-height el alto de la grilla lo fija
-   la columna mas larga, asi que un formulario de diez campos --el alta de
-   institucion-- estiraba tambien el panel azul: la trama y el circulo quedaban
-   repartidos en una franja de dos pantallas de alto y el pie legal caia fuera de
+   la columna más larga, así que un formulario de diez campos --el alta de
+   institución-- estiraba también el panel azul: la trama y el círculo quedaban
+   repartidos en una franja de dos pantallas de alto y el pie legal caía fuera de
    cuadro hasta que uno bajaba. El panel es un cartel, no un contenedor de datos:
-   mide una pantalla y ahi se queda.
+   mide una pantalla y ahí se queda.
 
-   dvh despues de vh: en el celular, 100vh no descuenta la barra de direcciones que
-   se repliega, asi que el ultimo campo del formulario queda debajo del borde. Los
-   navegadores que no conocen dvh se quedan con la linea anterior. */
+   dvh después de vh: en el celular, 100vh no descuenta la barra de direcciones que
+   se repliega, así que el último campo del formulario queda debajo del borde. Los
+   navegadores que no conocen dvh se quedan con la línea anterior. */
 .auth {
     display: grid;
     grid-template-columns: var(--auth-cols);
@@ -1879,7 +1879,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .auth__lista svg { flex-shrink: 0; margin-top: 2px; opacity: .8; }
 
 
-/* El que se desplaza es este, no la pagina: la barra aparece dentro de la columna
+/* El que se desplaza es este, no la página: la barra aparece dentro de la columna
    del formulario y el panel de marca no se mueve.
 
    min-height 0 porque es un item de grilla: sin eso no puede achicarse por debajo
@@ -1890,7 +1890,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     overflow-y: auto;
     padding: 24px;
     background: var(--bg);
-    /* Misma barra fina que la del menu lateral. */
+    /* Misma barra fina que la del menú lateral. */
     scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent;
 }
 .auth__panel::-webkit-scrollbar       { width: 9px; }
@@ -1927,7 +1927,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .auth__pie p { margin: 0; font-size: .86rem; color: var(--text-muted); }
 
 /* La vuelta al kiosco (volver-al-kiosco.js): arriba del formulario, a la vista de quien
-   llego tocando la marca sin querer. */
+   llegó tocando la marca sin querer. */
 .auth__kiosco {
     display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
     margin: 0 0 22px; padding: 10px 12px;
@@ -2053,9 +2053,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .seccion__tarjeta p  { margin: 0; font-size: .88rem; color: var(--text-muted); }
 
 /* El icono de la tarjeta es el mismo que ese destino tiene en la barra lateral, y
-   ese es el punto: se reconoce el destino sin leer el titulo. Va en una pastilla
-   tenida en vez de suelto sobre la tarjeta --a 18px un trazo fino se pierde contra
-   el fondo-- y arriba, alineado con la primera linea del titulo. */
+   ese es el punto: se reconoce el destino sin leer el título. Va en una pastilla
+   teñida en vez de suelto sobre la tarjeta --a 18px un trazo fino se pierde contra
+   el fondo-- y arriba, alineado con la primera línea del título. */
 .seccion__tarjeta { display: flex; align-items: flex-start; gap: var(--space); }
 .seccion__icono {
     display: inline-flex; align-items: center; justify-content: center;
@@ -2066,7 +2066,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 }
 .seccion__icono svg { width: 19px; height: 19px; }
 .seccion__tarjeta:hover .seccion__icono { background: var(--primary-solid); color: #fff; }
-/* min-width 0: sin esto una descripcion larga no puede achicarse por debajo de su
+/* min-width 0: sin esto una descripción larga no puede achicarse por debajo de su
    ancho de contenido y estira la tarjeta fuera de la grilla. */
 .seccion__texto { min-width: 0; }
 
@@ -2164,9 +2164,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .grilla__item[style*="grid-column: 8"] { border-left-color: var(--dia-dom);
     background: color-mix(in oklab, var(--dia-dom) 16%, var(--surface)); }
 
-/* La hora actual: un guion a lo ancho de los dias, con un punto en el borde izquierdo.
+/* La hora actual: un guion a lo ancho de los días, con un punto en el borde izquierdo.
    Punteado y en rojo tenue, que es como lo dibuja cualquier calendario: tiene que leerse
-   como una referencia y no como un bloque mas de la grilla. La ubica grilla-ahora.js; sin
+   como una referencia y no como un bloque más de la grilla. La ubica grilla-ahora.js; sin
    JavaScript no aparece, y no se pierde nada porque no dice nada. */
 .grilla__ahora {
     position: absolute; height: 0; z-index: 2; pointer-events: none;
@@ -2258,10 +2258,10 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     .pantalla-camara .camara-layout {
         flex: 1 1 auto; min-height: 22rem;
         align-items: stretch;
-        /* La columna de la derecha tiene un ancho util y no mas: son un mensaje, tres
-           botones y una lista corta, y estirarlos no los hace mas legibles. Todo lo que
-           sobra va a la camara, que es lo unico que se mira de lejos, y mientras mas
-           ancha sea su columna mas alto puede usar la imagen sin recortarse. */
+        /* La columna de la derecha tiene un ancho útil y no más: son un mensaje, tres
+           botones y una lista corta, y estirarlos no los hace más legibles. Todo lo que
+           sobra va a la cámara, que es lo único que se mira de lejos, y mientras más
+           ancha sea su columna más alto puede usar la imagen sin recortarse. */
         grid-template-columns: minmax(0, 1fr) clamp(300px, 26%, 24rem);
     }
 
@@ -2343,9 +2343,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     animation: v-scan 1500ms var(--ease) infinite;
 }
 
-/* El encabezado lleva el titulo a la izquierda y el paso al modo sin supervision a la
+/* El encabezado lleva el título a la izquierda y el paso al modo sin supervisión a la
    derecha: son dos modos de la misma pantalla, y el salto de uno al otro no es un control
-   de la camara. Envuelve en pantallas angostas en vez de apretar el titulo. */
+   de la cámara. Envuelve en pantallas angostas en vez de apretar el título. */
 .pase__header {
     margin-bottom: var(--space);
     display: flex; align-items: flex-start; justify-content: space-between;
@@ -2457,7 +2457,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 
 /* El avance del reconocimiento, con forma de aviso: es el mismo toast del resto del
    sistema, con la barra adentro. Las dos partes van en bloque porque adentro del texto del
-   aviso son <span>: en linea, el relleno con height 100% no mide nada y la barra se veia
+   aviso son <span>: en línea, el relleno con height 100% no mide nada y la barra se veía
    gris entera, sin avance. */
 .toast--pase .progreso,
 .toast--pase .progreso__barra { display: block; }
@@ -2551,7 +2551,7 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     margin-left: auto;
 }
 .reporte__recuento { color: var(--text-muted); font-size: .88rem; white-space: nowrap; }
-/* Los dos botones son la misma decisión —en qué formato me lo llevo— así que
+/* Los dos botones son la misma decisión —en qué formato me lo llevó— así que
    van pegados y no repartidos a lo ancho de la fila. */
 .reporte__descargas { display: flex; align-items: center; gap: 9px; }
 
@@ -2728,8 +2728,8 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     position: relative;   /* referencia de la barra */
 }
 
-/* La barra va posicionada y no como una fila mas del flujo: asi la camara sigue
-   centrada en la pantalla completa. Metida en el flujo, el video se corria hacia
+/* La barra va posicionada y no como una fila más del flujo: así la cámara sigue
+   centrada en la pantalla completa. Metida en el flujo, el video se corría hacia
    abajo el alto de la barra, y en una pantalla que se mira de pie y a un metro
    ese corrimiento se nota. */
 .kiosco__barra {
@@ -2751,13 +2751,13 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     font-weight: 700; font-size: .95rem;
 }
 
-/* Discreto a proposito: es la salida de una pantalla cuyo trabajo es quedarse
+/* Discreto a propósito: es la salida de una pantalla cuyo trabajo es quedarse
    quieta. Tiene que estar para quien lo busca, sin invitar a nadie a apretarlo. */
 .kiosco__entrar { opacity: .55; transition: opacity var(--t-fast) var(--ease); }
 .kiosco__entrar:hover,
 .kiosco__entrar:focus-visible { opacity: 1; }
 /* La marca es un enlace al login (kiosco.html): sin subrayado ni azul, que en un mostrador
-   la harian parecer un boton puesto para tocar. El foco se ve igual. */
+   la harían parecer un botón puesto para tocar. El foco se ve igual. */
 a.kiosco__marca { text-decoration: none; border-radius: var(--r); }
 a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--primary-ring); }
 
@@ -2824,15 +2824,15 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
     }
 }
 
-/* ---- Camara del puesto (V026) ---------------------------------------------------------- */
-/* La vista previa sirve para reconocer cual camara es, no para trabajar: chica alcanza. */
+/* ---- Cámara del puesto (V026) ---------------------------------------------------------- */
+/* La vista previa sirve para reconocer cuál cámara es, no para trabajar: chica alcanza. */
 .camara-caja--vista { max-width: 360px; margin: 12px 0; }
-/* El aviso de "la elegida no esta conectada" va pegado a la camara en las tres pantallas. */
+/* El aviso de "la elegida no está conectada" va pegado a la cámara en las tres pantallas. */
 .camara-aviso { margin-top: 8px; }
 
 /* ---- Detalle del ciclo lectivo (V027) ------------------------------------------------ */
-/* Una fila por periodo, cada una con su formulario. Flex y no la grilla de .form-row: la
-   fila lleva ademas el conteo de comisiones y dos botones, y en una pantalla angosta tiene
+/* Una fila por período, cada una con su formulario. Flex y no la grilla de .form-row: la
+   fila lleva además el conteo de comisiones y dos botones, y en una pantalla angosta tiene
    que poder partirse sin que los campos queden de un dedo de ancho. */
 .periodo-item {
     display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-sm) var(--space);
@@ -2852,10 +2852,10 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
 }
 .ciclo-detalle__registro { margin-top: var(--space-lg); }
 .ciclo-detalle__pie { margin: var(--space) 0 0; }
-/* El filtro por ano de Comisiones va en su propio form GET; display: contents lo deja ser un
-   control mas de la barra de filtros en vez de una caja aparte. */
+/* El filtro por año de Comisiones va en su propio form GET; display: contents lo deja ser un
+   control más de la barra de filtros en vez de una caja aparte. */
 .filtro__ciclo { display: contents; }
-/* El año de los dias sin clase: va al servidor, al lado de los filtros del navegador. */
+/* El año de los días sin clase: va al servidor, al lado de los filtros del navegador. */
 .filtro__anio { display: flex; align-items: center; gap: 8px; margin: 0; }
 .filtro__anio label { margin: 0; color: var(--text-muted); font-size: .85rem; }
 .filtro__anio input {
@@ -2868,7 +2868,7 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
 .filtro__anio input:focus-visible {
     border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); outline: none;
 }
-/* Lista sin viñetas: los periodos en el listado de ciclos, los dias sin clase en el detalle. */
+/* Lista sin viñetas: los períodos en el listado de ciclos, los días sin clase en el detalle. */
 .lista-plana { list-style: none; margin: 0; padding: 0; }
 .lista-plana li + li { margin-top: 4px; }
 
@@ -2883,15 +2883,15 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
 
 .grafico { margin-top: 12px; }
 
-/* El ancho del eje se reserva con la misma sangria arriba y abajo, para que cada
+/* El ancho del eje se reserva con la misma sangría arriba y abajo, para que cada
    etiqueta de semana caiga justo debajo de su columna. */
 .grafico__area { position: relative; padding-left: var(--grafico-eje, 40px); }
 .grafico__svg { width: 100%; height: 190px; display: block; }
 
-/* Los valores del eje van sobre las lineas que marcan, no en una nota al pie:
-   una guia sin numero obliga a leer un renglon para saber que marca. Van en HTML
+/* Los valores del eje van sobre las líneas que marcan, no en una nota al pie:
+   una guía sin número obliga a leer un renglón para saber qué marca. Van en HTML
    y no dentro del SVG porque el lienzo se estira --preserveAspectRatio none-- y
-   el texto de adentro saldria deformado. */
+   el texto de adentro saldría deformado. */
 .grafico__escala { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--grafico-eje, 40px) - 8px); }
 .grafico__escala-marca {
     position: absolute; right: 0; transform: translateY(-50%);
@@ -2903,7 +2903,7 @@ a.kiosco__marca:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--prima
 
 .grafico__barra { fill: var(--success); }
 /* Sin dato no es cero: se dibuja al ras y apagado, para que no se lea como una
-   semana en la que no se dicto nada. */
+   semana en la que no se dictó nada. */
 .grafico__barra--sin-dato { fill: var(--text-muted); opacity: .45; }
 
 .grafico__etiquetas { display: flex; margin-top: 6px; padding-left: var(--grafico-eje, 40px); }
