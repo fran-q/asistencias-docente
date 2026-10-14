@@ -76,7 +76,7 @@
                         <label for="clave">Clave de recuperación <span class="required">*</span></label>
                         <input type="text" id="clave" th:field="*{clave}" required maxlength="60"
                                placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off"
-                               style="font-family:var(--font-mono)" th:errorclass="is-invalid">
+                               class="input-mono" th:errorclass="is-invalid">
                         <span class="form-hint">
                             Como esté anotada: los guiones, los espacios y las mayúsculas no
                             importan.
@@ -111,8 +111,8 @@
                               th:errors="*{confirmacion}">Error</span>
                     </div>
 
-                    <button type="submit" class="btn btn--primary btn--lg btn--full"
-                            style="margin-top:var(--space)" data-texto-enviando="Cambiando...">
+                    <button type="submit" class="btn btn--primary btn--lg btn--full aire-arriba"
+                            data-texto-enviando="Cambiando...">
                         Cambiar la contraseña
                     </button>
                 </form>

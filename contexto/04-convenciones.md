@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.6 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.7 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -245,6 +245,14 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 - **Sin `style=""` en las plantillas.** El estilo va en clases de `main.css`, con sus
   tokens. La excepción es un valor que calcula el servidor —el ancho de una barra, la
   altura de una columna— y va con `th:style`, porque no hay clase que pueda saberlo.
+  Lo vigila `PlantillasTest`, que nombra el archivo y la línea.
+  - Una separación suelta, que no es de ningún componente, va con `.aire-arriba` o
+    `.aire-izquierda`. Están al final de `main.css` a propósito: con la misma
+    especificidad gana la última regla, y tienen que ganarle al margen propio del
+    componente (`.form-actions`, `.kv`).
+  - Si la misma combinación aparece en dos pantallas, ya es un componente y lleva nombre:
+    `.form-en-fila` (campos y botones en una fila), `.bajada` (el texto pegado a un
+    título), `.badge--al-lado`.
 - **Nunca escribas un color ni una duración a mano: salen de los tokens de `:root`.**
   Un valor suelto se ve bien en oscuro y se rompe en claro, que es exactamente lo que
   pasó con los badges —el de INSTITUCIÓN llegó a 1.69:1 sobre fondo claro—.

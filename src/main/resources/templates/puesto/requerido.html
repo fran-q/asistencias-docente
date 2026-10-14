@@ -122,22 +122,20 @@
             <details class="puesto__tope">
                 <summary class="btn btn--ghost">Cambiar el tope</summary>
 
-                <form th:action="@{/puestos/tope}" method="post"
-                      style="display:flex; gap:.75rem; align-items:flex-end; flex-wrap:wrap;
-                             margin-top:var(--space);">
-                    <div class="form-group" style="margin:0;">
+                <form th:action="@{/puestos/tope}" method="post" class="form-en-fila aire-arriba">
+                    <div class="form-group">
                         <label for="tope">Tope de equipos</label>
                         <input type="number" id="tope" name="tope" min="1" max="50"
-                               th:value="${tope}" autocomplete="off" style="max-width:8rem;"
+                               th:value="${tope}" autocomplete="off" class="puesto__tope-campo"
                                placeholder="Sin tope">
                     </div>
-                    <div class="form-actions" style="margin:0;">
+                    <div class="form-actions form-actions--inline">
                         <button type="submit" class="btn btn--primary"
                                 data-texto-enviando="Guardando...">Guardar</button>
                     </div>
                 </form>
 
-                <p class="text-muted" style="margin-bottom:0;">
+                <p class="text-muted puesto__tope-nota">
                     Dejalo vacío para no poner ningún tope. No se puede dejar por debajo de
                     los que ya están autorizados: bajarlo no revoca ninguno, y la pantalla
                     quedaría mostrando un límite que el propio sistema no cumple. Revocá
@@ -146,7 +144,7 @@
             </details>
         </div>
 
-        <!-- Sin esto, quien mira la tabla desde otra máquina ve un botón que no esta y no
+        <!-- Sin esto, quien mira la tabla desde otra máquina ve un botón que no está y no
              tiene forma de saber si falta porque no le corresponde o porque algo se rompió. -->
         <div class="card" th:if="${puedeDesignar and hayAlguno and idDeEsteEquipo == null}">
             <p class="text-muted">

@@ -15,7 +15,7 @@
             </p>
         </header>
 
-        <div th:if="${error != null}" class="alert alert--error" style="margin-top:1rem;" role="alert">
+        <div th:if="${error != null}" class="alert alert--error aire-arriba" role="alert">
             <p th:text="${error}">Error</p>
         </div>
 
@@ -42,7 +42,7 @@
                class="btn btn--ghost">Cambiar el período en la tabla</a>
         </div>
 
-        <p th:if="${error == null and graficos.vacio}" class="home__vacio" style="margin-top:1rem;">
+        <p th:if="${error == null and graficos.vacio}" class="home__vacio aire-arriba">
             No hay asistencias registradas con los filtros elegidos.
         </p>
 
@@ -51,9 +51,9 @@
             <!-- ============ DICTADO POR SEMANA ============
                  Las columnas vienen con su x y su alto ya calculados por el servicio: la
                  plantilla no hace cuentas, solo dibuja lo que le dan. -->
-            <div class="card" style="margin-top:1rem;">
+            <div class="card aire-arriba">
                 <h2>Dictado sobre programado, semana a semana</h2>
-                <p class="text-muted" style="margin-top:-.25rem;">
+                <p class="text-muted bajada">
                     Cada columna es una semana, desde el lunes. Una semana sin ninguna clase
                     con marca de salida se dibuja al ras y sin número: no es que se dictara
                     cero, es que de esa semana no se sabe.
@@ -65,9 +65,9 @@
                              valor obliga a leer un renglón para saber qué marca, y lo que se
                              busca en un gráfico es justamente no tener que leerlo. -->
                         <div class="grafico__escala" aria-hidden="true">
-                            <span class="grafico__escala-marca" style="top:0">100%</span>
-                            <span class="grafico__escala-marca" style="top:50%">50%</span>
-                            <span class="grafico__escala-marca" style="top:100%">0%</span>
+                            <span class="grafico__escala-marca grafico__escala-marca--tope">100%</span>
+                            <span class="grafico__escala-marca grafico__escala-marca--medio">50%</span>
+                            <span class="grafico__escala-marca grafico__escala-marca--base">0%</span>
                         </div>
 
                         <svg class="grafico__svg" viewBox="0 0 720 200"
@@ -102,7 +102,7 @@
             </div>
 
             <!-- ============ REPARTO DE ESTADOS ============ -->
-            <div class="card" style="margin-top:1rem;">
+            <div class="card aire-arriba">
                 <h2>Presentes, tarde y ausentes</h2>
 
                 <div class="grafico__apilada" role="img"
@@ -148,7 +148,7 @@
             </div>
 
             <!-- ============ DONDE SE CONCENTRAN LAS AUSENCIAS ============ -->
-            <div class="card" style="margin-top:1rem;">
+            <div class="card aire-arriba">
                 <h2>Dónde se concentran las ausencias</h2>
 
                 <p th:if="${#lists.isEmpty(graficos.docentes)}" class="home__vacio">

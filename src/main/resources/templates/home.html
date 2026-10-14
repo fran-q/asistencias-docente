@@ -124,8 +124,7 @@
                 Hoy no hay clases programadas.
             </p>
 
-            <div th:unless="${panel.resumen().sinClasesHoy()}"
-                 style="display:flex;flex-direction:column;flex:1">
+            <div th:unless="${panel.resumen().sinClasesHoy()}" class="home__resumen">
                 <!-- Cada número lleva al listado YA filtrado por ese estado: eso es lo que
                      lo diferencia de poner un acceso más al menú. -->
                 <div class="home__numeros">

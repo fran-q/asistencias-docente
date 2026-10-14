@@ -49,9 +49,8 @@
                     instalación no envía correos.
                 </p>
 
-                <div class="card" style="margin:var(--space) 0; text-align:center">
-                    <p style="font-family:var(--font-mono); font-size:1.6rem; letter-spacing:.08em;
-                              word-break:break-all; margin:0"
+                <div class="card clave-recuperacion-caja">
+                    <p class="clave-recuperacion clave-recuperacion--grande"
                        th:text="${claveRecuperacion}">XXXXX-XXXXX-XXXXX-XXXXX</p>
                 </div>
 
@@ -68,8 +67,7 @@
                     entrando con la cuenta que acabás de crear. Al generarla, esta deja de servir.
                 </p>
 
-                <a th:href="@{/login}" class="btn btn--primary btn--lg btn--full"
-                   style="margin-top:var(--space)">
+                <a th:href="@{/login}" class="btn btn--primary btn--lg btn--full aire-arriba">
                     Ya la guardé, ir a iniciar sesión
                 </a>
             </div>

@@ -103,7 +103,7 @@
                             <td>
                                 <code th:text="${c.materiaCodigo}">MAT</code>
                                 <small class="text-muted" th:text="${c.materiaNombre}">Nombre</small>
-                                <span th:unless="${c.materiaActiva}" class="badge badge--danger" style="margin-left:6px;">Materia inactiva</span>
+                                <span th:unless="${c.materiaActiva}" class="badge badge--danger badge--al-lado">Materia inactiva</span>
                             </td>
                             <td>
                                 <span th:if="${c.carreraNombre}" class="celda-recortada"
@@ -114,7 +114,7 @@
                                 <span th:if="${c.docenteNombre}" th:text="${c.docenteNombre}">Apellido, Nombre</span>
                                 <span th:unless="${c.docenteNombre}" class="text-muted">Sin asignar</span>
                                 <span th:if="${c.docenteNombre != null and !c.docenteActivo}"
-                                      class="badge badge--danger" style="margin-left:6px;">Docente inactivo</span>
+                                      class="badge badge--danger badge--al-lado">Docente inactivo</span>
                             </td>
                             <!-- data-valor: ordena por estado y no por el alfabeto de la insignia. -->
                             <td th:attr="data-valor=${c.activo} ? '0' : '1'">

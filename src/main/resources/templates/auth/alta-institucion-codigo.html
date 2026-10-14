@@ -71,7 +71,7 @@
                 <h1>Confirmá tu correo</h1>
                 <p>
                     Mandamos un código de 6 dígitos a
-                    <strong style="color:var(--text);font-weight:500"
+                    <strong class="auth__dato"
                             th:text="${email}">correo@ejemplo.com</strong>.
                     Vence en unos minutos y se usa una sola vez.
                 </p>
@@ -110,8 +110,8 @@
                         <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
                     </div>
 
-                    <button type="submit" class="btn btn--primary btn--lg btn--full"
-                            style="margin-top:var(--space)" data-texto-enviando="Creando...">
+                    <button type="submit" class="btn btn--primary btn--lg btn--full aire-arriba"
+                            data-texto-enviando="Creando...">
                         Crear la institución
                     </button>
                 </form>

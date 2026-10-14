@@ -88,7 +88,7 @@
                     <span class="form-error" th:if="${#fields.hasErrors('confirmaRevocacion')}" th:errors="*{confirmaRevocacion}">err</span>
                 </div>
 
-                <div class="form-actions" style="margin-top: 1.5rem;">
+                <div class="form-actions">
                     <button type="submit" class="btn btn--danger-solid" data-texto-enviando="Revocando...">Revocar consentimiento</button>
                     <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
                 </div>

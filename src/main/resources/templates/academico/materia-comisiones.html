@@ -24,8 +24,8 @@
         <div class="card">
             <p>
                 <span th:text="${#lists.size(comisiones)}">0</span> comisiones cargadas.
-                <a th:href="@{/comisiones/nueva}" class="btn btn--primary btn--sm"
-                   style="margin-left:1rem;">+ Nueva comisión</a>
+                <a th:href="@{/comisiones/nueva}"
+                   class="btn btn--primary btn--sm aire-izquierda">+ Nueva comisión</a>
                 <a th:href="@{/carreras/{id}/materias(id=${materia.carrera.id})}"
                    class="btn btn--ghost btn--sm">Volver a la carrera</a>
                 <a th:href="@{/materias/{id}/editar(id=${materia.id})}"
@@ -69,7 +69,7 @@
                 </dd>
             </dl>
 
-            <h3 style="margin-top:1rem;">Horarios</h3>
+            <h3 class="aire-arriba">Horarios</h3>
 
             <p class="text-muted" th:if="${#lists.isEmpty(horariosPorComision.get(c.id))}">
                 Sin horarios cargados. Esta comisión no puede registrar asistencia todavía.
@@ -110,7 +110,7 @@
                 </table>
             </div>
 
-            <div class="form-actions" style="margin-top:1rem;">
+            <div class="form-actions aire-arriba">
                 <a th:href="@{/comisiones/{id}/editar(id=${c.id})}"
                    class="btn btn--ghost btn--sm">Editar la comisión</a>
             </div>

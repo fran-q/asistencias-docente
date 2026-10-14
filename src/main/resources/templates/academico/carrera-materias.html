@@ -19,8 +19,8 @@
         <div class="card">
             <p>
                 <strong th:text="${#lists.size(materias)}">0</strong> materias activas en el plan.
-                <a th:href="@{/materias/nueva}" class="btn btn--primary btn--sm"
-                   style="margin-left:1rem;">+ Nueva materia</a>
+                <a th:href="@{/materias/nueva}"
+                   class="btn btn--primary btn--sm aire-izquierda">+ Nueva materia</a>
                 <a th:href="@{/carreras}" class="btn btn--ghost btn--sm">Volver a carreras</a>
             </p>
         </div>
@@ -40,7 +40,7 @@
         <div class="card" th:each="grupo : ${porAnio}">
             <h2>
                 <span th:text="|${grupo.key}° año|">1° año</span>
-                <span class="text-muted" style="font-weight:normal;font-size:0.9rem;"
+                <span class="text-muted titulo-cantidad"
                       th:text="|(${#lists.size(grupo.value)} materias)|">(0 materias)</span>
             </h2>
 

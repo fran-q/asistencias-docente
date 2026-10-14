@@ -97,7 +97,7 @@
                         <label for="cuit">CUIT</label>
                         <input type="text" id="cuit" th:field="*{cuit}" maxlength="13"
                                inputmode="numeric"
-                               placeholder="30-12345678-1" style="font-family:var(--font-mono)"
+                               placeholder="30-12345678-1" class="input-mono"
                                th:errorclass="is-invalid">
                         <span class="form-hint">
                             Con guiones o de corrido. Se comprueba el dígito verificador.
@@ -183,8 +183,8 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn--primary btn--lg btn--full"
-                            style="margin-top:var(--space)" data-texto-enviando="Enviando el código...">
+                    <button type="submit" class="btn btn--primary btn--lg btn--full aire-arriba"
+                            data-texto-enviando="Enviando el código...">
                         Continuar
                     </button>
                 </form>

@@ -18,7 +18,7 @@
         </header>
 
         <!-- Selector de carrera -->
-        <div class="card" style="padding: var(--space); margin-bottom: var(--space-lg);"
+        <div class="card grilla-selector-caja"
              th:unless="${#lists.isEmpty(carreras)}">
             <form method="get" th:action="@{/grilla}" class="grilla-selector">
                 <label for="carreraId">Carrera:</label>
@@ -33,15 +33,15 @@
                   Filtro por año del plan.
 
                   Sin él, una carrera de tres años apila las tres cohortes en las mismas
-                  franjas y la grilla deja de servir para lo único que sirve: ver que esta
-                  libre y que se superpone. Siempre hay un año elegido, y arranca en 1ro:
+                  franjas y la grilla deja de servir para lo único que sirve: ver qué está
+                  libre y qué se superpone. Siempre hay un año elegido, y arranca en 1ro:
                   "Todos" las volvía a apilar. Lo que se pierde es ver de un vistazo a un
                   docente con dos clases a la misma hora en años distintos.
 
                   Las opciones se acotan a la duración de la carrera: ofrecer 5to en una
                   tecnicatura de tres es invitar a un filtro que no puede devolver nada.
                 -->
-                <label for="anio" style="margin-left:1rem;">Año:</label>
+                <label for="anio" class="aire-izquierda">Año:</label>
                 <select id="anio" name="anio" onchange="this.form.submit()">
                     <option th:each="n : ${#numbers.sequence(1, grilla != null ? grilla.duracionAnios : 1)}"
                             th:value="${n}"

@@ -85,13 +85,13 @@
                             <td>
                                 <span class="celda-recortada" th:text="${m.carreraNombre}"
                                       th:title="${m.carreraNombre}">Nombre de la carrera</span>
-                                <span th:unless="${m.carreraActiva}" class="badge badge--danger" style="margin-left:6px;">Carrera inactiva</span>
+                                <span th:unless="${m.carreraActiva}" class="badge badge--danger badge--al-lado">Carrera inactiva</span>
                             </td>
                             <td th:text="|${m.anio}°|">1°</td>
                             <td>
                                 <span th:if="${m.titularNombre}" th:text="${m.titularNombre}">Apellido, Nombre</span>
                                 <span th:unless="${m.titularNombre}" class="text-muted">— Sin asignar —</span>
-                                <span th:if="${m.titularNombre != null and !m.titularActivo}" class="badge badge--danger" style="margin-left:6px;">Titular inactivo</span>
+                                <span th:if="${m.titularNombre != null and !m.titularActivo}" class="badge badge--danger badge--al-lado">Titular inactivo</span>
                             </td>
                             <!-- data-valor: la celda muestra una insignia, y ordenarla por su texto
                                  pondría "Activa" antes que "Inactiva" por alfabeto y no por estado. -->

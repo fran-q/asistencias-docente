@@ -85,7 +85,7 @@
                         <label for="cuit">CUIT</label>
                         <input type="text" id="cuit" th:field="*{cuit}" maxlength="13"
                                inputmode="numeric"
-                               placeholder="30-12345678-1" style="font-family:var(--font-mono)"
+                               placeholder="30-12345678-1" class="input-mono"
                                th:errorclass="is-invalid">
                         <span class="form-hint">
                             Con guiones o de corrido. Se comprueba el dígito verificador.
@@ -169,7 +169,7 @@
                          esta instalación no manda correos, así que no hay "olvidé mi
                          contraseña" que dependa de una casilla. La recuperación va por la clave
                          que dejó el instalador. -->
-                    <div class="alert alert--info" style="margin-top:var(--space)" role="note">
+                    <div class="alert alert--info aire-arriba" role="note">
                         <p>
                             Anotá la contraseña donde la puedas encontrar. Como esta instalación
                             no envía correos, recuperarla exige la clave de recuperación que el
@@ -177,8 +177,8 @@
                         </p>
                     </div>
 
-                    <button type="submit" class="btn btn--primary btn--lg btn--full"
-                            style="margin-top:var(--space)" data-texto-enviando="Creando...">
+                    <button type="submit" class="btn btn--primary btn--lg btn--full aire-arriba"
+                            data-texto-enviando="Creando...">
                         Crear la institución
                     </button>
                 </form>

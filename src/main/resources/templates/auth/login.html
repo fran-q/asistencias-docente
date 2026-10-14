@@ -91,7 +91,7 @@
                          kiosco (SecurityConfig, failureHandler). -->
                     <input type="hidden" name="desde" value="kiosco" th:if="${desdeKiosco}">
                     <div class="auth__campos">
-                        <div class="form-group" style="margin:0">
+                        <div class="form-group">
                             <!-- El usuario o el correo: CargadorDeUsuarios los distingue por el
                                  "@", que un usuario no puede llevar. Sin mayúscula automática ni
                                  corrector: el teclado del celular capitaliza la primera letra y
@@ -103,7 +103,7 @@
                                    th:attr="autofocus=${ultimoUsuario == null ? 'autofocus' : null}">
                         </div>
 
-                        <div class="form-group" style="margin:0">
+                        <div class="form-group">
                             <!-- El enlace de recuperación va acá, al lado de la etiqueta, y no
                                  al pie de la tarjeta: es donde uno mira cuando se da cuenta de
                                  que no se acuerda la contraseña. -->
@@ -124,7 +124,7 @@
                         </div>
 
                         <button type="submit" class="btn btn--primary btn--lg btn--full"
-                                style="margin-top:5px" data-texto-enviando="Ingresando...">
+                                data-texto-enviando="Ingresando...">
                             Ingresar
                         </button>
                     </div>

@@ -36,7 +36,7 @@
 
         <div class="card form-max">
             <h2>Confirmación</h2>
-            <p class="text-muted" style="margin-top:-0.5rem;">
+            <p class="text-muted bajada">
                 Para registrar el consentimiento alcanza con tildar la casilla
                 y enviar. El método se registra como
                 <strong>ESCRITO</strong> y la fecha de firma como
@@ -63,7 +63,7 @@
                     <span class="form-error" th:if="${#fields.hasErrors('aceptaTexto')}" th:errors="*{aceptaTexto}">err</span>
                 </div>
 
-                <div class="form-actions" style="margin-top: 1.5rem;">
+                <div class="form-actions">
                     <button type="submit" class="btn btn--primary" data-texto-enviando="Registrando...">Registrar consentimiento</button>
                     <a th:href="@{/docentes/{id}/editar(id=${docente.id})}" class="btn btn--ghost">Cancelar</a>
                 </div>
