@@ -48,8 +48,8 @@ class MigracionesIT {
      * El puerto, de {@code MARIADB_PORT} y si no el de siempre.
      *
      * <p>Existe para poder correr este mismo test contra la MariaDB que lleva el instalador, que
-     * escucha en un puerto propio (ADR-0022). Sin esto, lo unico verificado seria el motor del
-     * equipo de desarrollo, y el que se le entrega a la institucion es otro.
+     * escucha en un puerto propio (ADR-0022). Sin esto, lo único verificado sería el motor del
+     * equipo de desarrollo, y el que se le entrega a la institución es otro.
      */
     private static final String PUERTO =
         System.getenv("MARIADB_PORT") == null ? "3306" : System.getenv("MARIADB_PORT");
@@ -74,9 +74,9 @@ class MigracionesIT {
      * saltea solo, que es el mismo camino que ya tomaba cuando no había MariaDB a mano.
      */
     private static String credencial(String propiedad, String variableDeEntorno) {
-        // La variable de entorno PRIMERO: lo que se pasa explicitamente le gana al archivo del
+        // La variable de entorno PRIMERO: lo que se pasa explícitamente le gana al archivo del
         // entorno de desarrollo. Es lo que permite correr este test contra otra base --la que
-        // lleva el instalador, por ejemplo-- sin tocar la configuracion local de nadie.
+        // lleva el instalador, por ejemplo-- sin tocar la configuración local de nadie.
         String delEntorno = System.getenv(variableDeEntorno);
         if (delEntorno != null && !delEntorno.isBlank()) {
             return delEntorno;
@@ -131,9 +131,9 @@ class MigracionesIT {
             .dataSource(URL_BASE + BASE, USUARIO, CLAVE)
             .locations("classpath:db/migration")
             // Las migraciones califican las tablas como ${esquema}.tabla porque en la
-            // aplicacion el historial vive en otra base y, sin calificar, el CREATE TABLE
-            // terminaria ahi. Aca el esquema es esta base descartable: es justamente lo que
-            // el placeholder permite, que la misma migracion corra contra cualquier nombre.
+            // aplicación el historial vive en otra base y, sin calificar, el CREATE TABLE
+            // terminaría ahí. Acá el esquema es esta base descartable: es justamente lo que
+            // el placeholder permite, que la misma migración corra contra cualquier nombre.
             .placeholders(java.util.Map.of("esquema", BASE))
             .load();
 
@@ -172,26 +172,26 @@ class MigracionesIT {
             "cambios_identidad",
             // V019. Permanencia del docente con marca de entrada y de salida (ADR-0017).
             "bloques_presencia",
-            // V023. El ano calendario de cursada y sus tramos.
+            // V023. El año calendario de cursada y sus tramos.
             "ciclos_lectivos", "periodos_lectivos",
-            // V024. Los dias de adentro del ciclo en los que no se dicta clase.
+            // V024. Los días de adentro del ciclo en los que no se dicta clase.
             "dias_no_laborables");
 
-        // 3) Y las columnas que el codigo da por sentadas, incluidas las que agregaron las
-        //    migraciones tardias: si una migracion se perdiera, esto lo dice.
+        // 3) Y las columnas que el código da por sentadas, incluidas las que agregaron las
+        //    migraciones tardias: si una migración se perdiera, esto lo dice.
         assertThat(columnasDe("materias")).contains("anio", "docente_titular_id", "fecha_baja");
-        // V023. La comision se ata a un periodo, y con eso a un ano calendario.
+        // V023. La comisión se ata a un período, y con eso a un año calendario.
         assertThat(columnasDe("comisiones")).contains("periodo_id");
-        // V026. La camara con la que captura cada puesto.
+        // V026. La cámara con la que captura cada puesto.
         assertThat(columnasDe("puestos_captura"))
             .contains("camara_dispositivo_id", "camara_etiqueta", "camara_elegida_en");
         // V027. Reabrir un ciclo cerrado: quien y cuando, sin borrar el cierre.
         assertThat(columnasDe("ciclos_lectivos")).contains("reabierto_en", "reabierto_por");
-        // V030. Varios equipos por institucion, con tope propio: la columna generada que
-        // sostenia el tope de uno se fue con el indice que la usaba.
+        // V030. Varios equipos por institución, con tope propio: la columna generada que
+        // sostenía el tope de uno se fue con el índice que la usaba.
         assertThat(columnasDe("instituciones")).contains("max_puestos_habilitados");
         assertThat(columnasDe("puestos_captura")).doesNotContain("institucion_si_habilitado");
-        // V028. El tipo de dia sin clase, por el que se filtra el listado.
+        // V028. El tipo de día sin clase, por el que se filtra el listado.
         assertThat(columnasDe("dias_no_laborables")).contains("tipo", "motivo");
         assertThat(columnasDe("ciclos_lectivos")).contains("anio", "fecha_inicio", "fecha_fin", "estado");
         assertThat(columnasDe("periodos_lectivos")).contains("ciclo_id", "fecha_inicio", "fecha_fin", "orden");
@@ -200,21 +200,21 @@ class MigracionesIT {
         assertThat(columnasDe("horarios")).contains("tolerancia_min", "creado_en", "actualizado_en");
         assertThat(columnasDe("roles")).contains("creado_en");
         assertThat(columnasDe("motivos_carga_manual")).contains("creado_en", "fecha_baja");
-        // V019 y V020. El bloque de presencia y quien lo cerro a mano.
+        // V019 y V020. El bloque de presencia y quien lo cerró a mano.
         assertThat(columnasDe("bloques_presencia")).contains(
             "hora_entrada", "hora_salida", "origen_entrada", "origen_salida",
             "estado_cierre", "estado_salida",
             "modelo_facial_entrada_id", "modelo_facial_salida_id",
-            // Columna generada: vale docente_id mientras el bloque este abierto, y su UNIQUE
+            // Columna generada: vale docente_id mientras el bloque esté abierto, y su UNIQUE
             // es lo que impide que un docente tenga dos bloques abiertos a la vez.
             "bloque_abierto_de",
             // V020.
             "cerrado_por_usuario_id", "motivo_cierre_id", "detalle_cierre");
         assertThat(columnasDe("asistencias")).contains("bloque_id");
-        // V025. Modo kiosco: de que equipo salio cada marca, y cual puede operar sin sesion.
+        // V025. Modo kiosco: de qué equipo salió cada marca, y cuál puede operar sin sesión.
         assertThat(columnasDe("asistencias")).contains("puesto_id");
         assertThat(columnasDe("bloques_presencia")).contains("puesto_id");
-        // V031. Y por que equipo se fue: con una camara por entrada no tienen por que coincidir.
+        // V031. Y por qué equipo se fue: con una cámara por entrada no tienen por qué coincidir.
         assertThat(columnasDe("bloques_presencia")).contains("puesto_salida_id");
         assertThat(columnasDe("puestos_captura")).contains(
             "kiosco_habilitado", "kiosco_habilitado_en", "kiosco_habilitado_por");
@@ -232,15 +232,15 @@ class MigracionesIT {
             .doesNotContain("creado_en");
 
         // 4) El apellido tiene que admitir NULL: es lo que permite que una cuenta de
-        //    institucion tenga un solo nombre. Lo trajo V014 sobre usuarios y desde V016 la
+        //    institución tenga un solo nombre. Lo trajo V014 sobre usuarios y desde V016 la
         //    columna vive en personas, junto al resto de la identidad.
         Set<String> nullable = leer("SELECT COLUMN_NAME FROM information_schema.COLUMNS "
             + "WHERE TABLE_SCHEMA = '" + BASE + "' AND TABLE_NAME = 'personas' "
             + "AND IS_NULLABLE = 'YES'");
         assertThat(nullable).contains("apellido");
 
-        // 5) V016 saco la identidad de usuarios y docentes. Si alguna de estas columnas
-        //    reapareciera, habria dos fuentes de verdad para el mismo dato.
+        // 5) V016 sacó la identidad de usuarios y docentes. Si alguna de estas columnas
+        //    reapareciera, habría dos fuentes de verdad para el mismo dato.
         assertThat(columnasDe("usuarios"))
             .as("nombre y apellido viven en personas desde V016")
             .doesNotContain("nombre", "apellido");
@@ -249,8 +249,8 @@ class MigracionesIT {
             .contains("email", "persona_id");
 
         // V018. persona_id admite NULL: la cuenta institucional representa al establecimiento y
-        // no a una persona fisica. Si volviera a ser obligatorio, el alta de institucion tendria
-        // que inventar una identidad para alguien que todavia no existe.
+        // no a una persona física. Si volviera a ser obligatorio, el alta de institución tendría
+        // que inventar una identidad para alguien que todavía no existe.
         Set<String> usuariosNullable = leer("SELECT COLUMN_NAME FROM information_schema.COLUMNS "
             + "WHERE TABLE_SCHEMA = '" + BASE + "' AND TABLE_NAME = 'usuarios' "
             + "AND IS_NULLABLE = 'YES'");
@@ -260,7 +260,7 @@ class MigracionesIT {
             .doesNotContain("dni", "nombre", "apellido", "email", "telefono");
         assertThat(columnasDe("docentes")).contains("persona_id", "legajo", "fecha_alta");
 
-        // 6) La constancia del dato biometrico suprimido (ADR-0016): el embedding pasa a
+        // 6) La constancia del dato biométrico suprimido (ADR-0016): el embedding pasa a
         //    admitir NULL para poder borrar el dato conservando la fila como registro.
         Set<String> biometricoNullable = leer("SELECT COLUMN_NAME FROM information_schema.COLUMNS "
             + "WHERE TABLE_SCHEMA = '" + BASE + "' AND TABLE_NAME = 'modelos_faciales' "

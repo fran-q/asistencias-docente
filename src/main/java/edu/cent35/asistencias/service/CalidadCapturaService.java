@@ -83,7 +83,7 @@ public class CalidadCapturaService {
         }
 
         // El orden importa: se devuelve UN solo motivo, el más urgente. Una lista de cinco
-        // cosas para corregir a la vez no la sigue nadie parado frente a la camara.
+        // cosas para corregir a la vez no la sigue nadie parado frente a la cámara.
         String motivo = null;
         if (porcentaje < porcentajeCuadroMinimo) {
             motivo = "Acercate un poco más a la cámara.";
@@ -133,7 +133,7 @@ public class CalidadCapturaService {
     }
 
     // Varianza del Laplaciano: mide cuánto borde tiene la imagen. Una foto movida o
-    // desenfocada pierde los bordes finos, asi que su varianza cae.
+    // desenfocada pierde los bordes finos, así que su varianza cae.
     private double varianzaDelLaplaciano(Mat gris) {
         try (Mat laplaciano = new Mat(); Mat media = new Mat(); Mat desvio = new Mat()) {
             Laplacian(gris, laplaciano, CV_64F);

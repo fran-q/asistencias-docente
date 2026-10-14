@@ -40,11 +40,11 @@
      */
     const PAUSA_TRAS_MARCAR_MS = 4000;
     /**
-     * Cuanto se sostiene un resultado que hay que leer --un rechazo, un "no tenes clase
-     * ahora"-- antes de que lo pise el "No se detecta ningun rostro" del cuadro siguiente.
+     * Cuánto se sostiene un resultado que hay que leer --un rechazo, un "no tenés clase
+     * ahora"-- antes de que lo pise el "No se detecta ningún rostro" del cuadro siguiente.
      * Antes duraba lo que tardaba ese cuadro, un segundo: alcanzaba con que el docente se
      * corriera un paso para que el motivo desapareciera sin leerse, y era justo el mensaje
-     * que decia que habia que hacer.
+     * que decía que había que hacer.
      */
     const LECTURA_MINIMA_MS = 4000;
 
@@ -57,7 +57,7 @@
     // Mientras esta pantalla le cede el pase a esa ventana deja de publicar: si no, su
     // "apagado" pisaria el "andando" que la otra acaba de publicar.
     let cediendo = false;
-    // Si hay otra ventana tomando asistencia, esta no puede: la camara es una sola.
+    // Si hay otra ventana tomando asistencia, esta no puede: la cámara es una sola.
     let bloqueadoPorOtra = false;
 
     // El estado que ven las otras ventanas (facial/pase-estado.js). Se pide en cada uso y no
@@ -71,21 +71,21 @@
     let pausaTimeoutId = null;
     let cuentaRegresivaId = null;
 
-    // Si el pase esta activo o no. Es un estado propio y no se deduce de loopId ni del texto
-    // del boton: durante la pausa posterior a una marca loopId queda en null aunque el pase
-    // sigue activo, y con esa confusion el boton "Detener" terminaba arrancando otro loop.
+    // Si el pase está activo o no. Es un estado propio y no se deduce de loopId ni del texto
+    // del botón: durante la pausa posterior a una marca loopId queda en null aunque el pase
+    // sigue activo, y con esa confusión el botón "Detener" terminaba arrancando otro loop.
     let paseActivo = false;
-    // Deja de vigilar la camara (CamaraDelPuesto.vigilar). Null mientras no hay camara.
+    // Deja de vigilar la cámara (CamaraDelPuesto.vigilar). Null mientras no hay cámara.
     let dejarDeVigilar = null;
-    // La camara esta abierta pero no manda imagen: no se envian cuadros, que llegarian
-    // negros y pisarian el aviso con "No se detecta ningun rostro".
+    // La cámara está abierta pero no manda imagen: no se envían cuadros, que llegarían
+    // negros y pisarian el aviso con "No se detecta ningún rostro".
     let camaraSinImagen = false;
     // Hasta cuando se sostiene en pantalla un resultado que hay que leer.
     let fijoHasta = 0;
 
     // ---- Cámara -----------------------------------------------------------
 
-    // Deja la camara lista para enviar frames. Devuelve false si no se pudo, para que
+    // Deja la cámara lista para enviar frames. Devuelve false si no se pudo, para que
     // el que llama no siga adelante creyendo que hay imagen.
     async function encenderCamara() {
         if (stream) return true;
@@ -94,8 +94,8 @@
             return false;
         }
         try {
-            // La camara elegida para este puesto (V026), o la predeterminada si no hay
-            // ninguna o si la elegida no esta conectada.
+            // La cámara elegida para este puesto (V026), o la predeterminada si no hay
+            // ninguna o si la elegida no está conectada.
             stream = await CamaraDelPuesto.abrir(video, { width: { ideal: 640 }, height: { ideal: 480 } });
             video.srcObject = stream;
             camaraSinImagen = false;
@@ -110,9 +110,9 @@
             claseEl.textContent = '';
             return true;
         } catch (err) {
-            // getUserMedia puede haber concedido la camara y fallar despues, al engancharla
+            // getUserMedia puede haber concedido la cámara y fallar después, al engancharla
             // al <video>. Si no se suelta acá, stream queda seteado y todo el resto cree que
-            // hay camara prendida: el proximo "Iniciar pase" arranca el loop sin imagen.
+            // hay cámara prendida: el próximo "Iniciar pase" arranca el loop sin imagen.
             if (stream) {
                 stream.getTracks().forEach(function (t) { t.stop(); });
                 stream = null;
@@ -133,7 +133,7 @@
             stream = null;
         }
         video.srcObject = null;
-        // El boton de apagar solo existe mientras haya algo que apagar.
+        // El botón de apagar solo existe mientras haya algo que apagar.
         btnCamara.hidden = true;
         mostrarMensaje('Cámara apagada', 'info');
         claseEl.textContent = '';
@@ -144,17 +144,17 @@
 
     async function togglePase() {
         if (paseActivo) {
-            // Detener corta el envio de frames pero deja la camara prendida: es la unica
-            // razon por la que siguen siendo dos controles y no uno. Volver a pedir el
-            // dispositivo cuesta un segundo en negro y, segun el navegador, otro permiso.
+            // Detener corta el envío de frames pero deja la cámara prendida: es la única
+            // razón por la que siguen siendo dos controles y no uno. Volver a pedir el
+            // dispositivo cuesta un segundo en negro y, según el navegador, otro permiso.
             detenerLoop();
             mostrarMensaje('Pase detenido. La cámara sigue encendida.', 'info');
             claseEl.textContent = '';
             limpiarOverlay();
             return;
         }
-        // Un solo click hace las dos cosas. Tener la camara prendida sin el pase andando
-        // no le sirve a nadie al arrancar, asi que no se pide como paso aparte.
+        // Un solo click hace las dos cosas. Tener la cámara prendida sin el pase andando
+        // no le sirve a nadie al arrancar, así que no se pide como paso aparte.
         btnPase.disabled = true;
         mostrarMensaje('Encendiendo la cámara…', 'info');
         const listo = await encenderCamara();
@@ -174,8 +174,8 @@
         refrescoClasesId = setInterval(refrescarClases, REFRESCO_CLASES_MS);
     }
 
-    // Deja el pase completamente frenado: el envio de frames y tambien la pausa pendiente, que
-    // de no cancelarse volveria a arrancar el loop unos segundos despues.
+    // Deja el pase completamente frenado: el envío de frames y también la pausa pendiente, que
+    // de no cancelarse volvería a arrancar el loop unos segundos después.
     function detenerLoop() {
         paseActivo = false;
         if (loopId) {
@@ -186,8 +186,8 @@
         ocultarProgreso();
         if (refrescoClasesId) { clearInterval(refrescoClasesId); refrescoClasesId = null; }
         btnPase.textContent = 'Iniciar pase';
-        // Con la camara todavia prendida el pase esta quieto, no apagado: son dos estados
-        // distintos y el punto del menu los muestra distinto. Apagar la camara publica lo suyo.
+        // Con la cámara todavía prendida el pase esta quieto, no apagado: son dos estados
+        // distintos y el punto del menú los muestra distinto. Apagar la cámara publica lo suyo.
         if (stream) publicar('quieto');
     }
 
@@ -216,8 +216,8 @@
         pausaTimeoutId = setTimeout(function () {
             cancelarPausa();
             ocultarProgreso();
-            // Se reanuda solo si el pase sigue activo. Antes esto miraba el TEXTO del boton,
-            // que es estado de presentacion y no de la logica.
+            // Se reanuda solo si el pase sigue activo. Antes esto miraba el TEXTO del botón,
+            // que es estado de presentación y no de la lógica.
             if (stream && paseActivo) {
                 marcarFrame();
                 loopId = setInterval(marcarFrame, INTERVALO_MS);
@@ -231,7 +231,7 @@
     }
 
     // Una entrada y una salida no dicen lo mismo: para la salida, claseLabel trae la
-    // permanencia y las clases cubiertas, no una clase, asi que el texto tiene que cambiar.
+    // permanencia y las clases cubiertas, no una clase, así que el texto tiene que cambiar.
     function actualizarCuentaRegresiva(segundos, claseLabel, tipoDeMarca) {
         let baseMsg;
         if (tipoDeMarca === 'SALIDA') {
@@ -263,9 +263,9 @@
                 headers: headers,
                 body: JSON.stringify({ imagen: dataUrl })
             });
-            // El equipo dejo de estar autorizado: puede haber sido revocado desde otra
-            // maquina con el pase ya andando. No se reintenta ni se sigue mandando cuadros
-            // --ninguno va a entrar-- y se apaga la camara, porque tenerla encendida
+            // El equipo dejó de estar autorizado: puede haber sido revocado desde otra
+            // máquina con el pase ya andando. No se reintenta ni se sigue mandando cuadros
+            // --ninguno va a entrar-- y se apaga la cámara, porque tenerla encendida
             // capturando para nada es justo lo que el control existe para evitar.
             if (resp.status === 403) {
                 detenerLoop();
@@ -274,11 +274,11 @@
                 claseEl.textContent = 'Pedile a la cuenta institucional que lo autorice de nuevo.';
                 return;
             }
-            // La sesion se vencio o se cerro desde otra pestaña. Llega como 401 con cuerpo
-            // JSON --lo arma sesionVencidaEnApi-- y no como la redireccion al login, que
-            // fetch seguiria hasta recibir HTML con estado 200: ahi resp.ok da true, el
+            // La sesión se venció o se cerró desde otra pestaña. Llega como 401 con cuerpo
+            // JSON --lo arma sesionVencidaEnApi-- y no como la redirección al login, que
+            // fetch seguiría hasta recibir HTML con estado 200: ahí resp.ok da true, el
             // resp.json() de abajo revienta, y el catch del final se lo come tomandolo por
-            // un corte de red. Sin esto la camara seguia encendida mandando cuadros que no
+            // un corte de red. Sin esto la cámara seguía encendida mandando cuadros que no
             // registraban nada, sin decirlo.
             if (resp.status === 401) {
                 detenerLoop();
@@ -290,7 +290,7 @@
             if (!resp.ok) return;
             const datos = await resp.json();
             // Si mientras viajaba el pedido se detuvo el pase, esta respuesta ya no interesa:
-            // pintarla dejaria un recuadro y un mensaje en pantalla despues de haber frenado.
+            // pintarla dejaría un recuadro y un mensaje en pantalla después de haber frenado.
             if (!paseActivo) return;
             renderizar(datos);
         } catch (err) {
@@ -304,7 +304,7 @@
         if (!data.rostroDetectado) {
             limpiarOverlay();
             ocultarProgreso();
-            // Es el mensaje de rutina: no pisa un resultado que todavia se esta leyendo.
+            // Es el mensaje de rutina: no pisa un resultado que todavía se esta leyendo.
             if (Date.now() >= fijoHasta) {
                 mostrarMensaje('No se detecta ningún rostro.', 'info');
                 claseEl.textContent = '';
@@ -313,13 +313,13 @@
         }
 
         // 1) rostro detectado pero RECHAZADO → ROJO, con el motivo
-        //    Puede ser porque no esta registrado o porque no se lo pudo distinguir de
-        //    otro parecido. El servidor manda cual de los dos, asi que se muestra tal
+        //    Puede ser porque no está registrado o porque no se lo pudo distinguir de
+        //    otro parecido. El servidor manda cuál de los dos, así que se muestra tal
         //    cual: se corrigen de forma distinta.
         if (!data.reconocido) {
             // Sin coordenadas el rechazo no apunta a nadie en particular: es el caso de
-            // varias personas en cuadro. Recuadrar a una sola daria a entender que el
-            // sistema la eligio, que es justo lo contrario de lo que dice el mensaje.
+            // varias personas en cuadro. Recuadrar a una sola daría a entender que el
+            // sistema la eligió, que es justo lo contrario de lo que dice el mensaje.
             if (data.x === null || data.x === undefined) {
                 limpiarOverlay();
             } else {
@@ -332,9 +332,9 @@
             return;
         }
 
-        // 2) reconocido pero todavia sosteniendo la identidad → CIAN, sin nombre
-        //    El nombre no se muestra a proposito: si el reconocimiento esta oscilando entre
-        //    dos personas parecidas, mostrarlo haria aparecer y desaparecer el nombre
+        // 2) reconocido pero todavía sosteniendo la identidad → CIAN, sin nombre
+        //    El nombre no se muestra a propósito: si el reconocimiento está oscilando entre
+        //    dos personas parecidas, mostrarlo haría aparecer y desaparecer el nombre
         //    equivocado en pantalla, que es justo lo que este paso viene a evitar.
         if (data.confirmando) {
             dibujarRecuadro(data.x, data.y, data.ancho, data.alto, '#00acc1', null);
@@ -351,8 +351,8 @@
         // 3) reconocido + registrado → VERDE si entra, AZUL si sale
         if (data.asistenciaMarcada) {
             // Una entrada y una salida son hechos opuestos y no se pueden ver iguales: quien
-            // opera mira la cara, no el texto, asi que la diferencia tiene que estar en el
-            // recuadro. El azul quedo libre cuando "ya estaba marcado" dejo de existir en el
+            // opera mira la cara, no el texto, así que la diferencia tiene que estar en el
+            // recuadro. El azul quedó libre cuando "ya estaba marcado" dejó de existir en el
             // flujo normal: con bloques, la segunda pasada es la salida (RF-20, ADR-0017).
             const esSalida = data.tipoDeMarca === 'SALIDA';
             const color = esSalida ? tokenColor('--primary') : tokenColor('--success');
@@ -372,10 +372,10 @@
         }
 
         // 4) reconocido pero NO hay clase ahora → VERDE igual
-        //    El recuadro responde a UNA sola pregunta: si el sistema reconocio a la
-        //    persona. Y la reconocio. Que no haya clase en curso es otra cosa, y lo dice
-        //    el mensaje; pintarlo de amarillo hacia parecer que el reconocimiento habia
-        //    fallado, cuando el unico que fallo era el horario.
+        //    El recuadro responde a UNA sola pregunta: si el sistema reconoció a la
+        //    persona. Y la reconoció. Que no haya clase en curso es otra cosa, y lo dice
+        //    el mensaje; pintarlo de amarillo hacía parecer que el reconocimiento había
+        //    fallado, cuando el único que falló era el horario.
         dibujarRecuadro(data.x, data.y, data.ancho, data.alto, tokenColor('--success'), data.docenteNombre);
         ocultarProgreso();
         mensajeParaLeer(data.mensaje, 'warn');
@@ -383,7 +383,7 @@
         avisarAlResto('warning', data.mensaje);
     }
 
-    // El resultado del reconocimiento, para las ventanas que no estan mirando la camara.
+    // El resultado del reconocimiento, para las ventanas que no están mirando la cámara.
     function avisarAlResto(clase, mensaje, detalle) {
         const e = estado();
         if (e) e.resultado(clase, mensaje, detalle);
@@ -395,24 +395,24 @@
      * Deja el canvas del recuadro justo encima de la imagen.
      *
      * Son dos cosas distintas y las dos hacen falta. La primera: el canvas se dibuja en
-     * COORDENADAS DE LA CAMARA --el servidor devuelve el recuadro del rostro en pixeles
-     * del cuadro que recibio-- asi que su bitmap tiene que medir lo que mide la camara.
+     * COORDENADAS DE LA CÁMARA --el servidor devuelve el recuadro del rostro en píxeles
+     * del cuadro que recibió-- así que su bitmap tiene que medir lo que mide la cámara.
      *
      * La segunda: el video va con object-fit: contain, que muestra el cuadro entero y
      * deja aire de un lado. O sea que la imagen NO ocupa toda la caja, y un canvas
      * estirado sobre la caja dibuja el recuadro corrido y deformado: justo arriba de la
-     * cara pero no sobre ella. Asi que se le calcula a mano el rectangulo que la imagen
-     * esta ocupando de verdad, que es lo mismo que hace `contain`: entra a lo ancho o a
+     * cara pero no sobre ella. Así que se le calcula a mano el rectángulo que la imagen
+     * está ocupando de verdad, que es lo mismo que hace `contain`: entra a lo ancho o a
      * lo alto, lo que primero se llene, y se centra en el otro eje.
      *
      * Se escribe solo cuando cambia: esto corre con cada cuadro, y tocar cuatro estilos
-     * una vez por segundo para dejarlos igual es pedir un recalculo de layout de gratis.
+     * una vez por segundo para dejarlos igual es pedir un recálculo de layout de gratis.
      */
     function ajustarOverlay() {
         if (!(video.videoWidth > 0 && video.videoHeight > 0)) return;
 
         // Solo si cambio: asignarle el ancho a un canvas lo BORRA, aunque sea el mismo
-        // valor. Esto corre tambien al cambiar el tamaño de la ventana, y ahi borraria el
+        // valor. Esto corre también al cambiar el tamaño de la ventana, y ahí borraría el
         // recuadro verde que queda en pantalla los segundos de la pausa tras marcar.
         if (overlay.width !== video.videoWidth)   overlay.width  = video.videoWidth;
         if (overlay.height !== video.videoHeight) overlay.height = video.videoHeight;
@@ -472,8 +472,8 @@
 
     // ---- Clases de ahora -----------------------------------------------------
 
-    // Cada cuanto se actualiza la lista mientras el pase anda. Solo mientras anda: con el
-    // pase quieto, un pedido por minuto mantendria viva la sesion para siempre.
+    // Cada cuánto se actualiza la lista mientras el pase anda. Solo mientras anda: con el
+    // pase quieto, un pedido por minuto mantendria viva la sesión para siempre.
     const REFRESCO_CLASES_MS = 60000;
     let refrescoClasesId = null;
 
@@ -482,21 +482,21 @@
         if (!actual) return;
         try {
             const resp = await fetch('/asistencia/pase/clases', { headers: { 'Accept': 'text/html' } });
-            // Con la sesion vencida o el equipo desautorizado llega otra pantalla, detras de
-            // una redireccion: eso no se pega en la tarjeta. Solo se reemplaza por la tarjeta.
+            // Con la sesión vencida o el equipo desautorizado llega otra pantalla, detrás de
+            // una redirección: eso no se pega en la tarjeta. Solo se reemplaza por la tarjeta.
             if (!resp.ok || resp.redirected) return;
             const html = await resp.text();
             if (html.indexOf('data-clases-de-ahora') === -1) return;
             actual.outerHTML = html;
         } catch (e) {
-            /* Sin red: queda la lista anterior, y el proximo refresco lo reintenta. */
+            /* Sin red: queda la lista anterior, y el próximo refresco lo reintenta. */
         }
     }
 
-    // ---- Progreso de la confirmacion --------------------------------------
+    // ---- Progreso de la confirmación --------------------------------------
 
-    // La barra muestra el dato del servidor --cuanto lleva sostenida la identidad y cuanto
-    // hace falta--, no una animacion de relleno: si el docente se corre, la barra baja o se
+    // La barra muestra el dato del servidor --cuánto lleva sostenida la identidad y cuánto
+    // hace falta--, no una animación de relleno: si el docente se corre, la barra baja o se
     // va, que es justo lo que tiene que ver. Al marcar se llena de golpe y queda verde
     // durante la pausa.
     function mostrarProgreso(fraccion, listo) {
@@ -514,9 +514,9 @@
         progresoEl.setAttribute('aria-valuenow', '0');
     }
 
-    // ---- La camara se corta -----------------------------------------------
+    // ---- La cámara se corta -----------------------------------------------
 
-    // Definitivo: se desenchufo o se la llevo otra aplicacion. Se dice que paso y queda todo
+    // Definitivo: se desenchufó o se la llevó otra aplicación. Se dice que paso y queda todo
     // listo para arrancar de nuevo con un clic.
     function camaraPerdida() {
         dejarDeVigilar = null;
@@ -535,7 +535,7 @@
         avisarAlResto('error', 'Se perdió la cámara del pase.', 'Revisá que esté conectada.');
     }
 
-    // Pausa: la camara sigue abierta pero no manda imagen. Se deja de enviar --llegarian
+    // Pausa: la cámara sigue abierta pero no manda imagen. Se deja de enviar --llegarían
     // cuadros negros-- y se avisa; si vuelve, el pase sigue solo.
     function camaraSinImagenAviso() {
         camaraSinImagen = true;
@@ -558,9 +558,9 @@
 
     // ---- UI helpers -------------------------------------------------------
 
-    // El recuadro se dibuja en un canvas, y ahi no llegan las variables CSS: hay que
+    // El recuadro se dibuja en un canvas, y ahí no llegan las variables CSS: hay que
     // pasarle un color ya resuelto. Se lee del documento en vez de repetir el hex
-    // aca, para que siga al tema y a cualquier cambio de paleta. Se consulta en cada
+    // acá, para que siga al tema y a cualquier cambio de paleta. Se consulta en cada
     // dibujo y no una vez al cargar porque el tema se puede cambiar con el pase
     // andando.
     function tokenColor(nombre) {
@@ -573,7 +573,7 @@
     var TIPOS = ['success', 'error', 'warn', 'info'];
 
     function mostrarMensaje(texto, tipo) {
-        // Cualquier mensaje puesto a proposito reemplaza al que se estaba sosteniendo.
+        // Cualquier mensaje puesto a propósito reemplaza al que se estaba sosteniendo.
         fijoHasta = 0;
         var antes = mensajeEl.className;
 
@@ -583,19 +583,19 @@
         });
         if (tipo) mensajeEl.classList.add('pase__mensaje--' + tipo);
 
-        // El color salia de un hex escrito aca adentro (#4caf50, #e57373, #ffc107).
+        // El color salía de un hex escrito acá adentro (#4caf50, #e57373, #ffc107).
         // Eran colores de otra paleta, y al ser estilo inline el tema claro no los
-        // podia corregir: sobre fondo blanco el verde del exito quedaba lavado.
+        // podía corregir: sobre fondo blanco el verde del éxito quedaba lavado.
         // Ahora el color lo decide la hoja de estilos, que si conoce los dos temas.
 
-        // Un pase que confirma es el unico momento de la pantalla que merece
-        // moverse: quien opera esta mirando la camara, no el panel, y necesita
-        // saber de reojo que la marca entro. Solo al ENTRAR al estado, no en cada
+        // Un pase que confirma es el único momento de la pantalla que merece
+        // moverse: quien opera está mirando la cámara, no el panel, y necesita
+        // saber de reojo que la marca entró. Solo al ENTRAR al estado, no en cada
         // repintado, para que no lata mientras el mensaje se mantiene.
         var yaEstaba = antes.indexOf('pase__mensaje--success') !== -1;
         if (tipo === 'success' && !yaEstaba) {
             mensajeEl.classList.remove('pase__mensaje--confirma');
-            void mensajeEl.offsetWidth;              // reinicia la animacion
+            void mensajeEl.offsetWidth;              // reinicia la animación
             mensajeEl.classList.add('pase__mensaje--confirma');
         }
     }
@@ -622,7 +622,7 @@
     btnPase.addEventListener('click', togglePase);
     window.addEventListener('pagehide', function () {
         apagarCamara();
-        // La ventana se va: el punto del menu se apaga ya, sin esperar a que el ultimo
+        // La ventana se va: el punto del menú se apaga ya, sin esperar a que el último
         // estado publicado envejezca.
         publicar('cerrado');
     });
@@ -630,7 +630,7 @@
     // ---- La ventana aparte -------------------------------------------------
 
     // La ventana lleva nombre: abrirla dos veces trae la que ya esta, en vez de dejar dos
-    // camaras peleandose por el mismo dispositivo.
+    // cámaras peleándose por el mismo dispositivo.
     const VENTANA = 'visum-pase';
     const btnVentana = document.getElementById('pa-btn-ventana');
 
@@ -643,8 +643,8 @@
                 return;
             }
             abierta.focus();
-            if (bloqueadoPorOtra) return;        // ya estaba andando ahi: solo se la trae al frente
-            // Esta pantalla le cede la camara: deja de publicar, la suelta y se va al inicio.
+            if (bloqueadoPorOtra) return;        // ya estaba andando ahí: solo se la trae al frente
+            // Esta pantalla le cede la cámara: deja de publicar, la suelta y se va al inicio.
             cediendo = true;
             apagarCamara();
             window.location.href = '/';
@@ -652,13 +652,13 @@
     }
 
     /*
-     * Dos pases a la vez no pueden andar: la camara es una sola, y el segundo en pedirla no la
+     * Dos pases a la vez no pueden andar: la cámara es una sola, y el segundo en pedirla no la
      * consigue. Si ya hay uno en otra ventana, esta pantalla lo dice en vez de dejar apretar
      * "Iniciar pase" para que falle. Se revisa cada tanto y no una sola vez al cargar, porque
      * la otra ventana se puede cerrar en cualquier momento.
      */
     function revisarOtraVentana() {
-        if (esVentana || stream || paseActivo) return;     // esta pantalla ya esta usando la camara
+        if (esVentana || stream || paseActivo) return;     // esta pantalla ya está usando la cámara
         const hayOtra = !!(window.PaseEstado && window.PaseEstado.leer());
         if (hayOtra === bloqueadoPorOtra) return;
 
@@ -676,17 +676,17 @@
     }
 
     /* ======================================================================
-     *  Marcar sin camara
+     *  Marcar sin cámara
      *
-     *  Para el docente que el reconocimiento no acierta: rostro todavia sin registrar,
-     *  camara que falla, luz que no da, consentimiento revocado. Lo registra el admin que
-     *  esta atendiendo el pase, sobre la fila del docente, y el servidor decide si es
+     *  Para el docente que el reconocimiento no acierta: rostro todavía sin registrar,
+     *  cámara que falla, luz que no da, consentimiento revocado. Lo registra el admin que
+     *  está atendiendo el pase, sobre la fila del docente, y el servidor decide si es
      *  entrada o salida igual que con la cara (V029, ADR-0017).
      *
-     *  La camara no se toca: el pase sigue andando mientras el cuadro esta abierto. Es a
-     *  proposito --el docente siguiente ya puede estar pasando-- y por eso el resultado se
+     *  La cámara no se toca: el pase sigue andando mientras el cuadro está abierto. Es a
+     *  propósito --el docente siguiente ya puede estar pasando-- y por eso el resultado se
      *  muestra con mensajeParaLeer, que lo sostiene unos segundos para que el loop no lo
-     *  pise con "No se detecta ningun rostro" al cuadro siguiente.
+     *  pise con "No se detecta ningún rostro" al cuadro siguiente.
      * ====================================================================== */
 
     const scOverlay  = document.getElementById('pa-sc-overlay');
@@ -702,8 +702,8 @@
     let scAbriendo  = false;
     let scFocoPrevio = null;
 
-    // El boton vive adentro de la tarjeta de clases, que se reemplaza entera cada minuto:
-    // escuchar en el documento es lo unico que sobrevive a ese reemplazo.
+    // El botón vive adentro de la tarjeta de clases, que se reemplaza entera cada minuto:
+    // escuchar en el documento es lo único que sobrevive a ese reemplazo.
     document.addEventListener('click', function (ev) {
         const boton = ev.target.closest && ev.target.closest('.pase__sin-camara');
         if (boton) abrirSinCamara(boton);
@@ -730,11 +730,11 @@
         scOverlay.setAttribute('aria-hidden', 'true');
         scDocenteId = null;
         if (scFocoPrevio && typeof scFocoPrevio.focus === 'function') {
-            try { scFocoPrevio.focus(); } catch (e) { /* el boton ya no existe */ }
+            try { scFocoPrevio.focus(); } catch (e) { /* el botón ya no existe */ }
         }
     }
 
-    // "Otro" sin detalle deja un registro que no dice nada, asi que ahi el campo pasa a ser
+    // "Otro" sin detalle deja un registro que no dice nada, así que ahí el campo pasa a ser
     // obligatorio. Lo vuelve a revisar el servidor: esto es para no hacer ir y volver.
     function marcarDetalleSegunMotivo() {
         const codigo = scMotivo.options[scMotivo.selectedIndex]
@@ -781,8 +781,8 @@
                 })
             });
 
-            // Con la sesion vencida o el equipo desautorizado vuelve HTML detras de una
-            // redireccion: eso no es un resultado, y leerlo como JSON explota.
+            // Con la sesión vencida o el equipo desautorizado vuelve HTML detrás de una
+            // redirección: eso no es un resultado, y leerlo como JSON explota.
             if (resp.redirected || resp.status === 401 || resp.status === 403) {
                 mostrarErrorSc('La sesión venció o este equipo dejó de estar autorizado. '
                     + 'Volvé a entrar y probá de nuevo.');
@@ -792,7 +792,7 @@
             const datos = await resp.json();
 
             // 400 es un dato a corregir --el motivo-- y el cuadro se queda abierto. Un
-            // rechazo de negocio viene con 200 y se cierra: no hay nada que corregir aca.
+            // rechazo de negocio viene con 200 y se cierra: no hay nada que corregir acá.
             if (!resp.ok) {
                 mostrarErrorSc(datos.mensaje || 'No se pudo registrar la marca.');
                 return;
@@ -826,7 +826,7 @@
         scMotivo.addEventListener('change', marcarDetalleSegunMotivo);
         scOk.addEventListener('click', registrarSinCamara);
         scCancelar.addEventListener('click', cerrarSinCamara);
-        // Igual que el modal de confirmacion: Esc cierra y el clic afuera tambien.
+        // Igual que el modal de confirmación: Esc cierra y el clic afuera también.
         scOverlay.addEventListener('click', function (ev) {
             if (ev.target === scOverlay) cerrarSinCamara();
         });
@@ -838,8 +838,8 @@
     }
 
     /* Al cambiar el tamaño de la ventana la imagen cambia de lugar y de medida, y el
-       recuadro que esta encima tiene que seguirla. Sin esto se reacomoda recien con el
-       cuadro siguiente --hasta un segundo despues-- y, con el pase detenido y la camara
+       recuadro que está encima tiene que seguirla. Sin esto se reacomoda recién con el
+       cuadro siguiente --hasta un segundo después-- y, con el pase detenido y la cámara
        prendida, no se reacomoda nunca. */
     window.addEventListener('resize', ajustarOverlay);
 

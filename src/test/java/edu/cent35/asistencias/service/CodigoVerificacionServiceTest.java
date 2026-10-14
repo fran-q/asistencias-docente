@@ -44,7 +44,7 @@ class CodigoVerificacionServiceTest {
 
     @Mock private CodigoVerificacionRepository codigoRepository;
 
-    // Encoder real: lo que se prueba es justamente que el codigo no quede recuperable.
+    // Encoder real: lo que se prueba es justamente que el código no quede recuperable.
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private CodigoVerificacionService service;
@@ -58,7 +58,7 @@ class CodigoVerificacionServiceTest {
     }
 
     // ========================================================================
-    //  Emision
+    //  Emisión
     // ========================================================================
 
     @Test
@@ -106,7 +106,7 @@ class CodigoVerificacionServiceTest {
     }
 
     // ========================================================================
-    //  Validacion
+    //  Validación
     // ========================================================================
 
     @Test
@@ -204,7 +204,7 @@ class CodigoVerificacionServiceTest {
         when(codigoRepository.ultimoDe(USUARIO_ID, PropositoCodigo.VERIFICACION_EMAIL))
             .thenReturn(Optional.of(codigo));
 
-        // Un minuto antes del vencimiento todavia sirve.
+        // Un minuto antes del vencimiento todavía sirve.
         service.setClock(relojEn(emision.plusMinutes(14)));
         assertThat(service.validar(USUARIO_ID, PropositoCodigo.VERIFICACION_EMAIL, "123456"))
             .isEqualTo(CodigoVerificacionService.Resultado.OK);
@@ -220,14 +220,14 @@ class CodigoVerificacionServiceTest {
     //  helpers
     // ========================================================================
 
-    // Usuario minimo del tenant A.
+    // Usuario mínimo del tenant A.
     private Usuario usuario() {
         Usuario u = Usuario.builder().persona(DatosDePrueba.persona("Test")).id(USUARIO_ID).username("test").build();
         u.setInstitucionId(TENANT);
         return u;
     }
 
-    // Codigo disponible cuyo hash corresponde al valor pasado.
+    // Código disponible cuyo hash corresponde al valor pasado.
     private CodigoVerificacion vigenteCon(String codigoEnClaro) {
         return CodigoVerificacion.builder()
             .id(1L)

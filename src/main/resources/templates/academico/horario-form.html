@@ -29,10 +29,10 @@
                 </div>
 
                 <!--
-                  En alta se elige la comision; en edicion se muestra pero no se cambia.
-                  Las asistencias ya registradas guardan la comision, y moverles el horario
-                  las dejaria asociadas a una comision que nunca dicto esa clase. Ofrecer un
-                  desplegable editable que el servidor despues rechaza seria peor que no
+                  En alta se elige la comisión; en edición se muestra pero no se cambia.
+                  Las asistencias ya registradas guardan la comisión, y moverles el horario
+                  las dejaría asociadas a una comisión que nunca dictó esa clase. Ofrecer un
+                  desplegable editable que el servidor después rechaza sería peor que no
                   ofrecerlo: el campo tiene que decir la verdad sobre lo que se puede hacer.
                 -->
                 <div class="form-group">
@@ -42,9 +42,9 @@
                             th:field="*{comisionId}" required
                             th:classappend="${#fields.hasErrors('comisionId')} ? 'is-invalid'">
                         <option value="">-- Elegir comisión --</option>
-                        <!-- El nombre de la materia va en la opcion, no solo su codigo:
-                             "TUP-003 — A" no dice nada, y elegir la comision equivocada
-                             recien se nota cuando alguien marca asistencia en la clase de
+                        <!-- El nombre de la materia va en la opción, no solo su código:
+                             "TUP-003 — A" no dice nada, y elegir la comisión equivocada
+                             recién se nota cuando alguien marca asistencia en la clase de
                              otro. -->
                         <!-- Y el período con su año: dos comisiones de una materia pueden llevar
                              el mismo código en períodos distintos (V023), y sin esto el
@@ -57,7 +57,7 @@
                     </select>
                     <!-- Repite la materia debajo del campo, en chico. Lo llena academico-form.js
                          al elegir: el desplegable buscable se cierra y deja el texto adentro,
-                         asi que sin esto hay que volver a abrirlo para recordar que se eligio. -->
+                         así que sin esto hay que volver a abrirlo para recordar que se eligió. -->
                     <small class="form-hint" id="comision-materia"></small>
 
                     <th:block th:unless="${modo == 'crear'}">
@@ -93,8 +93,8 @@
                                min="0" max="30" required
                                th:classappend="${#fields.hasErrors('toleranciaMin')} ? 'is-invalid'">
                         <!-- Desde ADR-0018 la tolerancia perdona igual hacia los dos lados. Esta
-                             ayuda seguia con la regla vieja, "minutos antes del inicio", y
-                             contradecia al subtitulo, que hablaba de llegar tarde. -->
+                             ayuda seguía con la regla vieja, "minutos antes del inicio", y
+                             contradecia al subtítulo, que hablaba de llegar tarde. -->
                         <small class="form-hint">
                             El margen alrededor de la clase, igual de los dos lados: con 15, quien
                             llega hasta 15 minutos tarde queda <strong>Presente</strong>, y la salida
@@ -106,10 +106,10 @@
 
                 <!--
                   La hora se elige con dos listas, hora y minutos, en vez del selector
-                  propio del navegador: ese cambia de forma y de comportamiento segun
+                  propio del navegador: ese cambia de forma y de comportamiento según
                   el navegador, y en Chrome abre una doble columna que hay que recorrer
                   entera para llegar a las 14. El input real sigue siendo el de tipo
-                  time, oculto: es el que se envia y el que el servidor valida, asi que
+                  time, oculto: es el que se envía y el que el servidor valida, así que
                   el formato que viaja no cambia.
                 -->
                 <div class="form-row">
@@ -145,17 +145,17 @@
         <script th:src="@{/js/academico/hora-picker.js}" defer></script>
         </div>
 
-        <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
-             MAS precedencia que th:if, asi que sobre el mismo elemento los parametros del
-             fragmento se evaluan igual en modo alta, donde la entidad todavia no existe,
-             y la pantalla revienta antes de decidir que no habia que mostrar nada. -->
+        <!-- El th:if va en un bloque de afuera a propósito: en Thymeleaf th:replace tiene
+             MÁS precedencia que th:if, así que sobre el mismo elemento los parámetros del
+             fragmento se evaluan igual en modo alta, donde la entidad todavía no existe,
+             y la pantalla revienta antes de decidir que no había que mostrar nada. -->
         <th:block th:if="${modo == 'editar'}">
             <div th:replace="~{layout/fragmentos :: datosDelSistema(
                                 ${horario.activo}, 'Activo', 'Inactivo',
                                 ${horario.creadoEn}, ${horario.actualizadoEn}, ~{})}"></div>
         </th:block>
         <script th:src="@{/js/comun/select-buscable.js}" defer></script>
-        <!-- Repite la materia de la comision elegida debajo del campo. -->
+        <!-- Repite la materia de la comisión elegida debajo del campo. -->
         <script th:src="@{/js/academico/academico-form.js}" defer></script>
     </section>
 </body>

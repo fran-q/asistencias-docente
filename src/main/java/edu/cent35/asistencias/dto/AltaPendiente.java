@@ -23,7 +23,7 @@ public class AltaPendiente implements Serializable {
         this.expiraEn = expiraEn;
     }
 
-    // Los datos tipeados en el paso 1, que recien se persisten al confirmar el codigo.
+    // Los datos tipeados en el paso 1, que recién se persisten al confirmar el código.
     public AltaInstitucionFormDto getDatos() {
         return datos;
     }
@@ -48,7 +48,7 @@ public class AltaPendiente implements Serializable {
         return ++intentos;
     }
 
-    // Cuantas veces se tipeo un codigo incorrecto para esta alta.
+    // Cuántas veces se tipeó un código incorrecto para esta alta.
     public int getIntentos() {
         return intentos;
     }

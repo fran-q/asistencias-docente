@@ -1,10 +1,10 @@
 /* =============================================================================
  *  password-ui.js
  *  Mejoras UX para inputs type=password:
- *   - boton ojo (SVG) para mostrar / ocultar el texto
+ *   - botón ojo (SVG) para mostrar / ocultar el texto
  *   - bloqueo de copy / paste / cut por seguridad
  *
- *  Se aplica automaticamente a todo .password-toggle dentro de un
+ *  Se aplica automáticamente a todo .password-toggle dentro de un
  *  .password-input que envuelva un <input type="password">.
  *
  *  HTML esperado:
@@ -14,8 +14,8 @@
  *              aria-label="Mostrar contraseña"></button>
  *    </div>
  *
- *  El icono del boton lo inyecta este script (SVG inline). Si JS esta
- *  desactivado, el boton queda vacio pero el campo de password sigue
+ *  El icono del botón lo inyecta este script (SVG inline). Si JS esta
+ *  desactivado, el botón queda vacío pero el campo de password sigue
  *  funcionando normalmente.
  * ========================================================================== */
 
@@ -75,7 +75,7 @@
                 }
             });
         });
-        // Tambien deshabilita el menu contextual sobre el input
+        // También deshabilita el menú contextual sobre el input
         input.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     }
 

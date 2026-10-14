@@ -1,9 +1,9 @@
 /*
- * La eleccion de camara del puesto, en la pantalla de Puestos (V026).
+ * La elección de cámara del puesto, en la pantalla de Puestos (V026).
  *
- * Lista las camaras que ve el navegador de ESTA maquina, deja probar la elegida antes de
+ * Lista las cámaras que ve el navegador de ESTA máquina, deja probar la elegida antes de
  * guardarla, y manda al servidor el identificador y el nombre. Solo aparece en el equipo
- * autorizado: el identificador vale unicamente en este navegador.
+ * autorizado: el identificador vale únicamente en este navegador.
  */
 (function () {
     'use strict';
@@ -33,8 +33,8 @@
         let camaras = await camarasConectadas();
         let sinNombres = null;
 
-        // Sin permiso de camara el navegador lista los aparatos pero oculta sus nombres. Se
-        // pide la camara un instante para destaparlos, y se suelta enseguida.
+        // Sin permiso de cámara el navegador lista los aparatos pero oculta sus nombres. Se
+        // pide la cámara un instante para destaparlos, y se suelta enseguida.
         if (camaras.length && camaras.every(function (c) { return !c.label; })) {
             try {
                 const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -90,8 +90,8 @@
         etiqueta.value = (op && op.value) ? (op.dataset.nombre || op.textContent) : '';
     }
 
-    // Probar antes de guardar: con dos camaras del mismo modelo, o nombres genericos como
-    // "USB Camera", mirar la imagen es la unica forma de saber cual es cual.
+    // Probar antes de guardar: con dos cámaras del mismo modelo, o nombres genéricos como
+    // "USB Camera", mirar la imagen es la única forma de saber cuál es cuál.
     async function mostrarVista() {
         detenerVista();
         const id = select.value;
@@ -101,8 +101,8 @@
                 audio: false
             });
             vista.srcObject = streamVista;
-            // Si la camara se desconecta con la vista abierta, se dice: si no, la imagen se
-            // queda congelada en el ultimo cuadro y parece que sigue andando.
+            // Si la cámara se desconecta con la vista abierta, se dice: si no, la imagen se
+            // queda congelada en el último cuadro y parece que sigue andando.
             streamVista.getVideoTracks().forEach(function (t) {
                 t.addEventListener('ended', function () {
                     detenerVista();
@@ -136,7 +136,7 @@
     probar.addEventListener('click', function () {
         if (streamVista) detenerVista(); else mostrarVista();
     });
-    // Se suelta la camara antes de irse: si quedara tomada, el pase no la podria abrir.
+    // Se suelta la cámara antes de irse: si quedara tomada, el pase no la podría abrir.
     form.addEventListener('submit', detenerVista);
     window.addEventListener('pagehide', detenerVista);
 

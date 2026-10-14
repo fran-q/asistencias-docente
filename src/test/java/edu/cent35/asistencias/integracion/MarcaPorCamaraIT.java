@@ -148,8 +148,8 @@ class MarcaPorCamaraIT {
 
     @BeforeEach
     void sembrar() {
-        // Una sola lectura del calendario, y de ahi sale todo: asi el fixture y el servicio
-        // no pueden quedar en dias distintos si el test arranca justo al filo de medianoche.
+        // Una sola lectura del calendario, y de ahí sale todo: así el fixture y el servicio
+        // no pueden quedar en días distintos si el test arranca justo al filo de medianoche.
         hoy = LocalDate.now();
         relojDelPase(Clock.fixed(hoy.atTime(LA_HORA).atZone(ZoneId.systemDefault()).toInstant(),
                                  ZoneId.systemDefault()));
@@ -200,7 +200,7 @@ class MarcaPorCamaraIT {
             .periodo(ciclo.getPeriodos().get(0))
             .build());
 
-        // La clase esta en curso a LA_HORA, con lugar de sobra a los dos lados.
+        // La clase está en curso a LA_HORA, con lugar de sobra a los dos lados.
         horarioRepository.save(Horario.builder()
             .comision(comision)
             .diaSemana((byte) hoy.getDayOfWeek().getValue())
@@ -228,7 +228,7 @@ class MarcaPorCamaraIT {
     @AfterEach
     void limpiar() {
         // El servicio es un bean del contexto, que se comparte con el resto de los tests: si
-        // el reloj fijo quedara puesto, los demas creerian que son las 10:30 de hoy.
+        // el reloj fijo quedara puesto, los demás creerían que son las 10:30 de hoy.
         relojDelPase(Clock.systemDefaultZone());
         if (tenantId != null) {
             borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
@@ -297,7 +297,7 @@ class MarcaPorCamaraIT {
     }
 
     // ========================================================================
-    //  Modo kiosco: sin ninguna sesion
+    //  Modo kiosco: sin ninguna sesión
     // ========================================================================
 
     @Test
@@ -336,8 +336,8 @@ class MarcaPorCamaraIT {
     @Test
     @DisplayName("Con la jornada abierta, la pasada siguiente la cierra e imputa la clase")
     void laPasadaSiguienteCierraLaJornada() throws Exception {
-        // La entrada se siembra veinte minutos atras: la permanencia minima son diez, y la
-        // hora de la marca la pone el servidor, asi que no hay forma de adelantarla desde el
+        // La entrada se siembra veinte minutos atrás: la permanencia mínima son diez, y la
+        // hora de la marca la pone el servidor, así que no hay forma de adelantarla desde el
         // pedido.
         LocalTime entrada = LA_HORA.minusMinutes(20);
         BloquePresencia abierto = BloquePresencia.builder()
@@ -375,9 +375,9 @@ class MarcaPorCamaraIT {
     @Test
     @DisplayName("Entra por una puerta y sale por la otra: cada marca deja su equipo")
     void laSalidaPorOtraPuertaQuedaAsentada() throws Exception {
-        // Es el caso que pidio abrir el tope de equipos: con una camara por entrada, el
-        // docente sale por donde le queda mas cerca. Sin el equipo de salida, la jornada
-        // afirmaria que salio por donde entro, que es un dato falso y no uno incompleto.
+        // Es el caso que pidió abrir el tope de equipos: con una cámara por entrada, el
+        // docente sale por donde le queda más cerca. Sin el equipo de salida, la jornada
+        // afirmaría que salió por donde entró, que es un dato falso y no uno incompleto.
         PuestoCaptura norte = puestoRepository.deInstitucion(tenantId).get(0);
         String tokenSur = puestoService.designar(tenantId, "Entrada sur", cuenta).getTokenEnClaro();
         PuestoCaptura sur = puestoRepository.deInstitucion(tenantId).stream()
@@ -440,9 +440,9 @@ class MarcaPorCamaraIT {
      * campo al proxy no tocaría al que de verdad marca.
      */
     private void relojDelPase(Clock reloj) {
-        // La variable tipada no es adorno: pasar el generico de getTargetObject directo a
+        // La variable tipada no es adorno: pasar el genérico de getTargetObject directo a
         // setField hace que Java elija la sobrecarga que espera un Class, y el test revienta
-        // con un ClassCastException que no tiene nada que ver con lo que se esta probando.
+        // con un ClassCastException que no tiene nada que ver con lo que se está probando.
         PaseAsistenciaService real = AopTestUtils.getTargetObject(paseService);
         ReflectionTestUtils.setField(real, "clock", reloj);
     }

@@ -28,13 +28,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Usuario del sistema (Superadmin de institucion o Administrador).
- * El docente NO es un Usuario - su perfil esta en el modulo docente.
+ * Usuario del sistema (Superadmin de institución o Administrador).
+ * El docente NO es un Usuario - su perfil está en el módulo docente.
  * <p>
- * Cubre RF-01 (login), RF-02 (gestion de contrasenas), RF-03 (control por rol)
+ * Cubre RF-01 (login), RF-02 (gestión de contraseñas), RF-03 (control por rol)
  * y RF-06 (CRUD de administradores).
  * <p>
- * Tenant-scoped: pertenece a una unica institucion (heredado de
+ * Tenant-scoped: pertenece a una única institución (heredado de
  * {@link BaseTenantEntity}).
  */
 @Entity
@@ -58,7 +58,7 @@ public class Usuario extends BaseTenantEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Institucion del usuario, de solo lectura: el id se maneja desde BaseTenantEntity.
+    // Institución del usuario, de solo lectura: el id se maneja desde BaseTenantEntity.
     // Eager porque su nombre es el que se muestra cuando la cuenta no tiene persona (V018).
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "institucion_id", insertable = false, updatable = false)
@@ -75,7 +75,7 @@ public class Usuario extends BaseTenantEntity {
     @Column(nullable = false, length = 120)
     private String email;
 
-    // Cuando la persona confirmo que controla este buzon; NULL mientras no lo haya hecho.
+    // Cuando la persona confirmó que controla este buzón; NULL mientras no lo haya hecho.
     @Column(name = "email_verificado_en")
     private LocalDateTime emailVerificadoEn;
 
@@ -112,8 +112,8 @@ public class Usuario extends BaseTenantEntity {
     }
 
     // true si esta cuenta representa al establecimiento y no a alguien concreto. Se decide por
-    // la ausencia de persona y no por el codigo del rol: es el dato estructural, y no depende
-    // de que el catalogo de roles diga lo que uno espera.
+    // la ausencia de persona y no por el código del rol: es el dato estructural, y no depende
+    // de que el catálogo de roles diga lo que uno espera.
     public boolean esCuentaInstitucional() {
         return persona == null;
     }
@@ -152,21 +152,21 @@ public class Usuario extends BaseTenantEntity {
         }
     }
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;
 
-    // Ultima vez que se fijo una contrasena nueva, por cualquiera de los dos caminos que lo
-    // permiten. NULL en las cuentas anteriores a V021: nunca cambiaron y no estan trabadas.
+    // Última vez que se fijó una contraseña nueva, por cualquiera de los dos caminos que lo
+    // permiten. NULL en las cuentas anteriores a V021: nunca cambiaron y no están trabadas.
     @Column(name = "password_cambiada_en")
     private LocalDateTime passwordCambiadaEn;
 
-    // Cuando un administrador levanto el bloqueo de 24 horas. Ver puedeCambiarPassword.
+    // Cuando un administrador levantó el bloqueo de 24 horas. Ver puedeCambiarPassword.
     @Column(name = "cambio_password_habilitado_en")
     private LocalDateTime cambioPasswordHabilitadoEn;
 
-    // Quien lo levanto. Mismo criterio que dadoDeBajaPor: el id pelado, no la relacion.
+    // Quien lo levanto. Mismo criterio que dadoDeBajaPor: el id pelado, no la relación.
     @Column(name = "cambio_password_habilitado_por")
     private Long cambioPasswordHabilitadoPor;
 

@@ -37,13 +37,13 @@ import java.util.TreeMap;
 @Slf4j
 public class GraficosDeAsistenciaService {
 
-    // El lienzo del grafico semanal. Son coordenadas de un viewBox, no pixeles: el SVG se
+    // El lienzo del gráfico semanal. Son coordenadas de un viewBox, no píxeles: el SVG se
     // estira al ancho que tenga la tarjeta.
     private static final float LIENZO_ANCHO = 720f;
     private static final float LIENZO_ALTO  = 200f;
     private static final float SEPARACION   = 6f;
 
-    // Cuantas filas muestra cada ranking. Mas que esto deja de ser "donde intervenir" y pasa
+    // Cuántas filas muestra cada ranking. Más que esto deja de ser "donde intervenir" y pasa
     // a ser la tabla del reporte, que ya existe y ordena por lo que uno quiera.
     private static final int TOPE_RANKING = 8;
 
@@ -109,7 +109,7 @@ public class GraficosDeAsistenciaService {
                 : (int) Math.round(dictados * 100.0 / programados);
 
             // Una semana sin dato se dibuja como una marca al ras, no como una columna cero:
-            // cero es una afirmacion y esto es la ausencia de una.
+            // cero es una afirmación y esto es la ausencia de una.
             float alto = porcentaje == null ? 2f : LIENZO_ALTO * Math.min(100, porcentaje) / 100f;
 
             columnas.add(ColumnaSemanal.builder()

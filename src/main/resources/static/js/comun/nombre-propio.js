@@ -1,16 +1,16 @@
 /* =============================================================================
  *  nombre-propio.js
  *
- *  Pone mayuscula inicial en los campos de nombre y apellido al salir del campo.
+ *  Pone mayúscula inicial en los campos de nombre y apellido al salir del campo.
  *  Se activa con data-nombre-propio en el input.
  *
- *  Por que. Lo que se guarda lo decide el servidor (NombrePropio.java), que
+ *  Por qué. Lo que se guarda lo decide el servidor (NombrePropio.java), que
  *  aplica esta misma regla venga el dato de donde venga. Esto solo la muestra
- *  antes: quien tipeo "juan pablo" ve "Juan Pablo" al pasar al campo siguiente,
+ *  antes: quien tipeó "juan pablo" ve "Juan Pablo" al pasar al campo siguiente,
  *  en vez de enterarse en el listado de que el sistema lo cambio.
  *
  *  Al salir del campo y no mientras se escribe: corregir en cada tecla le mueve
- *  el cursor a quien esta escribiendo.
+ *  el cursor a quien está escribiendo.
  *
  *  La regla tiene que ser la misma que la de NombrePropio.java. Si difieren, el
  *  campo muestra una cosa y se guarda otra.
@@ -19,18 +19,18 @@
 (function (window, document) {
     'use strict';
 
-    // Las mismas de NombrePropio: van en minuscula, salvo cuando abren el campo.
+    // Las mismas de NombrePropio: van en minúscula, salvo cuando abren el campo.
     var PARTICULAS = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'da', 'das', 'do', 'dos', 'di', 'van', 'von'];
 
     var MAYUSCULA = /\p{Lu}/u;
     var MINUSCULA = /\p{Ll}/u;
 
-    // Si el texto trae mayusculas y minusculas a la vez: alguien eligio como se escribe.
+    // Si el texto trae mayúsculas y minúsculas a la vez: alguien eligió como se escribe.
     function mezcla(t) {
         return MAYUSCULA.test(t) && MINUSCULA.test(t);
     }
 
-    // Un tramo mezclado se respeta; si no, mayuscula inicial y el resto en minuscula.
+    // Un tramo mezclado se respeta; si no, mayúscula inicial y el resto en minúscula.
     function tramo(t) {
         if (!t || mezcla(t)) return t;
         var m = t.toLowerCase();
@@ -38,8 +38,8 @@
         return inicial.toUpperCase() + m.slice(inicial.length);
     }
 
-    // Cada tramo entre guiones o apostrofos lleva su propia mayuscula: Perez-Gomez, O'Connor.
-    // El split con parentesis conserva los separadores en las posiciones impares.
+    // Cada tramo entre guiones o apóstrofos lleva su propia mayúscula: Perez-Gomez, O'Connor.
+    // El split con paréntesis conserva los separadores en las posiciones impares.
     function palabra(p, primera) {
         var minuscula = p.toLowerCase();
         if (!primera && !mezcla(p) && PARTICULAS.indexOf(minuscula) !== -1) return minuscula;

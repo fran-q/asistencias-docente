@@ -237,7 +237,7 @@ class HorarioServiceTest {
     @Test
     @DisplayName("crear: rechaza tolerancia mayor que la duracion de la clase")
     void crear_toleranciaMayorQueLaClase() {
-        // Una clase de 20 minutos con 30 de tolerancia deja la ventana para marcar mas
+        // Una clase de 20 minutos con 30 de tolerancia deja la ventana para marcar más
         // larga que la clase a la que corresponde.
         assertThatThrownBy(() -> service.crear(COMISION_ID, DiaSemana.LUNES,
                 LocalTime.of(8, 0), LocalTime.of(8, 20), (short) 30))

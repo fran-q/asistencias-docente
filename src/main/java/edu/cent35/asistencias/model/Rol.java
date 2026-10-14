@@ -14,12 +14,12 @@ import lombok.Setter;
 import lombok.ToString;
 
 /**
- * Catalogo global de roles del sistema. NO es tenant-scoped.
+ * Catálogo global de roles del sistema. NO es tenant-scoped.
  * <p>
- * Codigos definidos en {@link RolCodigo}:
+ * Códigos definidos en {@link RolCodigo}:
  * <ul>
- *   <li>INSTITUCION: cuenta raiz de la institucion.</li>
- *   <li>ADMIN: operador del dia a dia.</li>
+ *   <li>INSTITUCION: cuenta raíz de la institución.</li>
+ *   <li>ADMIN: operador del día a día.</li>
  * </ul>
  */
 @Entity

@@ -38,8 +38,8 @@ public class MateriaFormDto {
     @NotNull(message = "Hay que elegir una carrera")
     private Long carreraId;
 
-    // El tope real lo pone la duracion de la carrera elegida; se valida en el service,
-    // porque aca todavia no sabemos cual es.
+    // El tope real lo pone la duración de la carrera elegida; se valida en el service,
+    // porque acá todavía no sabemos cuál es.
     @NotNull(message = "Hay que indicar de qué año es la materia")
     @Min(value = 1, message = "El año tiene que ser 1 o mayor")
     @Max(value = 10, message = "El año no puede pasar de 10")

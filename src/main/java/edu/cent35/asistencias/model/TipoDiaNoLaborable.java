@@ -15,13 +15,13 @@ public enum TipoDiaNoLaborable {
     // Los de la provincia, que el calendario nacional no trae.
     PROVINCIAL("Feriado provincial"),
 
-    // Una jornada, un acto o un cierre que decide la propia institucion.
+    // Una jornada, un acto o un cierre que decide la propia institución.
     INSTITUCIONAL("Institucional"),
 
-    // Invierno o verano: varios dias seguidos, que se marcan de una vez con un rango.
+    // Invierno o verano: varios días seguidos, que se marcan de una vez con un rango.
     RECESO("Receso"),
 
-    // Lo que no entra en los demas, y los dias cargados antes de V028, que no tenian tipo.
+    // Lo que no entra en los demás, y los días cargados antes de V028, que no tenían tipo.
     OTRO("Otro");
 
     private final String etiqueta;

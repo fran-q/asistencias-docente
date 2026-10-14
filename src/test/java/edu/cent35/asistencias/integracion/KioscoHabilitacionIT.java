@@ -92,7 +92,7 @@ class KioscoHabilitacionIT {
     }
 
     // ========================================================================
-    //  Habilitar: solo desde esa misma maquina
+    //  Habilitar: solo desde esa misma máquina
     // ========================================================================
 
     @Test
@@ -108,8 +108,8 @@ class KioscoHabilitacionIT {
 
         PuestoCaptura despues = puestoRepository.findById(puestoId).orElseThrow();
         assertThat(despues.operaDesatendido()).isTrue();
-        // RF-85 pide registrar quien tomo la decision, no solo que este tomada: es una
-        // atenuacion deliberada de un control y tiene que tener a quien atribuirsele.
+        // RF-85 pide registrar quien tomó la decisión, no solo que esté tomada: es una
+        // atenuación deliberada de un control y tiene que tener a quien atribuirsele.
         assertThat(despues.getKioscoHabilitadoEn()).isNotNull();
         assertThat(despues.getKioscoHabilitadoPor()).isNotNull();
         assertThat(despues.getKioscoHabilitadoPor().getId()).isEqualTo(cuentaA.getId());
@@ -118,9 +118,9 @@ class KioscoHabilitacionIT {
     @Test
     @DisplayName("Sin la cookie del equipo, la contrasena institucional sola no habilita el kiosco")
     void noHabilitaADistancia() throws Exception {
-        // Es lo que sostiene toda la funcion. El kiosco convierte la cookie del puesto en la
-        // credencial completa; si esto se pudiera a distancia, una contrasena institucional
-        // filtrada alcanzaria para convertir esa cookie en una credencial valida.
+        // Es lo que sostiene toda la función. El kiosco convierte la cookie del puesto en la
+        // credencial completa; si esto se pudiera a distancia, una contraseña institucional
+        // filtrada alcanzaría para convertir esa cookie en una credencial válida.
         designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
 
@@ -136,7 +136,7 @@ class KioscoHabilitacionIT {
     @Test
     @DisplayName("La cookie de otra institucion no habilita el kiosco ajeno")
     void noHabilitaConCookieAjena() throws Exception {
-        // La cookie sola tampoco alcanza: tiene que ser la del puesto de ESA institucion.
+        // La cookie sola tampoco alcanza: tiene que ser la del puesto de ESA institución.
         designarEn(institucionA, cuentaA);
         String tokenDeB = designarEn(institucionB, cuentaB);
         Long puestoDeA = puestoDe(institucionA).getId();
@@ -157,7 +157,7 @@ class KioscoHabilitacionIT {
         habilitar(puestoDeA, tokenDeA, cuentaA);
 
         // Con el id y hasta con la cookie de A, pero logueada en B: el tenant lo pone la
-        // sesion, asi que el puesto de A no existe para esta peticion.
+        // sesión, así que el puesto de A no existe para esta petición.
         mockMvc.perform(post("/puestos/{id}/kiosco/deshabilitar", puestoDeA)
                 .with(user(new UsuarioAutenticado(cuentaB))).with(csrf())
                 .cookie(new Cookie(CookiePuesto.NOMBRE, tokenDeA)))
@@ -175,8 +175,8 @@ class KioscoHabilitacionIT {
         Long puestoId = puestoDe(institucionA).getId();
         Usuario admin = cuentaConRol("admin.simple", institucionA, "ADMIN");
 
-        // Habilitar el kiosco es autorizar el tratamiento biometrico sin nadie mirando: es la
-        // misma decision que designar el equipo, y la toma la cuenta institucional.
+        // Habilitar el kiosco es autorizar el tratamiento biométrico sin nadie mirando: es la
+        // misma decisión que designar el equipo, y la toma la cuenta institucional.
         mockMvc.perform(post("/puestos/{id}/kiosco/habilitar", puestoId)
                 .with(user(new UsuarioAutenticado(admin))).with(csrf())
                 .cookie(new Cookie(CookiePuesto.NOMBRE, token)))
@@ -193,14 +193,14 @@ class KioscoHabilitacionIT {
     }
 
     // ========================================================================
-    //  Apagar: desde cualquier maquina, y sin revocar el equipo
+    //  Apagar: desde cualquier máquina, y sin revocar el equipo
     // ========================================================================
 
     @Test
     @DisplayName("El kiosco se apaga sin la cookie, desde cualquier maquina")
     void apagaADistancia() throws Exception {
-        // La asimetria con habilitar. Cuando hace falta apagarlo --la maquina se la llevaron,
-        // aparecio una marca que nadie explica-- lo mas probable es no poder llegar hasta ella.
+        // La asimetría con habilitar. Cuando hace falta apagarlo --la máquina se la llevaron,
+        // apareció una marca que nadie explica-- lo más probable es no poder llegar hasta ella.
         String token = designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
         habilitar(puestoId, token, cuentaA);
@@ -226,12 +226,12 @@ class KioscoHabilitacionIT {
 
         PuestoCaptura despues = puestoRepository.findById(puestoId).orElseThrow();
         // RF-85: apagarlo tiene que poder hacerse SIN revocar el equipo. Si revocara, la
-        // institucion se quedaria sin poder tomar asistencia ni siquiera con sesion abierta.
+        // institución se quedaría sin poder tomar asistencia ni siquiera con sesión abierta.
         assertThat(despues.habilitado())
             .as("el equipo sigue autorizado: solo dejo de funcionar solo")
             .isTrue();
         // El rastro sobrevive: la pregunta "desde cuando estuvo operando desatendido" se hace
-        // despues de apagarlo, no antes.
+        // después de apagarlo, no antes.
         assertThat(despues.getKioscoHabilitadoEn()).isEqualTo(cuando);
         assertThat(despues.getKioscoHabilitadoPor()).isNotNull();
     }
@@ -246,7 +246,7 @@ class KioscoHabilitacionIT {
         String token = designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
 
-        // Designado pero sin kiosco: la pantalla sin sesion no abre.
+        // Designado pero sin kiosco: la pantalla sin sesión no abre.
         assertThat(estadoDelKiosco(token))
             .as("designar no alcanza para operar desatendido")
             .isNotEqualTo(200);
@@ -268,7 +268,7 @@ class KioscoHabilitacionIT {
     @DisplayName("Revocar el equipo tambien apaga el kiosco")
     void revocarApagaElKiosco() throws Exception {
         // Revocar no limpia la bandera del kiosco --es historia: dice que ese equipo estuvo
-        // operando desatendido--, asi que la fila queda con kiosco_habilitado = 1 y activo = 0.
+        // operando desatendido--, así que la fila queda con kiosco_habilitado = 1 y activo = 0.
         // Lo que cierra la puerta es que se miren las DOS, y eso pasa en dos lugares
         // independientes: la consulta que resuelve el tenant y el interceptor del puesto.
         String token = designarEn(institucionA, cuentaA);
@@ -294,14 +294,14 @@ class KioscoHabilitacionIT {
     @Test
     @DisplayName("La resolucion del tenant sola ya rechaza al puesto revocado")
     void laResolucionDelTenantExigeElPuestoActivo() {
-        // Va contra el servicio y no contra la pantalla a proposito. Por HTTP el pedido muere
-        // igual gracias al interceptor del puesto, asi que sacarle el `activo` a la consulta
-        // que resuelve el tenant no se notaria: el test end-to-end seguiria verde y quedaria
+        // Va contra el servicio y no contra la pantalla a propósito. Por HTTP el pedido muere
+        // igual gracias al interceptor del puesto, así que sacarle el `activo` a la consulta
+        // que resuelve el tenant no se notaría: el test end-to-end seguiría verde y quedaría
         // una sola capa sosteniendo la puerta, sin que nadie se entere.
         //
-        // Y esta capa es la que importa primero: es la que publica la institucion en contexto.
-        // Resolver el tenant desde un equipo revocado seria dejar entrar la peticion al
-        // sistema para frenarla despues.
+        // Y esta capa es la que importa primero: es la que publica la institución en contexto.
+        // Resolver el tenant desde un equipo revocado sería dejar entrar la petición al
+        // sistema para frenarla después.
         String token = designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
 
@@ -361,14 +361,14 @@ class KioscoHabilitacionIT {
         habilitar(puestoId, token, cuentaA);
 
         // Sin esto la pantalla no distingue un equipo que opera solo de uno que no, que es el
-        // unico dato por el que alguien entraria a mirarla despues de habilitarlo.
+        // único dato por el que alguien entraría a mirarla después de habilitarlo.
         String encendido = pantallaDePuestos();
         assertThat(encendido).contains("Sin sesión");
         assertThat(encendido).contains("/kiosco/deshabilitar");
     }
 
     // ========================================================================
-    //  El paso del pase al kiosco (cerrando la sesion)
+    //  El paso del pase al kiosco (cerrando la sesión)
     // ========================================================================
 
     @Test
@@ -377,11 +377,11 @@ class KioscoHabilitacionIT {
         String token = designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
 
-        // El boton cierra la sesion. Ofrecerlo con el kiosco apagado dejaria a la persona
+        // El botón cierra la sesión. Ofrecerlo con el kiosco apagado dejaría a la persona
         // afuera del sistema y contra una pantalla que no abre.
         //
-        // Se busca el campo oculto y no el texto del boton. La etiqueta ya cambio una vez
-        // --el acceso paso del encabezado al pie y se renombro-- y el test fallo por eso, sin
+        // Se busca el campo oculto y no el texto del botón. La etiqueta ya cambio una vez
+        // --el acceso paso del encabezado al pie y se renombro-- y el test falló por eso, sin
         // que nada del comportamiento se hubiera roto. Lo que hace al paso es ese value: es
         // lo que el logout lee para mandar al kiosco en vez de al login.
         assertThat(pantallaDelPase(token))
@@ -396,9 +396,9 @@ class KioscoHabilitacionIT {
     @Test
     @DisplayName("Salir al kiosco cierra la sesion pero no borra la credencial del equipo")
     void salirAlKioscoCierraLaSesionYConservaElEquipo() throws Exception {
-        // Es el punto de todo el paso. Si la sesion siguiera viva detras de la pantalla
-        // desatendida, alcanzaria con apretar Atras para entrar al sistema entero con la
-        // cuenta de quien lo dejo andando: exactamente la practica que el kiosco reemplaza.
+        // Es el punto de todo el paso. Si la sesión siguiera viva detrás de la pantalla
+        // desatendida, alcanzaría con apretar Atrás para entrar al sistema entero con la
+        // cuenta de quien lo dejó andando: exactamente la práctica que el kiosco reemplaza.
         String token = designarEn(institucionA, cuentaA);
         Long puestoId = puestoDe(institucionA).getId();
         habilitar(puestoId, token, cuentaA);
@@ -412,13 +412,13 @@ class KioscoHabilitacionIT {
 
         assertThat(respuesta.getRedirectedUrl()).endsWith("/kiosco");
 
-        // La cookie del puesto identifica la MAQUINA, no la sesion: si el logout se la
-        // llevara, la pantalla desatendida no abriria y el paso no serviria de nada.
+        // La cookie del puesto identifica la MÁQUINA, no la sesión: si el logout se la
+        // llevara, la pantalla desatendida no abriría y el paso no serviría de nada.
         assertThat(respuesta.getHeaders("Set-Cookie"))
             .as("el logout no puede tocar la credencial del equipo")
             .noneMatch(h -> h.contains(CookiePuesto.NOMBRE));
 
-        // Y con esa misma cookie, ya sin sesion, la pantalla abre.
+        // Y con esa misma cookie, ya sin sesión, la pantalla abre.
         assertThat(estadoDelKiosco(token)).isEqualTo(200);
     }
 
@@ -436,8 +436,8 @@ class KioscoHabilitacionIT {
     @Test
     @DisplayName("El destino del logout no lo elige la peticion")
     void elDestinoNoSaleDeLaPeticion() throws Exception {
-        // El logout es de las paginas mas faciles de hacerle abrir a alguien desde afuera. Si
-        // el destino saliera del formulario seria un redirect abierto: "cerra sesion y anda a
+        // El logout es de las páginas más fáciles de hacerle abrir a alguien desde afuera. Si
+        // el destino saliera del formulario sería un redirect abierto: "cerrá sesión y andá a
         // este sitio que se parece al login".
         var respuesta = mockMvc.perform(post("/logout")
                 .param("destino", "https://sitio-ajeno.example/login")
@@ -452,7 +452,7 @@ class KioscoHabilitacionIT {
 
     // ------------------------------------------------------------------------
 
-    // La pantalla del pase, con sesion y con la cookie del equipo.
+    // La pantalla del pase, con sesión y con la cookie del equipo.
     private String pantallaDelPase(String token) throws Exception {
         return mockMvc.perform(get("/asistencia/pase")
                 .with(user(new UsuarioAutenticado(cuentaA)))
@@ -461,7 +461,7 @@ class KioscoHabilitacionIT {
             .andReturn().getResponse().getContentAsString();
     }
 
-    // El estado de /kiosco con esa cookie y SIN ninguna sesion abierta.
+    // El estado de /kiosco con esa cookie y SIN ninguna sesión abierta.
     private int estadoDelKiosco(String token) throws Exception {
         return mockMvc.perform(get("/kiosco").cookie(new Cookie(CookiePuesto.NOMBRE, token)))
             .andReturn().getResponse().getStatus();
@@ -473,7 +473,7 @@ class KioscoHabilitacionIT {
             .andReturn().getResponse().getContentAsString();
     }
 
-    // Habilita el kiosco por la via real: el POST, desde ese mismo equipo.
+    // Habilita el kiosco por la vía real: el POST, desde ese mismo equipo.
     private void habilitar(Long puestoId, String token, Usuario quien) throws Exception {
         mockMvc.perform(post("/puestos/{id}/kiosco/habilitar", puestoId)
                 .with(user(new UsuarioAutenticado(quien))).with(csrf())
@@ -508,7 +508,7 @@ class KioscoHabilitacionIT {
             .persona(DatosDePrueba.persona("Cuenta", "Prueba"))
             .rol(rol)
             .activo(true)
-            // Sin esto el interceptor de verificacion bloquea antes y el test estaria
+            // Sin esto el interceptor de verificación bloquea antes y el test estaría
             // midiendo el control equivocado.
             .emailVerificadoEn(LocalDateTime.now())
             .build();

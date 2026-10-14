@@ -69,7 +69,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
         @Param("estado")    edu.cent35.asistencias.model.EstadoAsistencia estado,
         @Param("metodo")    edu.cent35.asistencias.model.MetodoAsistencia metodo);
 
-    // Cuantas filas daria el reporte sin el tope. Se cuenta en la base en vez de traerlas
+    // Cuántas filas daría el reporte sin el tope. Se cuenta en la base en vez de traerlas
     // y medir la lista: contar es justamente lo que hay que poder hacer sin traer nada.
     @Query("""
         SELECT COUNT(a) FROM Asistencia a
@@ -165,7 +165,7 @@ public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
                                      @Param("hasta")     LocalDate hasta);
 
     // Lo mismo para el ciclo entero. Los mismos tres WHERE del tenant; el ciclo se compara por
-    // la FK del periodo, sin sumar otro JOIN que tambien habria que acotar.
+    // la FK del período, sin sumar otro JOIN que también habría que acotar.
     @Query("""
         SELECT MIN(a.fecha) FROM Asistencia a
         JOIN a.comision c

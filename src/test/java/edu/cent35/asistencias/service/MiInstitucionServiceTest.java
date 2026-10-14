@@ -113,7 +113,7 @@ class MiInstitucionServiceTest {
         InstitucionFormDto dto = InstitucionFormDto.builder()
             .nombre("X")
             .cuit("   ")           // whitespace -> null
-            .direccion("")          // vacio -> null
+            .direccion("")          // vacío -> null
             .emailContacto(null)    // null directo
             .build();
 

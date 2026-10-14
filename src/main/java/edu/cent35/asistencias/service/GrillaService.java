@@ -21,11 +21,11 @@ import java.util.List;
 
 /**
  * Arma la grilla horaria semanal para una carrera del tenant actual.
- * Cada item viene con sus coordenadas de grid CSS pre-calculadas.
+ * Cada ítem viene con sus coordenadas de grid CSS pre-calculadas.
  * <p>
  * Ventana fija: 07:00 a 23:00, slots de 30 minutos = 32 slots.
  * Si un horario cae fuera de la ventana, se clampa a los bordes
- * (aparece en el primer o ultimo slot).
+ * (aparece en el primer o último slot).
  */
 @Service
 @RequiredArgsConstructor
@@ -80,15 +80,15 @@ public class GrillaService {
             throw new EntityNotFoundException("Carrera no encontrada");
         }
 
-        // Sin ciclo elegido la pantalla muestra el que corre hoy. Si la institucion todavia
-        // no abrio ninguno, la grilla queda vacia en vez de fallar: no hay oferta que mostrar,
+        // Sin ciclo elegido la pantalla muestra el que corre hoy. Si la institución todavía
+        // no abrió ninguno, la grilla queda vacía en vez de fallar: no hay oferta que mostrar,
         // que es distinto de que algo se haya roto.
         CicloLectivo ciclo = cicloLectivoService.cicloParaMostrar(cicloId).orElse(null);
         List<Horario> horarios = ciclo == null
             ? List.of()
             : horarioRepository.findActivosPorCarreraYCiclo(carreraId, ciclo.getId(), tenantId);
 
-        // El filtro por anio se aplica en memoria y no en la consulta a proposito: son los
+        // El filtro por año se aplica en memoria y no en la consulta a propósito: son los
         // horarios de UNA carrera, decenas como mucho, y agregar una variante de la query
         // por un filtro opcional obliga a mantener dos consultas que hacen casi lo mismo.
         if (anio != null) {

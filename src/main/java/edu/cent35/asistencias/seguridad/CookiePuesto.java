@@ -21,8 +21,8 @@ public final class CookiePuesto {
 
     public static final String NOMBRE = "VISUM_PUESTO";
 
-    // Un ano. La cookie identifica una maquina, no una sesion: expirar cada pocas semanas
-    // obligaria a redesignar el mismo equipo una y otra vez, y el tramite terminaria
+    // Un año. La cookie identifica una máquina, no una sesión: expirar cada pocas semanas
+    // obligaría a redesignar el mismo equipo una y otra vez, y el trámite terminaría
     // haciendose de memoria y sin pensarlo, que es como se degrada un control.
     private static final Duration VIGENCIA = Duration.ofDays(365);
 
@@ -67,10 +67,10 @@ public final class CookiePuesto {
             .httpOnly(true)
             .sameSite("Strict")
             .path("/")
-            // Secure se decide por como llego la peticion y no por una constante: en
-            // desarrollo el sistema corre sobre http y una cookie Secure no se guardaria,
+            // Secure se decide por como llegó la petición y no por una constante: en
+            // desarrollo el sistema corre sobre http y una cookie Secure no se guardaría,
             // dejando el puesto imposible de designar. Al salir a la nube (rumbo 1) la
-            // aplicacion pasa a https --getUserMedia lo exige-- y la marca se activa sola.
+            // aplicación pasa a https --getUserMedia lo exige-- y la marca se activa sola.
             .secure(request.isSecure());
     }
 }

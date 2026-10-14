@@ -15,18 +15,18 @@ import java.util.Optional;
  * <b>Multi-tenant</b>: el filtro Hibernate {@code "tenant"} no aplica
  * directamente porque la entidad no tiene {@code institucion_id} propio.
  * Las queries que cruzan tenants pasan por JOIN con {@code Docente}, que si
- * tiene el filtro - igual asi, en el service validamos explicitamente para
+ * tiene el filtro - igual así, en el service validamos explícitamente para
  * cumplir con el principio de defensa en profundidad (TD-003).
  */
 public interface ConsentimientoBiometricoRepository extends JpaRepository<ConsentimientoBiometrico, Long> {
 
-    // Consentimiento vigente del docente; el service garantiza que no haya mas de uno.
+    // Consentimiento vigente del docente; el service garantiza que no haya más de uno.
     Optional<ConsentimientoBiometrico> findByDocenteIdAndVigenteTrue(Long docenteId);
 
-    // Ultimo registro del docente, vigente o revocado, para deducir su estado actual.
+    // Último registro del docente, vigente o revocado, para deducir su estado actual.
     Optional<ConsentimientoBiometrico> findTopByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
-    // Historial completo del docente, ordenado del mas nuevo al mas viejo.
+    // Historial completo del docente, ordenado del más nuevo al más viejo.
     List<ConsentimientoBiometrico> findByDocenteIdOrderByFechaConsentimientoDescIdDesc(Long docenteId);
 
     // Cuenta los docentes activos con consentimiento vigente.
@@ -51,7 +51,7 @@ public interface ConsentimientoBiometricoRepository extends JpaRepository<Consen
     """)
     List<UltimoEstadoConsentimientoView> findUltimoEstadoPorDocenteEnTenant(@Param("tenantId") Long tenantId);
 
-    // Proyeccion liviana para findUltimoEstadoPorDocenteEnTenant.
+    // Proyección liviana para findUltimoEstadoPorDocenteEnTenant.
     interface UltimoEstadoConsentimientoView {
         Long getDocenteId();
         Boolean getVigente();

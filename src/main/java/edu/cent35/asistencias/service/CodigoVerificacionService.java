@@ -27,7 +27,7 @@ import java.util.Optional;
 @Slf4j
 public class CodigoVerificacionService {
 
-    // Fuente criptografica: un Random comun es predecible y haria adivinable el codigo.
+    // Fuente criptografica: un Random común es predecible y haría adivinable el código.
     private static final SecureRandom ALEATORIO = new SecureRandom();
 
     private final CodigoVerificacionRepository codigoRepository;
@@ -42,8 +42,8 @@ public class CodigoVerificacionService {
     @Value("${app.verificacion.max-por-hora}")
     private int maxPorHora;
 
-    // Como resulto la validacion. Se distingue el motivo porque ayuda a la persona y no le
-    // aporta nada a quien este probando codigos: ya sabe si el suyo fue rechazado.
+    // Cómo resultó la validación. Se distingue el motivo porque ayuda a la persona y no le
+    // aporta nada a quien esté probando códigos: ya sabe si el suyo fue rechazado.
     public enum Resultado {
         OK,
         INCORRECTO,
@@ -71,7 +71,7 @@ public class CodigoVerificacionService {
 
         codigoRepository.invalidarPendientes(usuario.getId(), proposito, ahora);
 
-        // Seis digitos con ceros a la izquierda: "000123" es tan valido como cualquier otro.
+        // Seis dígitos con ceros a la izquierda: "000123" es tan válido como cualquier otro.
         String codigoEnClaro = String.format("%06d", ALEATORIO.nextInt(1_000_000));
 
         CodigoVerificacion codigo = CodigoVerificacion.builder()
@@ -131,13 +131,13 @@ public class CodigoVerificacionService {
         return Resultado.OK;
     }
 
-    // A que direccion se mando el ultimo codigo pendiente; el flujo lo muestra enmascarado.
+    // A que dirección se mandó el último código pendiente; el flujo lo muestra enmascarado.
     @Transactional(readOnly = true)
     public Optional<String> emailDelUltimoCodigo(Long usuarioId, PropositoCodigo proposito) {
         return codigoRepository.ultimoDe(usuarioId, proposito).map(CodigoVerificacion::getEmail);
     }
 
-    // Tolera que la persona pegue el codigo con espacios o guiones desde el correo.
+    // Tolera que la persona pegue el código con espacios o guiones desde el correo.
     private String normalizar(String codigo) {
         return codigo == null ? "" : codigo.replaceAll("[^0-9]", "");
     }

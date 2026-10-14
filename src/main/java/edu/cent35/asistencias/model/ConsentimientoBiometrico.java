@@ -26,23 +26,23 @@ import java.time.LocalDateTime;
 
 /**
  * Consentimiento informado del docente para el tratamiento de sus datos
- * biometricos (Ley 25.326 + Resolucion AAIP 255/2022). Cubre RF-10 y RNF-13.
+ * biométricos (Ley 25.326 + Resolución AAIP 255/2022). Cubre RF-10 y RNF-13.
  * <p>
  * <b>Multi-tenant</b>: no extiende {@code BaseTenantEntity} (no tiene
  * {@code institucion_id} propio). El tenant lo determina el {@code Docente}
- * padre y se valida explicitamente en el service - mismo patron que
+ * padre y se valida explícitamente en el service - mismo patrón que
  * {@code Comision}.
  * <p>
- * <b>Diseno historico</b>: cada docente puede tener varios registros a lo
- * largo del tiempo (otorga -> revoca -> vuelve a otorgar con la version
- * nueva del texto). El "estado actual" se calcula con el registro mas
+ * <b>Diseño histórico</b>: cada docente puede tener varios registros a lo
+ * largo del tiempo (otorga -> revoca -> vuelve a otorgar con la versión
+ * nueva del texto). El "estado actual" se calcula con el registro más
  * reciente. El campo {@code vigente} es un atajo redundante con
  * {@code fechaRevocacion == null} - se mantiene sincronizado a nivel
- * aplicacion para que las queries de listado sean directas.
+ * aplicación para que las queries de listado sean directas.
  * <p>
- * <b>Auditoria forense</b>: capturamos IP + User-Agent tanto en el
- * otorgamiento como en la revocacion (V005). Permite demostrar ante una
- * eventual auditoria AAIP que hubo una sesion historica concreta.
+ * <b>Auditoría forense</b>: capturamos IP + User-Agent tanto en el
+ * otorgamiento como en la revocación (V005). Permite demostrar ante una
+ * eventual auditoría AAIP que hubo una sesión historica concreta.
  */
 @Entity
 @Table(name = "consentimientos_biometricos")
@@ -86,7 +86,7 @@ public class ConsentimientoBiometrico {
     @Builder.Default
     private Boolean vigente = true;
 
-    // ---- Auditoria del otorgamiento ----------------------------------------
+    // ---- Auditoría del otorgamiento ----------------------------------------
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "registrado_por_usuario_id", nullable = false)
@@ -98,7 +98,7 @@ public class ConsentimientoBiometrico {
     @Column(name = "user_agent_otorgamiento", length = 500)
     private String userAgentOtorgamiento;
 
-    // ---- Auditoria de la revocacion (null hasta que se revoque) ------------
+    // ---- Auditoría de la revocación (null hasta que se revoque) ------------
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "revocado_por_usuario_id")

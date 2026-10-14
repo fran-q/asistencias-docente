@@ -6,15 +6,15 @@ import java.util.List;
 /**
  * Lo que se muestra en la pantalla de inicio.
  *
- * <p>La home no repite los accesos del menu: eso ya lo contesta la barra de navegacion. Lo
- * que contesta aca es que esta pasando ahora y que necesita que alguien haga algo, que es
- * lo unico que justifica una pantalla de inicio propia.
+ * <p>La home no repite los accesos del menú: eso ya lo contesta la barra de navegación. Lo
+ * que contesta acá es qué está pasando ahora y qué necesita que alguien haga algo, que es
+ * lo único que justifica una pantalla de inicio propia.
  *
  * @param enCurso         clases con la ventana horaria abierta en este momento
- * @param proximas        las que arrancan mas tarde hoy; solo importan si no hay ninguna en curso
- * @param resumen         como viene el dia en numeros
+ * @param proximas        las que arrancan más tarde hoy; solo importan si no hay ninguna en curso
+ * @param resumen         como viene el día en números
  * @param pendientes      cosas cargadas a medias que impiden que el sistema funcione
- * @param motivoSinClases por que no hay nada en curso ni por venir; null si hay algo
+ * @param motivoSinClases por qué no hay nada en curso ni por venir; null si hay algo
  */
 public record PanelInicioDto(
     List<ClaseEnCurso> enCurso,
@@ -29,22 +29,22 @@ public record PanelInicioDto(
         return enCurso.isEmpty();
     }
 
-    // true si no hay nada corriendo pero si algo mas tarde.
+    // true si no hay nada corriendo pero si algo más tarde.
     public boolean hayProximas() {
         return enCurso.isEmpty() && !proximas.isEmpty();
     }
 
-    // true si no hay nada corriendo ni por venir: el dia ya termino o no habia clases.
+    // true si no hay nada corriendo ni por venir: el día ya terminó o no había clases.
     public boolean nadaMasHoy() {
         return enCurso.isEmpty() && proximas.isEmpty();
     }
 
-    // true si hay alguna clase en curso con el docente todavia sin marcar.
+    // true si hay alguna clase en curso con el docente todavía sin marcar.
     public boolean hayAlguienSinMarcar() {
         return enCurso.stream().anyMatch(c -> !c.marcada());
     }
 
-    // true si no quedo nada pendiente de cargar.
+    // true si no quedó nada pendiente de cargar.
     public boolean todoEnOrden() {
         return pendientes.isEmpty();
     }
@@ -53,11 +53,11 @@ public record PanelInicioDto(
      * Una clase corriendo ahora, con el estado de su docente.
      *
      * @param docenteId  a quien hay que marcarle la asistencia. Lo usa el pase para ofrecer la
-     *                   marca sin camara sobre esta misma fila (V029): elegir de esta lista, y
+     *                   marca sin cámara sobre esta misma fila (V029): elegir de esta lista, y
      *                   no de un buscador de todos los docentes, hace imposible marcarle a
      *                   alguien que no tiene clase ahora
-     * @param estado     PRESENTE o TARDE si ya marco; null si todavia no
-     * @param horaMarca  cuando marco, o null si todavia no
+     * @param estado     PRESENTE o TARDE si ya marcó; null si todavía no
+     * @param horaMarca  cuando marcó, o null si todavía no
      */
     public record ClaseEnCurso(
         LocalTime horaInicio,
@@ -72,11 +72,11 @@ public record PanelInicioDto(
     ) {}
 
     /**
-     * Una clase que todavia no empezo.
+     * Una clase que todavía no empezó.
      *
      * <p>Solo se muestran cuando no hay ninguna en curso: el bloque "Ahora mismo" pasaba la
-     * mayor parte del dia diciendo que no habia nada y ocupando un tercio del ancho igual.
-     * Decir a que hora arranca la proxima usa ese espacio para algo.
+     * mayor parte del día diciendo que no había nada y ocupando un tercio del ancho igual.
+     * Decir a que hora arranca la próxima usa ese espacio para algo.
      */
     public record ProximaClase(
         LocalTime horaInicio,
@@ -87,11 +87,11 @@ public record PanelInicioDto(
     ) {}
 
     /**
-     * El dia en numeros.
+     * El día en números.
      *
-     * <p>Las ausencias se cuentan solo sobre clases que ya terminaron: una clase que todavia
-     * no empezo no es una ausencia, es una clase que falta. Mezclarlas daria un tablero en
-     * rojo a primera hora de la manana todos los dias.
+     * <p>Las ausencias se cuentan solo sobre clases que ya terminaron: una clase que todavía
+     * no empezó no es una ausencia, es una clase que falta. Mezclarlas daría un tablero en
+     * rojo a primera hora de la mañana todos los días.
      *
      * @param docentesQueMarcaron docentes con al menos una marca hoy
      * @param docentesConClase    docentes con al menos una clase hoy
@@ -105,7 +105,7 @@ public record PanelInicioDto(
         long docentesConClase
     ) {
 
-        // Porcentaje de docentes del dia que ya marcaron, para la barra de seguimiento.
+        // Porcentaje de docentes del día que ya marcaron, para la barra de seguimiento.
         public int porcentajeCobertura() {
             if (docentesConClase == 0) return 0;
             return (int) Math.round(docentesQueMarcaron * 100.0 / docentesConClase);
@@ -132,7 +132,7 @@ public record PanelInicioDto(
     public record Pendiente(Long cantidad, String titulo, String detalle, String url,
                             boolean soloInstitucion, List<String> cuales) {
 
-        // Cuantos casos se nombran; el resto se resume en "y N mas".
+        // Cuántos casos se nombran; el resto se resume en "y N más".
         private static final int NOMBRADOS = 3;
 
         public Pendiente(long cantidad, String titulo, String detalle, String url) {

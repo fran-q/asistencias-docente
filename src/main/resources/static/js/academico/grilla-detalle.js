@@ -3,15 +3,15 @@
  *
  *  Cuadro flotante con el detalle de una clase de la grilla semanal.
  *
- *  Por que. Antes cada bloque era un enlace directo a la edicion: un click
+ *  Por qué. Antes cada bloque era un enlace directo a la edición: un click
  *  hecho para "ver de que es esta clase" terminaba en un formulario, que es una
  *  pantalla de la que hay que salir sin guardar. Mirar y editar son dos
  *  intenciones distintas y ahora cuestan distinto: mirar es pasar el mouse,
- *  editar es un boton.
+ *  editar es un botón.
  *
- *  El cuadro se abre tambien con el foco del teclado, no solo con el mouse: si
- *  la unica forma de ver el detalle fuera pasar el puntero, quien navega
- *  tabulando no tendria manera de leerlo.
+ *  El cuadro se abre también con el foco del teclado, no solo con el mouse: si
+ *  la única forma de ver el detalle fuera pasar el puntero, quien navega
+ *  tabulando no tendría manera de leerlo.
  * ========================================================================== */
 (function (window, document) {
     'use strict';
@@ -25,8 +25,8 @@
         d.className = 'grilla-detalle';
         d.setAttribute('role', 'dialog');
         d.hidden = true;
-        // Si el puntero entra al propio cuadro no se cierra: hay un boton adentro, y
-        // cerrarlo al ir a buscarlo lo volveria inalcanzable con el mouse.
+        // Si el puntero entra al propio cuadro no se cierra: hay un botón adentro, y
+        // cerrarlo al ir a buscarlo lo volvería inalcanzable con el mouse.
         d.addEventListener('mouseenter', function () { clearTimeout(timerCierre); });
         d.addEventListener('mouseleave', cerrarConDemora);
         document.body.appendChild(d);
@@ -80,7 +80,7 @@
         var margen = 8;
 
         // Por defecto a la derecha del bloque; si no entra, a la izquierda. Sin esto los
-        // bloques de sabado y domingo abrian el cuadro fuera de la pantalla.
+        // bloques de sábado y domingo abrian el cuadro fuera de la pantalla.
         var izq = r.right + margen;
         if (izq + c.width > window.innerWidth - margen) izq = r.left - c.width - margen;
         if (izq < margen) izq = margen;
@@ -100,7 +100,7 @@
         abiertoPara = null;
     }
 
-    // Demora corta al salir: sin ella, mover el puntero del bloque al cuadro --que estan
+    // Demora corta al salir: sin ella, mover el puntero del bloque al cuadro --que están
     // separados por unos pixeles-- lo cierra antes de llegar.
     function cerrarConDemora() {
         clearTimeout(timerCierre);
@@ -114,7 +114,7 @@
             b.addEventListener('focus', function () { abrir(b); });
             b.addEventListener('blur', cerrarConDemora);
             // Con el teclado no existe "pasar por encima": el click o Enter abre el
-            // cuadro, y desde ahi se tabula hasta el boton de editar.
+            // cuadro, y desde ahí se tabula hasta el botón de editar.
             b.addEventListener('click', function () { abrir(b); });
         });
 

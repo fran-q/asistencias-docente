@@ -56,7 +56,7 @@ public class DiaNoLaborableController {
         return "academico/dia-sin-clase-list";
     }
 
-    // El alta, en su propia pantalla. Recibe el ano del listado del que se vino, para que
+    // El alta, en su propia pantalla. Recibe el año del listado del que se vino, para que
     // Cancelar vuelva a ese.
     @GetMapping("/nuevo")
     public String formNuevo(@RequestParam(name = "anio", required = false) Integer anio,
@@ -88,7 +88,7 @@ public class DiaNoLaborableController {
             DiaNoLaborableService.Resultado r = service.marcar(fecha, hasta, tipo, motivo,
                 principal == null ? null : principal.getUsuarioId());
             redirect.addFlashAttribute("flashMensaje", mensaje(r));
-            // Al listado del ano de lo que se marco, que es donde se ve.
+            // Al listado del año de lo que se marcó, que es donde se ve.
             return "redirect:/dias-sin-clase?anio=" + fecha.getYear();
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
@@ -102,8 +102,8 @@ public class DiaNoLaborableController {
         }
     }
 
-    // Lo que se marco y lo que se salteo porque ya estaba: si no se dice, quien cargo un receso
-    // de doce dias y ve once filas nuevas no sabe si se perdio uno.
+    // Lo que se marcó y lo que se salteó porque ya estaba: si no se dice, quien cargó un receso
+    // de doce días y ve once filas nuevas no sabe si se perdió uno.
     private static String mensaje(DiaNoLaborableService.Resultado r) {
         String listo = r.marcados() == 1
             ? "Listo. Ese día no va a generar ausencias automáticas."
@@ -114,7 +114,7 @@ public class DiaNoLaborableController {
             : " " + r.yaEstaban() + " ya estaban cargados y quedaron como estaban.");
     }
 
-    // Borrado fisico: no hay nada que dependa de esta fila. Ver DiaNoLaborableService.
+    // Borrado físico: no hay nada que dependa de esta fila. Ver DiaNoLaborableService.
     @PostMapping("/{id}/borrar")
     public String borrar(@PathVariable Long id,
                          @RequestParam(name = "anio", required = false) Integer anio,

@@ -49,8 +49,8 @@ public class DatosCuentaController {
     private static final String VISTA_EDITAR = "cuenta/mi-cuenta-editar";
     private static final String VISTA_CORREO = "cuenta/cambio-correo";
 
-    // Cuanto dura la autorizacion una vez validado el codigo del correo actual. La misma que la
-    // del cambio de contrasena: es el tiempo de abrir el otro buzon y copiar un codigo.
+    // Cuánto dura la autorización una vez validado el código del correo actual. La misma que la
+    // del cambio de contraseña: es el tiempo de abrir el otro buzón y copiar un código.
     private static final Duration VENTANA = Duration.ofMinutes(10);
 
     private final UsuarioService usuarioService;
@@ -91,7 +91,7 @@ public class DatosCuentaController {
 
         // La regla del usuario se pide solo si cambia: una cuenta anterior a ella --"..." es un
         // usuario que existe-- tiene que poder corregir su nombre sin que la obliguen a cambiar
-        // tambien como entra.
+        // también como entra.
         String usuarioNuevo = form.getUsername() == null ? "" : form.getUsername().trim();
         if (!usuarioNuevo.isEmpty() && !usuarioNuevo.equals(u.getUsername())) {
             String problema = UsuarioValidoValidator.problema(usuarioNuevo);
@@ -107,7 +107,7 @@ public class DatosCuentaController {
         boolean cambiaElCorreo = !correoNuevo.isEmpty() && !correoNuevo.equalsIgnoreCase(u.getEmail());
         if (cambiaElCorreo && !binding.hasFieldErrors("email")) {
             // Antes de guardar nada: si ese correo no sirve, que se entere con el formulario
-            // todavia en pantalla y no despues de esperar un codigo.
+            // todavía en pantalla y no después de esperar un código.
             String problema = verificacionService.problemaConCorreoNuevo(u.getId(), correoNuevo);
             if (problema != null) {
                 binding.rejectValue("email", "Disponible", problema);
@@ -125,8 +125,8 @@ public class DatosCuentaController {
             guardado = usuarioService.actualizarPropia(
                 u.getId(), usuarioNuevo, form.getNombre(), form.getApellido(), form.isConfirmado());
         } catch (ConfirmacionRequeridaException ex) {
-            // Esta persona ademas da clases: su nombre se ve en la ficha del docente y en los
-            // listados de asistencia. Se avisa antes de escribir, como en la edicion de usuarios.
+            // Esta persona además da clases: su nombre se ve en la ficha del docente y en los
+            // listados de asistencia. Se avisa antes de escribir, como en la edición de usuarios.
             Map<String, String> campos = new LinkedHashMap<>();
             campos.put("username", form.getUsername());
             campos.put("email", form.getEmail());
@@ -145,7 +145,7 @@ public class DatosCuentaController {
             return VISTA_EDITAR;
         }
 
-        // La sesion sigue siendo la misma: el usuario de la barra se refresca aca, en vez de
+        // La sesión sigue siendo la misma: el usuario de la barra se refresca acá, en vez de
         // pedirle a la persona que vuelva a entrar para verlo.
         principal.actualizarDatos(guardado);
         boolean cambioAlgoMas =
@@ -163,25 +163,25 @@ public class DatosCuentaController {
         return "redirect:/mi-cuenta/correo";
     }
 
-    // Lo que la pantalla de edicion necesita ademas del formulario.
+    // Lo que la pantalla de edición necesita además del formulario.
     private void prepararEdicion(Usuario u, Model model) {
         model.addAttribute("usuario", u);
         model.addAttribute("esInstitucion", u.esCuentaInstitucional());
-        // El patron del navegador va solo si el usuario de hoy ya cumple la regla. Si no, el
-        // campo quedaria invalido desde que se abre y no dejaria guardar aunque nadie lo toque.
+        // El patrón del navegador va solo si el usuario de hoy ya cumple la regla. Si no, el
+        // campo quedaría inválido desde que se abre y no dejaría guardar aunque nadie lo toque.
         model.addAttribute("patronUsuario",
             UsuarioValidoValidator.problema(u.getUsername()) == null ? UsuarioValido.PATRON_HTML : null);
         model.addAttribute("avisoUsuario", UsuarioValido.AVISO);
     }
 
     // ========================================================================
-    //  El correo: un codigo al actual y otro al nuevo
+    //  El correo: un código al actual y otro al nuevo
     //
-    //  POST /editar           guarda lo demas y manda el codigo al correo ACTUAL
-    //  POST /correo/actual    valida ese codigo y manda otro al correo NUEVO
-    //  POST /correo/nuevo     valida el segundo, y recien ahi la cuenta cambia de correo
+    //  POST /editar           guarda lo demás y manda el código al correo ACTUAL
+    //  POST /correo/actual    valida ese código y manda otro al correo NUEVO
+    //  POST /correo/nuevo     valida el segundo, y recién ahí la cuenta cambia de correo
     //
-    //  El estado vive en la sesion (CambioDeCorreo). Hasta el ultimo paso no cambio nada:
+    //  El estado vive en la sesión (CambioDeCorreo). Hasta el último paso no cambio nada:
     //  abandonar a mitad de camino deja la cuenta exactamente como estaba.
     // ========================================================================
 
@@ -200,7 +200,7 @@ public class DatosCuentaController {
         return VISTA_CORREO;
     }
 
-    // Paso 2: valida el codigo del correo actual y manda el del nuevo.
+    // Paso 2: valida el código del correo actual y manda el del nuevo.
     @PostMapping("/correo/actual")
     public String validarCorreoActual(@AuthenticationPrincipal UsuarioAutenticado principal,
                                       @RequestParam(name = "codigo", required = false) String codigo,
@@ -220,13 +220,13 @@ public class DatosCuentaController {
         }
 
         cambio.autorizarHasta(LocalDateTime.now().plus(VENTANA));
-        // Se vuelve a poner para que la sesion registre que el objeto cambio.
+        // Se vuelve a poner para que la sesión registre que el objeto cambio.
         sesion.setAttribute(CambioDeCorreo.SESION, cambio);
         enviarAlCorreoNuevo(principal.getUsuarioId(), cambio, request, redirect);
         return "redirect:/mi-cuenta/correo";
     }
 
-    // Paso 3: valida el codigo del correo nuevo y, si es correcto, la cuenta pasa a usarlo.
+    // Paso 3: valida el código del correo nuevo y, si es correcto, la cuenta pasa a usarlo.
     @PostMapping("/correo/nuevo")
     public String confirmarCorreoNuevo(@AuthenticationPrincipal UsuarioAutenticado principal,
                                        @RequestParam(name = "codigo", required = false) String codigo,
@@ -239,7 +239,7 @@ public class DatosCuentaController {
         if (!cambio.estaAutorizado()) {
             // Se comprueba en el servidor y no confiando en que la pantalla haya mostrado el paso
             // correcto: este formulario se puede mandar sin haber pasado por el anterior, y
-            // saltearlo es justo lo que el codigo al correo actual existe para impedir.
+            // saltearlo es justo lo que el código al correo actual existe para impedir.
             cambio.desautorizar();
             sesion.setAttribute(CambioDeCorreo.SESION, cambio);
             redirect.addFlashAttribute("flashError",
@@ -255,7 +255,7 @@ public class DatosCuentaController {
                 return "redirect:/mi-cuenta/correo";
             }
         } catch (IllegalArgumentException ex) {
-            // Otra cuenta de la institucion tomo ese correo mientras llegaban los codigos.
+            // Otra cuenta de la institución tomó ese correo mientras llegaban los códigos.
             sesion.removeAttribute(CambioDeCorreo.SESION);
             redirect.addFlashAttribute("flashError", ex.getMessage());
             return "redirect:/mi-cuenta";
@@ -267,7 +267,7 @@ public class DatosCuentaController {
         return "redirect:/mi-cuenta";
     }
 
-    // Manda otro codigo para el paso en curso.
+    // Manda otro código para el paso en curso.
     @PostMapping("/correo/reenviar")
     public String reenviar(@AuthenticationPrincipal UsuarioAutenticado principal,
                            HttpServletRequest request,
@@ -280,8 +280,8 @@ public class DatosCuentaController {
         if (cambio.estaAutorizado()) {
             enviarAlCorreoNuevo(principal.getUsuarioId(), cambio, request, redirect);
         } else {
-            // Sin autorizacion vigente se vuelve al primer paso: una ventana vencida no se
-            // estira pidiendo otro codigo al correo nuevo.
+            // Sin autorización vigente se vuelve al primer paso: una ventana vencida no se
+            // estira pidiendo otro código al correo nuevo.
             cambio.desautorizar();
             sesion.setAttribute(CambioDeCorreo.SESION, cambio);
             enviarAlCorreoActual(usuarioService.buscarPorId(principal.getUsuarioId()),
@@ -299,7 +299,7 @@ public class DatosCuentaController {
         return "redirect:/mi-cuenta";
     }
 
-    // El cambio pendiente de ESTA cuenta, o null. Uno de otra cuenta se descarta: la sesion
+    // El cambio pendiente de ESTA cuenta, o null. Uno de otra cuenta se descarta: la sesión
     // conserva sus atributos si alguien vuelve a entrar con otro usuario en el mismo navegador.
     static CambioDeCorreo pendienteDe(UsuarioAutenticado principal, HttpSession sesion) {
         Object guardado = sesion.getAttribute(CambioDeCorreo.SESION);
@@ -313,7 +313,7 @@ public class DatosCuentaController {
         return null;
     }
 
-    // Manda el codigo al correo actual y deja el aviso para la pantalla siguiente.
+    // Manda el código al correo actual y deja el aviso para la pantalla siguiente.
     private void enviarAlCorreoActual(Usuario u, String correoNuevo, HttpServletRequest request,
                                       RedirectAttributes redirect, String prefijo) {
         try {
@@ -330,7 +330,7 @@ public class DatosCuentaController {
         }
     }
 
-    // Manda el codigo al correo nuevo y deja el aviso para la pantalla siguiente.
+    // Manda el código al correo nuevo y deja el aviso para la pantalla siguiente.
     private void enviarAlCorreoNuevo(Long usuarioId, CambioDeCorreo cambio, HttpServletRequest request,
                                      RedirectAttributes redirect) {
         try {

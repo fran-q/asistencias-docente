@@ -82,9 +82,9 @@ class KioscoTenantInterceptorTest {
     @Test
     @DisplayName("CON sesion abierta el equipo no se consulta siquiera")
     void conSesionGanaLaSesion() {
-        // Es la fuga que este interceptor tiene que evitar: un admin de una institucion
-        // sentado en la maquina de otra lleva las dos credenciales encima. Si el equipo
-        // pisara a la sesion, operaria sobre los datos de la institucion equivocada.
+        // Es la fuga que este interceptor tiene que evitar: un admin de una institución
+        // sentado en la máquina de otra lleva las dos credenciales encima. Si el equipo
+        // pisara a la sesión, operaria sobre los datos de la institución equivocada.
         conSesionDe(INSTITUCION_DE_LA_SESION);
         conCookie(TOKEN);
 
@@ -99,8 +99,8 @@ class KioscoTenantInterceptorTest {
     @Test
     @DisplayName("el usuario anonimo de Spring cuenta como no tener sesion")
     void elAnonimoNoEsSesion() {
-        // Spring pone un token anonimo cuando nadie inicio sesion. Tomarlo por una sesion
-        // real dejaria el kiosco sin resolver nunca y sin decir por que.
+        // Spring pone un token anónimo cuando nadie inicio sesión. Tomarlo por una sesión
+        // real dejaría el kiosco sin resolver nunca y sin decir por qué.
         SecurityContextHolder.getContext().setAuthentication(
             new AnonymousAuthenticationToken("clave", "anonymousUser",
                 List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))));
@@ -123,8 +123,8 @@ class KioscoTenantInterceptorTest {
     @Test
     @DisplayName("con credencial rechazada no se publica ninguna institucion")
     void credencialRechazadaNoPublicaNada() {
-        // Token vencido, puesto revocado, kiosco no habilitado: el servicio devuelve vacio y
-        // acá no se inventa una institucion por defecto.
+        // Token vencido, puesto revocado, kiosco no habilitado: el servicio devuelve vacío y
+        // acá no se inventa una institución por defecto.
         conCookie(TOKEN);
         when(puestoService.resolverKiosco(TOKEN)).thenReturn(Optional.empty());
 

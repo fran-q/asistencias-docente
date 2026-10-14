@@ -79,27 +79,27 @@ public class MateriaService {
      * Las comisiones de una materia, activas primero.
      *
      * <p>Igual que en las materias de una carrera: se resuelve la materia con
-     * {@link #buscarPorId}, que es la que comprueba la institucion, antes de consultar.
+     * {@link #buscarPorId}, que es la que comprueba la institución, antes de consultar.
      */
     @Transactional(readOnly = true)
     public List<Comision> comisionesDe(Long materiaId) {
         buscarPorId(materiaId);
-        // Solo las activas, igual que el plan de una carrera: una comision dada de baja ya
-        // no se dicta, y verla ahi confunde a quien esta armando el cuatrimestre.
+        // Solo las activas, igual que el plan de una carrera: una comisión dada de baja ya
+        // no se dicta, y verla ahí confunde a quien está armando el cuatrimestre.
         List<Comision> comisiones = comisionRepository
             .findByMateriaIdOrderByActivoDescCodigoAsc(materiaId).stream()
             .filter(c -> Boolean.TRUE.equals(c.getActivo()))
             .toList();
         // Mismo motivo que en las materias de una carrera: el docente asignado es lazy y la
-        // sesion se cierra al salir de aca, asi que la plantilla no podria leerlo despues.
+        // sesión se cierra al salir de acá, así que la plantilla no podría leerlo después.
         for (Comision c : comisiones) {
             if (c.getDocenteAsignado() != null) c.getDocenteAsignado().getNombreCompleto();
-            // El periodo con su ano: dos comisiones de la materia pueden llevar el mismo codigo
-            // en periodos distintos (V023), y la pantalla los muestra para distinguirlas.
+            // El período con su año: dos comisiones de la materia pueden llevar el mismo código
+            // en períodos distintos (V023), y la pantalla los muestra para distinguirlas.
             if (c.getPeriodo() != null) c.getPeriodo().getCiclo().getAnio();
         }
-        // Del ano mas nuevo al mas viejo y, dentro del ano, en el orden de sus periodos: dos
-        // comisiones con el mismo codigo quedan juntas y en un orden que se entiende.
+        // Del año más nuevo al más viejo y, dentro del año, en el orden de sus períodos: dos
+        // comisiones con el mismo código quedan juntas y en un orden que se entiende.
         return comisiones.stream()
             .sorted(Comparator
                 .comparing((Comision c) -> c.getPeriodo() == null
@@ -196,8 +196,8 @@ public class MateriaService {
             throw new IllegalArgumentException("La materia ya está inactiva.");
         }
         // Solo cuentan las de ciclos que siguen abiertos. Antes de V023 se contaban todas, y
-        // eso dejaba la materia atada para siempre: una comision de 2026 seguia siendo
-        // "activa" en 2030 e impedia sacar la materia del plan. Las de ciclos cerrados son
+        // eso dejaba la materia atada para siempre: una comisión de 2026 seguía siendo
+        // "activa" en 2030 e impedía sacar la materia del plan. Las de ciclos cerrados son
         // historia, no oferta vigente.
         long comisionesActivas = comisionRepository.contarActivasEnCiclosAbiertos(
             id, edu.cent35.asistencias.config.TenantContext.getRequired());
@@ -259,11 +259,11 @@ public class MateriaService {
     }
 
     /**
-     * El anio de la materia no puede pasar la duracion de su carrera.
+     * El año de la materia no puede pasar la duración de su carrera.
      *
-     * <p>No se puede expresar como CHECK en la base porque haria falta una subconsulta a
-     * carreras, asi que la regla vive aca. El mensaje nombra la carrera y su duracion: decir
-     * solo "año inválido" obliga a ir a buscar contra que se comparo.
+     * <p>No se puede expresar como CHECK en la base porque haría falta una subconsulta a
+     * carreras, así que la regla vive acá. El mensaje nombra la carrera y su duración: decir
+     * solo "año inválido" obliga a ir a buscar contra qué se comparó.
      */
     private void validarAnio(Short anio, Carrera carrera) {
         if (anio == null) {

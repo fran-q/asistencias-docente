@@ -63,7 +63,7 @@ public record KioscoResultadoDto(
     // Se identificó pero la identidad todavía no se sostuvo lo suficiente (ADR-0013).
     public static KioscoResultadoDto confirmando(int x, int y, int ancho, int alto,
                                                  long progresoMs, long objetivoMs) {
-        // Sin apellido a proposito: mostrarlo antes de confirmar es lo que hace que alguien
+        // Sin apellido a propósito: mostrarlo antes de confirmar es lo que hace que alguien
         // vea el apellido equivocado durante un parpadeo.
         return new KioscoResultadoDto(true, true, null, false, null, null,
             x, y, ancho, alto, true, progresoMs, objetivoMs,

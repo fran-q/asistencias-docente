@@ -21,7 +21,7 @@ public record IdentificacionResultadoDto(
     boolean reconocido,
     Long docenteId,
     String docenteNombre,
-    // Solo el apellido, para el kiosco: esa pantalla no muestra la nomina completa (RF-87).
+    // Solo el apellido, para el kiosco: esa pantalla no muestra la nómina completa (RF-87).
     String docenteApellido,
     Long modeloFacialId,
     Double distancia,

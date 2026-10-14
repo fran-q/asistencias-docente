@@ -73,7 +73,7 @@ class BloquePresenciaServiceTest {
     @Mock private ResolutorDeBloquesService resolutor;
     @Mock private AsistenciaService asistenciaService;
     @Mock private ConsentimientoBiometricoService consentimientoService;
-    // Desde el arreglo del dia no laborable, la apertura lo consulta antes del resolutor.
+    // Desde el arreglo del día no laborable, la apertura lo consulta antes del resolutor.
     @Mock private DiaNoLaborableService diaNoLaborableService;
     @Mock private edu.cent35.asistencias.repository.AsistenciaRepository asistenciaRepository;
     @Mock private edu.cent35.asistencias.repository.UsuarioRepository usuarioRepository;
@@ -105,8 +105,8 @@ class BloquePresenciaServiceTest {
         @DisplayName("un dia marcado sin clases no abre bloque, y dice por que")
         void enDiaSinClasesNoAbre() {
             // La asistencia se guarda CONTRA UN HORARIO: una marca en un feriado afirma que se
-            // dicto una clase que la institucion habia cancelado. Es el mismo dato falso que
-            // la ausencia automatica, del otro lado.
+            // dictó una clase que la institución había cancelado. Es el mismo dato falso que
+            // la ausencia automática, del otro lado.
             docenteDelTenant();
             when(consentimientoService.estadoActual(DOCENTE_ID))
                 .thenReturn(EstadoConsentimiento.ACTIVO);
@@ -126,8 +126,8 @@ class BloquePresenciaServiceTest {
         @Test
         @DisplayName("un bloque ya abierto se puede cerrar aunque el dia este marcado")
         void enDiaSinClasesSiCierra() {
-            // El corte es solo de la apertura. Si tambien frenara el cierre, un bloque abierto
-            // quedaria colgado hasta que lo levante el job: peor que el problema que resuelve.
+            // El corte es solo de la apertura. Si también frenara el cierre, un bloque abierto
+            // quedaría colgado hasta que lo levante el job: peor que el problema que resuelve.
             docenteDelTenant();
             when(consentimientoService.estadoActual(DOCENTE_ID))
                 .thenReturn(EstadoConsentimiento.ACTIVO);
@@ -386,7 +386,7 @@ class BloquePresenciaServiceTest {
     }
 
     // ========================================================================
-    //  Cierre automatico
+    //  Cierre automático
     // ========================================================================
 
     @Nested
@@ -524,7 +524,7 @@ class BloquePresenciaServiceTest {
         @DisplayName("corregir un cierre por rostro borra su evidencia biometrica")
         void corregirBorraLaEvidencia() {
             // El CHECK ck_bloques_salida_modelo solo admite modelo y confianza en un cierre
-            // AUTOMATICO, y ademas la hora ya no la sostiene una medicion sino una persona.
+            // AUTOMATICO, y además la hora ya no la sostiene una medición sino una persona.
             BloquePresencia b = bloquePorId(LocalTime.of(18, 0), UN_LUNES, EstadoCierre.CERRADO_POR_ROSTRO);
             b.setModeloFacialSalida(ModeloFacial.builder().id(7L).build());
             b.setConfianzaSalida(new java.math.BigDecimal("0.9000"));
@@ -584,7 +584,7 @@ class BloquePresenciaServiceTest {
         @DisplayName("acortar el rango informa que clases quedan afuera, sin borrarlas")
         void informaLasQueQuedanAfuera() {
             // Quitar una marca de asistencia es otro acto administrativo y tiene su propio
-            // flujo: aca solo se avisa, para que el admin decida.
+            // flujo: acá solo se avisa, para que el admin decida.
             BloquePresencia b = bloquePorId(LocalTime.of(18, 0), UN_LUNES, EstadoCierre.SIN_CIERRE);
             Horario primera = horario(1L, 18, 0, 20, 0);
             Horario segunda = horario(2L, 20, 0, 22, 0);
@@ -593,7 +593,7 @@ class BloquePresenciaServiceTest {
             conAdmin();
             guardaElBloque();
 
-            // El bloque tenia las dos clases imputadas por una salida anterior de las 22.
+            // El bloque tenía las dos clases imputadas por una salida anterior de las 22.
             Asistencia aDeLaSegunda = Asistencia.builder()
                 .id(2L).horario(segunda).horaRegistrada(LocalTime.of(20, 0)).build();
             when(asistenciaRepository.findByBloqueIdOrderByHoraRegistradaAsc(BLOQUE_ID))
@@ -611,7 +611,7 @@ class BloquePresenciaServiceTest {
     }
 
     // ========================================================================
-    //  Marca sin camara (V029)
+    //  Marca sin cámara (V029)
     // ========================================================================
 
     @Nested
@@ -644,8 +644,8 @@ class BloquePresenciaServiceTest {
             assertThat(guardado.getMotivoEntrada()).isNotNull();
             assertThat(guardado.getDetalleEntrada()).isEqualTo("todavia sin foto");
 
-            // ck_bloques_entrada_modelo: una hora que no salio de una medicion no lleva
-            // evidencia biometrica detras, porque no hubo ninguna medicion.
+            // ck_bloques_entrada_modelo: una hora que no salió de una medición no lleva
+            // evidencia biométrica detrás, porque no hubo ninguna medición.
             assertThat(guardado.getModeloFacialEntrada()).isNull();
             assertThat(guardado.getConfianzaEntrada()).isNull();
         }
@@ -654,9 +654,9 @@ class BloquePresenciaServiceTest {
         @DisplayName("un consentimiento no vigente no la frena: aca no se usa ningun rostro")
         void sinConsentimientoSeRegistraIgual() {
             // Es el caso para el que este camino existe. La regla dura es que sin
-            // consentimiento vigente no se USA UN ROSTRO (RF-82, Ley 25.326), y aca no hay
-            // captura, ni modelo, ni comparacion. Consultarlo dejaria sin forma de registrar
-            // su asistencia justamente al docente que ejercio su derecho a revocarlo.
+            // consentimiento vigente no se USA UN ROSTRO (RF-82, Ley 25.326), y acá no hay
+            // captura, ni modelo, ni comparación. Consultarlo dejaría sin forma de registrar
+            // su asistencia justamente al docente que ejerció su derecho a revocarlo.
             docenteDelTenant();
             sinBloqueAbierto();
             conMotivo((short) 2, "FALLA_RECONOCIMIENTO");
@@ -675,7 +675,7 @@ class BloquePresenciaServiceTest {
         @DisplayName("con el bloque abierto registra la salida, no una segunda entrada")
         void conBloqueAbiertoCierra() {
             // El sentido de la marca lo decide el estado del docente, igual que en una pasada
-            // por la camara (ADR-0017). Quien la carga no elige entre entrada y salida, y por
+            // por la cámara (ADR-0017). Quien la carga no elige entre entrada y salida, y por
             // eso el pedido del navegador no trae esa palabra.
             docenteDelTenant();
             conBloqueAbierto(LocalTime.of(18, 0), UN_LUNES);
@@ -712,11 +712,11 @@ class BloquePresenciaServiceTest {
         @Test
         @DisplayName("en un dia sin clases le dice al admin que hacer, no que pida ayuda")
         void enDiaSinClasesElMensajeEsParaElAdmin() {
-            // Las guardas del calendario valen igual que con camara: un feriado no abre
-            // bloque. Lo que cambia es a quien se le habla. "Pedile a secretaria que la
-            // cargue a mano" es una instruccion para el docente parado frente a la camara;
-            // dicha a secretaria, que es quien esta cargando esto, la manda a preguntarse a
-            // si misma.
+            // Las guardas del calendario valen igual que con cámara: un feriado no abre
+            // bloque. Lo que cambia es a quien se le habla. "Pedile a secretaría que la
+            // cargue a mano" es una instrucción para el docente parado frente a la cámara;
+            // dicha a secretaría, que es quien está cargando esto, la manda a preguntarse a
+            // sí misma.
             docenteDelTenant();
             sinBloqueAbierto();
             conMotivo((short) 1, "FALLA_CAMARA");
@@ -795,7 +795,7 @@ class BloquePresenciaServiceTest {
     }
 
     // ========================================================================
-    //  Por que no hay clase
+    //  Por qué no hay clase
     // ========================================================================
 
     /**
@@ -881,9 +881,9 @@ class BloquePresenciaServiceTest {
     //  Fixtures
     // ========================================================================
 
-    // El docente de las fixtures es "Perez, Juana": ninguna de las dos partes puede aparecer en
+    // El docente de las fixtures es "Pérez, Juana": ninguna de las dos partes puede aparecer en
     // el motivo. El apellido tampoco: en el kiosco viaja por su propio campo, y repetirlo en el
-    // mensaje es como se veia duplicado en pantalla. Vive aca y no en su clase anidada porque
+    // mensaje es como se veía duplicado en pantalla. Vive acá y no en su clase anidada porque
     // lo usan las dos que miran el motivo.
     private void noNombraANadie(String motivo) {
         assertThat(motivo)

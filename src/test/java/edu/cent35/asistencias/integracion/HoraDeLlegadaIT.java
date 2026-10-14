@@ -141,7 +141,7 @@ class HoraDeLlegadaIT {
         CicloLectivo ciclo = cicloRepository.save(
             DatosDePrueba.cicloAnualDelTenant(tenantId, 2026));
 
-        // Tres comisiones para poder tener tres clases el mismo dia sin pisar el UNIQUE de
+        // Tres comisiones para poder tener tres clases el mismo día sin pisar el UNIQUE de
         // (docente, horario, fecha), que es lo que impide dos marcas de la misma clase.
         Horario deLaCamara = clase(materia, docente, ciclo, "A", 18, 20);
         Horario cargadaAMano = clase(materia, docente, ciclo, "B", 8, 10);
@@ -252,7 +252,7 @@ class HoraDeLlegadaIT {
         }
     }
 
-    // Una clase del docente ese lunes, en su propia comision.
+    // Una clase del docente ese lunes, en su propia comisión.
     private Horario clase(Materia materia, Docente docente, CicloLectivo ciclo,
                           String codigoComision, int desde, int hasta) {
         Comision comision = comisionRepository.save(Comision.builder()

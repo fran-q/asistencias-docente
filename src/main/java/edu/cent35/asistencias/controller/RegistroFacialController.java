@@ -71,8 +71,8 @@ public class RegistroFacialController {
         // entrenamiento hablen de las mismas etapas.
         model.addAttribute("etapas", EtapaCaptura.values());
         model.addAttribute("capturasPorEtapa", modeloFacialService.getCapturasPorEtapa());
-        // La misma camara que despues va a usar el pase (V026). Registrar el rostro con una
-        // camara y reconocerlo con otra es la forma mas facil de que el sistema reconozca peor.
+        // La misma cámara que después va a usar el pase (V026). Registrar el rostro con una
+        // cámara y reconocerlo con otra es la forma más fácil de que el sistema reconozca peor.
         model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         return "reconocimiento/registrar-rostro";
     }

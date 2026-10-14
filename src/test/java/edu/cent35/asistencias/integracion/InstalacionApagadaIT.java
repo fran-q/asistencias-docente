@@ -70,8 +70,8 @@ class InstalacionApagadaIT {
     @Test
     @DisplayName("la recuperación por clave tampoco existe")
     void laRecuperacionPorClaveNoExiste() throws Exception {
-        // Donde hay correo, recuperar va por codigo. Dos caminos abiertos a la vez serian
-        // superficie de mas sin que nadie la necesite.
+        // Donde hay correo, recuperar va por código. Dos caminos abiertos a la vez serían
+        // superficie de más sin que nadie la necesite.
         mvc.perform(get("/recuperar/clave")).andExpect(status().isNotFound());
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
@@ -84,7 +84,7 @@ class InstalacionApagadaIT {
     @Test
     @DisplayName("el alta pública de instituciones sigue abierta")
     void elAltaPublicaSigueAbierta() throws Exception {
-        // La contracara del test de la instalacion autonoma: lo que alla se cierra, en un
+        // La contracara del test de la instalación autónoma: lo que allá se cierra, en un
         // despliegue normal tiene que seguir funcionando igual que siempre.
         mvc.perform(get("/alta-institucion")).andExpect(status().isOk());
     }
@@ -92,8 +92,8 @@ class InstalacionApagadaIT {
     @Test
     @DisplayName("el respaldo desde la pantalla no existe")
     void elRespaldoNoExiste() throws Exception {
-        // El volcado se lleva la base entera: donde hay varias instituciones eso seria el dato
-        // de todas en manos de una. Sin sesion cae en el login, que ya dice que no paso.
+        // El volcado se lleva la base entera: donde hay varias instituciones eso sería el dato
+        // de todas en manos de una. Sin sesión cae en el login, que ya dice que no paso.
         mvc.perform(get("/mi-institucion/respaldo"))
             .andExpect(status().is3xxRedirection());
     }

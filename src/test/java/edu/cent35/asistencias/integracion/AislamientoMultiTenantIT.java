@@ -57,7 +57,7 @@ class AislamientoMultiTenantIT {
     private Long carreraDeB;
 
     // Siembra datos de dos instituciones. Se escribe por repositorio y no por service: el aspecto
-    // solo avanza sobre beans @Service, asi que aca no hay filtro y se puede cargar de ambas.
+    // solo avanza sobre beans @Service, así que acá no hay filtro y se puede cargar de ambas.
     @BeforeEach
     void sembrar() {
         TenantContext.clear();
@@ -81,13 +81,13 @@ class AislamientoMultiTenantIT {
     }
 
     // ========================================================================
-    //  Capa 1: filtro de Hibernate sobre queries sin WHERE explicito
+    //  Capa 1: filtro de Hibernate sobre queries sin WHERE explícito
     // ========================================================================
 
     @Test
     @DisplayName("El listado de carreras solo devuelve las de la institucion activa")
     void listadoDeCarrerasSeAislaPorTenant() {
-        // listar() delega en una query derivada que NO menciona la institucion: si el filtro de
+        // listar() delega en una query derivada que NO menciona la institución: si el filtro de
         // Hibernate no se activa, devuelve las tres carreras y la fuga queda a la vista.
         TenantContext.set(TENANT_A);
         List<Carrera> deA = carreraService.listar();
@@ -106,7 +106,7 @@ class AislamientoMultiTenantIT {
         TenantContext.set(TENANT_A);
         assertThat(carreraService.listar()).hasSize(2);
 
-        // Si el parametro del filtro quedara cacheado de la llamada anterior, esto seguiria
+        // Si el parámetro del filtro quedara cacheado de la llamada anterior, esto seguiría
         // devolviendo las carreras de A.
         TenantContext.set(TENANT_B);
         List<Carrera> deB = carreraService.listar();
@@ -131,7 +131,7 @@ class AislamientoMultiTenantIT {
     }
 
     // ========================================================================
-    //  Capa 2: JOIN con institucionId explicito (comision no es tenant-scoped)
+    //  Capa 2: JOIN con institucionId explícito (comisión no es tenant-scoped)
     // ========================================================================
 
     @Test
@@ -149,7 +149,7 @@ class AislamientoMultiTenantIT {
     }
 
     // ========================================================================
-    //  Capa 3: validacion explicita en el service para el acceso por id
+    //  Capa 3: validación explícita en el service para el acceso por id
     // ========================================================================
 
     @Test
@@ -158,8 +158,8 @@ class AislamientoMultiTenantIT {
         TenantContext.set(TENANT_A);
 
         // findById no pasa por el filtro de Hibernate (las cargas por clave primaria lo saltean),
-        // por eso el service tiene que comparar el tenant a mano. Sin esa validacion, esto
-        // devolveria la carrera de la otra institucion.
+        // por eso el service tiene que comparar el tenant a mano. Sin esa validación, esto
+        // devolvería la carrera de la otra institución.
         assertThatThrownBy(() -> carreraService.buscarPorId(carreraDeB))
             .isInstanceOf(EntityNotFoundException.class);
     }
@@ -178,7 +178,7 @@ class AislamientoMultiTenantIT {
         assertThatThrownBy(() -> comisionService.listarDelCiclo(cicloDeB))
             .as("un listado vacio se leeria como 'ese ano no tiene comisiones'")
             .isInstanceOf(EntityNotFoundException.class);
-        // El periodo de B por la direccion del ciclo propio: se busca dentro de la lista del
+        // El período de B por la dirección del ciclo propio: se busca dentro de la lista del
         // ciclo, ya acotada al tenant, y no por findById, que no pasa por el filtro.
         assertThatThrownBy(() -> cicloLectivoService.editarPeriodo(cicloDeA, periodoDeB.getId(),
                 "Ajeno", java.time.LocalDate.of(2026, 3, 1), java.time.LocalDate.of(2026, 7, 1)))
@@ -201,7 +201,7 @@ class AislamientoMultiTenantIT {
     //  helpers
     // ========================================================================
 
-    // Borra en orden de dependencia para no chocar con las claves foraneas.
+    // Borra en orden de dependencia para no chocar con las claves foráneas.
     private void limpiar() {
         comisionRepository.deleteAll();
         materiaRepository.deleteAll();
@@ -229,11 +229,11 @@ class AislamientoMultiTenantIT {
     // ------------------------------------------------------------------------
     //  Ciclo lectivo para los datos de prueba (V023)
     // ------------------------------------------------------------------------
-    //  La comision tiene periodo_id NOT NULL desde V023, asi que persistir una exige antes un
-    //  ciclo con al menos un periodo. Se crea uno anual por tenant, reutilizado por todo el
+    //  La comisión tiene periodo_id NOT NULL desde V023, así que persistir una exige antes un
+    //  ciclo con al menos un período. Se crea uno anual por tenant, reutilizado por todo el
     //  test: lo que estos casos prueban no es el calendario.
-    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un metodo
-    //  al siguiente pero la instancia del test no, asi que un cache por instancia intentaba
+    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un método
+    //  al siguiente pero la instancia del test no, así que un cache por instancia intentaba
     //  crear el mismo ciclo otra vez y chocaba contra uq_ciclos_inst_anio.
     private PeriodoLectivo periodoDe(Long tenantId) {
         return periodoLectivoRepository.seleccionablesDelTenant(tenantId).stream()

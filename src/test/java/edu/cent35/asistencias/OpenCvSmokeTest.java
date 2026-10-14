@@ -12,12 +12,12 @@ import static org.bytedeco.opencv.global.opencv_core.CV_8UC1;
 /**
  * Smoke test del entorno JavaCV / OpenCV (Sprint 4 Fase A).
  * <p>
- * No prueba logica de negocio: solo verifica que los <b>binarios nativos</b>
- * de OpenCV cargan correctamente en esta maquina y que el modulo
+ * No prueba lógica de negocio: solo verifica que los <b>binarios nativos</b>
+ * de OpenCV cargan correctamente en esta máquina y que el módulo
  * {@code opencv_face} (contrib) - necesario para {@code LBPHFaceRecognizer} -
  * esta disponible.
  * <p>
- * Si este test falla, el problema es de configuracion del entorno
+ * Si este test falla, el problema es de configuración del entorno
  * (dependencia JavaCV, binarios nativos, plataforma) y hay que resolverlo
  * antes de avanzar con el reconocimiento facial. Ver ADR-0007.
  */
@@ -40,8 +40,8 @@ class OpenCvSmokeTest {
     @Test
     @DisplayName("opencv_face: LBPHFaceRecognizer se puede instanciar (modulo contrib presente)")
     void lbphRecognizerDisponible() {
-        // create() falla si el modulo opencv_face no esta en el classpath
-        // nativo - es decir, si el paquete de OpenCV no incluye los modulos
+        // create() falla si el módulo opencv_face no está en el classpath
+        // nativo - es decir, si el paquete de OpenCV no incluye los módulos
         // contrib.
         try (LBPHFaceRecognizer recognizer = LBPHFaceRecognizer.create()) {
             assertThat(recognizer).isNotNull();

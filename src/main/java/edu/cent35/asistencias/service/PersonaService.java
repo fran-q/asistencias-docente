@@ -56,8 +56,8 @@ public class PersonaService {
                          ImpactoIdentidadDto.Motivo.ALTA_SOBRE_PERSONA_EXISTENTE);
     }
 
-    // Qué alcanza editar la identidad de una persona: si además tiene cuenta, o varios periodos
-    // docentes, el cambio se ve en pantallas que quien edita no esta mirando.
+    // Qué alcanza editar la identidad de una persona: si además tiene cuenta, o varios períodos
+    // docentes, el cambio se ve en pantallas que quien edita no está mirando.
     @Transactional(readOnly = true)
     public ImpactoIdentidadDto impactoDeEdicion(Persona persona, String nombrePropuesto) {
         return construir(persona,
@@ -74,8 +74,8 @@ public class PersonaService {
      */
     @Transactional(readOnly = true)
     public boolean edicionRequiereConfirmacion(Persona persona) {
-        // Una cuenta institucional no tiene persona detras (V018): no hay identidad compartida
-        // con nadie, asi que no hay nada que advertir.
+        // Una cuenta institucional no tiene persona detrás (V018): no hay identidad compartida
+        // con nadie, así que no hay nada que advertir.
         if (persona == null) {
             return false;
         }
@@ -106,7 +106,7 @@ public class PersonaService {
         anotarSiCambio(persona, "telefono", antes.telefono(), despues.telefono(), usuarioId, origen);
     }
 
-    // Historial de una identidad, del cambio mas reciente al mas viejo.
+    // Historial de una identidad, del cambio más reciente al más viejo.
     @Transactional(readOnly = true)
     public List<CambioIdentidad> historialDe(Long personaId) {
         return cambioIdentidadRepository.historialDe(TenantContext.getRequired(), personaId);

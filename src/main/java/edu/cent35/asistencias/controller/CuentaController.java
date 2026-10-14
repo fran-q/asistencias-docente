@@ -59,7 +59,7 @@ public class CuentaController {
         return "cuenta/mi-cuenta";
     }
 
-    // Emite un codigo nuevo y lo manda al correo de la cuenta.
+    // Emite un código nuevo y lo manda al correo de la cuenta.
     @PostMapping("/enviar-codigo")
     public String enviarCodigo(@AuthenticationPrincipal UsuarioAutenticado principal,
                                HttpServletRequest request,
@@ -79,7 +79,7 @@ public class CuentaController {
         return "redirect:/mi-cuenta";
     }
 
-    // Confirma el correo si el codigo ingresado es el correcto.
+    // Confirma el correo si el código ingresado es el correcto.
     @PostMapping("/verificar")
     public String verificar(@AuthenticationPrincipal UsuarioAutenticado principal,
                             @Valid @ModelAttribute("form") CodigoFormDto form,
@@ -133,29 +133,29 @@ public class CuentaController {
     }
 
     // ========================================================================
-    //  Cambio de la propia contrasena, en dos pasos
+    //  Cambio de la propia contraseña, en dos pasos
     //
-    //  Paso 1  POST /password/codigo     pide el codigo y lo manda al correo
-    //  Paso 2  POST /password/verificar  comprueba el codigo y abre la ventana
-    //  Paso 3  POST /password            fija la contrasena nueva, dos veces
+    //  Paso 1  POST /password/codigo     pide el código y lo manda al correo
+    //  Paso 2  POST /password/verificar  comprueba el código y abre la ventana
+    //  Paso 3  POST /password            fija la contraseña nueva, dos veces
     //
-    //  Por que en dos pasos y no todo junto. Se puede pedir el codigo y la
-    //  contrasena en un mismo formulario, pero entonces un codigo mal tipeado
-    //  descarta tambien la contrasena recien escrita y hay que rehacer todo.
+    //  Por qué en dos pasos y no todo junto. Se puede pedir el código y la
+    //  contraseña en un mismo formulario, pero entonces un código mal tipeado
+    //  descarta también la contraseña recién escrita y hay que rehacer todo.
     //  Separarlos hace que cada error cueste solo su propio paso.
     // ========================================================================
 
-    // Cuanto dura la autorizacion una vez validado el codigo. Corta a proposito: es el
-    // tiempo de escribir una contrasena, no el de dejar la pantalla abierta toda la tarde.
+    // Cuánto dura la autorización una vez validado el código. Corta a propósito: es el
+    // tiempo de escribir una contraseña, no el de dejar la pantalla abierta toda la tarde.
     private static final Duration VENTANA_CAMBIO = Duration.ofMinutes(10);
 
-    // Marca en la sesion de que cuenta y hasta cuando quedo autorizado el cambio. Se guarda
-    // el id ademas del vencimiento porque una sesion puede cambiar de usuario al re-loguear,
-    // y una autorizacion emitida para otra cuenta no puede seguir valiendo.
+    // Marca en la sesión de que cuenta y hasta cuando quedó autorizado el cambio. Se guarda
+    // el id además del vencimiento porque una sesión puede cambiar de usuario al re-loguear,
+    // y una autorización emitida para otra cuenta no puede seguir valiendo.
     private static final String AUTORIZACION = "cambioPasswordAutorizadoPara";
     private static final String AUTORIZACION_VENCE = "cambioPasswordVence";
 
-    // Paso 1: manda el codigo al correo de la cuenta.
+    // Paso 1: manda el código al correo de la cuenta.
     @PostMapping("/password/codigo")
     public String pedirCodigoDeCambio(@AuthenticationPrincipal UsuarioAutenticado principal,
                                       HttpServletRequest request,
@@ -179,7 +179,7 @@ public class CuentaController {
         return "redirect:/mi-cuenta";
     }
 
-    // Paso 2: comprueba el codigo. Recien si es correcto se habilita el formulario.
+    // Paso 2: comprueba el código. Recién si es correcto se habilita el formulario.
     @PostMapping("/password/verificar")
     public String verificarCodigoDeCambio(@AuthenticationPrincipal UsuarioAutenticado principal,
                                           @RequestParam(name = "codigo", required = false) String codigo,
@@ -201,7 +201,7 @@ public class CuentaController {
         return "redirect:/mi-cuenta";
     }
 
-    // Paso 3: fija la contrasena nueva. Sin la autorizacion del paso 2 no hace nada.
+    // Paso 3: fija la contraseña nueva. Sin la autorización del paso 2 no hace nada.
     @PostMapping("/password")
     public String cambiarPassword(@AuthenticationPrincipal UsuarioAutenticado principal,
                                   @Valid @ModelAttribute("formPassword") CambioPasswordFormDto form,
@@ -233,9 +233,9 @@ public class CuentaController {
         try {
             usuarioService.fijarPasswordPropia(principal.getUsuarioId(), form.getNuevaPassword());
         } catch (IllegalArgumentException | IllegalStateException ex) {
-            // IllegalState es el limite de 24 horas. Llega hasta aca solo si trabaron la cuenta
-            // entre el paso 1 y este, porque el paso 1 ya lo comprueba; aun asi hay que
-            // atajarlo, o el cambio pasaria igual por una ventana que se cerro en el medio.
+            // IllegalState es el límite de 24 horas. Llega hasta acá solo si trabaron la cuenta
+            // entre el paso 1 y este, porque el paso 1 ya lo comprueba; aun así hay que
+            // atajarlo, o el cambio pasaría igual por una ventana que se cerró en el medio.
             binding.rejectValue("nuevaPassword", "error.igual", ex.getMessage());
             redirect.addFlashAttribute(
                 "org.springframework.validation.BindingResult.formPassword", binding);
@@ -244,14 +244,14 @@ public class CuentaController {
             return "redirect:/mi-cuenta";
         }
 
-        // La autorizacion se consume: sirvio para un cambio y para uno solo.
+        // La autorización se consume: sirvio para un cambio y para uno solo.
         sesion.removeAttribute(AUTORIZACION);
         sesion.removeAttribute(AUTORIZACION_VENCE);
         redirect.addFlashAttribute("flashMensaje", "Contraseña cambiada correctamente.");
         return "redirect:/mi-cuenta";
     }
 
-    // Si esta sesion valido un codigo para ESTA cuenta y la ventana sigue abierta.
+    // Si esta sesión validó un código para ESTA cuenta y la ventana sigue abierta.
     private boolean estaAutorizado(UsuarioAutenticado principal, HttpSession sesion) {
         Object para = sesion.getAttribute(AUTORIZACION);
         Object vence = sesion.getAttribute(AUTORIZACION_VENCE);

@@ -51,13 +51,13 @@
 (function (document) {
     'use strict';
 
-    // Saca acentos y pasa a minusculas: quien busca "garcia" tiene que encontrar
+    // Saca acentos y pasa a minúsculas: quien busca "garcía" tiene que encontrar
     // a "García" sin tener que acordarse de la tilde. NFD separa la letra de su
     // tilde, y \p{Diacritic} borra la tilde suelta sin escribirla en el archivo,
-    // que es lo que evita que el regex dependa del encoding con que se guardo.
+    // que es lo que evita que el regex dependa del encoding con que se guardó.
     var DIACRITICOS = /\p{Diacritic}/gu;
 
-    // Pasa a minusculas y saca las tildes, para que el texto tipeado y el de la tabla comparen igual.
+    // Pasa a minúsculas y saca las tildes, para que el texto tipeado y el de la tabla comparen igual.
     function normalizar(texto) {
         return texto
             .toLowerCase()
@@ -77,8 +77,8 @@
         return campos;
     }
 
-    // Ancho maximo del desplegable de un filtro, en pixeles. Los valores salen de las filas
-    // --el nombre de una carrera, el de un docente-- y sin tope el control mide lo que el mas
+    // Ancho máximo del desplegable de un filtro, en píxeles. Los valores salen de las filas
+    // --el nombre de una carrera, el de un docente-- y sin tope el control mide lo que el más
     // largo y se lleva la barra entera.
     var ANCHO_MAXIMO = 240;
 
@@ -96,7 +96,7 @@
             if (orden[a] !== null && orden[b] !== null && orden[a] !== orden[b]) {
                 return orden[a] - orden[b];
             }
-            // numeric: "10° año" va despues de "2° año" y no antes.
+            // numeric: "10° año" va después de "2° año" y no antes.
             return a.localeCompare(b, 'es', { numeric: true });
         });
 
@@ -157,7 +157,7 @@
                     : visibles + ' de ' + filas.length;
             }
 
-            // Aviso de que la busqueda no dio nada, distinto de "no hay nada cargado".
+            // Aviso de que la búsqueda no dio nada, distinto de "no hay nada cargado".
             if (vacia) vacia.hidden = visibles > 0 || filas.length === 0;
         }
 
@@ -170,11 +170,11 @@
         [].forEach.call(document.querySelectorAll('[data-filtro-tabla]'), conectar);
     }
 
-    /* Arranca apenas se ejecuta si la pagina ya esta armada, igual que select-menu.js.
-       No es un detalle: los dos van con defer, asi que corren recien terminado el parseo y
+    /* Arranca apenas se ejecuta si la página ya está armada, igual que select-menu.js.
+       No es un detalle: los dos van con defer, así que corren recién terminado el parseo y
        con readyState "interactive". Esperar a DOMContentLoaded dejaba este script para
-       DESPUES de select-menu, que arma su desplegable con las opciones que encuentra en ese
-       momento --ninguna-- y el filtro quedaba con una sola opcion en pantalla aunque el
+       DESPUÉS de select-menu, que arma su desplegable con las opciones que encuentra en ese
+       momento --ninguna-- y el filtro quedaba con una sola opción en pantalla aunque el
        <select> de abajo las tuviera todas. Corriendo ya, el orden lo decide el orden de los
        <script> en el layout, donde este va primero. */
     if (document.readyState === 'loading') {

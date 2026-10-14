@@ -42,10 +42,10 @@
                         <select id="horarioId" th:field="*{horarioId}" required
                                 th:classappend="${#fields.hasErrors('horarioId')} ? 'is-invalid'">
                             <option value="">-- Elegir horario --</option>
-                            <!-- Cada opcion lleva el docente de su comision. El JS de abajo
+                            <!-- Cada opción lleva el docente de su comisión. El JS de abajo
                                  usa ese dato para dejar a la vista solo las clases del
                                  docente elegido: elegir docente y clase por separado
-                                 permitia marcarle asistencia a alguien en la clase de otro.
+                                 permitía marcarle asistencia a alguien en la clase de otro.
                                  El servidor lo rechaza igual, pero mejor no ofrecerlo. -->
                             <option th:each="h : ${horarios}"
                                     th:value="${h.id}"
@@ -127,7 +127,7 @@
         <!--
       Deja a la vista solo las clases del docente elegido. Es comodidad: el servidor
       revalida igual, porque el formulario se puede armar a mano y porque entre que se
-      dibuja la pantalla y se envia, otra persona puede haber reasignado la comision.
+      dibuja la pantalla y se envía, otra persona puede haber reasignado la comisión.
     -->
     <script th:inline="javascript">
     /*<![CDATA[*/

@@ -16,7 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO para el formulario de edicion de la institucion propia.
+ * DTO para el formulario de edición de la institución propia.
  * <p>
  * Solo expone los campos que el usuario INSTITUCION puede editar.
  * No incluye {@code id}, {@code activo}, ni timestamps - esos los

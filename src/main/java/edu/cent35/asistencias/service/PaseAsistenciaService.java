@@ -63,8 +63,8 @@ public class PaseAsistenciaService {
      * orquestación, cualquier cambio en la ventana de confirmación o en el orden de las
      * guardas habría que hacerlo dos veces, y la segunda se olvida.
      *
-     * @param identificacion lo que devolvió el reconocimiento
-     * @param confirmacion   el avance de la ventana; null si no se llegó a evaluar
+     * @param identificación lo que devolvió el reconocimiento
+     * @param confirmación   el avance de la ventana; null si no se llegó a evaluar
      * @param presencia      lo que se registró; null si no se llegó a intentar
      */
     private record Paso(IdentificacionResultadoDto identificacion,
@@ -90,7 +90,7 @@ public class PaseAsistenciaService {
         }
 
         // Antes de tocar el registro de asistencia, la identidad tiene que sostenerse. Un
-        // reconocimiento suelto es demasiado fragil ante un cambio de luz, y una marca
+        // reconocimiento suelto es demasiado frágil ante un cambio de luz, y una marca
         // equivocada queda asentada como si fuera un hecho.
         VentanaConfirmacionService.Estado confirmado =
             ventanaConfirmacion.registrar(confirmacion, id.docenteId(), System.currentTimeMillis());
@@ -99,10 +99,10 @@ public class PaseAsistenciaService {
             return new Paso(id, confirmado, null);
         }
 
-        // Confirmada la identidad, la racha se corta: la proxima persona arranca limpia.
+        // Confirmada la identidad, la racha se corta: la próxima persona arranca limpia.
         ventanaConfirmacion.cortar(confirmacion);
 
-        // La misma pasada por la camara significa una cosa u otra segun el estado del docente:
+        // La misma pasada por la cámara significa una cosa u otra según el estado del docente:
         // sin bloque abierto es su entrada, con bloque abierto es su salida. Quien lo decide es
         // el servicio de bloques, no esta clase ni el operador (ADR-0017).
         BloquePresenciaService.ResultadoPresencia presencia = bloquePresenciaService.registrar(
@@ -124,8 +124,8 @@ public class PaseAsistenciaService {
         }
         if (paso.noReconocido()) {
             // Cuando hay varias personas no viene recuadro: dibujarlo sobre una sola de
-            // ellas daria a entender que el sistema eligio a esa, que es justo lo contrario
-            // de lo que esta diciendo.
+            // ellas daría a entender que el sistema eligió a esa, que es justo lo contrario
+            // de lo que está diciendo.
             if (id.x() == null) {
                 return PaseAsistenciaResultadoDto.rechazadoSinRecuadro(id.mensaje());
             }
@@ -174,8 +174,8 @@ public class PaseAsistenciaService {
             return KioscoResultadoDto.sinRostro();
         }
         if (paso.noReconocido()) {
-            // El motivo explica que paso, pero sin nombrar a nadie: decir a quien se parecio
-            // seria peor que no decir nada en una pantalla que mira cualquiera.
+            // El motivo explica que paso, pero sin nombrar a nadie: decir a quien se pareció
+            // sería peor que no decir nada en una pantalla que mira cualquiera.
             return KioscoResultadoDto.noReconocido(
                 id.mensaje(), id.x(), id.y(), id.ancho(), id.alto());
         }
@@ -280,7 +280,7 @@ public class PaseAsistenciaService {
             b.getEstadoSalida() == EstadoSalida.ANTICIPADA);
     }
 
-    // Cuanto estuvo y cuantas clases le quedaron imputadas: "18:00 a 20:00 - 2 clases".
+    // Cuánto estuvo y cuántas clases le quedaron imputadas: "18:00 a 20:00 - 2 clases".
     // Lo comparten la salida por rostro y la cargada a mano, que informan lo mismo.
     private static String resumenDeSalida(BloquePresencia b, int clases) {
         return b.getHoraEntrada().format(HM) + " a " + b.getHoraSalida().format(HM)

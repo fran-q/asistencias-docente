@@ -13,7 +13,7 @@
             </p>
         </header>
 
-        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del titulo
+        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del título
              (ayuda.js). -->
         <aside class="ayuda" data-ayuda="usuario-nuevo" aria-label="Cómo funcionan las cuentas nuevas">
             <p>
@@ -87,10 +87,10 @@
                         <span class="form-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}">err</span>
                     </div>
                     <!--
-                      Repetir la contrasena no es ceremonia: el campo esta enmascarado, asi
+                      Repetir la contraseña no es ceremonia: el campo está enmascarado, así
                       que quien la escribe no la ve, y encima es la clave con la que OTRA
                       persona va a entrar por primera vez. Un error de tipeo no se descubre
-                      aca; se descubre cuando esa persona no puede entrar y nadie sabe si el
+                      acá; se descubre cuando esa persona no puede entrar y nadie sabe si el
                       problema es la clave o la cuenta.
                     -->
                     <div class="form-group">

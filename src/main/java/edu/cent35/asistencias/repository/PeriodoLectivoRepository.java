@@ -34,7 +34,7 @@ public interface PeriodoLectivoRepository extends JpaRepository<PeriodoLectivo, 
         """)
     List<PeriodoLectivo> seleccionablesDelTenant(@Param("institucionId") Long institucionId);
 
-    // Un periodo con su ciclo, validando el tenant en la misma consulta.
+    // Un período con su ciclo, validando el tenant en la misma consulta.
     @Query("""
         SELECT p FROM PeriodoLectivo p
         JOIN FETCH p.ciclo c
@@ -62,7 +62,7 @@ public interface PeriodoLectivoRepository extends JpaRepository<PeriodoLectivo, 
     List<PeriodoLectivo> vigentesEnFecha(@Param("institucionId") Long institucionId,
                                          @Param("fecha") LocalDate fecha);
 
-    // Cuantas comisiones cuelgan de este periodo; sin esto, borrarlo lo rechazaria la FK con
+    // Cuántas comisiones cuelgan de este período; sin esto, borrarlo lo rechazaría la FK con
     // un error de base en vez de un mensaje que se entienda.
     @Query("""
         SELECT COUNT(co) FROM Comision co

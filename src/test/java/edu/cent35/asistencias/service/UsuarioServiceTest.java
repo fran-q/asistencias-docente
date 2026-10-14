@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 /**
  * Tests unitarios de UsuarioService.
  * <p>
- * Mockean repos y password encoder. La logica de tenant se ejercita
+ * Mockean repos y password encoder. La lógica de tenant se ejercita
  * seteando manualmente {@link TenantContext} en cada test.
  */
 @ExtendWith(MockitoExtension.class)
@@ -49,11 +49,11 @@ class UsuarioServiceTest {
     @Mock private PersonaRepository personaRepository;
     @Mock private PersonaService personaService;
     @Mock private PasswordEncoder passwordEncoder;
-    // La baja cierra la sesion que la cuenta tuviera abierta; aca solo hace falta que exista.
+    // La baja cierra la sesión que la cuenta tuviera abierta; acá solo hace falta que exista.
     @Mock private edu.cent35.asistencias.seguridad.SesionesActivasService sesionesActivas;
-    // Sin instalacion autonoma: el mock devuelve false, que es el despliegue comun.
+    // Sin instalación autónoma: el mock devuelve false, que es el despliegue común.
     // Lo contrario --la cuenta que nace verificada porque no hay correo-- se cubre en
-    // InstalacionInicialIT, donde la propiedad esta encendida de verdad.
+    // InstalacionInicialIT, donde la propiedad está encendida de verdad.
     @Mock private edu.cent35.asistencias.config.ModalidadInstalacion modalidad;
 
     @InjectMocks private UsuarioService service;
@@ -125,7 +125,7 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
-    //  ACTUALIZAR / verificacion del correo (RF-57)
+    //  ACTUALIZAR / verificación del correo (RF-57)
     // ====================================================================
 
     @Test
@@ -164,10 +164,10 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
-    //  BAJA / autoproteccion
+    //  BAJA / autoprotección
     // ====================================================================
-    //  La baja dejo de ser una casilla del formulario de datos --se guardaba junto con el
-    //  nombre y el correo, sin preguntar nada-- y paso a ser su propia operacion. Las dos
+    //  La baja dejó de ser una casilla del formulario de datos --se guardaba junto con el
+    //  nombre y el correo, sin preguntar nada-- y paso a ser su propia operación. Las dos
     //  guardas viven en ella.
 
     @Test
@@ -184,7 +184,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("darDeBaja: una cuenta de INSTITUCION no se puede dar de baja")
     void baja_institucionNoSeDaDeBaja() {
-        // Es la unica cuenta que administra el establecimiento. Desactivarla por error
+        // Es la única cuenta que administra el establecimiento. Desactivarla por error
         // deja al colegio sin nadie que pueda entrar a repararlo.
         Usuario institucion = usuarioActivo(50L, RolCodigo.INSTITUCION);
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(institucion));
@@ -244,8 +244,8 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("actualizar: no toca el rol aunque la cuenta cambie de datos")
     void actualizar_noCambiaElRol() {
-        // El rol no es un parametro del metodo: no hay forma de pedir el cambio ni
-        // armando la peticion a mano. Este test lo fija para que no vuelva a agregarse.
+        // El rol no es un parámetro del método: no hay forma de pedir el cambio ni
+        // armando la petición a mano. Este test lo fija para que no vuelva a agregarse.
         Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -269,8 +269,8 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("crear: un apellido en blanco se guarda como NULL, no como cadena vacia")
     void crear_apellidoEnBlancoEsNull() {
-        // NULL significa "no corresponde" --una institucion no es una persona--; la
-        // cadena vacia diria "tiene apellido y es el vacio", que no quiere decir nada.
+        // NULL significa "no corresponde" --una institución no es una persona--; la
+        // cadena vacía diría "tiene apellido y es el vacío", que no quiere decir nada.
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         Usuario creado = service.crear("sinape", "s@x.com", "pass1234", "Colegio", "   ");
@@ -286,7 +286,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("actualizarPropia: un usuario que ya usa otra institucion se rechaza")
     void actualizarPropia_usuarioTomado() {
-        // Repetirlo dejaria ambiguo el ingreso con usuario para las dos cuentas.
+        // Repetirlo dejaría ambiguo el ingreso con usuario para las dos cuentas.
         Usuario u = usuarioActivo(7L, RolCodigo.ADMIN);
         when(usuarioRepository.findById(7L)).thenReturn(Optional.of(u));
         when(usuarioRepository.contarUsernameEnOtrasCuentas("admin.utn", 7L)).thenReturn(1L);
@@ -301,7 +301,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("actualizarPropia: si solo cambia el usuario, no pregunta ni toca la persona")
     void actualizarPropia_soloElUsuario() {
-        // El nombre viaja con otras mayusculas, pero NombrePropio lo deja igual al guardado:
+        // El nombre viaja con otras mayúsculas, pero NombrePropio lo deja igual al guardado:
         // como no cambia, no hay nada que advertirle a nadie.
         Usuario u = usuarioActivo(8L, RolCodigo.ADMIN);
         when(usuarioRepository.findById(8L)).thenReturn(Optional.of(u));
@@ -348,7 +348,7 @@ class UsuarioServiceTest {
     }
 
     // ====================================================================
-    //  Una contrasena nueva cada 24 horas
+    //  Una contraseña nueva cada 24 horas
     // ====================================================================
 
     @Test
@@ -408,7 +408,7 @@ class UsuarioServiceTest {
         conVentanaDe(24);
         Usuario u = usuarioActivo(53L, RolCodigo.ADMIN);
         u.setCambioPasswordHabilitadoEn(LocalDateTime.now().minusHours(3));
-        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(2));   // se uso despues
+        u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(2));   // se uso después
         when(usuarioRepository.findById(53L)).thenReturn(Optional.of(u));
 
         assertThatThrownBy(() -> service.fijarPasswordPropia(53L, "NuevaClave1"))
@@ -430,7 +430,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("habilitarCambioDePassword: nadie se destraba a si mismo")
     void destrabe_noSePuedeUnoMismo() {
-        // Si pudiera, el limite no existiria: alcanzaria con levantarlo antes de cada cambio.
+        // Si pudiera, el límite no existiría: alcanzaría con levantarlo antes de cada cambio.
         assertThatThrownBy(() -> service.habilitarCambioDePassword(USUARIO_ACTUAL, USUARIO_ACTUAL))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("vos mismo");
@@ -445,7 +445,7 @@ class UsuarioServiceTest {
         ajeno.setInstitucionId(TENANT_B);
         when(usuarioRepository.findById(55L)).thenReturn(Optional.of(ajeno));
 
-        // Se responde "no encontrado" y no "no autorizado": lo segundo revelaria que existe.
+        // Se responde "no encontrado" y no "no autorizado": lo segundo revelaría que existe.
         assertThatThrownBy(() -> service.habilitarCambioDePassword(55L, USUARIO_ACTUAL))
             .isInstanceOf(EntityNotFoundException.class);
     }
@@ -481,7 +481,7 @@ class UsuarioServiceTest {
     // ====================================================================
 
     // La ventana llega por @Value, que en un test unitario no se inyecta: sin esto queda en
-    // cero y el limite no se ejercita, con lo que los casos de arriba pasarian sin probar nada.
+    // cero y el límite no se ejercita, con lo que los casos de arriba pasarían sin probar nada.
     private void conVentanaDe(long horas) {
         org.springframework.test.util.ReflectionTestUtils.setField(
             service, "horasEntreCambios", horas);

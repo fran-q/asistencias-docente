@@ -92,8 +92,8 @@ public class MiInstitucionController {
         try {
             service.actualizar(form);
         } catch (DataIntegrityViolationException ex) {
-            // Se atrapa aca en vez de dejarlo subir al manejador global para no perder lo que
-            // la persona ya habia tipeado: el formulario se vuelve a dibujar con sus valores.
+            // Se atrapa acá en vez de dejarlo subir al manejador global para no perder lo que
+            // la persona ya había tipeado: el formulario se vuelve a dibujar con sus valores.
             log.warn("Conflicto al actualizar mi institucion: {}", ex.getMostSpecificCause().getMessage());
             binding.reject("error.global", ManejadorDeColisiones.traducir(ex));
             model.addAttribute(ENTIDAD_ATTR, service.getMiInstitucion());
@@ -167,8 +167,8 @@ public class MiInstitucionController {
     }
 
     // El temporal se borra cuando termina de enviarse, pase lo que pase: si se borrara antes de
-    // devolver la respuesta no habria nada que mandar, y si no se borrara nunca, cada respaldo
-    // dejaria una copia entera de la base en el disco de la maquina.
+    // devolver la respuesta no habría nada que mandar, y si no se borrara nunca, cada respaldo
+    // dejaría una copia entera de la base en el disco de la máquina.
     private InputStream flujoQueSeBorra(Path archivo) throws IOException {
         return new FilterInputStream(Files.newInputStream(archivo)) {
             @Override

@@ -42,7 +42,7 @@ class CalidadCapturaServiceTest {
     @DisplayName("Un rostro diminuto pide acercarse, y lo dice antes que cualquier otra cosa")
     void rostroChico() {
         try (Mat cuadro = tablero(LADO_CUADRO)) {
-            // 40x40 sobre 400x400 = 1% del cuadro, muy por debajo del 6% minimo.
+            // 40x40 sobre 400x400 = 1% del cuadro, muy por debajo del 6% mínimo.
             CalidadCapturaService.Medicion m = service.evaluar(cuadro, new Rect(0, 0, 40, 40));
 
             assertThat(m.apta()).isFalse();
@@ -55,7 +55,7 @@ class CalidadCapturaServiceTest {
     @DisplayName("Un rostro que ocupa casi todo el cuadro pide alejarse")
     void rostroDemasiadoGrande() {
         try (Mat cuadro = tablero(LADO_CUADRO)) {
-            // 380x380 sobre 400x400 = 90%, por encima del 55% maximo.
+            // 380x380 sobre 400x400 = 90%, por encima del 55% máximo.
             CalidadCapturaService.Medicion m = service.evaluar(cuadro, new Rect(0, 0, 380, 380));
 
             assertThat(m.apta()).isFalse();
@@ -93,7 +93,7 @@ class CalidadCapturaServiceTest {
     @Test
     @DisplayName("Una imagen sin relieve se rechaza por plana, aunque el brillo sea correcto")
     void imagenPlana() {
-        // Gris medio: el brillo esta perfecto, pero no hay ninguna variacion.
+        // Gris medio: el brillo está perfecto, pero no hay ninguna variación.
         try (Mat cuadro = uniforme(LADO_CUADRO, 128)) {
             CalidadCapturaService.Medicion m = service.evaluar(cuadro, zonaCentral());
 

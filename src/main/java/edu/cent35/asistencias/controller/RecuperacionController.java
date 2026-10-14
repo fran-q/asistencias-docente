@@ -32,8 +32,8 @@ import java.util.Optional;
 @Slf4j
 public class RecuperacionController {
 
-    // A quien se le esta recuperando la contrasena. Vive en la sesion y no en la URL: si viajara
-    // por parametro, cualquiera podria pedir el cambio de otra cuenta escribiendo otro id.
+    // A quien se le está recuperando la contraseña. Vive en la sesión y no en la URL: si viajara
+    // por parámetro, cualquiera podría pedir el cambio de otra cuenta escribiendo otro id.
     private static final String SESION_USUARIO = "RECUPERACION_USUARIO_ID";
 
     private final VerificacionCuentaService verificacionService;
@@ -47,7 +47,7 @@ public class RecuperacionController {
         return "auth/recuperar-inicio";
     }
 
-    // Emite el codigo si la cuenta existe, pero avanza igual al paso 2 en cualquier caso.
+    // Emite el código si la cuenta existe, pero avanza igual al paso 2 en cualquier caso.
     @PostMapping
     public String pedirCodigo(@Valid @ModelAttribute("form") RecuperacionInicioFormDto form,
                               BindingResult binding,
@@ -60,12 +60,12 @@ public class RecuperacionController {
         Optional<Long> usuarioId = verificacionService.iniciarRecuperacion(
             form.getUsuarioOEmail(), CuentaController.ipDe(request));
 
-        // Se guarda solo si existe; si no, el paso 2 se muestra igual y cualquier codigo falla.
+        // Se guarda solo si existe; si no, el paso 2 se muestra igual y cualquier código falla.
         usuarioId.ifPresent(id -> session.setAttribute(SESION_USUARIO, id));
         return "redirect:/recuperar/codigo";
     }
 
-    // Paso 2: pide el codigo y la contrasena nueva.
+    // Paso 2: pide el código y la contraseña nueva.
     @GetMapping("/codigo")
     public String formCodigo(HttpSession session, Model model) {
         if (!model.containsAttribute("form")) {
@@ -74,7 +74,7 @@ public class RecuperacionController {
         return "auth/recuperar-codigo";
     }
 
-    // Cierra el flujo: valida el codigo y fija la contrasena nueva.
+    // Cierra el flujo: valida el código y fija la contraseña nueva.
     @PostMapping("/codigo")
     public String completar(@Valid @ModelAttribute("form") RecuperacionCompletarFormDto form,
                             BindingResult binding,
@@ -91,7 +91,7 @@ public class RecuperacionController {
 
         Object id = session.getAttribute(SESION_USUARIO);
         if (id == null) {
-            // Nunca hubo una cuenta detras de este flujo, o la sesion caduco.
+            // Nunca hubo una cuenta detrás de este flujo, o la sesión caducó.
             binding.reject("error.global", "El código no es correcto o el pedido venció. Empezá de nuevo.");
             return "auth/recuperar-codigo";
         }
@@ -101,16 +101,16 @@ public class RecuperacionController {
             resultado = verificacionService.completarRecuperacion(
                 (Long) id, form.getCodigo(), form.getNuevaPassword());
         } catch (IllegalStateException ex) {
-            // El codigo era correcto pero la cuenta cambio su contrasena hace menos de la
+            // El código era correcto pero la cuenta cambio su contraseña hace menos de la
             // ventana. El mensaje explica el plazo y el destrabe; solo lo ve quien acaba de
-            // probar que controla el buzon, asi que no delata la existencia de nada.
+            // probar que controla el buzón, así que no delata la existencia de nada.
             session.removeAttribute(SESION_USUARIO);
             binding.reject("error.global", ex.getMessage());
             return "auth/recuperar-codigo";
         }
 
         if (resultado == CodigoVerificacionService.Resultado.OK) {
-            // La sesion del flujo se cierra si o si: el codigo ya se consumio.
+            // La sesión del flujo se cierra sí o sí: el código ya se consumió.
             session.removeAttribute(SESION_USUARIO);
             redirect.addFlashAttribute("flashMensaje",
                 "Tu contraseña se cambió. Ya podés iniciar sesión.");

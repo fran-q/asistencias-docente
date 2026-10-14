@@ -73,7 +73,7 @@ public class DiaNoLaborableService {
             .map(DiaNoLaborable::getMotivo);
     }
 
-    // El listado de un ano, que es como se los carga y se los revisa.
+    // El listado de un año, que es como se los carga y se los revisa.
     @Transactional(readOnly = true)
     public List<DiaNoLaborable> listarDelAnio(int anio) {
         return repository.entreFechas(TenantContext.getRequired(),

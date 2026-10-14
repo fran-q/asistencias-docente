@@ -27,17 +27,17 @@
                  puede estilar. select-menu.js lo reemplaza por el mismo desplegable que
                  usa el resto de la app, dejando este select oculto como el que vale. -->
             <select class="filtro__estado" data-menu aria-label="Filtrar por estado">
-                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
-                     ahi porque hay historial colgando de el, pero no es algo con lo que se
-                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
-                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <!-- Arranca en "activos". Un registro inactivo es un borrado lógico: sigue
+                     ahí porque hay historial colgando de él, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacía que el listado creciera con cosas
+                     que ya nadie usa y que el día a día tiene que saltear. -->
                 <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
             <!-- Filtros por columna. Las opciones las arma filtro-tabla.js con los valores
-                 que traen las filas: asi el desplegable ofrece exactamente lo que hay en la
-                 tabla, y sumar el filtro no obliga a pasarle el catalogo desde el controlador. -->
+                 que traen las filas: así el desplegable ofrece exactamente lo que hay en la
+                 tabla, y sumar el filtro no obliga a pasarle el catálogo desde el controlador. -->
             <select class="filtro__campo" data-filtro="dia" data-menu
                     aria-label="Filtrar por día">
                 <option value="">Todos los días</option>
@@ -55,15 +55,15 @@
 
         <div class="card card--no-padding listado-caja">
             <div class="table-wrap">
-                <!-- data-ordenable: ordena en el navegador. En un catalogo el listado completo
-                     ya vino en la pagina, asi que ir al servidor por otro orden seria un viaje
-                     para reacomodar filas que ya estan aca. Asistencias y Reportes NO lo usan:
-                     filtran por servidor, y ordenar solo la pagina visible da un orden que
+                <!-- data-ordenable: ordena en el navegador. En un catálogo el listado completo
+                     ya vino en la página, así que ir al servidor por otro orden sería un viaje
+                     para reacomodar filas que ya están acá. Asistencias y Reportes NO lo usan:
+                     filtran por servidor, y ordenar solo la página visible da un orden que
                      parece global y no lo es. -->
                 <table class="table table--acciones-fijas" id="tabla-horarios" data-ordenable>
                     <thead>
                         <tr>
-                            <!-- Dia va como numero: por texto ordenaria Domingo, Jueves, Lunes...
+                            <!-- Día va como número: por texto ordenaria Domingo, Jueves, Lunes...
                                  El valor lo pone cada celda con diaSemanaNum (1 lunes a 7 domingo).
                                  Horario si va por texto: "08:00" con cero adelante ordena bien. -->
                             <th data-orden="numero">Día</th>

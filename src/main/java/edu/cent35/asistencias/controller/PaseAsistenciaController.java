@@ -55,10 +55,10 @@ public class PaseAsistenciaController {
     public String pantalla(HttpServletRequest request, Model model) {
         PuestoCaptura puesto = puestoDe(request);
         model.addAttribute("kioscoDisponible", puesto != null && puesto.operaDesatendido());
-        // La camara elegida para este equipo (V026); null deja la predeterminada.
+        // La cámara elegida para este equipo (V026); null deja la predeterminada.
         model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         model.addAttribute("clases", panelInicioService.clasesDeAhora());
-        // Para el cuadro de marcar sin camara. Va en la pantalla y no en el fragmento de las
+        // Para el cuadro de marcar sin cámara. Va en la pantalla y no en el fragmento de las
         // clases, que se refresca solo: el cuadro esta afuera y no se vuelve a dibujar.
         model.addAttribute("motivos", asistenciaService.motivosActivos());
         return "asistencia/pase";
@@ -66,7 +66,7 @@ public class PaseAsistenciaController {
 
     /**
      * La tarjeta de las clases de ahora, sola, para que el pase la actualice sin recargarse: al
-     * marcar y cada minuto mientras esta andando.
+     * marcar y cada minuto mientras está andando.
      */
     @GetMapping("/clases")
     public String clases(Model model) {
@@ -91,7 +91,7 @@ public class PaseAsistenciaController {
         return "asistencia/pase-ventana";
     }
 
-    // Nombre del atributo de sesion donde vive la racha de confirmacion del pase.
+    // Nombre del atributo de sesión donde vive la racha de confirmación del pase.
     private static final String RACHA = "paseConfirmacionIdentidad";
 
     // Recibe un frame del loop, identifica al docente e intenta marcar; responde JSON.
@@ -143,8 +143,8 @@ public class PaseAsistenciaController {
         }
     }
 
-    // La racha vive en la sesion, no en el navegador ni en un mapa del servidor: asi no se
-    // puede saltear modificando el JavaScript, y se limpia sola cuando la sesion termina.
+    // La racha vive en la sesión, no en el navegador ni en un mapa del servidor: así no se
+    // puede saltear modificando el JavaScript, y se limpia sola cuando la sesión termina.
     private ConfirmacionIdentidad rachaDe(HttpSession sesion) {
         ConfirmacionIdentidad racha = (ConfirmacionIdentidad) sesion.getAttribute(RACHA);
         if (racha == null) {

@@ -1,10 +1,10 @@
 /**
  * Modelo del dominio: entidades JPA, enums y superclase tenant.
  * <p>
- * Aca se declara con {@link org.hibernate.annotations.FilterDef} el filtro
+ * Acá se declara con {@link org.hibernate.annotations.FilterDef} el filtro
  * {@code "tenant"} de Hibernate a nivel global del persistence unit.
  * Cualquier entidad anotada con {@code @Filter(name = "tenant")} usa esta
- * definicion. El filtro se activa por transaccion via
+ * definición. El filtro se activa por transacción vía
  * {@link edu.cent35.asistencias.config.TenantFilterAspect} a partir del
  * {@link edu.cent35.asistencias.config.TenantContext}.
  * <p>

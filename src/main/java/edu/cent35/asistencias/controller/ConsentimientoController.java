@@ -99,14 +99,14 @@ public class ConsentimientoController {
         try {
             // Form simplificado: por ahora siempre ESCRITO + fecha = ahora.
             // Cuando se necesite cargar consentimientos retroactivos o
-            // distinguir metodos, se expanden los campos del DTO.
+            // distinguir métodos, se expanden los campos del DTO.
             consentimientoService.otorgar(
                 docenteId,
                 MetodoConsentimiento.ESCRITO,
                 LocalDateTime.now(),
                 extraerIp(request),
                 request.getHeader("User-Agent"),
-                null, // documentoUrl - opcional, se podra cargar despues
+                null, // documentoUrl - opcional, se podra cargar después
                 principal.getUsuarioId()
             );
             redirect.addFlashAttribute("flashMensaje",
@@ -124,7 +124,7 @@ public class ConsentimientoController {
     }
 
     // ========================================================================
-    //  Revocacion
+    //  Revocación
     // ========================================================================
 
     @GetMapping("/revocar")

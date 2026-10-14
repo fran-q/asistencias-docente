@@ -97,13 +97,13 @@ class DocenteServiceTest {
 
         Docente d = service.crear("30111222", "   ", "Ana", "Perez", null, null, USUARIO_ACTUAL);
 
-        // Si el vacio se guardara como cadena, dos docentes sin legajo chocarian entre si.
+        // Si el vacío se guardara como cadena, dos docentes sin legajo chocarían entre sí.
         assertThat(d.getLegajo()).isNull();
         verify(docenteRepository, never()).existeLegajoVigente(any(), any());
     }
 
     // ========================================================================
-    //  Edicion
+    //  Edición
     // ========================================================================
 
     @Test
@@ -148,7 +148,7 @@ class DocenteServiceTest {
 
         service.darDeBaja(7L, ultimoDia, USUARIO_ACTUAL);
 
-        // La baja se carga dias despues del hecho: forzar "hoy" falsearia el registro.
+        // La baja se carga días después del hecho: forzar "hoy" falsearía el registro.
         assertThat(d.getFechaBaja()).isEqualTo(ultimoDia);
         assertThat(d.getActivo()).isFalse();
     }
@@ -187,7 +187,7 @@ class DocenteServiceTest {
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Reasignalas", USUARIO_ACTUAL);
 
-        // Ni la baja ni la fecha quedan escritas si la operacion no procede.
+        // Ni la baja ni la fecha quedan escritas si la operación no procede.
         assertThat(d.getActivo()).isTrue();
         assertThat(d.getFechaBaja()).isNull();
         verify(docenteRepository, never()).save(any());
@@ -215,7 +215,7 @@ class DocenteServiceTest {
 
 
     // ========================================================================
-    //  Confirmacion sobre una identidad que ya existe
+    //  Confirmación sobre una identidad que ya existe
     // ========================================================================
 
     @Test
@@ -294,14 +294,14 @@ class DocenteServiceTest {
     }
 
     // ====================================================================
-    //  Redaccion del motivo que impide la baja
+    //  Redacción del motivo que impide la baja
     // ====================================================================
 
     @Test
     @DisplayName("motivoQueImpideLaBaja: redacta bien los tres casos")
     void motivoRedactadoCorrectamente() {
-        // Solo comisiones. Antes decia "es asignado a", porque el verbo estaba en un
-        // prefijo comun que solo servia para el caso de las materias.
+        // Solo comisiones. Antes decía "es asignado a", porque el verbo estaba en un
+        // prefijo común que solo servía para el caso de las materias.
         when(materiaRepository.countByDocenteTitularIdAndActivoTrue(1L)).thenReturn(0L);
         when(comisionRepository.countByDocenteAsignadoIdAndActivoTrue(1L)).thenReturn(2L);
         assertThat(service.motivoQueImpideLaBaja(1L))

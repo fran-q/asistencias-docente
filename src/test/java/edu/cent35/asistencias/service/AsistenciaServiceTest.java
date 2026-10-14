@@ -326,7 +326,7 @@ class AsistenciaServiceTest {
     }
 
     // ========================================================================
-    //  marcarManual: la fecha tiene que caer en el dia del horario
+    //  marcarManual: la fecha tiene que caer en el día del horario
     // ========================================================================
 
     @Test
@@ -334,7 +334,7 @@ class AsistenciaServiceTest {
     void marcarManual_rechazaFechaDeOtroDia() {
         Docente docente = docenteActivoA();
         Horario horarioDeLunes = horarioLunes18a20Tolerancia15(docente);
-        // 2026-05-30 fue sabado: el horario es de lunes, asi que no corresponde.
+        // 2026-05-30 fue sábado: el horario es de lunes, así que no corresponde.
         LocalDate unSabado = LocalDate.of(2026, 5, 30);
 
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docente));
@@ -403,7 +403,7 @@ class AsistenciaServiceTest {
     @DisplayName("marcarManual: la hora la pone el sistema, no quien carga")
     void marcarManual_horaDelSistema() {
         // Lo que se asienta es cuando el administrador declara el hecho. Antes la hora era
-        // un campo libre y se podia escribir cualquiera, incluso fuera de la franja.
+        // un campo libre y se podía escribir cualquiera, incluso fuera de la franja.
         Docente docente = docenteActivoA();
         Horario horario = horarioLunes18a20Tolerancia15(docente);
         LocalDate unLunes = LocalDate.of(2026, 5, 25);

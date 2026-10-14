@@ -1,13 +1,13 @@
 /* =============================================================================
  *  toast.js
- *  API minima de notificaciones toast.
+ *  API mínima de notificaciones toast.
  *
- *  Uso programatico:
+ *  Uso programático:
  *    Toast.show('Guardado!', 'success');
  *    Toast.show('Algo fallo', 'error', 7000);
  *    Toast.show('Cuidado', 'warning');
  *
- *  Carga automatica desde flash attributes:
+ *  Carga automática desde flash attributes:
  *    En layout/base.html (y login.html) hay un <div id="flash-data"
  *    data-success="..." data-warning="..." data-error="..."> hidden.
  *    Este script lo lee al cargar el DOM y dispara los toasts
@@ -99,16 +99,16 @@
     document.addEventListener('DOMContentLoaded', bootstrapFromFlashData);
 
     /*
-     *  Botones que solo avisan por que NO se puede hacer algo.
+     *  Botones que solo avisan por qué NO se puede hacer algo.
      *
      *      <button data-aviso-toast="No se puede dar de baja: es titular de 3 materias.">
      *
      *  Existen para las acciones que el servidor ya sabe que van a fallar. Antes se
-     *  abria igual el cuadro de confirmacion, se pedia una fecha y el rechazo llegaba
-     *  despues de enviar: tres pasos para llegar a un "no". Ahora el motivo aparece de
-     *  una vez y no se envia nada.
+     *  abría igual el cuadro de confirmación, se pedía una fecha y el rechazo llegaba
+     *  después de enviar: tres pasos para llegar a un "no". Ahora el motivo aparece de
+     *  una vez y no se envía nada.
      *
-     *  Se escucha por delegacion en el documento y no boton por boton: los listados se
+     *  Se escucha por delegación en el documento y no botón por botón: los listados se
      *  filtran y se redibujan, y un listener atado a cada fila se pierde en el camino.
      */
     document.addEventListener('click', function (e) {

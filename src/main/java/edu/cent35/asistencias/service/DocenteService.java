@@ -70,8 +70,8 @@ public class DocenteService {
     }
 
     @Transactional
-    // Igual que el anterior, con la confirmacion ya dada: solo entra por aca el segundo intento,
-    // despues de que alguien miro la pantalla de aviso y dijo que si.
+    // Igual que el anterior, con la confirmación ya dada: solo entra por acá el segundo intento,
+    // después de que alguien miró la pantalla de aviso y dijo que sí.
     public Docente crear(String dni, String legajo, String nombre, String apellido,
                          String email, String telefono, boolean confirmado,
                          Long usuarioActualId) {
@@ -116,7 +116,7 @@ public class DocenteService {
             persona.setTelefono(blankToNull(telefono));
             personaRepository.save(persona);
             // Un reingreso confirmado puede venir con datos distintos a los guardados: queda
-            // registrado igual que cualquier otra edicion, con su propio origen.
+            // registrado igual que cualquier otra edición, con su propio origen.
             personaService.registrarCambios(persona, antes, usuarioActualId, "REINGRESO");
             log.info("Alta de docente sobre persona existente CONFIRMADA: persona_id={}, institucion_id={}",
                      persona.getId(), tenantId);
@@ -136,7 +136,7 @@ public class DocenteService {
             .persona(persona)
             .legajo(legajoNorm)
             // La fecha de alta es el momento en que se carga, no un dato a tipear: quien
-            // esta cargando al docente esta aca ahora, y pedirsela solo habilita el error.
+            // está cargando al docente está acá ahora, y pedírsela solo habilita el error.
             .fechaAlta(LocalDate.now())
             .activo(true)
             .build();
@@ -156,7 +156,7 @@ public class DocenteService {
     }
 
     @Transactional
-    // Igual que el anterior, con la confirmacion ya dada.
+    // Igual que el anterior, con la confirmación ya dada.
     public Docente actualizar(Long id, String dni, String legajo, String nombre, String apellido,
                               String email, String telefono, boolean confirmado,
                               Long usuarioActualId) {
@@ -179,12 +179,12 @@ public class DocenteService {
             throw new IllegalArgumentException("Ya existe otro docente con legajo '" + legajoNuevo + "'.");
         }
 
-        // La confirmacion va DESPUES de validar, no antes: preguntar "seguro que querés cambiar
-        // esto en todos sus roles" para despues rechazar el formulario por un DNI mal formado
-        // seria hacer decidir sobre algo que no se iba a guardar igual.
+        // La confirmación va DESPUÉS de validar, no antes: preguntar "seguro que querés cambiar
+        // esto en todos sus roles" para después rechazar el formulario por un DNI mal formado
+        // sería hacer decidir sobre algo que no se iba a guardar igual.
         //
-        // Si esta persona ademas tiene cuenta en el sistema, el cambio de nombre se ve tambien
-        // ahi. Quien edita esta mirando la pantalla de docentes y no tiene por que saberlo.
+        // Si esta persona además tiene cuenta en el sistema, el cambio de nombre se ve también
+        // ahí. Quien edita está mirando la pantalla de docentes y no tiene por qué saberlo.
         if (!confirmado && personaService.edicionRequiereConfirmacion(persona)) {
             String propuesto = apellidoNuevo + ", " + nombreNuevo;
             throw new ConfirmacionRequeridaException(
@@ -194,8 +194,8 @@ public class DocenteService {
         // La identidad se edita del lado de la persona. Si esa persona además tiene cuenta en
         // el sistema, el cambio de nombre se refleja también ahí, que es justamente el punto
         // de haberla separado: antes había que corregirla en dos lugares.
-        // La foto del antes se toma aca, con la entidad todavia sin tocar: guardarse una
-        // referencia a la persona no serviria, porque se edita en el lugar y devolveria el
+        // La foto del antes se toma acá, con la entidad todavía sin tocar: guardarse una
+        // referencia a la persona no serviría, porque se edita en el lugar y devolvería el
         // estado nuevo.
         InstantaneaIdentidad antes = InstantaneaIdentidad.de(persona);
 
@@ -208,7 +208,7 @@ public class DocenteService {
         personaService.registrarCambios(persona, antes, usuarioActualId, "DOCENTE");
 
         // Del vínculo solo se edita el legajo. La fecha de alta no se toca: es el registro de
-        // cuando ingreso, no un campo mas del legajo.
+        // cuando ingreso, no un campo más del legajo.
         d.setLegajo(legajoNuevo);
 
         Docente saved = docenteRepository.save(d);
@@ -235,8 +235,8 @@ public class DocenteService {
         if (materias == 0 && comisiones == 0) {
             return null;
         }
-        // Cada parte trae su propio verbo. Un prefijo comun --"es"-- daba "es asignado a
-        // 2 comisiones" cuando no habia materias de por medio.
+        // Cada parte trae su propio verbo. Un prefijo común --"es"-- daba "es asignado a
+        // 2 comisiones" cuando no había materias de por medio.
         StringBuilder sb = new StringBuilder("No se puede dar de baja: ");
         if (materias > 0) {
             sb.append("es titular de ").append(materias)
@@ -252,8 +252,8 @@ public class DocenteService {
         return sb.append(". Reasignalas primero.").toString();
     }
 
-    // Baja logica con la fecha en que dejo de prestar servicios; se bloquea si sigue
-    // siendo titular o esta asignado a comisiones activas.
+    // Baja lógica con la fecha en que dejó de prestar servicios; se bloquea si sigue
+    // siendo titular o está asignado a comisiones activas.
     @Transactional
     public void darDeBaja(Long id, LocalDate fechaBaja, Long usuarioActualId) {
         Docente d = buscarPorId(id);
@@ -290,14 +290,14 @@ public class DocenteService {
         }
         d.setActivo(true);
         // Se borra la fecha de baja: dejarla puesta describiria a un docente activo que
-        // ademas figura como desvinculado, que es una contradiccion.
+        // además figura como desvinculado, que es una contradicción.
         d.setFechaBaja(null);
         d.setDadoDeBajaPor(null);
         docenteRepository.save(d);
         log.info("Docente reactivado: id={}", id);
     }
 
-    // La baja se carga despues del hecho, asi que puede ser anterior a hoy pero nunca
+    // La baja se carga después del hecho, así que puede ser anterior a hoy pero nunca
     // futura ni anterior al ingreso del docente.
     private void validarFechaBaja(LocalDate fechaBaja, LocalDate fechaAlta) {
         if (fechaBaja == null) {

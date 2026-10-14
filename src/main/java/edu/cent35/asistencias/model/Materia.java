@@ -26,8 +26,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Materia academica perteneciente a una carrera. RF-12.
- * Tenant-scoped: pertenece a una unica institucion.
+ * Materia académica perteneciente a una carrera. RF-12.
+ * Tenant-scoped: pertenece a una única institución.
  * <p>
  * El campo {@code docenteTitularId} se completa en Sprint 3 cuando
  * existan docentes gestionables. Por ahora se persiste null.
@@ -63,11 +63,11 @@ public class Materia extends BaseTenantEntity {
     private String nombre;
 
     /**
-     * Anio de la carrera en el que se cursa.
+     * Año de la carrera en el que se cursa.
      *
-     * <p>Va en la materia y no en la comision porque es una propiedad del plan de estudios:
-     * que Analisis I sea de primero no depende de si se dicta a la manana o a la noche. En la
-     * comision habria que repetirlo en cada una y dos podrian contradecirse.
+     * <p>Va en la materia y no en la comisión porque es una propiedad del plan de estudios:
+     * que Análisis I sea de primero no depende de si se dicta a la mañana o a la noche. En la
+     * comisión habría que repetirlo en cada una y dos podrían contradecirse.
      */
     @Column(nullable = false)
     @Builder.Default
@@ -93,7 +93,7 @@ public class Materia extends BaseTenantEntity {
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * Repositorio JPA de roles. Catalogo global, no tenant-scoped.
+ * Repositorio JPA de roles. Catálogo global, no tenant-scoped.
  */
 @Repository
 public interface RolRepository extends JpaRepository<Rol, Short> {

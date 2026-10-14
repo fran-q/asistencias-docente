@@ -109,8 +109,8 @@ public class AsistenciaService {
         LocalTime ahora = instante.toLocalTime();
         byte diaSemana = (byte) instante.getDayOfWeek().getValue(); // 1..7 ISO
 
-        // La fecha va ademas del dia de la semana desde V023: el horario tiene que caer
-        // dentro de su periodo, o el pase abriria un bloque por una clase de un cuatrimestre
+        // La fecha va además del día de la semana desde V023: el horario tiene que caer
+        // dentro de su período, o el pase abriría un bloque por una clase de un cuatrimestre
         // ya terminado.
         List<Horario> horariosHoy = horarioRepository
             .findHoyParaDocente(docenteId, diaSemana, fecha, tenantId);
@@ -158,7 +158,7 @@ public class AsistenciaService {
             return ResultadoMarca.creada(guardada);
         } catch (DataIntegrityViolationException ex) {
             // Race condition: otro request acaba de insertar la marca para
-            // el mismo (docente, horario, fecha). El UNIQUE de BD lo bloqueo.
+            // el mismo (docente, horario, fecha). El UNIQUE de BD lo bloqueó.
             // Releemos y devolvemos como ya existente.
             log.info("Race condition al marcar asistencia: docente {} horario {} fecha {} - ya existía",
                      docenteId, horario.getId(), fecha);
@@ -201,8 +201,8 @@ public class AsistenciaService {
             .comision(horario.getComision())
             .horario(horario)
             .bloque(bloque)
-            // Sale del bloque y no por parametro: una clase imputada viene del mismo equipo
-            // que abrio la jornada, y pasarlo aparte permitiria que discreparan (RF-89).
+            // Sale del bloque y no por parámetro: una clase imputada viene del mismo equipo
+            // que abrió la jornada, y pasarlo aparte permitiría que discreparan (RF-89).
             .puesto(bloque.getPuesto())
             .fecha(fecha)
             .horaRegistrada(horaLlegada.withNano(0))
@@ -221,7 +221,7 @@ public class AsistenciaService {
             return guardada;
         } catch (DataIntegrityViolationException ex) {
             // Carrera con el job de ausencias o con una carga manual: el UNIQUE de la base la
-            // resolvio. Releemos y devolvemos la que quedo.
+            // resolvió. Releemos y devolvemos la que quedó.
             log.info("Imputacion descartada por marca concurrente: docente={}, horario={}, fecha={}",
                      docenteId, horario.getId(), fecha);
             return asistenciaRepository
@@ -237,7 +237,7 @@ public class AsistenciaService {
      * administrador está cargando el registro, no un dato que se tipea. Dejarlo abierto
      * permitía escribir cualquier horario —incluso uno fuera de la franja de la clase— y
      * convertía un registro administrativo en algo que dice lo que quien lo carga quiera
-     * que diga. Lo que se está asentando es "yo, tal administrador, a esta hora, declaro
+     * que diga. Lo que se está asentando es "yo, tal administrador, a esta hora, declaró
      * que este docente estuvo o no estuvo en esta clase". Esa es la afirmación real, y
      * ésa es la que queda registrada.
      *
@@ -264,7 +264,7 @@ public class AsistenciaService {
             throw new IllegalArgumentException("Hay que indicar el estado de la asistencia.");
         }
 
-        // El docente tiene que ser el asignado a la comision de ese horario.
+        // El docente tiene que ser el asignado a la comisión de ese horario.
         Docente asignado = horario.getComision().getDocenteAsignado();
         if (asignado == null) {
             throw new IllegalArgumentException(

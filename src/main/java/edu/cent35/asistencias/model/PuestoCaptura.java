@@ -48,13 +48,13 @@ public class PuestoCaptura extends BaseTenantEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Como lo llama la institucion. Es lo unico que distingue un puesto de otro en la
-    // pantalla de revocacion, asi que no puede repetirse dentro de la institucion.
+    // Como lo llama la institución. Es lo único que distingue un puesto de otro en la
+    // pantalla de revocación, así que no puede repetirse dentro de la institución.
     @Column(nullable = false, length = 80)
     private String nombre;
 
     // Hash del token que viaja en la cookie del equipo; el token en claro solo existe en
-    // ese navegador y se muestra una unica vez, al designarlo.
+    // ese navegador y se muestra una única vez, al designarlo.
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 
@@ -62,7 +62,7 @@ public class PuestoCaptura extends BaseTenantEntity {
     @Builder.Default
     private Boolean activo = true;
 
-    // Cuando se revoco. NULL = sigue habilitado.
+    // Cuando se revocó. NULL = sigue habilitado.
     @Column(name = "fecha_baja")
     private LocalDate fechaBaja;
 
@@ -76,8 +76,8 @@ public class PuestoCaptura extends BaseTenantEntity {
     @JoinColumn(name = "designado_por")
     private Usuario designadoPor;
 
-    // Ultima vez que el puesto paso el control. Sirve para reconocer cual es cual cuando
-    // hay varios cargados y ya nadie recuerda a que maquina corresponde cada nombre.
+    // Última vez que el puesto pasó el control. Sirve para reconocer cuál es cuál cuando
+    // hay varios cargados y ya nadie recuerda a que máquina corresponde cada nombre.
     @Column(name = "ultimo_uso_en")
     private LocalDateTime ultimoUsoEn;
 
@@ -102,7 +102,7 @@ public class PuestoCaptura extends BaseTenantEntity {
     @Column(name = "kiosco_habilitado_en")
     private LocalDateTime kioscoHabilitadoEn;
 
-    // Quien lo habilito. NULL si esa cuenta se suprimio: la FK hace SET NULL, igual que
+    // Quien lo habilitó. NULL si esa cuenta se suprimio: la FK hace SET NULL, igual que
     // designadoPor, para que suprimir una cuenta no rompa una fila ya escrita.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "kiosco_habilitado_por")
@@ -119,12 +119,12 @@ public class PuestoCaptura extends BaseTenantEntity {
     private String camaraDispositivoId;
 
     // El nombre que reporto el dispositivo ("Logitech C920"). Aparte del id porque el id es un
-    // hash ilegible, y la pantalla de puestos tiene que poder decir que camara usa el equipo.
+    // hash ilegible, y la pantalla de puestos tiene que poder decir que cámara usa el equipo.
     @Column(name = "camara_etiqueta", length = 120)
     private String camaraEtiqueta;
 
-    // Ultimo cambio de camara, aunque se haya vuelto a la predeterminada. El reconocimiento se
-    // calibro con una camara concreta: si empieza a fallar, lo primero que conviene saber es si
+    // Último cambio de cámara, aunque se haya vuelto a la predeterminada. El reconocimiento se
+    // calibró con una cámara concreta: si empieza a fallar, lo primero que conviene saber es si
     // alguien la cambio.
     @Column(name = "camara_elegida_en")
     private LocalDateTime camaraElegidaEn;
@@ -154,7 +154,7 @@ public class PuestoCaptura extends BaseTenantEntity {
         return Boolean.TRUE.equals(activo);
     }
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

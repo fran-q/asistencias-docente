@@ -49,23 +49,23 @@ public class CodigoVerificacion extends BaseTenantEntity {
     @Column(nullable = false, length = 30)
     private PropositoCodigo proposito;
 
-    // Direccion a la que se envio. Se guarda aparte del usuario porque si alguien cambia su
-    // correo despues de pedir el codigo, el codigo sigue atado al buzon que lo recibio.
+    // Dirección a la que se envió. Se guarda aparte del usuario porque si alguien cambia su
+    // correo después de pedir el código, el código sigue atado al buzón que lo recibió.
     @Column(nullable = false, length = 120)
     private String email;
 
-    // Hash del OTP; el codigo en claro solo existe en el correo enviado.
+    // Hash del OTP; el código en claro solo existe en el correo enviado.
     @Column(name = "codigo_hash", nullable = false)
     private String codigoHash;
 
     @Column(name = "expira_en", nullable = false)
     private LocalDateTime expiraEn;
 
-    // NULL mientras siga disponible; con fecha, ya se consumio.
+    // NULL mientras siga disponible; con fecha, ya se consumió.
     @Column(name = "usado_en")
     private LocalDateTime usadoEn;
 
-    // Validaciones fallidas acumuladas; al llegar al tope el codigo se descarta.
+    // Validaciones fallidas acumuladas; al llegar al tope el código se descarta.
     @Column(nullable = false)
     @Builder.Default
     private Short intentos = 0;
@@ -77,7 +77,7 @@ public class CodigoVerificacion extends BaseTenantEntity {
     @Builder.Default
     private LocalDateTime creadoEn = LocalDateTime.now();
 
-    // Un codigo sirve si no se uso y todavia no vencio.
+    // Un código sirve si no se uso y todavía no venció.
     public boolean estaDisponible(LocalDateTime ahora) {
         return usadoEn == null && ahora.isBefore(expiraEn);
     }

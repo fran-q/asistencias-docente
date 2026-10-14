@@ -42,16 +42,16 @@ class CuitTest {
     @Test
     @DisplayName("Vacío o solo espacios queda en null, no en cadena vacía")
     void vacioEsNulo() {
-        // Importa: el CUIT es opcional y unico. Guardar "" en vez de null haria que dos
-        // instituciones sin CUIT chocaran entre si, porque en SQL un NULL no repite a otro
-        // pero dos cadenas vacias si.
+        // Importa: el CUIT es opcional y único. Guardar "" en vez de null haría que dos
+        // instituciones sin CUIT chocaran entre sí, porque en SQL un NULL no repite a otro
+        // pero dos cadenas vacías sí.
         assertThat(Cuit.normalizar("")).isNull();
         assertThat(Cuit.normalizar("   ")).isNull();
         assertThat(Cuit.normalizar(null)).isNull();
     }
 
     // ========================================================================
-    //  Digito verificador
+    //  Dígito verificador
     // ========================================================================
 
     @Test
@@ -60,14 +60,14 @@ class CuitTest {
         assertThat(Cuit.esValido("30-12345678-1")).isTrue();
         assertThat(Cuit.esValido("20-12345678-6")).isTrue();
         assertThat(Cuit.esValido("27-12345678-0")).isTrue();
-        // Tambien escrito de corrido.
+        // También escrito de corrido.
         assertThat(Cuit.esValido("30123456781")).isTrue();
     }
 
     @Test
     @DisplayName("Un dígito verificador equivocado se detecta")
     void detectaElVerificadorMal() {
-        // Mismo numero que el valido de arriba, con el ultimo digito cambiado.
+        // Mismo número que el válido de arriba, con el último dígito cambiado.
         assertThat(Cuit.esValido("30-12345678-9"))
             .as("tiene la forma correcta pero ese CUIT no existe")
             .isFalse();
@@ -77,7 +77,7 @@ class CuitTest {
     @Test
     @DisplayName("Un error de tipeo en el medio también rompe el cálculo")
     void detectaElTipeoEnElCuerpo() {
-        // Para eso sirve el verificador: no solo cuida el ultimo digito, cierra
+        // Para eso sirve el verificador: no solo cuida el último dígito, cierra
         // sobre los diez anteriores.
         assertThat(Cuit.esValido("30-12345679-1")).isFalse();
         assertThat(Cuit.esValido("31-12345678-1")).isFalse();
@@ -103,8 +103,8 @@ class CuitTest {
     @Test
     @DisplayName("Si no son 11 dígitos se devuelve tal cual, sin inventar nada")
     void loInvalidoNoSeMaquilla() {
-        // El formulario ya lo rechazo antes de llegar aca. Completar o recortar seria
-        // guardar un CUIT que nadie escribio.
+        // El formulario ya lo rechazó antes de llegar acá. Completar o recortar sería
+        // guardar un CUIT que nadie escribió.
         assertThat(Cuit.normalizar("301234567811")).isEqualTo("301234567811");
         assertThat(Cuit.normalizar("123")).isEqualTo("123");
     }

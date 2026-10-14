@@ -88,7 +88,7 @@
     let buenasSeguidas = 0;
     let capturas = [];
     let enviando = false;
-    // Deja de vigilar la camara (CamaraDelPuesto.vigilar). Null mientras no hay camara.
+    // Deja de vigilar la cámara (CamaraDelPuesto.vigilar). Null mientras no hay cámara.
     let dejarDeVigilar = null;
 
     // ---- Cámara -----------------------------------------------------------
@@ -103,14 +103,14 @@
             return;
         }
         try {
-            // La camara elegida para este puesto (V026), o la predeterminada si no hay
-            // ninguna o si la elegida no esta conectada.
+            // La cámara elegida para este puesto (V026), o la predeterminada si no hay
+            // ninguna o si la elegida no está conectada.
             stream = await CamaraDelPuesto.abrir(video, { width: { ideal: 640 }, height: { ideal: 480 } });
             video.srcObject = stream;
             dejarDeVigilar = CamaraDelPuesto.vigilar(stream, {
                 perdida: camaraPerdida,
-                // Sin imagen, cada evaluacion daria "no hay rostro" y la secuencia se
-                // quedaria esperando sin decir por que: se frena y se avisa.
+                // Sin imagen, cada evaluación daría "no hay rostro" y la secuencia se
+                // quedaría esperando sin decir por qué: se frena y se avisa.
                 sinImagen: function () {
                     detenerLoop();
                     feedbackEl.textContent = 'La cámara dejó de mandar imagen. Esperando que vuelva…';
@@ -135,7 +135,7 @@
         }
     }
 
-    // Corta el loop, libera la camara y deja la pantalla como al principio.
+    // Corta el loop, libera la cámara y deja la pantalla como al principio.
     function apagarCamara() {
         detenerLoop();
         if (dejarDeVigilar) { dejarDeVigilar(); dejarDeVigilar = null; }
@@ -151,10 +151,10 @@
         feedbackEl.className = 'captura__feedback';
     }
 
-    // La camara se corto en medio del registro: se desenchufo o se la llevo otra aplicacion.
-    // Lo capturado en esta vuelta no alcanza para registrar, asi que se dice y queda todo
-    // listo para empezar de nuevo. Si las capturas ya estaban viajando, el envio sigue su
-    // curso y es el que dice como termino.
+    // La cámara se cortó en medio del registro: se desenchufó o se la llevó otra aplicación.
+    // Lo capturado en esta vuelta no alcanza para registrar, así que se dice y queda todo
+    // listo para empezar de nuevo. Si las capturas ya estaban viajando, el envío sigue su
+    // curso y es el que dice cómo terminó.
     function camaraPerdida() {
         dejarDeVigilar = null;
         if (enviando) return;
@@ -179,7 +179,7 @@
         pintarEtapa();
     }
 
-    // Muestra la instruccion de la etapa actual y la marca como activa en la lista.
+    // Muestra la instrucción de la etapa actual y la marca como activa en la lista.
     function pintarEtapa() {
         etapas.forEach(function (e, i) {
             e.nodo.classList.toggle('captura__etapa--activa', i === etapaActual);
@@ -201,7 +201,7 @@
             capturasDeLaEtapa + '/' + capturasPorEtapa;
     }
 
-    // Da la etapa por cumplida y pasa a la siguiente, o envia si era la ultima.
+    // Da la etapa por cumplida y pasa a la siguiente, o envía si era la última.
     function completarEtapa() {
         const etapa = etapas[etapaActual];
         etapa.nodo.classList.remove('captura__etapa--activa');
@@ -226,12 +226,12 @@
         loopId = setInterval(evaluar, INTERVALO_EVALUACION_MS);
     }
 
-    // Frena la evaluacion periodica.
+    // Frena la evaluación periodica.
     function detenerLoop() {
         if (loopId) { clearInterval(loopId); loopId = null; }
     }
 
-    // Iguala el tamano del canvas al del video, que recien se conoce al reproducir.
+    // Iguala el tamaño del canvas al del video, que recién se conoce al reproducir.
     function ajustarOverlay() {
         if (video.videoWidth > 0 && video.videoHeight > 0) {
             overlay.width  = video.videoWidth;
@@ -239,7 +239,7 @@
         }
     }
 
-    // Saca el cuadro que se esta viendo, con la calidad de compresion que se pida.
+    // Saca el cuadro que se está viendo, con la calidad de compresión que se pida.
     function cuadroActual(calidad) {
         canvas.width  = video.videoWidth;
         canvas.height = video.videoHeight;
@@ -264,19 +264,19 @@
                 body: JSON.stringify({ imagen: dataUrl })
             });
             // Equipo revocado con la captura guiada en curso. Se frena acá: seguir pidiendo
-            // poses para capturas que despues no se van a poder guardar hace perder el
-            // tiempo a las dos personas que estan frente a la camara.
+            // poses para capturas que después no se van a poder guardar hace perder el
+            // tiempo a las dos personas que están frente a la cámara.
             if (resp.status === 403) {
                 detenerLoop();
                 apagarCamara();
                 mostrarMensaje('Este equipo ya no está autorizado para registrar rostros.', 'error');
                 return;
             }
-            // La sesion se vencio o se cerro desde otra pestaña. Llega como 401 con cuerpo
-            // JSON --lo arma sesionVencidaEnApi-- y no como la redireccion al login, que
-            // fetch seguiria hasta recibir HTML con estado 200: ahi resp.ok da true, el
+            // La sesión se venció o se cerró desde otra pestaña. Llega como 401 con cuerpo
+            // JSON --lo arma sesionVencidaEnApi-- y no como la redirección al login, que
+            // fetch seguiría hasta recibir HTML con estado 200: ahí resp.ok da true, el
             // resp.json() de abajo revienta, y el catch del final se lo come tomandolo por
-            // un corte de red. Sin esto la camara seguia encendida mandando cuadros que no
+            // un corte de red. Sin esto la cámara seguía encendida mandando cuadros que no
             // registraban nada, sin decirlo.
             if (resp.status === 401) {
                 detenerLoop();
@@ -291,7 +291,7 @@
             if (!stream || enPausa || enviando) return;
 
             // Con varias personas en cuadro no se dibuja nada: el servidor manda el
-            // recuadro del rostro mas grande, y pintarlo daria a entender que ese es el
+            // recuadro del rostro más grande, y pintarlo daría a entender que ese es el
             // que se va a registrar, cuando justamente el mensaje dice que no se puede.
             if (datos.rostroDetectado && datos.cantidadRostros === 1) {
                 dibujarRecuadro(datos.x, datos.y, datos.ancho, datos.alto, datos.apta);
@@ -316,7 +316,7 @@
         }
     }
 
-    // Guarda la captura, avanza el contador y hace una pausa para que la proxima salga distinta.
+    // Guarda la captura, avanza el contador y hace una pausa para que la próxima salga distinta.
     function capturar() {
         capturas.push(cuadroActual(0.85));
         capturasDeLaEtapa++;
@@ -376,7 +376,7 @@
                 body: JSON.stringify({ capturas: capturas })
             });
             // Equipo revocado mientras se tomaban las capturas. Se avisa con el motivo real
-            // en vez de "el servidor respondio 403", que no le dice nada a quien opera.
+            // en vez de "el servidor respondió 403", que no le dice nada a quien opera.
             if (resp.status === 403) {
                 apagarCamara();
                 mostrarMensaje('Este equipo ya no está autorizado para registrar rostros. '
@@ -385,7 +385,7 @@
             }
             // Igual que arriba, pero acá se pierde el trabajo ya hecho: hay que decirlo.
             // Sin esto, resp.ok daba true con el HTML del login y el error de sintaxis del
-            // resp.json() salia como "El servidor respondio 200", que no orienta a nadie.
+            // resp.json() salía como "El servidor respondió 200", que no orienta a nadie.
             if (resp.status === 401) {
                 apagarCamara();
                 mostrarMensaje('Se cerró la sesión, así que las capturas no se guardaron. '
@@ -403,7 +403,7 @@
                 }, 1400);
             } else {
                 // El servidor revalida y puede rechazar lo que acá pasó. Su
-                // mensaje dice qué falló, asi que se muestra tal cual.
+                // mensaje dice qué falló, así que se muestra tal cual.
                 mostrarMensaje(datos.mensaje, 'error');
                 prepararReintento();
             }
@@ -413,7 +413,7 @@
         }
     }
 
-    // Deja la pantalla lista para volver a empezar despues de un rechazo.
+    // Deja la pantalla lista para volver a empezar después de un rechazo.
     function prepararReintento() {
         enviando = false;
         reiniciarSecuencia();
@@ -435,7 +435,7 @@
     // Esconde el cartel de resultado.
     function ocultarMensaje() { resultado.hidden = true; }
 
-    // Convierte el error de getUserMedia en una explicacion que se entienda.
+    // Convierte el error de getUserMedia en una explicación que se entienda.
     function traducirError(err) {
         switch (err && err.name) {
             case 'NotAllowedError':

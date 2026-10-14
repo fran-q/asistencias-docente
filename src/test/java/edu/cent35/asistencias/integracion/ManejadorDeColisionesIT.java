@@ -82,7 +82,7 @@ class ManejadorDeColisionesIT {
     @Test
     @DisplayName("Un Referer de otro sitio no se usa como destino")
     void noRedirigeAOtroSitio() throws Exception {
-        // Sin este control, una pagina externa podria mandar a alguien —con la sesion ya
+        // Sin este control, una página externa podría mandar a alguien —con la sesión ya
         // iniciada— a un formulario ajeno que imite al nuestro.
         var respuesta = mockMvc.perform(post("/prueba/pantalla")
                 .header("Referer", "http://sitio-ajeno.example/docentes/nuevo"))
@@ -97,9 +97,9 @@ class ManejadorDeColisionesIT {
     @Test
     @DisplayName("Al pase de asistencia, que consulta por JSON, no se le manda una redireccion")
     void alClienteDeDatosNoSeLeRedirige() {
-        // El pase hace fetch con el cuerpo en JSON. Una redireccion a HTML le rompe el
-        // resp.json() con un error que no explica nada, asi que el manejador no la atiende y
-        // el error sigue su curso: en la aplicacion corriendo termina en un codigo de error,
+        // El pase hace fetch con el cuerpo en JSON. Una redirección a HTML le rompe el
+        // resp.json() con un error que no explica nada, así que el manejador no la atiende y
+        // el error sigue su curso: en la aplicación corriendo termina en un código de error,
         // que es lo que ese cliente sabe leer.
         assertThatThrownBy(() -> mockMvc.perform(post("/prueba/datos")
                 .contentType("application/json")

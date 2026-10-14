@@ -30,15 +30,15 @@
                 </select>
 
                 <!--
-                  Filtro por anio del plan.
+                  Filtro por año del plan.
 
-                  Sin el, una carrera de tres anios apila las tres cohortes en las mismas
-                  franjas y la grilla deja de servir para lo unico que sirve: ver que esta
-                  libre y que se superpone. Siempre hay un anio elegido, y arranca en 1ro:
-                  "Todos" las volvia a apilar. Lo que se pierde es ver de un vistazo a un
-                  docente con dos clases a la misma hora en anios distintos.
+                  Sin él, una carrera de tres años apila las tres cohortes en las mismas
+                  franjas y la grilla deja de servir para lo único que sirve: ver que esta
+                  libre y que se superpone. Siempre hay un año elegido, y arranca en 1ro:
+                  "Todos" las volvía a apilar. Lo que se pierde es ver de un vistazo a un
+                  docente con dos clases a la misma hora en años distintos.
 
-                  Las opciones se acotan a la duracion de la carrera: ofrecer 5to en una
+                  Las opciones se acotan a la duración de la carrera: ofrecer 5to en una
                   tecnicatura de tres es invitar a un filtro que no puede devolver nada.
                 -->
                 <label for="anio" style="margin-left:1rem;">Año:</label>
@@ -78,10 +78,10 @@
         <div th:if="${grilla != null and grilla.totalHorarios > 0}"
              class="grilla">
 
-            <!-- Esquina superior izquierda (vacia) -->
+            <!-- Esquina superior izquierda (vacía) -->
             <div class="grilla__corner"></div>
 
-            <!-- Header: dias de la semana, columnas 2-8 -->
+            <!-- Header: días de la semana, columnas 2-8 -->
             <div th:each="d : ${dias}"
                  class="grilla__day-header"
                  th:style="|grid-column: ${d.numero + 1}; grid-row: 1|"
@@ -95,10 +95,10 @@
 
             <!-- Items posicionados -->
             <!--
-              Boton y no enlace: antes cada bloque llevaba directo a la edicion, asi que un
+              Botón y no enlace: antes cada bloque llevaba directo a la edición, así que un
               click hecho para "ver de que es esta clase" terminaba en un formulario. Ahora
-              el bloque solo muestra; editar es una decision aparte, dentro del cuadro.
-              Es <button> para que tambien se llegue con el teclado.
+              el bloque solo muestra; editar es una decisión aparte, dentro del cuadro.
+              Es <button> para que también se llegue con el teclado.
             -->
             <button type="button" th:each="item : ${grilla.items}"
                class="grilla__item"

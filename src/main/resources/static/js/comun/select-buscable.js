@@ -3,23 +3,23 @@
  *
  *  Convierte un <select> largo en un campo donde se escribe para filtrar.
  *
- *  Por que. Con veinte docentes cargados, elegir uno en un desplegable nativo
+ *  Por qué. Con veinte docentes cargados, elegir uno en un desplegable nativo
  *  es recorrer la lista con la vista. Escribir tres letras del apellido es lo
  *  que cualquiera intenta hacer primero.
  *
  *  Como. El <select> original NO se elimina: queda oculto y sigue siendo el que
- *  se envia y el que el servidor valida --mismo criterio que el selector de
+ *  se envía y el que el servidor valida --mismo criterio que el selector de
  *  hora--. Encima se dibuja un input de texto y una lista filtrada que solo
  *  escriben en el select. Si este script no llegara a correr, el select sigue
- *  ahi y funciona como siempre.
+ *  ahí y funciona como siempre.
  *
  *  Se activa poniendo data-buscable en el <select>. No se aplica solo a todos
- *  porque en una lista de tres opciones el buscador estorba mas de lo que ayuda.
+ *  porque en una lista de tres opciones el buscador estorba más de lo que ayuda.
  * ========================================================================== */
 (function (window, document) {
     'use strict';
 
-    // Saca tildes y pasa a minusculas: buscar "garcia" tiene que encontrar a Garcia.
+    // Saca tildes y pasa a minúsculas: buscar "garcía" tiene que encontrar a García.
     // Mismo criterio que el filtro de los listados, para que la app se comporte igual
     // en los dos lugares donde se busca escribiendo.
     function normalizar(t) {
@@ -92,8 +92,8 @@
                 li.textContent = o.texto;
                 li.dataset.valor = o.valor;
                 if (o.valor === select.value) li.classList.add('buscable__opcion--actual');
-                // mousedown y no click: el click llega despues del blur del input, que
-                // ya habria cerrado la lista y cancelado la seleccion.
+                // mousedown y no click: el click llega después del blur del input, que
+                // ya habría cerrado la lista y cancelado la selección.
                 li.addEventListener('mousedown', function (e) {
                     e.preventDefault();
                     elegir(i);
@@ -129,8 +129,8 @@
             lista.hidden = true;
             input.setAttribute('aria-expanded', 'false');
             input.removeAttribute('aria-activedescendant');
-            // Se repone el texto de lo que este realmente elegido: si quedo escrito
-            // algo a medias, el campo mostraria una cosa y el formulario mandaria otra.
+            // Se repone el texto de lo que este realmente elegido: si quedó escrito
+            // algo a medias, el campo mostraría una cosa y el formulario mandaría otra.
             input.value = textoActual();
         }
 
@@ -148,16 +148,16 @@
         /*
          *  Al enfocar se abre la lista Y se selecciona el texto que haya.
          *
-         *  Antes el campo quedaba con la opcion elegida escrita y el cursor al final, asi
-         *  que para buscar otra cosa habia que borrarla a mano primero: si no, lo tipeado
-         *  se pegaba atras --"TUP-003 — Aprogramacion"-- y el filtro no encontraba nada.
+         *  Antes el campo quedaba con la opción elegida escrita y el cursor al final, así
+         *  que para buscar otra cosa había que borrarla a mano primero: si no, lo tipeado
+         *  se pegaba atrás --"TUP-003 — Aprogramacion"-- y el filtro no encontraba nada.
          *
          *  Seleccionando el texto, la primera tecla lo reemplaza, que es como se comporta
-         *  la barra de direcciones del navegador y cualquier campo de busqueda. Y si en vez
-         *  de escribir se elige de la lista, el texto seleccionado no se pierde: sigue ahi.
+         *  la barra de direcciones del navegador y cualquier campo de búsqueda. Y si en vez
+         *  de escribir se elige de la lista, el texto seleccionado no se pierde: sigue ahí.
          *
          *  El setTimeout no es un parche: en el focus por click, el navegador coloca el
-         *  cursor DESPUES de que corre este listener, y sin el la seleccion se deshace sola.
+         *  cursor DESPUÉS de que corre este listener, y sin el la selección se deshace sola.
          */
         input.addEventListener('focus', function () {
             abrir();
@@ -166,7 +166,7 @@
             }, 0);
         });
 
-        // Click sobre un campo ya enfocado: no dispara focus de nuevo, pero la intencion de
+        // Click sobre un campo ya enfocado: no dispara focus de nuevo, pero la intención de
         // volver a hacer click sobre lo que ya esta escrito es cambiarlo.
         input.addEventListener('mouseup', function (e) {
             if (input.selectionStart === input.selectionEnd) {
@@ -192,7 +192,7 @@
                 marcarResaltado();
             } else if (e.key === 'Enter') {
                 if (!lista.hidden) {
-                    // Solo se traga el Enter si la lista esta abierta: con el campo
+                    // Solo se traga el Enter si la lista está abierta: con el campo
                     // cerrado tiene que seguir enviando el formulario como cualquier otro.
                     e.preventDefault();
                     elegir(resaltado);
@@ -202,7 +202,7 @@
             }
         });
 
-        // El select puede cambiar por fuera --el formulario de comision propone el
+        // El select puede cambiar por fuera --el formulario de comisión propone el
         // titular de la materia-- y el input tiene que reflejarlo.
         select.addEventListener('change', function () {
             if (document.activeElement !== input) input.value = textoActual();

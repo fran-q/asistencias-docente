@@ -53,7 +53,7 @@ class GeneradorAusenciasServiceTest {
     @Mock private HorarioRepository horarioRepository;
     @Mock private AsistenciaRepository asistenciaRepository;
     @Mock private BloquePresenciaService bloquePresenciaService;
-    // Desde V024 el job pregunta primero si el dia esta marcado como sin clases. Sin este
+    // Desde V024 el job pregunta primero si el día está marcado como sin clases. Sin este
     // mock la llamada es un NPE antes de llegar a los horarios.
     @Mock private DiaNoLaborableService diaNoLaborableService;
 
@@ -69,7 +69,7 @@ class GeneradorAusenciasServiceTest {
             .thenReturn(Optional.empty());
         when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        // 21:00 -> la clase de 18-20 ya termino
+        // 21:00 -> la clase de 18-20 ya terminó
         int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(21, 0));
 
         assertThat(creadas).isEqualTo(1);
@@ -80,7 +80,7 @@ class GeneradorAusenciasServiceTest {
         assertThat(ausencia.getMetodo()).isEqualTo(MetodoAsistencia.AUTOMATICO);
         assertThat(ausencia.getModeloFacial()).isNull();
         assertThat(ausencia.getConfianza()).isNull();
-        // Convencion: hora_registrada = hora_fin del horario
+        // Convención: hora_registrada = hora_fin del horario
         assertThat(ausencia.getHoraRegistrada()).isEqualTo(LocalTime.of(20, 0));
         assertThat(ausencia.getInstitucionId()).isEqualTo(TENANT_A);
         assertThat(ausencia.getFecha()).isEqualTo(LUNES);
@@ -92,7 +92,7 @@ class GeneradorAusenciasServiceTest {
         when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
             .thenReturn(List.of(horarioLunes18a20()));
 
-        // 19:00 -> la clase de 18-20 esta corriendo
+        // 19:00 -> la clase de 18-20 está corriendo
         int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(19, 0));
 
         assertThat(creadas).isZero();
@@ -143,7 +143,7 @@ class GeneradorAusenciasServiceTest {
 
         int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(21, 0));
 
-        // La marca real gano la carrera: 0 creadas, sin excepcion propagada.
+        // La marca real gano la carrera: 0 creadas, sin excepción propagada.
         assertThat(creadas).isZero();
     }
 
@@ -171,9 +171,9 @@ class GeneradorAusenciasServiceTest {
     @Test
     @DisplayName("ejecutar: cierra los bloques ANTES de generar las ausencias")
     void cierraBloquesAntesDeGenerarAusencias() {
-        // El orden no es indistinto. Cerrar un bloque imputa las clases que el docente cubrio,
-        // y esas ya no son candidatas a ausencia. Al reves, la ausencia se escribiria primero
-        // y la imputacion chocaria contra el UNIQUE: quedaria como ausente una clase que si se
+        // El orden no es indistinto. Cerrar un bloque imputa las clases que el docente cubrió,
+        // y esas ya no son candidatas a ausencia. Al revés, la ausencia se escribiría primero
+        // y la imputación chocaría contra el UNIQUE: quedaría como ausente una clase que sí se
         // dio, que es exactamente lo que RF-80 quiere evitar.
         Institucion inst = Institucion.builder().id(TENANT_A).nombre("CENT 35").activo(true).build();
         when(institucionRepository.findAll()).thenReturn(List.of(inst));

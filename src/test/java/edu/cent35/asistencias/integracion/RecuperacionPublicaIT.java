@@ -59,8 +59,8 @@ class RecuperacionPublicaIT {
     @Autowired private PasswordEncoder passwordEncoder;
 
     // Se reemplaza el notificador real para poder afirmar que NO se lo llama. Con el real solo
-    // se sabria que el envio fallo por no haber SMTP, que no es lo mismo que no haberlo pedido.
-    // Se mockea la interfaz, no el canal concreto: el test verifica que el codigo se
+    // se sabría que el envío falló por no haber SMTP, que no es lo mismo que no haberlo pedido.
+    // Se mockea la interfaz, no el canal concreto: el test verifica que el código se
     // pida, no por donde sale.
     @MockBean private CanalDeCodigos notificador;
 
@@ -90,7 +90,7 @@ class RecuperacionPublicaIT {
     }
 
     // ========================================================================
-    //  Acceso sin sesion
+    //  Acceso sin sesión
     // ========================================================================
 
     @Test
@@ -126,8 +126,8 @@ class RecuperacionPublicaIT {
     @Test
     @DisplayName("La pantalla del codigo se ve identica exista o no la cuenta")
     void laPantallaDelCodigoNoDelataLaCuenta() throws Exception {
-        // Comparar el estado y la redireccion no alcanza: los dos casos redirigen igual y la
-        // diferencia aparece recien en la pantalla siguiente. Aca se sigue el flujo hasta el
+        // Comparar el estado y la redirección no alcanza: los dos casos redirigen igual y la
+        // diferencia aparece recién en la pantalla siguiente. Acá se sigue el flujo hasta el
         // HTML renderizado, que es donde se filtraba el correo enmascarado del titular.
         String conCuentaReal = pantallaDelCodigoTras(USUARIO_REAL);
         String conCuentaInventada = pantallaDelCodigoTras("no.existe.esta.cuenta");
@@ -188,7 +188,7 @@ class RecuperacionPublicaIT {
 
         // La pantalla contesta lo mismo exista o no la cuenta (ADR-0009) y eso ya lo cubren los
         // tests de arriba. Pero del lado del servidor el motivo tiene que quedar dicho: si no,
-        // el pedido se pierde en silencio y no se puede distinguir de un canal caido.
+        // el pedido se pierde en silencio y no se puede distinguir de un canal caído.
         verify(notificador).noSeEmitio(
             org.mockito.ArgumentMatchers.eq("no.existe.esta.cuenta"),
             org.mockito.ArgumentMatchers.contains("no existe"));
@@ -198,22 +198,22 @@ class RecuperacionPublicaIT {
     @Test
     @DisplayName("El correo va a la direccion registrada, no a la que se escribio")
     void elCorreoVaALaDireccionRegistrada() throws Exception {
-        // Se busca por usuario, asi que la direccion de destino la pone el sistema. Si saliera
-        // hacia lo tipeado, cualquiera podria hacer que el sistema le escriba a un tercero.
+        // Se busca por usuario, así que la dirección de destino la pone el sistema. Si saliera
+        // hacia lo tipeado, cualquiera podría hacer que el sistema le escriba a un tercero.
         pedirCodigo(USUARIO_REAL);
 
         verify(notificador).enviarCodigo(any(), any(), org.mockito.ArgumentMatchers.eq(EMAIL_REAL), any());
     }
 
     // ========================================================================
-    //  Una contrasena nueva cada 24 horas
+    //  Una contraseña nueva cada 24 horas
     // ========================================================================
 
     @Test
     @DisplayName("Recuperar dos veces dentro de la ventana no cambia la contrasena")
     void segundaRecuperacionDentroDeLaVentanaSeFrena() throws Exception {
         // Se simula que la cuenta acaba de cambiarla. Es lo que pasa cuando alguien recupera,
-        // se olvida de nuevo al rato y vuelve a intentarlo el mismo dia.
+        // se olvida de nuevo al rato y vuelve a intentarlo el mismo día.
         Usuario u = usuarioRepository.findByUsername(USUARIO_REAL).get(0);
         String hashOriginal = u.getPasswordHash();
         u.setPasswordCambiadaEn(LocalDateTime.now().minusHours(1));
@@ -274,8 +274,8 @@ class RecuperacionPublicaIT {
             .andReturn().getResponse().getContentAsString();
     }
 
-    // Dispara el paso 1 del flujo. En el perfil de test no hay SMTP escuchando, asi que el
-    // envio falla: se aprovecha para verificar que ni aun asi cambia la respuesta.
+    // Dispara el paso 1 del flujo. En el perfil de test no hay SMTP escuchando, así que el
+    // envío falla: se aprovecha para verificar que ni aun así cambia la respuesta.
     private MvcResult pedirCodigo(String identificador) throws Exception {
         return mockMvc.perform(post("/recuperar")
                 .with(csrf())
@@ -283,8 +283,8 @@ class RecuperacionPublicaIT {
             .andReturn();
     }
 
-    // Recorre el paso 1 y devuelve el HTML del paso 2, arrastrando la sesion: es la sesion la
-    // que sabe si la cuenta existia, asi que sin ella la comparacion no probaria nada.
+    // Recorre el paso 1 y devuelve el HTML del paso 2, arrastrando la sesión: es la sesión la
+    // que sabe si la cuenta existía, así que sin ella la comparación no probaría nada.
     private String pantallaDelCodigoTras(String identificador) throws Exception {
         MvcResult paso1 = mockMvc.perform(post("/recuperar")
                 .with(csrf())
@@ -298,8 +298,8 @@ class RecuperacionPublicaIT {
             .getResponse()
             .getContentAsString();
 
-        // El token CSRF es distinto en cada sesion por definicion, asi que se normaliza: de
-        // lo contrario las dos paginas nunca serian iguales y el test no probaria nada.
+        // El token CSRF es distinto en cada sesión por definición, así que se normaliza: de
+        // lo contrario las dos páginas nunca serían iguales y el test no probaría nada.
         return html.replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\" value=\"TOKEN\"");
     }
 

@@ -1,30 +1,30 @@
 /* =============================================================================
  *  ciclo-periodos.js
  *
- *  Las fechas de un ciclo lectivo y la division del anio en periodos.
+ *  Las fechas de un ciclo lectivo y la división del año en períodos.
  *
- *  1. Las fechas del ciclo caen dentro de su anio, que es lo que exige el servidor.
- *     Los campos de fecha toman ese limite como min y max: el calendario del
- *     navegador no ofrece dias de otro anio, y form-validacion.js lo avisa antes
+ *  1. Las fechas del ciclo caen dentro de su año, que es lo que exige el servidor.
+ *     Los campos de fecha toman ese límite como min y max: el calendario del
+ *     navegador no ofrece días de otro año, y form-validacion.js lo avisa antes
  *     de enviar. Sirve en el alta y en "Datos del ciclo" (form[data-fechas-del-anio]).
  *
- *  2. En el alta, "Como se divide el anio": anual, dos cuatrimestres, anual y dos
- *     cuatrimestres, o tres trimestres arman las filas de periodos con sus nombres y
+ *  2. En el alta, "Como se divide el año": anual, dos cuatrimestres, anual y dos
+ *     cuatrimestres, o tres trimestres arman las filas de períodos con sus nombres y
  *     reparten las fechas del ciclo en partes iguales; el Anual, si lo hay, lo cubre
- *     entero. Despues se ajustan a mano. En cuanto se toca una
- *     fila, o se agrega otra, la division pasa a "Personalizada" y ya no se
- *     recalcula sola: si no, el proximo cambio de fechas del ciclo pisaria el ajuste.
+ *     entero. Después se ajustan a mano. En cuanto se toca una
+ *     fila, o se agrega otra, la división pasa a "Personalizada" y ya no se
+ *     recalcula sola: si no, el próximo cambio de fechas del ciclo pisaria el ajuste.
  *
- *  Antes habia que cargar a mano cada periodo, y el unico que venia sugerido
- *  ("Anual") llegaba sin fechas: habia que repetir las del ciclo.
+ *  Antes había que cargar a mano cada período, y el único que venía sugerido
+ *  ("Anual") llegaba sin fechas: había que repetir las del ciclo.
  * ========================================================================== */
 (function () {
     'use strict';
 
     var DIA = 24 * 60 * 60 * 1000;
-    // Cada division: los periodos que reparten el ciclo en partes iguales y, si lleva, un
-    // Anual que lo cubre entero. Con "Anual y dos cuatrimestres" los periodos se superponen a
-    // proposito: una materia anual y una cuatrimestral conviven en el mismo ciclo.
+    // Cada división: los períodos que reparten el ciclo en partes iguales y, si lleva, un
+    // Anual que lo cubre entero. Con "Anual y dos cuatrimestres" los períodos se superponen a
+    // propósito: una materia anual y una cuatrimestral conviven en el mismo ciclo.
     var ESTRUCTURAS = {
         '1': { partes: ['Anual'] },
         '2': { partes: ['1er cuatrimestre', '2do cuatrimestre'] },
@@ -32,7 +32,7 @@
         '3': { partes: ['1er trimestre', '2do trimestre', '3er trimestre'] }
     };
 
-    // ---- 1. Fechas dentro del anio ------------------------------------------------
+    // ---- 1. Fechas dentro del año ------------------------------------------------
 
     Array.prototype.forEach.call(document.querySelectorAll('form[data-fechas-del-anio]'), function (form) {
         var anio = form.querySelector('[name="anio"]');
@@ -55,7 +55,7 @@
         acotar();
     });
 
-    // ---- 2. Division del anio (solo en el alta) -----------------------------------
+    // ---- 2. División del año (solo en el alta) -----------------------------------
 
     var form = document.getElementById('form-ciclo');
     var estructura = document.getElementById('estructura');
@@ -78,8 +78,8 @@
     }
 
     // Reparte [desde, hasta] en n tramos seguidos y sin huecos. Se trabaja en UTC para que
-    // un cambio de horario no corra un dia; los dias que no se dividen justo van a los
-    // ultimos tramos.
+    // un cambio de horario no corra un día; los días que no se dividen justo van a los
+    // últimos tramos.
     function repartir(desde, hasta, n) {
         var base = aDia(desde);
         var dias = Math.round((aDia(hasta) - base) / DIA) + 1;
@@ -92,7 +92,7 @@
         return tramos;
     }
 
-    // Una fila nueva a partir del molde, vacia y con sus id renumerados: con el id
+    // Una fila nueva a partir del molde, vacía y con sus id renumerados: con el id
     // repetido, tocar la etiqueta "Desde" de la tercera fila enfocaba el campo de la primera.
     function fila(i) {
         var f = molde.cloneNode(true);
@@ -102,7 +102,7 @@
         return f;
     }
 
-    // Las fechas de cada periodo, dentro de las del ciclo.
+    // Las fechas de cada período, dentro de las del ciclo.
     function acotarFilas() {
         contenedor.querySelectorAll('input[type="date"]').forEach(function (f) {
             if (inicio.value) f.min = inicio.value; else f.removeAttribute('min');

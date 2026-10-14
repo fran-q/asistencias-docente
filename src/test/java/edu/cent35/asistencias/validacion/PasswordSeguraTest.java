@@ -44,9 +44,9 @@ class PasswordSeguraTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "Visum2026",        // el caso tipico
-        "Abc123",           // justo el minimo: 6
-        "Aa1bbbbbbbbbbbbbbbbb",   // justo el maximo: 20 caracteres
+        "Visum2026",        // el caso típico
+        "Abc123",           // justo el mínimo: 6
+        "Aa1bbbbbbbbbbbbbbbbb",   // justo el máximo: 20 caracteres
         "aB3xyz",
     })
     @DisplayName("acepta las que cumplen largo y las tres clases de carácter")
@@ -60,10 +60,10 @@ class PasswordSeguraTest {
     @ValueSource(strings = {
         "Ab1",                      // corta
         "Aa1234567890123456789",    // 21: se pasa por uno
-        "visum2026",                // sin mayuscula
-        "VISUM2026",                // sin minuscula
-        "VisumVisum",               // sin numero
-        "12345678",                 // solo numeros
+        "visum2026",                // sin mayúscula
+        "VISUM2026",                // sin minúscula
+        "VisumVisum",               // sin número
+        "12345678",                 // solo números
     })
     @DisplayName("rechaza las que no cumplen")
     void rechazaLasInvalidas(String password) {
@@ -75,21 +75,21 @@ class PasswordSeguraTest {
     @Test
     @DisplayName("el mensaje dice QUÉ falta, no un 'no cumple los requisitos'")
     void elMensajeExplicaQueFalta() {
-        // Quien crea una cuenta no tiene por que adivinar cual de las cinco condiciones fallo.
+        // Quien crea una cuenta no tiene por qué adivinar cuál de las cinco condiciones falló.
         assertThat(mensajeDe("visum2026")).contains("una mayúscula");
         assertThat(mensajeDe("VisumVisum")).contains("un número");
         assertThat(mensajeDe("VISUM2026")).contains("una minúscula");
         assertThat(mensajeDe("Ab1")).contains("muy corta");
         assertThat(mensajeDe("Aa1234567890123456789")).contains("muy larga");
 
-        // Y cuando falta mas de una cosa, las nombra todas.
+        // Y cuando falta más de una cosa, las nombra todas.
         assertThat(mensajeDe("abc")).contains("muy corta").contains("una mayúscula").contains("un número");
     }
 
     @Test
     @DisplayName("el campo vacío lo reporta @NotBlank, no esta validación")
     void vacioNoDuplicaElError() {
-        // Si las dos se quejaran, la persona veria dos errores por el mismo hueco.
+        // Si las dos se quejaran, la persona vería dos errores por el mismo hueco.
         assertThat(violacionesDe("")).isEmpty();
         assertThat(violacionesDe(null)).isEmpty();
     }
@@ -102,9 +102,9 @@ class PasswordSeguraTest {
     @DisplayName("alta de institución, alta de usuario, recuperación y cambio: la misma regla")
     void losCuatroFormulariosCoinciden() {
         String valida   = "Visum2026";
-        String invalida = "visum";      // corta, sin mayuscula y sin numero
+        String invalida = "visum";      // corta, sin mayúscula y sin número
 
-        // Alta de institucion
+        // Alta de institución
         assertThat(erroresDeCampo(altaCon(valida), "password")).isEmpty();
         assertThat(erroresDeCampo(altaCon(invalida), "password")).isNotEmpty();
 
@@ -112,8 +112,8 @@ class PasswordSeguraTest {
         assertThat(erroresDeCampo(usuarioCon(valida), "password")).isEmpty();
         assertThat(erroresDeCampo(usuarioCon(invalida), "password")).isNotEmpty();
 
-        // Cambio desde Mi cuenta: es el que pedia 10 caracteres y ahora pide lo mismo
-        // que los demas. Con 9 tiene que pasar.
+        // Cambio desde Mi cuenta: es el que pedía 10 caracteres y ahora pide lo mismo
+        // que los demás. Con 9 tiene que pasar.
         CambioPasswordFormDto cambio = new CambioPasswordFormDto();
         cambio.setNuevaPassword(valida);
         cambio.setConfirmacion(valida);
@@ -121,7 +121,7 @@ class PasswordSeguraTest {
             .as("antes exigia 10 caracteres y rechazaba una de 9 que los demas aceptaban")
             .isEmpty();
 
-        // Recuperacion desde afuera
+        // Recuperación desde afuera
         RecuperacionCompletarFormDto rec = new RecuperacionCompletarFormDto();
         rec.setNuevaPassword(valida);
         rec.setConfirmacion(valida);

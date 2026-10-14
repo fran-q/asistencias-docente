@@ -53,7 +53,7 @@ public class DocenteFormDto {
     private boolean confirmado;
 
     // La fecha de alta no viaja en el formulario: la fija el sistema al crear el docente y
-    // despues no se edita. Ver DocenteService.crear.
+    // después no se edita. Ver DocenteService.crear.
 
     // Precarga el formulario con los datos actuales, para el modo edición. El formulario sigue
     // siendo uno solo aunque los datos vengan de dos tablas: quien edita un docente no tiene por

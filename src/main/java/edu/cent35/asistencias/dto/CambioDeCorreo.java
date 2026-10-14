@@ -12,7 +12,7 @@ public class CambioDeCorreo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // Nombre del atributo de sesion donde se guarda.
+    // Nombre del atributo de sesión donde se guarda.
     public static final String SESION = "cambioDeCorreo";
 
     private final Long usuarioId;
@@ -24,28 +24,28 @@ public class CambioDeCorreo implements Serializable {
         this.correoNuevo = correoNuevo;
     }
 
-    // De que cuenta es. Una sesion puede cambiar de usuario al volver a entrar, y un cambio
+    // De que cuenta es. Una sesión puede cambiar de usuario al volver a entrar, y un cambio
     // pedido desde otra cuenta no puede seguir valiendo.
     public Long getUsuarioId() {
         return usuarioId;
     }
 
-    // La direccion a la que la cuenta quiere pasar.
+    // La dirección a la que la cuenta quiere pasar.
     public String getCorreoNuevo() {
         return correoNuevo;
     }
 
-    // Marca validado el codigo del correo actual: hasta ese momento se puede confirmar el nuevo.
+    // Marca validado el código del correo actual: hasta ese momento se puede confirmar el nuevo.
     public void autorizarHasta(LocalDateTime hasta) {
         this.autorizadoHasta = hasta;
     }
 
-    // Si el correo actual ya se confirmo y la ventana sigue abierta.
+    // Si el correo actual ya se confirmó y la ventana sigue abierta.
     public boolean estaAutorizado() {
         return autorizadoHasta != null && LocalDateTime.now().isBefore(autorizadoHasta);
     }
 
-    // Si el correo actual se habia confirmado pero la ventana ya paso: hay que volver a empezar.
+    // Si el correo actual se había confirmado pero la ventana ya paso: hay que volver a empezar.
     public boolean autorizacionVencida() {
         return autorizadoHasta != null && !estaAutorizado();
     }

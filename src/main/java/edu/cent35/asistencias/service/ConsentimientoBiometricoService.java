@@ -24,23 +24,23 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Operaciones sobre el consentimiento biometrico del docente. Cubre RF-10
- * y RNF-13 (Ley 25.326 + Resolucion AAIP 255/2022).
+ * Operaciones sobre el consentimiento biométrico del docente. Cubre RF-10
+ * y RNF-13 (Ley 25.326 + Resolución AAIP 255/2022).
  * <p>
- * <b>Modelo</b>: cada docente puede tener varios registros historicos
+ * <b>Modelo</b>: cada docente puede tener varios registros históricos
  * (otorga -> revoca -> otorga). El "estado actual" se calcula con el
- * registro mas reciente. Solo puede haber UN registro vigente por docente
- * - garantizado a nivel aplicacion (no a nivel DB porque MariaDB no soporta
- * indices unicos parciales del estilo {@code WHERE vigente = true}).
+ * registro más reciente. Solo puede haber UN registro vigente por docente
+ * - garantizado a nivel aplicación (no a nivel DB porque MariaDB no soporta
+ * índices únicos parciales del estilo {@code WHERE vigente = true}).
  * <p>
- * <b>Multi-tenant</b>: el consentimiento se valida via el docente padre
- * (mismo patron que {@code Comision}). El service nunca toca un docente que
+ * <b>Multi-tenant</b>: el consentimiento se valida vía el docente padre
+ * (mismo patrón que {@code Comision}). El service nunca toca un docente que
  * no sea del tenant actual.
  * <p>
  * <b>Quien otorga/revoca</b>: en Sprint 3 lo hace el admin (rol
- * {@code INSTITUCION} o {@code ADMIN}) en representacion del docente, que
- * firma en papel. En Sprint 4 se habilitara que el docente acepte por si
- * mismo via login propio (metodo {@code DIGITAL}).
+ * {@code INSTITUCION} o {@code ADMIN}) en representación del docente, que
+ * firma en papel. En Sprint 4 se habilitará que el docente acepte por sí
+ * mismo vía login propio (método {@code DIGITAL}).
  */
 @Service
 @RequiredArgsConstructor
@@ -53,7 +53,7 @@ public class ConsentimientoBiometricoService {
     private final ModeloFacialRepository modeloFacialRepository;
     private final IdentificacionFacialService identificacionFacialService;
 
-    // Estado del consentimiento del docente segun su ultimo registro, o NUNCA_OTORGADO si no hay.
+    // Estado del consentimiento del docente según su último registro, o NUNCA_OTORGADO si no hay.
     @Transactional(readOnly = true)
     public EstadoConsentimiento estadoActual(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -89,7 +89,7 @@ public class ConsentimientoBiometricoService {
         return resultado;
     }
 
-    // Historial completo del docente (del mas nuevo al mas viejo).
+    // Historial completo del docente (del más nuevo al más viejo).
     @Transactional(readOnly = true)
     public List<ConsentimientoBiometrico> historialDe(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -99,7 +99,7 @@ public class ConsentimientoBiometricoService {
         return historial;
     }
 
-    // Toca los lazy que el template va a leer ya cerrada la transaccion (open-in-view=false).
+    // Toca los lazy que el template va a leer ya cerrada la transacción (open-in-view=false).
     private void touchAsociacionesLazy(ConsentimientoBiometrico c) {
         if (c.getRegistradoPor() != null) c.getRegistradoPor().getUsername();
         if (c.getRevocadoPor() != null) c.getRevocadoPor().getUsername();
@@ -216,7 +216,7 @@ public class ConsentimientoBiometricoService {
      */
     private void darDeBajaElModeloFacial(Long docenteId) {
         modeloFacialRepository.findByDocenteIdAndActivoTrue(docenteId).ifPresent(modelo -> {
-            // Evictar ANTES de persistir la baja, igual que en la supresion ARCO: mientras
+            // Evictar ANTES de persistir la baja, igual que en la supresión ARCO: mientras
             // siga cargado en memoria el reconocimiento lo sigue usando aunque la fila diga
             // que esta inactivo.
             identificacionFacialService.evictarModelo(modelo.getId());
@@ -245,7 +245,7 @@ public class ConsentimientoBiometricoService {
         return d;
     }
 
-    // Normaliza texto opcional: deja null si viene vacio o solo con espacios.
+    // Normaliza texto opcional: deja null si viene vacío o solo con espacios.
     private static String trimToNull(String s) {
         if (s == null) return null;
         String t = s.trim();

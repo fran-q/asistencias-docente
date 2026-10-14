@@ -45,7 +45,7 @@ public class SesionesActivasService {
         return registro.getAllPrincipals().stream()
             .filter(p -> esDe(p, username))
             // false: las vencidas no cuentan. Son las que ya fueron desplazadas y todavía no
-            // volvieron a pedir nada, y anunciarlas mandaria a cerrar algo que ya esta cerrado.
+            // volvieron a pedir nada, y anunciarlas mandaría a cerrar algo que ya está cerrado.
             .flatMap(p -> registro.getAllSessions(p, false).stream())
             .filter(s -> !s.getSessionId().equals(sesionActual))
             .sorted(Comparator.comparing(SessionInformation::getLastRequest).reversed())
@@ -81,7 +81,7 @@ public class SesionesActivasService {
         return cerradas;
     }
 
-    // El principal del registro es el UserDetails con el que se entro; se compara su usuario.
+    // El principal del registro es el UserDetails con el que se entró; se compara su usuario.
     private static boolean esDe(Object principal, String username) {
         return principal instanceof UserDetails u && u.getUsername().equals(username);
     }

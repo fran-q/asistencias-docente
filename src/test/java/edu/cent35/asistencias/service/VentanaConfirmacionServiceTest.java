@@ -86,7 +86,7 @@ class VentanaConfirmacionServiceTest {
     @DisplayName("Un frame perdido no reinicia la cuenta")
     void toleraUnFramePerdido() {
         service.registrar(racha, ANA, 0);
-        // Salto de 2 s: se perdio un frame, pero la persona sigue ahi.
+        // Salto de 2 s: se perdió un frame, pero la persona sigue ahí.
         service.registrar(racha, ANA, 2000);
         assertThat(service.registrar(racha, ANA, 3000).confirmado())
             .as("exigir frames perfectos haria que nunca confirme con una camara real")
@@ -123,7 +123,7 @@ class VentanaConfirmacionServiceTest {
     @Test
     @DisplayName("El progreso informado nunca supera el objetivo")
     void progresoAcotado() {
-        // Alguien que se queda parado mas tiempo del necesario: lecturas seguidas, sin
+        // Alguien que se queda parado más tiempo del necesario: lecturas seguidas, sin
         // huecos, hasta pasarse holgadamente de los 3 s de la ventana.
         VentanaConfirmacionService.Estado e = null;
         for (long t = 0; t <= 6000; t += 1000) {

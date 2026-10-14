@@ -21,10 +21,10 @@ import java.util.Map;
 @Slf4j
 public class ManejadorDeColisiones {
 
-    // Cada restriccion de la base, con lo que significa para quien esta usando el sistema.
-    // El nombre del indice es la clave porque es lo unico que el motor devuelve: el mensaje
+    // Cada restricción de la base, con lo que significa para quien está usando el sistema.
+    // El nombre del índice es la clave porque es lo único que el motor devuelve: el mensaje
     // crudo ("Duplicate entry '1-ECO-2024' for key 'uq_carreras_inst_codigo'") no sirve para
-    // mostrar, pero alcanza para saber exactamente que se choco.
+    // mostrar, pero alcanza para saber exactamente que se chocó.
     private static final Map<String, String> MENSAJES = new LinkedHashMap<>();
     static {
         MENSAJES.put("uq_docentes_inst_dni",
@@ -79,9 +79,9 @@ public class ManejadorDeColisiones {
                            HttpServletRequest request,
                            RedirectAttributes redirect) throws DataIntegrityViolationException {
 
-        // El pase de asistencia consulta por JSON: devolverle una redireccion a HTML rompe el
+        // El pase de asistencia consulta por JSON: devolverle una redirección a HTML rompe el
         // fetch del navegador con un error que no dice nada. Que siga su curso y termine en un
-        // codigo de error, que es lo que ese cliente sabe leer.
+        // código de error, que es lo que ese cliente sabe leer.
         if (!esperaHtml(request)) throw ex;
 
         String causa = causaRaiz(ex);
@@ -108,7 +108,7 @@ public class ManejadorDeColisiones {
     }
 
     // Distingue al navegador pidiendo una pantalla de un fetch pidiendo datos. No alcanza con
-    // mirar el Accept: fetch() manda "*/*" salvo que se le indique otra cosa, asi que quien
+    // mirar el Accept: fetch() manda "*/*" salvo que se le indique otra cosa, así que quien
     // manda JSON en el cuerpo cuenta como cliente de datos aunque no lo declare al pedir.
     private static boolean esperaHtml(HttpServletRequest request) {
         String tipoEnviado = request.getContentType();
@@ -118,8 +118,8 @@ public class ManejadorDeColisiones {
         return accept == null || !accept.contains("application/json") || accept.contains("text/html");
     }
 
-    // Recorre la cadena de causas: el nombre del indice aparece en el error del driver, no
-    // en el de Spring, que solo dice que hubo una violacion de integridad.
+    // Recorre la cadena de causas: el nombre del índice aparece en el error del driver, no
+    // en el de Spring, que solo dice que hubo una violación de integridad.
     private static String causaRaiz(Throwable ex) {
         StringBuilder sb = new StringBuilder();
         Throwable t = ex;
@@ -147,7 +147,7 @@ public class ManejadorDeColisiones {
             return "/";
         }
 
-        // Si trae host, tiene que ser el mismo por el que entro el pedido.
+        // Si trae host, tiene que ser el mismo por el que entró el pedido.
         if (uri.getHost() != null && !uri.getHost().equalsIgnoreCase(request.getServerName())) {
             log.warn("Referer de otro host descartado: {}", referer);
             return "/";
@@ -156,7 +156,7 @@ public class ManejadorDeColisiones {
         String ruta = uri.getPath();
         if (ruta == null || !ruta.startsWith("/")) return "/";
 
-        // La redireccion es relativa al contexto, asi que el prefijo se saca antes de sumarlo.
+        // La redirección es relativa al contexto, así que el prefijo se saca antes de sumarlo.
         String contexto = request.getContextPath();
         if (!contexto.isEmpty() && ruta.startsWith(contexto)) {
             ruta = ruta.substring(contexto.length());

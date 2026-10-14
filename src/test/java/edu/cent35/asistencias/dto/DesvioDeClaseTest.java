@@ -81,7 +81,7 @@ class DesvioDeClaseTest {
         LocalTime[][] casos = {
             {LocalTime.of(18, 0),  LocalTime.of(20, 0)},    // clase entera
             {LocalTime.of(18, 20), LocalTime.of(19, 30)},   // tarde y se fue antes
-            {LocalTime.of(17, 0),  LocalTime.of(21, 0)},    // jornada mas larga que la clase
+            {LocalTime.of(17, 0),  LocalTime.of(21, 0)},    // jornada más larga que la clase
             {LocalTime.of(8, 0),   LocalTime.of(10, 0)},    // jornada que no toca la clase
             {LocalTime.of(21, 0),  LocalTime.of(23, 0)},    // jornada posterior a la clase
         };
@@ -97,8 +97,8 @@ class DesvioDeClaseTest {
     @Test
     @DisplayName("sin jornada no se afirma ningun desvio")
     void sinJornada() {
-        // Una carga manual guarda la hora en que se cargo, no la de llegada: decir "llego 40
-        // minutos tarde" con ese dato seria inventarlo.
+        // Una carga manual guarda la hora en que se cargó, no la de llegada: decir "llegó 40
+        // minutos tarde" con ese dato sería inventarlo.
         Asistencia a = asistencia();
         a.setBloque(null);
 

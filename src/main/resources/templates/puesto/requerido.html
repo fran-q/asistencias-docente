@@ -28,8 +28,8 @@
             </p>
         </header>
 
-        <!-- Este equipo no esta autorizado. Desde V030 puede haber varios a la vez -una
-             camara por entrada- pero cada uno se autoriza desde si mismo: si no, cualquiera
+        <!-- Este equipo no está autorizado. Desde V030 puede haber varios a la vez -una
+             cámara por entrada- pero cada uno se autoriza desde sí mismo: si no, cualquiera
              con la cuenta institucional se lleva la captura a donde quiera (ADR-0015). -->
         <div class="card" th:if="${bloqueado and hayAlguno}">
             <p>
@@ -70,8 +70,8 @@
             </p>
 
             <form th:action="@{/puestos/designar}" method="post" novalidate>
-                <!-- Un nombre repetido no es un error de formato del campo, asi que no lo
-                     puede reportar la validacion del navegador: llega del servidor y se
+                <!-- Un nombre repetido no es un error de formato del campo, así que no lo
+                     puede reportar la validación del navegador: llega del servidor y se
                      muestra acá, junto al formulario que hay que corregir. -->
                 <div th:if="${error}" class="alert alert--error" role="alert">
                     <p th:text="${error}">Error</p>
@@ -91,8 +91,8 @@
             </form>
         </div>
 
-        <!-- Sin cupo no hay formulario que completar. Sin este parrafo la pantalla se queda
-             muda: se ve una tabla de equipos y ninguna explicacion de por que no se puede
+        <!-- Sin cupo no hay formulario que completar. Sin este párrafo la pantalla se queda
+             muda: se ve una tabla de equipos y ninguna explicación de por qué no se puede
              sumar este. -->
         <div class="card" th:if="${puedeDesignar and !hayCupo and idDeEsteEquipo == null}">
             <h2>Llegaste al tope de equipos</h2>
@@ -103,9 +103,9 @@
             </p>
         </div>
 
-        <!-- El tope se edita donde se siente. Tambien esta en "Mi institucion", junto al
-             resto de los datos; esta copia existe porque contra el limite se choca aca, y
-             mandar a otra pantalla a cambiar un numero y volver son tres pasos. -->
+        <!-- El tope se edita donde se siente. También está en "Mi institución", junto al
+             resto de los datos; esta copia existe porque contra el límite se choca acá, y
+             mandar a otra pantalla a cambiar un número y volver son tres pasos. -->
         <div class="card" th:if="${puedeDesignar}">
             <h2>Cuántos equipos pueden tomar asistencia</h2>
             <p class="text-muted">
@@ -114,11 +114,11 @@
                     th:if="${tope == null}">, sin ningún tope puesto</span>.
             </p>
 
-            <!-- El campo arranca cerrado y se abre con el boton. Un numero editable a la
-                 vista se cambia sin querer, y este gobierna cuantas maquinas pueden tener
+            <!-- El campo arranca cerrado y se abre con el botón. Un número editable a la
+                 vista se cambia sin querer, y este gobierna cuántas máquinas pueden tener
                  una credencial de captura: abrirlo es el paso deliberado que faltaba.
-                 <details> es nativo, asi que anda sin JS y es lo que esta pantalla ya usa
-                 mas abajo para la nota de la camara de red. -->
+                 <details> es nativo, así que anda sin JS y es lo que esta pantalla ya usa
+                 más abajo para la nota de la cámara de red. -->
             <details class="puesto__tope">
                 <summary class="btn btn--ghost">Cambiar el tope</summary>
 
@@ -146,8 +146,8 @@
             </details>
         </div>
 
-        <!-- Sin esto, quien mira la tabla desde otra maquina ve un boton que no esta y no
-             tiene forma de saber si falta porque no le corresponde o porque algo se rompio. -->
+        <!-- Sin esto, quien mira la tabla desde otra máquina ve un botón que no esta y no
+             tiene forma de saber si falta porque no le corresponde o porque algo se rompió. -->
         <div class="card" th:if="${puedeDesignar and hayAlguno and idDeEsteEquipo == null}">
             <p class="text-muted">
                 El <strong>modo kiosco</strong> —que deja al equipo tomando asistencia sin
@@ -174,10 +174,10 @@
                         <tr th:each="p : ${puestos}" th:classappend="${!p.activo} ? 'row--inactive'">
                             <td>
                                 <span th:text="${p.nombre}">Secretaría PC-1</span>
-                                <!-- Sin esta marca la pantalla lista nombres y no dice cual
-                                     de todos es la maquina en la que uno esta sentado, que es
-                                     el unico dato que hace falta para saber si se puede
-                                     revocar desde aca. -->
+                                <!-- Sin esta marca la pantalla lista nombres y no dice cuál
+                                     de todos es la máquina en la que uno está sentado, que es
+                                     el único dato que hace falta para saber si se puede
+                                     revocar desde acá. -->
                                 <span th:if="${p.id == idDeEsteEquipo}"
                                       class="badge badge--accent">Este equipo</span>
                             </td>
@@ -186,9 +186,9 @@
                                 <span th:unless="${p.activo}" class="badge badge--neutral">Revocado</span>
                             </td>
                             <!-- Estado y kiosco son dos columnas y no una: un equipo puede
-                                 estar autorizado y aun asi no tener permiso de funcionar solo,
-                                 que es justo la distincion que hay que poder ver de un vistazo
-                                 (RF-85). Juntarlas obligaria a inventar un tercer estado. -->
+                                 estar autorizado y aun así no tener permiso de funcionar solo,
+                                 que es justo la distinción que hay que poder ver de un vistazo
+                                 (RF-85). Juntarlas obligaría a inventar un tercer estado. -->
                             <td>
                                 <span th:if="${p.operaDesatendido()}" class="badge badge--warning"
                                       th:title="${p.kioscoHabilitadoEn != null}
@@ -202,10 +202,10 @@
                                          ? ${#temporals.format(p.ultimoUsoEn, 'dd/MM/yyyy HH:mm')}
                                          : 'Nunca'">—</td>
                             <td class="table__actions">
-                                <!-- Habilitar el kiosco exige estar en esa maquina, igual
+                                <!-- Habilitar el kiosco exige estar en esa máquina, igual
                                      que revocar. Convierte la cookie del equipo en la
                                      credencial completa: si se pudiera a distancia, la
-                                     contrasena institucional sola alcanzaria para volverla
+                                     contraseña institucional sola alcanzaría para volverla
                                      una credencial. -->
                                 <form th:if="${p.activo and !p.operaDesatendido() and p.id == idDeEsteEquipo}"
                                       th:action="@{/puestos/{id}/kiosco/habilitar(id=${p.id})}"
@@ -219,7 +219,7 @@
 
                                 <!-- Apagarlo, en cambio, funciona desde cualquier lado: el
                                      momento en que hace falta es justo aquel en el que no se
-                                     puede llegar hasta esa maquina. -->
+                                     puede llegar hasta esa máquina. -->
                                 <form th:if="${p.operaDesatendido()}"
                                       th:action="@{/puestos/{id}/kiosco/deshabilitar(id=${p.id})}"
                                       method="post" class="inline-form"
@@ -230,10 +230,10 @@
                                             data-texto-enviando="Apagando...">Apagar kiosco</button>
                                 </form>
 
-                                <!-- Cualquier equipo se revoca desde aca (V030). Con una
-                                     camara por entrada, exigir estar en esa maquina obligaba
+                                <!-- Cualquier equipo se revoca desde acá (V030). Con una
+                                     cámara por entrada, exigir estar en esa máquina obligaba
                                      a caminar hasta la que justo puede estar rota o robada,
-                                     que es cuando mas urge revocarla. -->
+                                     que es cuando más urge revocarla. -->
                                 <form th:if="${p.activo}"
                                       th:action="@{/puestos/{id}/revocar(id=${p.id})}"
                                       method="post" class="inline-form"
@@ -255,10 +255,10 @@
         </div>
 
 
-        <!-- ================= Camara de este equipo (V026) =================
+        <!-- ================= Cámara de este equipo (V026) =================
              Solo en el equipo autorizado y solo para la cuenta institucional. El
-             identificador de la camara lo genera el navegador y vale unicamente en esta
-             maquina: elegido desde otra, apuntaria a un aparato que ahi no existe.
+             identificador de la cámara lo genera el navegador y vale únicamente en esta
+             máquina: elegido desde otra, apuntaría a un aparato que ahí no existe.
 
              El script va adentro del bloque y no al final del archivo: esta plantilla se
              inserta en el layout por su <section>, y lo que quede afuera se descarta. -->

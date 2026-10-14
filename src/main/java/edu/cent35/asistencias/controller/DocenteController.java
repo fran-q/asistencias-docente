@@ -65,7 +65,7 @@ public class DocenteController {
             .toList();
         model.addAttribute("docentes", items);
         // Tope del selector de fecha de baja: se resuelve en el servidor porque la fecha de
-        // la maquina del cliente puede estar corrida.
+        // la máquina del cliente puede estar corrida.
         model.addAttribute("hoy", LocalDate.now());
         return "docente/list";
     }
@@ -166,8 +166,8 @@ public class DocenteController {
             redirect.addFlashAttribute("flashMensaje", "Docente actualizado correctamente.");
             return "redirect:/docentes";
         } catch (ConfirmacionRequeridaException ex) {
-            // Esta persona tambien tiene cuenta: el cambio de nombre se ve en pantallas que quien
-            // edita no esta mirando, asi que se avisa antes de escribir.
+            // Esta persona también tiene cuenta: el cambio de nombre se ve en pantallas que quien
+            // edita no está mirando, así que se avisa antes de escribir.
             prepararConfirmacion(model, ex, form,
                 "/docentes/" + id + "/editar", "/docentes/" + id + "/editar");
             return "identidad/confirmar";
@@ -182,7 +182,7 @@ public class DocenteController {
     private void agregarDatosEdicion(Long id, Model model) {
         model.addAttribute("docente", service.buscarPorId(id));
         model.addAttribute("modo", "editar");
-        // Consentimiento biometrico (Sprint 3 Fase D)
+        // Consentimiento biométrico (Sprint 3 Fase D)
         model.addAttribute("estadoConsentimiento", consentimientoService.estadoActual(id));
         consentimientoService.vigenteDe(id)
             .ifPresent(c -> model.addAttribute("consentimientoVigente", c));
@@ -190,10 +190,10 @@ public class DocenteController {
         model.addAttribute("tieneModeloFacial", modeloFacialService.tieneModeloActivo(id));
         modeloFacialService.modeloActivoDe(id)
             .ifPresent(m -> model.addAttribute("modeloFacial", m));
-        // Supresion ARCO (RNF-14): tambien contempla modelos historicos
+        // Supresión ARCO (RNF-14): también contempla modelos históricos
         model.addAttribute("tieneModelosBiometricos", modeloFacialService.tieneModelos(id));
-        // Por que no se puede dar de baja, o null si se puede. La pantalla lo usa para
-        // avisar de una vez en lugar de abrir un cuadro de confirmacion que va a fallar.
+        // Por qué no se puede dar de baja, o null si se puede. La pantalla lo usa para
+        // avisar de una vez en lugar de abrir un cuadro de confirmación que va a fallar.
         model.addAttribute("motivoQueImpideLaBaja", service.motivoQueImpideLaBaja(id));
         // Tope del selector de fecha de baja, resuelto en el servidor: el reloj del
         // cliente puede estar corrido.

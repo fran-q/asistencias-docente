@@ -39,7 +39,7 @@ public class GeneradorAusenciasService {
     private final HorarioRepository horarioRepository;
     private final AsistenciaRepository asistenciaRepository;
     private final BloquePresenciaService bloquePresenciaService;
-    // Los feriados y el receso: el ciclo pone el limite grueso, esto resuelve lo de adentro.
+    // Los feriados y el receso: el ciclo pone el límite grueso, esto resuelve lo de adentro.
     private final DiaNoLaborableService diaNoLaborableService;
 
     @Value("${app.asistencia.ausencias-habilitado:true}")
@@ -60,17 +60,17 @@ public class GeneradorAusenciasService {
         for (Institucion institucion : institucionRepository.findAll()) {
             if (Boolean.FALSE.equals(institucion.getActivo())) continue;
             try {
-                // Propagacion manual del tenant: los hilos del scheduler no
+                // Propagación manual del tenant: los hilos del scheduler no
                 // pasan por TenantInterceptor (ver javadoc de TenantContext).
                 TenantContext.set(institucion.getId());
                 // El orden no es indistinto: cerrar los bloques imputa las clases que el
-                // docente efectivamente cubrio, y esas ya no son candidatas a ausencia. Al
-                // reves, la ausencia se escribiria primero y la imputacion chocaria contra el
-                // UNIQUE, dejando como ausente una clase que si se dio.
+                // docente efectivamente cubrió, y esas ya no son candidatas a ausencia. Al
+                // revés, la ausencia se escribiría primero y la imputación chocaría contra el
+                // UNIQUE, dejando como ausente una clase que sí se dio.
                 totalCerrados += bloquePresenciaService.cerrarBloquesVencidos(hoy, ahora);
                 totalCreadas += generarParaInstitucion(institucion.getId(), hoy, ahora);
             } catch (RuntimeException ex) {
-                // Una institucion con error no debe frenar a las demas.
+                // Una institución con error no debe frenar a las demás.
                 log.error("Job de ausencias fallo para institucion {}: {}",
                           institucion.getId(), ex.getMessage(), ex);
             } finally {
@@ -110,11 +110,11 @@ public class GeneradorAusenciasService {
 
         int creadas = 0;
         for (Horario h : horarios) {
-            if (!ahora.isAfter(h.getHoraFin())) continue;      // la clase no termino
+            if (!ahora.isAfter(h.getHoraFin())) continue;      // la clase no terminó
             Docente docente = h.getComision().getDocenteAsignado();
             if (docente == null || Boolean.FALSE.equals(docente.getActivo())) continue;
 
-            // Idempotencia a nivel aplicacion: si ya hay marca, no hay ausencia.
+            // Idempotencia a nivel aplicación: si ya hay marca, no hay ausencia.
             boolean yaTieneMarca = asistenciaRepository
                 .findByDocenteIdAndHorarioIdAndFecha(docente.getId(), h.getId(), fecha)
                 .isPresent();
@@ -138,7 +138,7 @@ public class GeneradorAusenciasService {
                          docente.getId(), h.getId(), fecha, institucionId);
             } catch (DataIntegrityViolationException ex) {
                 // Carrera con el pase facial o con una carga manual: el UNIQUE
-                // de BD la resolvio a favor de la marca real. Nada que hacer.
+                // de BD la resolvió a favor de la marca real. Nada que hacer.
                 log.info("Ausencia descartada por marca concurrente: docente={}, horario={}, fecha={}",
                          docente.getId(), h.getId(), fecha);
             }

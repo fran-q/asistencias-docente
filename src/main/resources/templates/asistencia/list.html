@@ -62,7 +62,7 @@
                         <tr th:each="a : ${asistencias}"
                             th:classappend="${a.calculada} ? 'row--inactive'" role="row">
                             <!-- Igual que en el reporte: bajo "Entrada" va la llegada observada
-                                 y nada mas. La carga manual muestra aparte cuando se asento. -->
+                                 y nada más. La carga manual muestra aparte cuando se asentó. -->
                             <td role="cell" data-label="Entrada">
                                 <span th:if="${a.horaDeLlegada and a.horaRegistrada != null}"
                                       th:text="${#temporals.format(a.horaRegistrada, 'HH:mm:ss')}">18:05:23</span>

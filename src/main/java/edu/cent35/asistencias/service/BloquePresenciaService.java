@@ -61,20 +61,20 @@ public class BloquePresenciaService {
     private final ModeloFacialRepository modeloFacialRepository;
     private final ResolutorDeBloquesService resolutor;
     // El pase pregunta lo mismo que ya pregunta el job de ausencias. Sin esto, un feriado
-    // quedaba con presencias de unos docentes y sin ausencias de los demas.
+    // quedaba con presencias de unos docentes y sin ausencias de los demás.
     private final DiaNoLaborableService diaNoLaborableService;
     private final AsistenciaService asistenciaService;
     private final ConsentimientoBiometricoService consentimientoService;
     private final AsistenciaRepository asistenciaRepository;
     private final UsuarioRepository usuarioRepository;
     private final MotivoCargaManualRepository motivoCargaManualRepository;
-    // Solo para explicar un rechazo: sin ciclo activo, "no tenes clases" culparia al docente
+    // Solo para explicar un rechazo: sin ciclo activo, "no tenés clases" culparia al docente
     // de algo que es del calendario.
     private final CicloLectivoRepository cicloRepository;
 
     private static final DateTimeFormatter HM = DateTimeFormatter.ofPattern("HH:mm");
 
-    // Lo que dice siempre un rechazo por falta de clase; despues de los dos puntos va el porque.
+    // Lo que dice siempre un rechazo por falta de clase; después de los dos puntos va el porque.
     private static final String SIN_CLASE = "No hay clase en este momento: ";
 
     // Minutos que tienen que pasar desde la entrada para aceptar una salida (RF-77).
@@ -261,21 +261,21 @@ public class BloquePresenciaService {
     private ResultadoPresencia abrir(Docente docente, Long tenantId, Long modeloFacialId,
                                      Double distanciaLbph, LocalDateTime instante,
                                      PuestoCaptura puesto, EntradaManual manual) {
-        // Un dia declarado sin clases no abre bloque (V024). La asistencia se registra CONTRA
-        // UN HORARIO, asi que una marca en un feriado afirma que se dicto una clase que la
-        // institucion habia cancelado: es el mismo dato falso que la ausencia automatica, del
-        // otro lado. Con el kiosco pesa mas, porque nadie mira la pantalla para notarlo.
+        // Un día declarado sin clases no abre bloque (V024). La asistencia se registra CONTRA
+        // UN HORARIO, así que una marca en un feriado afirma que se dictó una clase que la
+        // institución había cancelado: es el mismo dato falso que la ausencia automática, del
+        // otro lado. Con el kiosco pesa más, porque nadie mira la pantalla para notarlo.
         //
         // Corta solo la APERTURA. Un bloque ya abierto se tiene que poder cerrar siempre, o
-        // quedaria colgado hasta que lo levante el job.
+        // quedaría colgado hasta que lo levante el job.
         Optional<String> motivoSinClases =
             diaNoLaborableService.motivoSinClases(tenantId, instante.toLocalDate());
         if (motivoSinClases.isPresent()) {
             log.info("Entrada rechazada: {} esta marcado como dia sin clases ({}), docente={}",
                      instante.toLocalDate(), motivoSinClases.get(), docente.getId());
             // El camino a seguir no es el mismo para los dos: al docente parado frente a la
-            // camara hay que mandarlo a secretaria, pero decirle eso a secretaria --que es
-            // quien carga la entrada a mano-- seria mandarla a preguntarse a si misma.
+            // cámara hay que mandarlo a secretaría, pero decirle eso a secretaría --que es
+            // quien carga la entrada a mano-- sería mandarla a preguntarse a sí misma.
             return ResultadoPresencia.rechazada(manual == null
                 ? "Hoy no hay clases: " + motivoSinClases.get() + ". Si viniste igual, pedile a "
                   + "secretaría que cargue la asistencia a mano."
@@ -319,13 +319,13 @@ public class BloquePresenciaService {
             .fecha(instante.toLocalDate())
             .horaEntrada(horaEntrada)
             .origenEntrada(manual == null ? OrigenMarca.AUTOMATICO : OrigenMarca.MANUAL)
-            // De que equipo salio la jornada (RF-89). Sin sesion no hay usuario a quien
+            // De que equipo salió la jornada (RF-89). Sin sesión no hay usuario a quien
             // atribuir el registro, y "desde donde" es lo que reemplaza a "quien".
             .puesto(puesto)
             .modeloFacialEntrada(modelo)
             .confianzaEntrada(distanciaLbph == null ? null
                 : asistenciaService.distanciaToConfianza(distanciaLbph))
-            // Quien la cargo y por que, o los tres en null si la abrio un rostro. Lo exige
+            // Quién la cargó y por qué, o los tres en null si la abrió un rostro. Lo exige
             // ck_bloques_entrada_admin, y antes que el CHECK lo exige el registro: una hora
             // de entrada que nadie firma no se puede defender.
             .abiertoPor(manual == null ? null : manual.admin())
@@ -426,13 +426,13 @@ public class BloquePresenciaService {
             .toList();
 
         if (deHoy.isEmpty()) {
-            // Las clases del dia existen solo dentro de un ciclo activo.
+            // Las clases del día existen solo dentro de un ciclo activo.
             return cicloRepository.activoEnFecha(tenantId, fecha).isEmpty()
                 ? SIN_CLASE + "no hay un ciclo lectivo activo que incluya el día de hoy."
                 : SIN_CLASE + "hoy no tenés clases asignadas.";
         }
 
-        // Ninguna esta en ventana: las que no terminaron todavia no la abrieron.
+        // Ninguna está en ventana: las que no terminaron todavía no la abrieron.
         Optional<Horario> proxima = deHoy.stream()
             .filter(h -> h.getHoraInicio().isAfter(hora))
             .min(Comparator.comparing(Horario::getHoraInicio));
@@ -568,8 +568,8 @@ public class BloquePresenciaService {
                 "La hora de salida tiene que ser posterior a la de entrada ("
                 + bloque.getHoraEntrada() + ").");
         }
-        // Una salida futura acreditaria una permanencia que todavia no ocurrio. Solo aplica
-        // al bloque de hoy: los de dias anteriores ya terminaron enteros.
+        // Una salida futura acreditaria una permanencia que todavía no ocurrió. Solo aplica
+        // al bloque de hoy: los de días anteriores ya terminaron enteros.
         if (bloque.getFecha().equals(LocalDate.now()) && horaSalida.isAfter(LocalTime.now())) {
             throw new IllegalArgumentException("La hora de salida no puede ser futura.");
         }
@@ -591,11 +591,11 @@ public class BloquePresenciaService {
         bloque.setCerradoPor(admin);
         bloque.setMotivoCierre(motivo);
         bloque.setDetalleCierre(detalleLimpio);
-        // Lo exige ck_bloques_salida_modelo, y ademas la hora ya no la sostiene una medicion.
+        // Lo exige ck_bloques_salida_modelo, y además la hora ya no la sostiene una medición.
         bloque.setModeloFacialSalida(null);
         bloque.setConfianzaSalida(null);
-        // De que equipo salio, si salio de alguno (V031). Desde la pantalla de pendientes no
-        // hay ninguno: ahi quien sostiene la hora es el admin, y eso lo dice cerradoPor.
+        // De que equipo salió, si salió de alguno (V031). Desde la pantalla de pendientes no
+        // hay ninguno: ahí quien sostiene la hora es el admin, y eso lo dice cerradoPor.
         bloque.setPuestoSalida(puesto);
 
         BloquePresencia cerrado = bloqueRepository.saveAndFlush(bloque);
@@ -609,7 +609,7 @@ public class BloquePresenciaService {
             imputadas++;
         }
 
-        // Si la correccion acorto el rango, hay clases marcadas por un rango que ya no existe.
+        // Si la corrección acorto el rango, hay clases marcadas por un rango que ya no existe.
         Set<Long> idsCubiertos = cubiertas.stream().map(Horario::getId).collect(Collectors.toSet());
         List<Asistencia> fueraDeRango = asistenciaRepository
             .findByBloqueIdOrderByHoraRegistradaAsc(cerrado.getId()).stream()
@@ -650,21 +650,21 @@ public class BloquePresenciaService {
         return motivo;
     }
 
-    // Normaliza texto opcional: deja null si viene vacio o solo con espacios.
+    // Normaliza texto opcional: deja null si viene vacío o solo con espacios.
     private static String trimToNull(String texto) {
         if (texto == null) return null;
         String t = texto.trim();
         return t.isEmpty() ? null : t;
     }
 
-    // Bloques sin salida registrada, del mas viejo al mas nuevo (RF-79).
+    // Bloques sin salida registrada, del más viejo al más nuevo (RF-79).
     @Transactional(readOnly = true)
     public List<BloquePresencia> pendientesDeCierre() {
         return bloqueRepository.findPendientesDeCierre(TenantContext.getRequired());
     }
 
     // ------------------------------------------------------------------------
-    //  Cierre automatico
+    //  Cierre automático
     // ------------------------------------------------------------------------
 
     /**

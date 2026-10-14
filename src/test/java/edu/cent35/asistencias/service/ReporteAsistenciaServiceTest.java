@@ -59,10 +59,10 @@ class ReporteAsistenciaServiceTest {
 
     @BeforeEach
     void setUp() {
-        // El reporte pasa el tenant explicito a la consulta desde ADR-0016.
+        // El reporte pasa el tenant explícito a la consulta desde ADR-0016.
         TenantContext.set(1L);
         // El tope viene de application.properties; sin fijarlo, en el test unitario vale 0
-        // y todo reporte saldria vacio por truncamiento.
+        // y todo reporte saldría vacío por truncamiento.
         ReflectionTestUtils.setField(service, "maxFilas", 2000);
     }
 
@@ -128,8 +128,8 @@ class ReporteAsistenciaServiceTest {
     @DisplayName("el tiempo fuera de clase se cuenta una vez por jornada, no una por clase")
     void fueraDeClaseNoSeDuplicaEntreClases() {
         // Una jornada de 17:50 a 22:10 que cubre dos clases seguidas: 18 a 20 y 20 a 22. Los
-        // diez minutos de antes son de la primera y los diez de despues, de la segunda. El
-        // rato entre las dos no es tiempo de mas: es la segunda clase.
+        // diez minutos de antes son de la primera y los diez de después, de la segunda. El
+        // rato entre las dos no es tiempo de más: es la segunda clase.
         BloquePresencia jornada = BloquePresencia.builder()
             .id(7L).fecha(LocalDate.of(2026, 6, 15))
             .horaEntrada(LocalTime.of(17, 50)).horaSalida(LocalTime.of(22, 10))
@@ -180,7 +180,7 @@ class ReporteAsistenciaServiceTest {
         return a;
     }
 
-    // La proyeccion que devuelve la consulta de bordes, armada a mano para el test.
+    // La proyección que devuelve la consulta de bordes, armada a mano para el test.
     private AsistenciaRepository.BordesDeLaJornada bordes(Long bloqueId, LocalTime primera,
                                                           LocalTime ultima) {
         return new AsistenciaRepository.BordesDeLaJornada() {

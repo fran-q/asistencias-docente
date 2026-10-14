@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
-  Pagina de error generica del sistema.
-  Spring Boot la usa automaticamente para CUALQUIER codigo de error HTTP
-  (404, 403, 500, etc.) cuando no hay un template mas especifico en
+  Página de error genérica del sistema.
+  Spring Boot la usa automáticamente para CUALQUIER código de error HTTP
+  (404, 403, 500, etc.) cuando no hay un template más específico en
   templates/error/{status}.html.
 
   Es standalone (no extiende layout/base) para que renderice incluso si
-  el problema esta en el layout o en la sesion.
+  el problema está en el layout o en la sesión.
 
   Atributos que Spring inyecta: status, error, message, path, timestamp.
 -->
@@ -61,8 +61,8 @@
             <a href="javascript:history.back()" class="btn btn--ghost">Volver atrás</a>
         </div>
 
-        <!-- Detalle tecnico: lo justo para que soporte encuentre el error en el registro
-             del servidor (codigo, ruta y hora). El mensaje interno de la excepcion no se
+        <!-- Detalle técnico: lo justo para que soporte encuentre el error en el registro
+             del servidor (código, ruta y hora). El mensaje interno de la excepción no se
              muestra: para quien usa el sistema no significa nada, y puede traer nombres de
              tablas o de restricciones de la base (server.error.include-message=never). -->
         <details class="error-card__detail" th:if="${path != null}">

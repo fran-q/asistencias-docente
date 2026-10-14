@@ -98,7 +98,7 @@ class CiclosLectivosIT {
     @Autowired private RolRepository rolRepository;
     @Autowired private UsuarioRepository usuarioRepository;
 
-    // Cada metodo trabaja sobre su propia institucion: asi el estado de uno no filtra al
+    // Cada método trabaja sobre su propia institución: así el estado de uno no filtra al
     // siguiente y cada caso arranca con un calendario limpio.
     private static final java.util.concurrent.atomic.AtomicInteger SECUENCIA =
         new java.util.concurrent.atomic.AtomicInteger();
@@ -107,13 +107,13 @@ class CiclosLectivosIT {
     private Materia materia;
     private Docente docente;
 
-    // Un martes cualquiera de cada ano, para que el horario del dia 2 caiga siempre en fecha.
+    // Un martes cualquiera de cada año, para que el horario del día 2 caiga siempre en fecha.
     private static final LocalDate MARTES_2026 = LocalDate.of(2026, 4, 7);
     private static final LocalDate MARTES_2027 = LocalDate.of(2027, 4, 6);
 
     @BeforeEach
     void sembrar() {
-        // El nombre de institucion es unico y estos tests no se limpian entre metodos: sin el
+        // El nombre de institución es único y estos tests no se limpian entre métodos: sin el
         // sufijo, el segundo choca contra el UNIQUE antes de llegar a lo que quiere probar.
         Institucion inst = institucionRepository.save(
             Institucion.builder()
@@ -161,7 +161,7 @@ class CiclosLectivosIT {
                    c -> docente != null && docente.getId().equals(c.getDocente().getId()));
             // Solo getId() sobre los proxies lazy: Hibernate lo devuelve sin ir a la base.
             // Cualquier otro getter --getInstitucionId(), por ejemplo-- intenta inicializar el
-            // proxy fuera de sesion y revienta con LazyInitializationException.
+            // proxy fuera de sesión y revienta con LazyInitializationException.
             List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
                 .map(Comision::getId).toList();
             borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
@@ -177,15 +177,15 @@ class CiclosLectivosIT {
         TenantContext.clear();
     }
 
-    // Borra de un repositorio las filas que cumplan la condicion. Se filtra en memoria porque
-    // son fixtures de un solo test: la claridad vale mas que la consulta.
+    // Borra de un repositorio las filas que cumplan la condición. Se filtra en memoria porque
+    // son fixtures de un solo test: la claridad vale más que la consulta.
     private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
                             java.util.function.Predicate<T> condicion) {
         repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
     }
 
     // ========================================================================
-    //  Copiar la oferta al ano siguiente
+    //  Copiar la oferta al año siguiente
     // ========================================================================
 
     @Test
@@ -237,8 +237,8 @@ class CiclosLectivosIT {
     @DisplayName("Una comision cuyo periodo no existe en el destino se saltea y se avisa")
     void sinPeriodoEquivalenteSeAvisa() {
         // 2026 tiene cuatrimestres y 2027 arranca solo con "Anual": meter una materia
-        // cuatrimestral en un periodo anual cambia lo que el sistema espera de ella todo el ano,
-        // asi que se deja afuera y se dice cual.
+        // cuatrimestral en un período anual cambia lo que el sistema espera de ella todo el año,
+        // así que se deja afuera y se dice cuál.
         CicloLectivo origen  = cicloCon(2026, "1er cuatrimestre");
         CicloLectivo destino = cicloCon(2027, "Anual");
         comisionEn(origen, "A");
@@ -285,8 +285,8 @@ class CiclosLectivosIT {
     @Test
     @DisplayName("Fuera del periodo no se generan ausencias, aunque el horario siga activo")
     void fueraDelPeriodoNoHayAusencias() {
-        // El error que esto corrige: antes la consulta traia todo horario activo de ese dia de
-        // la semana, sin mirar el calendario. Un cuatrimestre terminado seguia generando
+        // El error que esto corrige: antes la consulta traía todo horario activo de ese día de
+        // la semana, sin mirar el calendario. Un cuatrimestre terminado seguía generando
         // ausencias, y en 2027 lo hubieran hecho los horarios de 2026.
         CicloLectivo ciclo = cicloConRango(2026, "1er cuatrimestre",
                                            LocalDate.of(2026, 3, 1), LocalDate.of(2026, 7, 15));
@@ -328,8 +328,8 @@ class CiclosLectivosIT {
         CicloLectivo dosMilVeintiseis = cicloCon(2026, "Anual");
         horarioEn(comisionEn(dosMilVeintiseis, "A"), (byte) 2, "18:00", "20:00");
 
-        // 2027 en preparacion, con su propia oferta ya cargada: es el caso real de diciembre,
-        // cuando se arma el ano que viene mientras el actual sigue corriendo.
+        // 2027 en preparación, con su propia oferta ya cargada: es el caso real de diciembre,
+        // cuando se arma el año que viene mientras el actual sigue corriendo.
         CicloLectivo dosMilVeintisiete = cicloCon(2027, "Anual");
         dosMilVeintisiete.setEstado(EstadoCiclo.PREPARACION);
         cicloRepository.save(dosMilVeintisiete);
@@ -346,9 +346,9 @@ class CiclosLectivosIT {
     @DisplayName("En un dia sin clases el pase tampoco abre bloque")
     void elPaseNoAbreEnDiaSinClases() {
         // La otra mitad del arreglo. Antes el job --correctamente-- no generaba ausencias pero
-        // el pase SI marcaba PRESENTE, asi que el feriado quedaba con marcas de unos docentes
-        // y nada de los demas. Y como la asistencia se guarda contra un horario, esa marca
-        // afirmaba que se dicto una clase que la institucion habia cancelado.
+        // el pase SI marcaba PRESENTE, así que el feriado quedaba con marcas de unos docentes
+        // y nada de los demás. Y como la asistencia se guarda contra un horario, esa marca
+        // afirmaba que se dictó una clase que la institución había cancelado.
         CicloLectivo ciclo = cicloCon(2026, "Anual");
         horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
         diaService.marcar(MARTES_2026, null, TipoDiaNoLaborable.NACIONAL, "Feriado de prueba", null);
@@ -491,7 +491,7 @@ class CiclosLectivosIT {
             .andExpect(flash().attribute("flashMensaje",
                 org.hamcrest.Matchers.containsString("Se marcaron 5 días")));
 
-        // La peticion limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
+        // La petición limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
         TenantContext.set(tenantId);
         assertThat(diaService.listarDelAnio(2026))
             .extracting(DiaNoLaborable::getTipo)
@@ -506,8 +506,8 @@ class CiclosLectivosIT {
     @Test
     @DisplayName("Achicar un periodo no puede dejar afuera un dia que ya tiene asistencias")
     void achicarUnPeriodoNoDejaAsistenciasAfuera() {
-        // El caso real: V023 armo el ciclo del ano entero y las clases empezaron en marzo. Hay
-        // que poder recortarlo, pero no dejar una asistencia de abril fuera de su propio periodo.
+        // El caso real: V023 armó el ciclo del año entero y las clases empezaron en marzo. Hay
+        // que poder recortarlo, pero no dejar una asistencia de abril fuera de su propio período.
         CicloLectivo ciclo = cicloCon(2026, "Anual");
         horarioEn(comisionEn(ciclo, "A"), (byte) 2, "18:00", "20:00");
         generador.generarParaInstitucion(tenantId, MARTES_2026, LocalTime.of(23, 0));
@@ -566,8 +566,8 @@ class CiclosLectivosIT {
             .as("un ciclo que ya corrio tiene asistencias de ese ano")
             .hasMessageContaining("preparación");
 
-        // Un tipeo al crear el del ano que viene: queria 2027 y puso 2028. Las fechas del
-        // ciclo se corrigen a mano; su periodo se corre solo, porque no puede quedar afuera.
+        // Un tipeo al crear el del año que viene: quería 2027 y puso 2028. Las fechas del
+        // ciclo se corrigen a mano; su período se corre solo, porque no puede quedar afuera.
         CicloLectivo mal = cicloCon(2028, "Anual");
         enPreparacion(mal);
         cicloService.actualizar(mal.getId(), (short) 2027,
@@ -725,8 +725,8 @@ class CiclosLectivosIT {
             .as("queda quien lo reabrio")
             .isEqualTo(principalInstitucional().getUsuarioId());
 
-        // Y desde preparacion se activa como siempre. La peticion de arriba limpia el tenant del
-        // hilo al terminar, asi que se vuelve a fijar antes de llamar al servicio.
+        // Y desde preparación se activa como siempre. La petición de arriba limpia el tenant del
+        // hilo al terminar, así que se vuelve a fijar antes de llamar al servicio.
         TenantContext.set(tenantId);
         cicloService.activar(ciclo.getId());
         assertThat(cicloRepository.findById(ciclo.getId()).get().getEstado())
@@ -741,7 +741,7 @@ class CiclosLectivosIT {
         CicloLectivo reciente = cicloCon(2026, "Anual");
         cicloService.cerrar(reciente.getId(), null);
         // Fechas explicitas: dos cierres seguidos pueden caer en el mismo instante, y lo que se
-        // prueba es cual se cerro ultimo, no el desempate.
+        // prueba es cuál se cerró último, no el desempate.
         fijarCierre(viejo.getId(), LocalDateTime.of(2025, 12, 20, 10, 0));
         fijarCierre(reciente.getId(), LocalDateTime.of(2026, 12, 20, 10, 0));
 
@@ -759,9 +759,9 @@ class CiclosLectivosIT {
     //  Las pantallas nuevas, renderizadas de verdad
     // ========================================================================
 
-    // Las expresiones de Thymeleaf fallan recien al renderizar: una llamada mal escrita en la
+    // Las expresiones de Thymeleaf fallan recién al renderizar: una llamada mal escrita en la
     // plantilla compila igual y revienta en la cara del usuario. Estos dos casos piden la
-    // pagina como la cuenta institucional y miran el HTML que sale.
+    // página como la cuenta institucional y miran el HTML que sale.
 
     @Test
     @DisplayName("La pantalla de ciclos renderiza con sus periodos y sus acciones")
@@ -994,7 +994,7 @@ class CiclosLectivosIT {
             .andExpect(status().is3xxRedirection())
             .andExpect(flash().attribute("flashMensaje", "Ciclo lectivo 2037 creado."));
 
-        // La peticion limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
+        // La petición limpia el tenant del hilo al terminar: se vuelve a fijar para el servicio.
         TenantContext.set(tenantId);
         CicloLectivo creado = cicloRepository.findByInstitucionIdAndAnio(tenantId, (short) 2037)
             .orElseThrow();
@@ -1080,7 +1080,7 @@ class CiclosLectivosIT {
         return new UsuarioAutenticado(u);
     }
 
-    // Ciclo ACTIVO del ano, con un unico periodo que lo cubre entero.
+    // Ciclo ACTIVO del año, con un único período que lo cubre entero.
     private CicloLectivo cicloCon(int anio, String nombrePeriodo) {
         return cicloConRango(anio, nombrePeriodo,
                              LocalDate.of(anio, 1, 1), LocalDate.of(anio, 12, 31));
@@ -1100,9 +1100,9 @@ class CiclosLectivosIT {
         return cicloRepository.save(ciclo);
     }
 
-    // Pasa a preparacion un ciclo de los helpers, que nacen ACTIVO. No devuelve lo que guardo a
-    // proposito: es una copia desprendida, y sus periodos no se pueden leer fuera de la sesion.
-    // Se sigue usando la instancia original, que es la que conoce sus periodos.
+    // Pasa a preparación un ciclo de los helpers, que nacen ACTIVO. No devuelve lo que guardó a
+    // propósito: es una copia desprendida, y sus períodos no se pueden leer fuera de la sesión.
+    // Se sigue usando la instancia original, que es la que conoce sus períodos.
     private void enPreparacion(CicloLectivo ciclo) {
         ciclo.setEstado(EstadoCiclo.PREPARACION);
         cicloRepository.save(ciclo);

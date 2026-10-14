@@ -58,14 +58,14 @@ public class IdentificacionFacialService {
     // Cache: modeloFacialId → recognizer ya cargado y listo para predict.
     private final ConcurrentHashMap<Long, LBPHFaceRecognizer> cache = new ConcurrentHashMap<>();
 
-    // Cuando se uso por ultima vez cada entrada del cache.
+    // Cuando se uso por última vez cada entrada del cache.
     private final ConcurrentHashMap<Long, Long> ultimoUso = new ConcurrentHashMap<>();
 
-    // Cuantos minutos puede quedar un modelo descifrado en memoria sin que nadie lo use.
+    // Cuántos minutos puede quedar un modelo descifrado en memoria sin que nadie lo use.
     @Value("${app.biometria.cache-minutos-inactividad}")
     private long minutosInactividad;
 
-    // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una linea
+    // Identifica el rostro contra los modelos activos del tenant. Cada intento loguea una línea
     // CALIBRACION con distancia y tiempos, que es la fuente de Documentacion/5-informes/calibracion-umbral.md.
     @Transactional(readOnly = true)
     public IdentificacionResultadoDto identificar(byte[] imagenBytes) {
@@ -92,7 +92,7 @@ public class IdentificacionFacialService {
             sincronizarCache(modelos);
 
             // Se guarda el mejor Y el segundo mejor. La diferencia entre ambos es el MARGEN, y
-            // es lo unico que permite ver si el sistema estuvo cerca de confundir a dos
+            // es lo único que permite ver si el sistema estuvo cerca de confundir a dos
             // docentes: un acierto con margen de 3 puntos esta a un frame de convertirse en un
             // falso positivo, y mirando solo la mejor distancia eso no se nota.
             double mejorDistancia = Double.MAX_VALUE;
@@ -131,10 +131,10 @@ public class IdentificacionFacialService {
             boolean reconocido = veredicto == Veredicto.ACEPTADO;
 
             // El mejor candidato se registra SIEMPRE, se lo haya aceptado o no: cuando el
-            // sistema rechaza a alguien que si estaba, saber contra quien se acerco es lo que
-            // permite entender por que fallo.
+            // sistema rechaza a alguien que sí estaba, saber contra quién se acercó es lo que
+            // permite entender por qué falló.
             String margen = segundoMatch == null
-                ? "-"                                   // habia un solo modelo: no hay con que comparar
+                ? "-"                                   // había un solo modelo: no hay con que comparar
                 : String.format("%.1f", segundaDistancia - mejorDistancia);
 
             log.info("CALIBRACION reconocido={} mejorDocente={} mejorDistancia={} "
@@ -156,7 +156,7 @@ public class IdentificacionFacialService {
                     mejorMatch.getId(), mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }
-            // Se distingue por que se rechazo: "no estas registrado" y "no puedo
+            // Se distingue por qué se rechazó: "no estás registrado" y "no puedo
             // distinguirte de otro" son problemas distintos y se resuelven distinto.
             if (veredicto == Veredicto.AMBIGUO) {
                 log.warn("Identificacion ambigua: docentes {} y {} quedaron a {} de distancia "
@@ -188,18 +188,18 @@ public class IdentificacionFacialService {
      * @param segundaDistancia distancia del segundo mejor, o null si solo había un modelo
      */
     Veredicto decidir(double mejorDistancia, Double segundaDistancia) {
-        // LBPH siempre devuelve el mas parecido, aunque el parecido sea pesimo: no existe
-        // la respuesta "no conozco a esta persona". El umbral es lo unico que la construye.
+        // LBPH siempre devuelve el más parecido, aunque el parecido sea pésimo: no existe
+        // la respuesta "no conozco a esta persona". El umbral es lo único que la construye.
         if (mejorDistancia > umbralConfianza) {
             return Veredicto.NO_REGISTRADO;
         }
         // Con un solo modelo cargado no hay segundo contra quien medir. Vale la pena saber
-        // que en ese caso el sistema esta en su punto mas debil: la unica defensa es el
+        // que en ese caso el sistema está en su punto más débil: la única defensa es el
         // umbral, y cualquiera que se le parezca lo suficiente entra.
         if (segundaDistancia == null) {
             return Veredicto.ACEPTADO;
         }
-        // Un empate no es una identificacion: cual gana lo decide una sombra, no la cara.
+        // Un empate no es una identificación: cuál gana lo decide una sombra, no la cara.
         if (segundaDistancia - mejorDistancia < margenMinimo) {
             return Veredicto.AMBIGUO;
         }
@@ -209,13 +209,13 @@ public class IdentificacionFacialService {
     /**
      * Descarta los modelos que llevan rato sin usarse.
      *
-     * <p>El cache guarda el dato biometrico <b>descifrado</b>: mientras una entrada vive, el
-     * embedding esta en memoria en claro. Que se quede ahi mientras el pase corre es el
-     * precio de que ande rapido; que se quede toda la noche despues de la ultima clase no
+     * <p>El cache guarda el dato biométrico <b>descifrado</b>: mientras una entrada vive, el
+     * embedding está en memoria en claro. Que se quede ahí mientras el pase corre es el
+     * precio de que ande rápido; que se quede toda la noche después de la última clase no
      * compra nada y solo alarga la ventana en la que ese dato existe sin cifrar.
      *
      * <p>Hace falta un barrido programado y no alcanza con limpiar dentro de
-     * {@code sincronizarCache}: ese metodo corre cuando alguien identifica, y el momento en
+     * {@code sincronizarCache}: ese método corre cuando alguien identifica, y el momento en
      * que hay que soltar la memoria es justamente cuando ya nadie identifica.
      */
     @Scheduled(fixedDelayString = "${app.biometria.cache-barrido-ms}")
@@ -234,7 +234,7 @@ public class IdentificacionFacialService {
     }
 
     // Saca el recognizer del cache y libera su memoria nativa; sin esto, tras un borrado ARCO
-    // una copia en memoria seguiria reconociendo al docente hasta el proximo reinicio.
+    // una copia en memoria seguiría reconociendo al docente hasta el próximo reinicio.
     public void evictarModelo(Long modeloFacialId) {
         ultimoUso.remove(modeloFacialId);
         LBPHFaceRecognizer rec = cache.remove(modeloFacialId);
@@ -262,7 +262,7 @@ public class IdentificacionFacialService {
             }
         }
 
-        // Cargar los nuevos y marcar a todos como usados recien: si estan sincronizados es
+        // Cargar los nuevos y marcar a todos como usados recién: si están sincronizados es
         // porque alguien acaba de identificar contra ellos.
         long ahora = System.currentTimeMillis();
         for (ModeloFacial m : modelosActivos) {

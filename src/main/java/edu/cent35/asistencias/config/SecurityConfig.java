@@ -89,27 +89,27 @@ public class SecurityConfig {
                                           SesionesActivasService sesionesActivas) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // /recuperar/** va abierto por necesidad: quien perdio la contrasena no puede
-                // autenticarse para pedirla. El flujo se protege con el codigo de un solo uso.
+                // /recuperar/** va abierto por necesidad: quien perdió la contraseña no puede
+                // autenticarse para pedirla. El flujo se protege con el código de un solo uso.
                 //
-                // /alta-institucion/** tambien: crear una institucion ocurre ANTES de que
-                // exista el tenant, asi que no hay sesion ni rol contra el cual autorizar. Lo
-                // que la protege es el codigo que se manda al correo declarado, que ademas
-                // impide que la institucion llegue a crearse sin esa direccion comprobada
+                // /alta-institucion/** también: crear una institución ocurre ANTES de que
+                // exista el tenant, así que no hay sesión ni rol contra el cual autorizar. Lo
+                // que la protege es el código que se manda al correo declarado, que además
+                // impide que la institución llegue a crearse sin esa dirección comprobada
                 // (ADR-0010).
                 // /instalacion es el asistente de primer arranque (ADR-0022): crea la
-                // primera cuenta de una instalacion local, asi que por definicion corre sin
+                // primera cuenta de una instalación local, así que por definición corre sin
                 // nadie autenticado. No queda abierta por esto: solo responde si la base no
-                // tiene ninguna institucion y si la instalacion la habilito; en cualquier otro
+                // tiene ninguna institución y si la instalación la habilitó; en cualquier otro
                 // caso es un 404.
                 .requestMatchers("/login", "/recuperar/**", "/alta-institucion/**",
                                  "/alta-institucion",
                                  "/instalacion", "/instalacion/**",
-                                 // /fonts/** va con el resto de lo estatico. Sin esta linea
-                                 // la peticion de cada .woff2 cae en anyRequest().authenticated()
-                                 // y se responde con la redireccion al login: el navegador
+                                 // /fonts/** va con el resto de lo estático. Sin esta línea
+                                 // la petición de cada .woff2 cae en anyRequest().authenticated()
+                                 // y se responde con la redirección al login: el navegador
                                  // recibe HTML donde esperaba una fuente, @font-face falla y la
-                                 // aplicacion vuelve a la tipografia del sistema sin decir por
+                                 // aplicación vuelve a la tipografía del sistema sin decir por
                                  // que. Cuesta de encontrar porque no rompe nada visible.
                                  "/css/**", "/js/**", "/img/**", "/fonts/**",
                                  "/webjars/**", "/actuator/health").permitAll()
@@ -127,40 +127,40 @@ public class SecurityConfig {
                     if (usuario != null && !usuario.isBlank()) {
                         request.getSession().setAttribute("ULTIMO_USUARIO_LOGIN", usuario);
                     }
-                    // Quien vino desde el kiosco y se equivoco de clave conserva la vuelta: sin
-                    // esto el reintento caia en un login comun, y el equipo podia quedar ahi.
+                    // Quien vino desde el kiosco y se equivocó de clave conserva la vuelta: sin
+                    // esto el reintento caía en un login común, y el equipo podía quedar ahí.
                     boolean desdeKiosco = "kiosco".equals(request.getParameter("desde"));
                     response.sendRedirect(request.getContextPath() + "/login?error"
                         + (desdeKiosco ? "&desde=kiosco" : ""));
                 })
                 .permitAll()
             )
-            // El token CSRF va en cookie y no en sesion, por el mismo motivo que ya vale para
+            // El token CSRF va en cookie y no en sesión, por el mismo motivo que ya vale para
             // el kiosco: el default de Spring lo guarda en la HttpSession, que expira a los 30
             // minutos.
             //
-            // Aca ademas es lo que hace que el 401 de abajo llegue a existir. Guardado en
-            // sesion, el token muere junto con ella, asi que el POST del pase se rechazaba
-            // primero por CSRF: 403, reenvio a /error y desde ahi la redireccion al login, sin
-            // que la entrada de autenticacion llegara a ver la ruta original. Medido: el
-            // matcher recibia /error. En cookie el token sobrevive, el filtro de CSRF deja
-            // pasar y recien entonces se evalua la sesion, que es lo que falta de verdad.
+            // Acá además es lo que hace que el 401 de abajo llegue a existir. Guardado en
+            // sesión, el token muere junto con ella, así que el POST del pase se rechazaba
+            // primero por CSRF: 403, reenvio a /error y desde ahí la redirección al login, sin
+            // que la entrada de autenticación llegara a ver la ruta original. Medido: el
+            // matcher recibía /error. En cookie el token sobrevive, el filtro de CSRF deja
+            // pasar y recién entonces se evalúa la sesión, que es lo que falta de verdad.
             .csrf(csrf -> csrf.csrfTokenRepository(
                 CookieCsrfTokenRepository.withHttpOnlyFalse()))
-            // Sin esto, una sesion vencida contesta el POST de fetch con la redireccion al
+            // Sin esto, una sesión vencida contesta el POST de fetch con la redirección al
             // login. Ver el javadoc de sesionVencidaEnApi.
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entradaDeAutenticacion()))
             /*
               Una cuenta se usa en un equipo por vez.
 
-              El tope NO lo aplica Spring (maximumSessions queda sin limite): si lo aplicara,
+              El tope NO lo aplica Spring (maximumSessions queda sin límite): si lo aplicara,
               el ingreso nuevo desplazaria al anterior de una, sin que quien entra sepa que
-              habia alguien adentro ni que se lo llevo puesto. Lo unico que se toma de aca es
+              había alguien adentro ni que se lo llevó puesto. Lo único que se toma de acá es
               el registro de sesiones; a quien se desplaza lo decide la persona, en la pantalla
               que muestra despuesDeEntrar.
 
               expiredUrl es lo que ve el equipo desplazado en su pedido siguiente: el login
-              diciendo por que se cerro, en vez del formulario pelado.
+              diciendo por qué se cerró, en vez del formulario pelado.
             */
             .sessionManagement(sesion -> sesion
                 .maximumSessions(-1)
@@ -168,8 +168,8 @@ public class SecurityConfig {
                 .expiredUrl("/login?desplazada"))
             .logout(logout -> logout
                 .logoutSuccessHandler(SecurityConfig::despuesDeCerrarSesion)
-                // Solo la de sesion. La del puesto identifica la MAQUINA y tiene que
-                // sobrevivir: es lo que deja al kiosco funcionando despues de cerrar sesion.
+                // Solo la de sesión. La del puesto identifica la MÁQUINA y tiene que
+                // sobrevivir: es lo que deja al kiosco funcionando después de cerrar sesión.
                 .deleteCookies("JSESSIONID")
                 .permitAll()
             );

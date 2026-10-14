@@ -25,8 +25,8 @@
             </p>
         </div>
 
-        <!-- Sin materias todavia: se dice que falta y se ofrece el camino, en vez de
-             mostrar una tabla vacia que no explica nada. -->
+        <!-- Sin materias todavía: se dice que falta y se ofrece el camino, en vez de
+             mostrar una tabla vacía que no explica nada. -->
         <div class="card" th:if="${#lists.isEmpty(materias)}">
             <p class="text-muted">
                 Esta carrera todavía no tiene materias cargadas. Sin materias no se pueden
@@ -35,7 +35,7 @@
             </p>
         </div>
 
-        <!-- Un recuadro por anio del plan. Los anios salen ordenados porque el controlador
+        <!-- Un recuadro por año del plan. Los años salen ordenados porque el controlador
              agrupa en un TreeMap. -->
         <div class="card" th:each="grupo : ${porAnio}">
             <h2>

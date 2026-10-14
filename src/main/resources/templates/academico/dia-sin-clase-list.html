@@ -20,9 +20,9 @@
                class="btn btn--primary">+ Marcar días sin clase</a>
         </header>
 
-        <!-- Lo que la pantalla NO hace es tan importante como lo que hace: alguien podria
-             cargar un feriado sin darse cuenta de que ademas apaga el pase. Se lee una vez:
-             se cierra con la cruz y se vuelve a abrir con la "i" del titulo (ayuda.js). -->
+        <!-- Lo que la pantalla NO hace es tan importante como lo que hace: alguien podría
+             cargar un feriado sin darse cuenta de que además apaga el pase. Se lee una vez:
+             se cierra con la cruz y se vuelve a abrir con la "i" del título (ayuda.js). -->
         <aside class="ayuda" data-ayuda="dias-sin-clase" aria-label="Qué pasa en un día sin clase">
             <p>
                 Un día marcado sale del calendario: nadie queda ausente y
@@ -57,8 +57,8 @@
                     <option th:each="t : ${tipos}" th:value="${t.name()}"
                             th:text="${t.etiqueta}">Feriado nacional</option>
                 </select>
-                <!-- El dia de la semana sale de la fecha de cada fila, y sus opciones las arma
-                     filtro-tabla.js: un año tiene feriados en cinco dias distintos, no en siete. -->
+                <!-- El día de la semana sale de la fecha de cada fila, y sus opciones las arma
+                     filtro-tabla.js: un año tiene feriados en cinco días distintos, no en siete. -->
                 <select class="filtro__campo" data-filtro="dia" data-menu
                         aria-label="Filtrar por día de la semana">
                     <option value="">Todos los días</option>

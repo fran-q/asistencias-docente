@@ -109,9 +109,9 @@
                                  que no se acuerda la contraseña. -->
                             <div class="auth__campo-fila">
                                 <label for="password">Contraseña</label>
-                                <!-- En una instalacion autonoma no hay SMTP: mandar a /recuperar seria ofrecer un
-                                     codigo por correo que no llega nunca. Ahi la recuperacion va por la clave
-                                     que entrego la configuracion inicial (ADR-0022). -->
+                                <!-- En una instalación autónoma no hay SMTP: mandar a /recuperar sería ofrecer un
+                                     código por correo que no llega nunca. Ahí la recuperación va por la clave
+                                     que entregó la configuración inicial (ADR-0022). -->
                                 <a th:href="${instalacionAutonoma} ? @{/recuperar/clave} : @{/recuperar}">¿La olvidaste?</a>
                             </div>
                             <div class="password-input">
@@ -134,9 +134,9 @@
                      instalación, no algo que un usuario del día a día necesite. Exponerlo
                      no es un riesgo porque el alta no crea nada hasta que se valide el
                      código enviado al correo. -->
-                <!-- En una instalacion autonoma no se ofrece: esa instalacion atiende a una sola
-                     institucion, ya creada por la configuracion inicial, y el alta manda un
-                     codigo por un correo que no existe (ADR-0022). -->
+                <!-- En una instalación autónoma no se ofrece: esa instalación atiende a una sola
+                     institución, ya creada por la configuración inicial, y el alta manda un
+                     código por un correo que no existe (ADR-0022). -->
                 <div class="auth__pie" th:unless="${instalacionAutonoma}">
                     <p>
                         ¿Tu institución todavía no está en Visum?

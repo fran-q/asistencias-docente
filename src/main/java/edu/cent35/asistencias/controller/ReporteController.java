@@ -96,7 +96,7 @@ public class ReporteController {
         try {
             List<AsistenciaReporteRowDto> filas = reporteService.reporte(filtro);
             model.addAttribute("filas", filas);
-            // Cuantas habria sin el tope. Si son mas que las mostradas, la pantalla avisa:
+            // Cuántas habría sin el tope. Si son más que las mostradas, la pantalla avisa:
             // un reporte cortado en silencio se lee como un reporte completo.
             long total = reporteService.contar(filtro);
             model.addAttribute("totalSinTope", total);
@@ -182,8 +182,8 @@ public class ReporteController {
             volverAlReporte(request, response, filtro, ex);
             return;
         }
-        // Cuantas habria sin el tope, igual que en la pantalla. Un archivo cortado en
-        // silencio se lee como el periodo entero, y este se abre en una planilla para
+        // Cuántas habría sin el tope, igual que en la pantalla. Un archivo cortado en
+        // silencio se lee como el período entero, y este se abre en una planilla para
         // sacar cuentas: el que suma no tiene como saber que le faltan filas.
         long totalSinTope = reporteService.contar(filtro);
         boolean cortado = totalSinTope > filas.size();
@@ -203,7 +203,7 @@ public class ReporteController {
             for (AsistenciaReporteRowDto f : filas) {
                 escribirFila(writer, f);
             }
-            // Al final y en una sola celda: arriba correria las columnas, y el que abre el
+            // Al final y en una sola celda: arriba correría las columnas, y el que abre el
             // archivo para ver si esta completo va justo al final.
             if (cortado) {
                 writer.println(csv(
@@ -322,15 +322,15 @@ public class ReporteController {
             csvTime(f.getHoraRegistrada()),
             csvTime(f.getHoraSalida()),
             csv(f.getHoraSalida() == null ? "" : (f.isSalidaPresumida() ? "SI" : "NO")),
-            // De que equipo salio cada marca (V031). En columnas separadas: en una planilla
+            // De que equipo salió cada marca (V031). En columnas separadas: en una planilla
             // se filtra por puerta, no se lee un texto con las dos adentro.
             csv(f.getEquipoEntrada()),
             csv(f.getEquipoSalida()),
             csv(f.getMinutosProgramados()),
-            // Vacio, no cero: cero dice "no dio la clase" y vacio dice "no tenemos el dato".
+            // Vacío, no cero: cero dice "no dio la clase" y vacío dice "no tenemos el dato".
             // En la planilla esa diferencia decide si el promedio de horas es una mentira.
             csv(f.getMinutosEfectivos()),
-            // El desvio, desarmado en sus dos mitades. En columnas separadas y no en un texto
+            // El desvío, desarmado en sus dos mitades. En columnas separadas y no en un texto
             // como "12 min tarde" porque el CSV se abre para sumar y filtrar, no para leer.
             csv(f.getMinutosTarde()),
             csv(f.getMinutosSalidaAnticipada()),

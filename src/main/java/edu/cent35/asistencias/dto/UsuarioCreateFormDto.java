@@ -14,7 +14,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Form para crear un usuario nuevo en la institucion del tenant actual.
+ * Form para crear un usuario nuevo en la institución del tenant actual.
  * Incluye password en claro (se hashea en el service con BCrypt).
  */
 @Data

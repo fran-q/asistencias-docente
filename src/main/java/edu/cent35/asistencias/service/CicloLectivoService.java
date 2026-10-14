@@ -43,29 +43,29 @@ import java.util.function.BiFunction;
 @Slf4j
 public class CicloLectivoService {
 
-    // Las fechas de los mensajes van como se leen aca, no en ISO: "07/04/2026" y no "2026-04-07".
+    // Las fechas de los mensajes van como se leen acá, no en ISO: "07/04/2026" y no "2026-04-07".
     private static final DateTimeFormatter DD_MM_AAAA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final CicloLectivoRepository cicloRepository;
     private final PeriodoLectivoRepository periodoRepository;
     private final ComisionRepository comisionRepository;
     private final HorarioRepository horarioRepository;
-    // Para no dejar asistencias fuera de su periodo al mover fechas (V027).
+    // Para no dejar asistencias fuera de su período al mover fechas (V027).
     private final AsistenciaRepository asistenciaRepository;
-    // Los dias sin clase que caen dentro del ciclo, para el detalle.
+    // Los días sin clase que caen dentro del ciclo, para el detalle.
     private final DiaNoLaborableRepository diaNoLaborableRepository;
-    // Para mostrar quien cerro o reabrio el ciclo: la tabla guarda el id pelado.
+    // Para mostrar quien cerró o reabrió el ciclo: la tabla guarda el id pelado.
     private final UsuarioRepository usuarioRepository;
 
-    // Reloj inyectable, mismo patron que CodigoVerificacionService: sin esto, probar que un
-    // ciclo esta vigente o vencido exigiria esperar a que cambie el almanaque.
+    // Reloj inyectable, mismo patrón que CodigoVerificacionService: sin esto, probar que un
+    // ciclo esta vigente o vencido exigiría esperar a que cambie el almanaque.
     private Clock clock = Clock.systemDefaultZone();
 
     // ========================================================================
     //  Lectura
     // ========================================================================
 
-    // Todos los ciclos de la institucion, del mas nuevo al mas viejo, con sus periodos.
+    // Todos los ciclos de la institución, del más nuevo al más viejo, con sus períodos.
     @Transactional(readOnly = true)
     public List<CicloLectivo> listar() {
         return cicloRepository.listarDelTenant(TenantContext.getRequired());
@@ -122,8 +122,8 @@ public class CicloLectivoService {
         Long tenantId = TenantContext.getRequired();
         CicloLectivo ciclo = buscarPorId(id);
 
-        // Una consulta por periodo: son dos o tres por ciclo, y contarComisiones ya lleva los
-        // WHERE del tenant. Una agrupada ahorraria dos viajes a costa de otra query que cuidar.
+        // Una consulta por período: son dos o tres por ciclo, y contarComisiones ya lleva los
+        // WHERE del tenant. Una agrupada ahorraría dos viajes a costa de otra query que cuidar.
         Map<Long, Long> comisionesPorPeriodo = new HashMap<>();
         for (PeriodoLectivo p : ciclo.getPeriodos()) {
             comisionesPorPeriodo.put(p.getId(), periodoRepository.contarComisiones(tenantId, p.getId()));
@@ -159,12 +159,12 @@ public class CicloLectivoService {
             return comisionesPorPeriodo.values().stream().mapToLong(Long::longValue).sum();
         }
 
-        // Mismas condiciones que borrar(): en preparacion y sin ninguna comision colgando.
+        // Mismas condiciones que borrar(): en preparación y sin ninguna comisión colgando.
         public boolean sePuedeBorrar() {
             return ciclo.getEstado() == EstadoCiclo.PREPARACION && totalDeComisiones() == 0;
         }
 
-        // Mismas condiciones que quitarPeriodo(): ciclo abierto, sin comisiones, y no el unico.
+        // Mismas condiciones que quitarPeriodo(): ciclo abierto, sin comisiones, y no el único.
         public boolean sePuedeQuitar(Long periodoId) {
             return ciclo.getEstado().admiteCambiosDeEstructura()
                 && ciclo.getPeriodos().size() > 1
@@ -177,7 +177,7 @@ public class CicloLectivoService {
     }
 
     // ========================================================================
-    //  Alta y edicion
+    //  Alta y edición
     // ========================================================================
 
     /**
@@ -289,8 +289,8 @@ public class CicloLectivoService {
 
         // Las fechas del ciclo, a mano: tienen que caer en su año, el nuevo si cambió.
         validarDentroDelAnio(cambiaElAnio ? anio : ciclo.getAnio(), inicio, fin);
-        // Los periodos, en cambio, se corren con el año: no se los puede mover antes (quedarian
-        // fuera del ciclo viejo) ni despues (quedarian fuera del nuevo).
+        // Los períodos, en cambio, se corren con el año: no se los puede mover antes (quedarían
+        // fuera del ciclo viejo) ni después (quedarían fuera del nuevo).
         int corrimiento = cambiaElAnio ? anio - ciclo.getAnio() : 0;
         for (PeriodoLectivo p : ciclo.getPeriodos()) {
             LocalDate desde = p.getFechaInicio().plusYears(corrimiento);
@@ -304,9 +304,9 @@ public class CicloLectivoService {
                       + "del ciclo. Ampliá las fechas del ciclo para que lo contengan.");
             }
         }
-        // Con los periodos adentro, esto solo puede saltar por una asistencia que ya estaba
-        // fuera de su periodo pero dentro del ciclo. Es raro, pero sacarla del ciclo tambien
-        // la dejaria fuera de su ano.
+        // Con los períodos adentro, esto solo puede saltar por una asistencia que ya estaba
+        // fuera de su período pero dentro del ciclo. Es raro, pero sacarla del ciclo también
+        // la dejaría fuera de su año.
         exigirQueNoQuedenAsistenciasAfuera("El ciclo",
             ciclo.getFechaInicio(), ciclo.getFechaFin(), inicio, fin,
             (desde, hasta) -> asistenciaRepository.primeraDelCicloEntre(tenantId, id, desde, hasta));
@@ -328,7 +328,7 @@ public class CicloLectivoService {
     }
 
     // ========================================================================
-    //  Periodos
+    //  Períodos
     // ========================================================================
 
     /**
@@ -353,7 +353,7 @@ public class CicloLectivoService {
         exigirNombreLibre(ciclo, nuevo.getNombre(), null);
 
         // Se guarda por su repositorio y no por el del ciclo: save() sobre un ciclo que ya
-        // existe es un merge, y el merge copia el periodo nuevo en vez de persistir este.
+        // existe es un merge, y el merge copia el período nuevo en vez de persistir este.
         ciclo.agregarPeriodo(nuevo);
         PeriodoLectivo guardado = periodoRepository.save(nuevo);
         log.info("Periodo agregado: ciclo={}, nombre='{}', {} a {}",
@@ -559,7 +559,7 @@ public class CicloLectivoService {
     }
 
     // ========================================================================
-    //  Copiar la oferta al ano siguiente
+    //  Copiar la oferta al año siguiente
     // ========================================================================
 
     /**
@@ -596,7 +596,7 @@ public class CicloLectivoService {
         }
         exigirEstructuraEditable(destino);
 
-        // Los periodos del destino, por nombre normalizado, para emparejarlos con los del origen.
+        // Los períodos del destino, por nombre normalizado, para emparejarlos con los del origen.
         Map<String, PeriodoLectivo> destinoPorNombre = new HashMap<>();
         for (PeriodoLectivo p : destino.getPeriodos()) {
             destinoPorNombre.put(normalizar(p.getNombre()), p);
@@ -609,7 +609,7 @@ public class CicloLectivoService {
 
         for (Comision original : aCopiar) {
             if (Boolean.FALSE.equals(original.getActivo())) {
-                continue;                          // una comision dada de baja no se reofrece
+                continue;                          // una comisión dada de baja no se reofrece
             }
             PeriodoLectivo destinoDelPeriodo =
                 destinoPorNombre.get(normalizar(original.getPeriodo().getNombre()));
@@ -622,7 +622,7 @@ public class CicloLectivoService {
             }
             if (comisionRepository.existsByMateriaIdAndCodigoAndPeriodoId(
                     original.getMateria().getId(), original.getCodigo(), destinoDelPeriodo.getId())) {
-                continue;                          // ya se copio en una corrida anterior
+                continue;                          // ya se copió en una corrida anterior
             }
 
             Comision copia = Comision.builder()
@@ -753,8 +753,8 @@ public class CicloLectivoService {
             .orElseThrow(() -> new EntityNotFoundException("Período no encontrado: " + periodoId));
     }
 
-    // El usuario de quien cerro o reabrio, para mostrarlo. Null si no hay nadie registrado o si
-    // la cuenta es de otra institucion: findById no pasa por el filtro de tenant.
+    // El usuario de quien cerró o reabrió, para mostrarlo. Null si no hay nadie registrado o si
+    // la cuenta es de otra institución: findById no pasa por el filtro de tenant.
     private String nombreDeUsuario(Long usuarioId, Long tenantId) {
         if (usuarioId == null) {
             return null;
@@ -765,8 +765,8 @@ public class CicloLectivoService {
             .orElse(null);
     }
 
-    // El mismo rango que el CHECK de la base: sin esto, un ano mal tipeado llegaria hasta el
-    // INSERT y volveria como un error de base que nadie entiende.
+    // El mismo rango que el CHECK de la base: sin esto, un año mal tipeado llegaría hasta el
+    // INSERT y volvería como un error de base que nadie entiende.
     private void validarAnio(Short anio) {
         if (anio == null || anio < 2000 || anio > 2200) {
             throw new IllegalArgumentException(
@@ -816,8 +816,8 @@ public class CicloLectivoService {
         }
     }
 
-    // Dos periodos con el mismo nombre en un ciclo hacen que el copiado no sepa a cual apuntar,
-    // ademas de que la base lo rechaza por el UNIQUE. Se avisa acá para que el mensaje se entienda.
+    // Dos períodos con el mismo nombre en un ciclo hacen que el copiado no sepa a cuál apuntar,
+    // además de que la base lo rechaza por el UNIQUE. Se avisa acá para que el mensaje se entienda.
     private void validarNombresDePeriodoUnicos(List<PeriodoLectivo> periodos) {
         List<String> vistos = new ArrayList<>();
         for (PeriodoLectivo p : periodos) {
@@ -831,8 +831,8 @@ public class CicloLectivoService {
         }
     }
 
-    // Lo mismo contra los periodos que el ciclo ya tiene, salvo el que se esta editando: ese
-    // puede quedarse con su nombre, o cambiarle solo las mayusculas.
+    // Lo mismo contra los períodos que el ciclo ya tiene, salvo el que se está editando: ese
+    // puede quedarse con su nombre, o cambiarle solo las mayúsculas.
     private void exigirNombreLibre(CicloLectivo ciclo, String nombre, Long exceptoPeriodoId) {
         for (PeriodoLectivo otro : ciclo.getPeriodos()) {
             if (!otro.getId().equals(exceptoPeriodoId)

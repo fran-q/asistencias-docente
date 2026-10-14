@@ -102,8 +102,8 @@ class KioscoPantallaIT {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
 
-        // Si alguna de estas aparece, la pantalla dejo de ser un kiosco: es el sistema entero
-        // abierto en una maquina que nadie vigila.
+        // Si alguna de estas aparece, la pantalla dejó de ser un kiosco: es el sistema entero
+        // abierto en una máquina que nadie vigila.
         assertThat(html)
             .as("una pantalla desatendida no puede llevar a ningun lado")
             .doesNotContain("/docentes")
@@ -115,14 +115,14 @@ class KioscoPantallaIT {
             .doesNotContain("/puestos")
             .doesNotContain("lateral__link");
 
-        // Y tampoco puede ofrecer cerrar sesion, porque no hay ninguna abierta.
+        // Y tampoco puede ofrecer cerrar sesión, porque no hay ninguna abierta.
         assertThat(html).doesNotContain("/logout");
     }
 
     @Test
     @DisplayName("Un equipo designado pero SIN kiosco habilitado no abre la pantalla")
     void designadoNoAlcanza() throws Exception {
-        // Designar dice "la captura ocurre aca"; habilitar el kiosco dice "ademas puede
+        // Designar dice "la captura ocurre acá"; habilitar el kiosco dice "además puede
         // ocurrir sin nadie mirando". Son dos permisos distintos (RF-85).
         String token = puestoService.designar(institucionId, "Secretaria", cuenta)
             .getTokenEnClaro();
@@ -138,8 +138,8 @@ class KioscoPantallaIT {
     @Test
     @DisplayName("El registro del rostro sigue exigiendo sesion, aun con el kiosco habilitado")
     void elRegistroDelRostroSigueCerrado() throws Exception {
-        // RF-86: marcar sin supervision registra un hecho; enrolar sin supervision crea una
-        // identidad, y permitiria que cualquiera registre su cara como la de un docente.
+        // RF-86: marcar sin supervisión registra un hecho; enrolar sin supervisión crea una
+        // identidad, y permitiría que cualquiera registre su cara como la de un docente.
         String token = kioscoHabilitado();
 
         var respuesta = mockMvc.perform(
@@ -195,7 +195,7 @@ class KioscoPantallaIT {
 
     // ------------------------------------------------------------------------
 
-    // Designa el equipo y ademas lo habilita para operar sin sesion.
+    // Designa el equipo y además lo habilita para operar sin sesión.
     private String kioscoHabilitado() {
         String token = puestoService.designar(institucionId, "Secretaria", cuenta)
             .getTokenEnClaro();

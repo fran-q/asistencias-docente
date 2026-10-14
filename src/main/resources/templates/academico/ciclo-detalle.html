@@ -5,12 +5,12 @@
     <title th:text="|Ciclo lectivo ${ciclo.anio} - Visum|">Ciclo lectivo - Visum</title>
 </head>
 <body>
-    <!-- La pantalla de un ciclo (V027). Hasta aca todo vivia en el listado, que despues del alta
-         no dejaba cambiar nada: ni las fechas, ni los periodos, ni el ano. Aca se ve lo que
-         cuelga del ciclo y se corrige; el listado quedo para ver todos juntos y abrir uno nuevo.
+    <!-- La pantalla de un ciclo (V027). Hasta acá todo vivía en el listado, que después del alta
+         no dejaba cambiar nada: ni las fechas, ni los períodos, ni el año. Acá se ve lo que
+         cuelga del ciclo y se corrige; el listado quedó para ver todos juntos y abrir uno nuevo.
 
          Todo va adentro de la section, scripts incluidos si alguna vez hacen falta: el layout
-         inserta la plantilla por ella y descarta lo demas sin avisar. -->
+         inserta la plantilla por ella y descarta lo demás sin avisar. -->
     <section class="ciclo-detalle">
         <header class="page-header page-header--with-action">
             <div>
@@ -33,8 +33,8 @@
             <a th:href="@{/ciclos}" class="btn btn--ghost">Volver a ciclos</a>
         </header>
 
-        <!-- Los rechazos de los formularios de esta pantalla --datos y periodos-- vuelven aca
-             y no como aviso flotante: son errores de lo que se cargo, y tienen que quedar a la
+        <!-- Los rechazos de los formularios de esta pantalla --datos y períodos-- vuelven acá
+             y no como aviso flotante: son errores de lo que se cargó, y tienen que quedar a la
              vista mientras se corrige. Las acciones --activar, cerrar, reabrir-- van por aviso. -->
         <div th:if="${error}" class="alert alert--error" role="alert">
             <p th:text="${error}">Error</p>
@@ -65,8 +65,8 @@
                 <div class="form-row form-row--3">
                     <div class="form-group">
                         <label for="anio">Año</label>
-                        <!-- Deshabilitado fuera de preparacion. Un campo deshabilitado no se
-                             envia, y el servicio se queda con el ano que estaba. -->
+                        <!-- Deshabilitado fuera de preparación. Un campo deshabilitado no se
+                             envía, y el servicio se queda con el año que estaba. -->
                         <input type="number" id="anio" name="anio" min="2000" max="2200"
                                th:value="${ciclo.anio}" th:disabled="${!enPreparacion}">
                         <small class="form-hint" th:if="${enPreparacion}">
@@ -107,7 +107,7 @@
                 <dd th:text="${#temporals.format(ciclo.fechaFin, 'dd/MM/yyyy')}">15/12/2026</dd>
             </dl>
 
-            <!-- Quien lo cerro y quien lo reabrio. El cierre se conserva aunque despues se haya
+            <!-- Quien lo cerró y quien lo reabrió. El cierre se conserva aunque después se haya
                  reabierto (V027): si fue un error, es lo primero que alguien va a querer ver. -->
             <dl class="kv ciclo-detalle__registro"
                 th:if="${ciclo.cerradoEn != null or ciclo.reabiertoEn != null}">
@@ -130,7 +130,7 @@
             </dl>
         </div>
 
-        <!-- ================= Periodos ================= -->
+        <!-- ================= Períodos ================= -->
         <div class="card">
             <h2>Períodos</h2>
             <p class="form-hint" th:unless="${cerrado}">
@@ -138,7 +138,7 @@
                 repetilo igual el año que viene. Solo se quita un período sin comisiones.
             </p>
 
-            <!-- Una fila por periodo, cada una con su formulario. Quitar va en un formulario
+            <!-- Una fila por período, cada una con su formulario. Quitar va en un formulario
                  aparte y no anidado: HTML no admite un form adentro de otro. -->
             <div class="periodo-item" th:each="p : ${ciclo.periodos}">
                 <form class="periodo-item__form" th:unless="${cerrado}"
@@ -196,7 +196,7 @@
             </p>
         </div>
 
-        <!-- ================= Agregar un periodo ================= -->
+        <!-- ================= Agregar un período ================= -->
         <div class="card" th:unless="${cerrado}">
             <h2>Agregar un período</h2>
             <form th:action="@{/ciclos/{id}/periodos(id=${ciclo.id})}" method="post" novalidate>
@@ -233,7 +233,7 @@
             </form>
         </div>
 
-        <!-- ================= Dias sin clase ================= -->
+        <!-- ================= Días sin clase ================= -->
         <div class="card">
             <h2>Días sin clase dentro del ciclo</h2>
             <ul class="lista-plana" th:unless="${#lists.isEmpty(detalle.diasSinClase())}">

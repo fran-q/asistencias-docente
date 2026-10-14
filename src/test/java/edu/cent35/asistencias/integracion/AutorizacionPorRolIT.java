@@ -38,16 +38,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AutorizacionPorRolIT {
 
-    // Pantallas compartidas por INSTITUCION y ADMIN. Todas exigen sesion, asi que esta lista
-    // es la que usa el caso del anonimo.
+    // Pantallas compartidas por INSTITUCION y ADMIN. Todas exigen sesión, así que esta lista
+    // es la que usa el caso del anónimo.
     private static final String[] PANTALLAS_COMPARTIDAS = {
         "/docentes", "/carreras", "/materias", "/comisiones",
         "/horarios", "/grilla", "/asistencias", "/reportes", "/asistencia/pase"
     };
 
-    // Las que se abren con solo tener el rol. El pase quedo afuera: desde ADR-0015 tambien
-    // exige que el equipo sea un puesto autorizado, asi que un 200 ahi ya no depende del rol
-    // y mezclarlo haria que este test midiera dos controles a la vez. El del puesto vive en
+    // Las que se abren con solo tener el rol. El pase quedó afuera: desde ADR-0015 también
+    // exige que el equipo sea un puesto autorizado, así que un 200 ahí ya no depende del rol
+    // y mezclarlo haría que este test midiera dos controles a la vez. El del puesto vive en
     // PuestoCapturaIT, incluido que el pase siga alcanzable con el equipo designado.
     private static final String[] ABREN_SOLO_CON_ROL = {
         "/docentes", "/carreras", "/materias", "/comisiones",
@@ -59,7 +59,7 @@ class AutorizacionPorRolIT {
 
     private Long tenantId;
 
-    // Hace falta una institucion real: las pantallas del rol INSTITUCION la leen desde el tenant.
+    // Hace falta una institución real: las pantallas del rol INSTITUCION la leen desde el tenant.
     @BeforeEach
     void sembrar() {
         TenantContext.clear();
@@ -174,7 +174,7 @@ class AutorizacionPorRolIT {
                 .param("codigo", "X-1")
                 .param("nombre", "Carrera X")
                 // Obligatoria desde V010: sin ella el alta vuelve al formulario con
-                // errores de validacion y el test dejaria de probar lo que dice probar.
+                // errores de validación y el test dejaría de probar lo que dice probar.
                 .param("duracionAnios", "3"))
             .andExpect(status().is3xxRedirection());
     }
@@ -183,8 +183,8 @@ class AutorizacionPorRolIT {
     //  helpers
     // ========================================================================
 
-    // Principal de la aplicacion (no el de Spring): TenantInterceptor necesita un
-    // UsuarioAutenticado para poder publicar la institucion en el TenantContext.
+    // Principal de la aplicación (no el de Spring): TenantInterceptor necesita un
+    // UsuarioAutenticado para poder publicar la institución en el TenantContext.
     private UsuarioAutenticado principal(String rol) {
         Rol r = new Rol();
         r.setId((short) 1);

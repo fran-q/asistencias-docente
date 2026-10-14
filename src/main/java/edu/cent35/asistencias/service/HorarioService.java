@@ -28,7 +28,7 @@ import java.util.List;
 @Slf4j
 public class HorarioService {
 
-    // Una franja no puede durar mas de seis horas: mas que eso casi siempre es un error de
+    // Una franja no puede durar más de seis horas: más que eso casi siempre es un error de
     // tipeo en la hora de fin, y no se nota hasta que el pase acepta marcas toda la tarde.
     private static final int MAX_DURACION_MIN = 6 * 60;
 
@@ -71,7 +71,7 @@ public class HorarioService {
         Long tenantId = TenantContext.getRequired();
         Horario h = horarioRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Horario no encontrado: " + id));
-        // El tenant del horario se deduce por su cadena comision -> materia.
+        // El tenant del horario se deduce por su cadena comisión -> materia.
         if (h.getComision() == null
                 || h.getComision().getMateria() == null
                 || !tenantId.equals(h.getComision().getMateria().getInstitucionId())) {
@@ -84,7 +84,7 @@ public class HorarioService {
         if (h.getComision().getMateria().getCarrera() != null) {
             h.getComision().getMateria().getCarrera().getCodigo();
         }
-        // Y su periodo con el ano: la edicion muestra la comision fija con ellos.
+        // Y su período con el año: la edición muestra la comisión fija con ellos.
         if (h.getComision().getPeriodo() != null) h.getComision().getPeriodo().getCiclo().getAnio();
         return h;
     }
@@ -134,21 +134,21 @@ public class HorarioService {
         Long tenantId = TenantContext.getRequired();
         Comision comision = obtenerComisionValidada(comisionId, tenantId);
 
-        // La comision de un horario NO se puede cambiar.
+        // La comisión de un horario NO se puede cambiar.
         //
-        // Cada asistencia guarda su comision ademas de su horario --redundancia deliberada,
-        // para que el reporte no tenga que hacer un JOIN mas en su consulta mas pesada--.
-        // Esa copia se escribe cuando se marca la asistencia y despues nadie la vuelve a
-        // tocar. Si el horario se reasignara a otra comision, todas las asistencias ya
-        // registradas quedarian apuntando a la anterior, y el reporte contaria clases de
-        // una comision que nunca las dicto. No es un riesgo teorico: es la unica operacion
-        // del sistema que podia producir ese estado.
+        // Cada asistencia guarda su comisión además de su horario --redundancia deliberada,
+        // para que el reporte no tenga que hacer un JOIN más en su consulta más pesada--.
+        // Esa copia se escribe cuando se marca la asistencia y después nadie la vuelve a
+        // tocar. Si el horario se reasignara a otra comisión, todas las asistencias ya
+        // registradas quedarían apuntando a la anterior, y el reporte contaria clases de
+        // una comisión que nunca las dictó. No es un riesgo teórico: es la única operación
+        // del sistema que podía producir ese estado.
         //
-        // Se prohibe el cambio en vez de propagarlo a las asistencias porque reescribir
-        // historial de asistencias para acomodar una correccion de carga es peor: esas
+        // Se prohíbe el cambio en vez de propagarlo a las asistencias porque reescribir
+        // historial de asistencias para acomodar una corrección de carga es peor: esas
         // filas son el registro de lo que efectivamente paso. Si la franja pertenece a otra
-        // comision, lo correcto es dar de baja esta y crear la que corresponde, que ademas
-        // deja constancia de cuando dejo de valer la anterior.
+        // comisión, lo correcto es dar de baja esta y crear la que corresponde, que además
+        // deja constancia de cuando dejó de valer la anterior.
         if (!comision.getId().equals(h.getComision().getId())) {
             throw new IllegalArgumentException(
                 "No se puede mover un horario a otra comisión: las asistencias ya "
@@ -170,7 +170,7 @@ public class HorarioService {
     }
 
     // Desactiva un horario sin borrarlo, para no perder las asistencias que lo referencian.
-    // Deja ademas la fecha: "esta inactivo" sin decir desde cuando no sirve como constancia.
+    // Deja además la fecha: "esta inactivo" sin decir desde cuando no sirve como constancia.
     @Transactional
     public void darDeBaja(Long id) {
         Horario h = buscarPorId(id);

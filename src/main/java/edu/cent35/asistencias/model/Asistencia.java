@@ -118,7 +118,7 @@ public class Asistencia extends BaseTenantEntity {
     @Column(nullable = false, length = 15)
     private MetodoAsistencia metodo;
 
-    // Sólo presente cuando metodo == AUTOMATICO.
+    // Sólo presente cuando método == AUTOMATICO.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "modelo_facial_id")
     private ModeloFacial modeloFacial;

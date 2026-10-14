@@ -18,14 +18,14 @@ import java.util.Optional;
 @Repository
 public interface DiaNoLaborableRepository extends JpaRepository<DiaNoLaborable, Long> {
 
-    // Si ese dia esta marcado como sin clases. Es lo que consulta el job antes de generar nada.
+    // Si ese día está marcado como sin clases. Es lo que consulta el job antes de generar nada.
     boolean existsByInstitucionIdAndFecha(Long institucionId, LocalDate fecha);
 
-    // El dia entero, cuando ademas del si o no hace falta el motivo: el pase lo muestra en
-    // pantalla, y "hoy no hay clases" sin decir por que no le sirve a quien esta parado ahi.
+    // El día entero, cuando además del si o no hace falta el motivo: el pase lo muestra en
+    // pantalla, y "hoy no hay clases" sin decir por qué no le sirve a quien está parado ahí.
     Optional<DiaNoLaborable> findByInstitucionIdAndFecha(Long institucionId, LocalDate fecha);
 
-    // El listado de la pantalla, acotado a un rango para no traer todos los anos cargados.
+    // El listado de la pantalla, acotado a un rango para no traer todos los años cargados.
     @Query("""
         SELECT d FROM DiaNoLaborable d
         WHERE d.institucionId = :institucionId

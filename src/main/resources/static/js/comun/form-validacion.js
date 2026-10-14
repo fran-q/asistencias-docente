@@ -3,16 +3,16 @@
  *
  *  Muestra los errores de un formulario ANTES de enviarlo.
  *
- *  Por que. Hoy toda la validacion vive en el servidor: se completa el
- *  formulario, se envia, la pagina vuelve entera y recien ahi aparece que
+ *  Por qué. Hoy toda la validación vive en el servidor: se completa el
+ *  formulario, se envía, la página vuelve entera y recién ahí aparece que
  *  faltaba un campo. En formularios largos --el de horario tiene ocho-- eso
- *  obliga a volver a subir y buscar cual era.
+ *  obliga a volver a subir y buscar cuál era.
  *
- *  Esto NO reemplaza la validacion del servidor ni la duplica: se apoya en las
+ *  Esto NO reemplaza la validación del servidor ni la duplica: se apoya en las
  *  restricciones que el propio HTML ya declara (required, min, max, pattern),
  *  que a su vez salen de las anotaciones del DTO. Las reglas que necesitan la
- *  base --que el codigo sea unico, que el año entre en la carrera-- siguen
- *  resolviendose donde unicamente se pueden resolver, en el servidor.
+ *  base --que el código sea único, que el año entre en la carrera-- siguen
+ *  resolviéndose donde únicamente se pueden resolver, en el servidor.
  * ========================================================================== */
 (function (window, document) {
     'use strict';
@@ -31,7 +31,7 @@
         if (v.patternMismatch) return campo.getAttribute('data-error-patron') || 'El formato no es válido.';
         if (v.tooShort)      return 'Tiene que tener al menos ' + campo.minLength + ' caracteres.';
         if (v.tooLong)       return 'No puede pasar de ' + campo.maxLength + ' caracteres.';
-        // En una fecha el limite viene como 2027-01-01: se muestra como se escribe aca.
+        // En una fecha el límite viene como 2027-01-01: se muestra como se escribe acá.
         if (v.rangeUnderflow) return campo.type === 'date'
             ? 'Tiene que ser el ' + comoFecha(campo.min) + ' o después.'
             : 'Tiene que ser ' + campo.min + ' o mayor.';
@@ -88,7 +88,7 @@
             if (primerFallo) {
                 e.preventDefault();
                 // Se lleva la vista al primer problema: en un formulario largo el error
-                // puede quedar fuera de la pantalla y parece que el boton no hizo nada.
+                // puede quedar fuera de la pantalla y parece que el botón no hizo nada.
                 primerFallo.focus();
                 if (primerFallo.scrollIntoView) {
                     primerFallo.scrollIntoView({ block: 'center', behavior: 'smooth' });

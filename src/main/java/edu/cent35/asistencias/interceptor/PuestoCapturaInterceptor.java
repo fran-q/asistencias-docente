@@ -42,9 +42,9 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
     /** Atributo con el que el controlador puede recuperar el puesto ya verificado. */
     public static final String ATRIBUTO_PUESTO = "puestoCaptura";
 
-    // Cada cuanto se refresca "ultimo uso". El endpoint de reconocimiento recibe un cuadro
-    // por segundo, y anotar la marca en cada uno seria un UPDATE por segundo para un dato
-    // que solo sirve para reconocer que maquina es cual.
+    // Cada cuánto se refresca "último uso". El endpoint de reconocimiento recibe un cuadro
+    // por segundo, y anotar la marca en cada uno sería un UPDATE por segundo para un dato
+    // que solo sirve para reconocer qué máquina es cuál.
     private static final Duration REFRESCO_USO = Duration.ofMinutes(5);
 
     private final PuestoCapturaService puestoService;
@@ -54,10 +54,10 @@ public class PuestoCapturaInterceptor implements HandlerInterceptor {
                              Object handler) throws IOException {
 
         // Sin tenant no hay contra que validar, y en estas rutas eso ya no puede pasar de
-        // largo. Hasta el modo kiosco, llegar aca implicaba tener sesion —Spring Security
-        // exigia autenticacion antes— y por eso alcanzaba con seguir. Desde ADR-0019 /kiosco
-        // es permitAll: si no hay tenant significa que la credencial del equipo no resolvio,
-        // y dejar pasar abriria la ruta a cualquiera. Se rechaza.
+        // largo. Hasta el modo kiosco, llegar acá implicaba tener sesión —Spring Security
+        // exigía autenticación antes— y por eso alcanzaba con seguir. Desde ADR-0019 /kiosco
+        // es permitAll: si no hay tenant significa que la credencial del equipo no resolvió,
+        // y dejar pasar abriría la ruta a cualquiera. Se rechaza.
         Optional<Long> tenant = TenantContext.get();
         if (tenant.isEmpty()) {
             log.info("Captura biometrica bloqueada: {} {} sin institucion en contexto",

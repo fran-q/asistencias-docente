@@ -67,17 +67,17 @@ public class ClaveRecuperacionService {
             .orElseThrow(() -> new IllegalArgumentException(
                 "No existe la institución " + institucionId));
 
-        // Se hashea la forma normalizada --sin guiones y en mayuscula-- y se devuelve la forma
+        // Se hashea la forma normalizada --sin guiones y en mayúscula-- y se devuelve la forma
         // legible. Si se hasheara con los guiones, la clave escrita de cualquier otra manera no
-        // coincidiria nunca, y "como la haya copiado la persona" dejaria de ser cierto.
+        // coincidiria nunca, y "como la haya copiado la persona" dejaría de ser cierto.
         String crudo = sortearClave();
         institucion.setClaveRecuperacionHash(passwordEncoder.encode(crudo));
         institucion.setClaveRecuperacionCreadaEn(LocalDateTime.now());
         institucionRepository.save(institucion);
         String enClaro = conGuiones(crudo);
 
-        // La clave NO va al log, por lo mismo que no va una contrasena: el log se lee, se copia
-        // y se manda por ahi. Se anota que se genero, que es lo que sirve para responder
+        // La clave NO va al log, por lo mismo que no va una contraseña: el log se lee, se copia
+        // y se manda por ahí. Se anota que se generó, que es lo que sirve para responder
         // "cuando se cambio esto".
         log.info("Clave de recuperacion generada: institucion_id={}", institucionId);
         return enClaro;
@@ -145,8 +145,8 @@ public class ClaveRecuperacionService {
             .findFirst();
     }
 
-    // Se acepta como venga escrita: con espacios, con guiones, en minuscula. Lo que se compara
-    // es lo que se genero, y nadie tiene por que acordarse de si los grupos iban separados.
+    // Se acepta como venga escrita: con espacios, con guiones, en minúscula. Lo que se compara
+    // es lo que se generó, y nadie tiene por qué acordarse de si los grupos iban separados.
     private String normalizar(String clave) {
         if (clave == null) return "";
         return clave.replaceAll("[^A-Za-z0-9]", "").toUpperCase();

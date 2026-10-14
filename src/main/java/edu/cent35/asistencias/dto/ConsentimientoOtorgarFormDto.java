@@ -7,10 +7,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Form simplificado para que el admin registre el consentimiento biometrico
- * de un docente en representacion.
+ * Form simplificado para que el admin registre el consentimiento biométrico
+ * de un docente en representación.
  * <p>
- * Por ahora solo expone el checkbox de confirmacion. El metodo (ESCRITO),
+ * Por ahora solo expone el checkbox de confirmación. El método (ESCRITO),
  * la fecha (hoy) y la URL del documento se asumen por defecto y se setean
  * en el controller. En el futuro el form podra incluir esos campos cuando
  * sea necesario (por ejemplo cuando se cargen consentimientos

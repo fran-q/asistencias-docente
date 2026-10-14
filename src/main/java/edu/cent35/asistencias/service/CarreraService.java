@@ -52,24 +52,24 @@ public class CarreraService {
     /**
      * Las materias de una carrera, activas primero.
      *
-     * <p>Pasa por {@link #buscarPorId} a proposito: esa es la que valida que la carrera sea de
-     * la institucion actual. Consultar las materias directamente por carreraId devolveria las
-     * de otra institucion si alguien prueba identificadores.
+     * <p>Pasa por {@link #buscarPorId} a propósito: esa es la que valida que la carrera sea de
+     * la institución actual. Consultar las materias directamente por carreraId devolvería las
+     * de otra institución si alguien prueba identificadores.
      */
     @Transactional(readOnly = true)
     public List<Materia> materiasDe(Long carreraId) {
         buscarPorId(carreraId);
         // Solo las activas. Esta pantalla es el plan de estudios tal como se dicta hoy, no
         // el historial: una materia dada de baja sigue en la base porque hay asistencias
-        // colgando de ella, pero ya no forma parte del plan. Mezclarlas hacia que el plan
-        // creciera con cada correccion y dejara de poder leerse de un vistazo.
+        // colgando de ella, pero ya no forma parte del plan. Mezclarlas hacía que el plan
+        // creciera con cada corrección y dejara de poder leerse de un vistazo.
         List<Materia> materias = materiaRepository
             .findByCarreraIdOrderByActivoDescNombreAsc(carreraId).stream()
             .filter(m -> Boolean.TRUE.equals(m.getActivo()))
             .toList();
-        // El docente titular es lazy y la sesion se cierra al salir de este metodo: la
-        // plantilla lo pediria despues y reventaria con LazyInitializationException. Se lo
-        // toca aca, que es donde la sesion todavia esta abierta.
+        // El docente titular es lazy y la sesión se cierra al salir de este método: la
+        // plantilla lo pediría después y reventaría con LazyInitializationException. Se lo
+        // toca acá, que es donde la sesión todavía está abierta.
         for (Materia m : materias) {
             if (m.getDocenteTitular() != null) m.getDocenteTitular().getNombreCompleto();
         }
@@ -113,9 +113,9 @@ public class CarreraService {
                 "Ya existe otra carrera con código '" + codigoNuevo + "' en esta institución.");
         }
 
-        // Acortar la duracion dejaria materias fuera del plan, en un anio que ya no existe.
-        // Se frena antes de guardar y se dice cual es el anio que estorba: mandar a "revisar
-        // las materias" sin decir cual no le ahorra la busqueda a nadie.
+        // Acortar la duración dejaría materias fuera del plan, en un año que ya no existe.
+        // Se frena antes de guardar y se dice cuál es el año que estorba: mandar a "revisar
+        // las materias" sin decir cuál no le ahorra la búsqueda a nadie.
         Short maxAnio = materiaRepository.maxAnioDeLaCarrera(id);
         if (duracionAnios != null && maxAnio != null && maxAnio > duracionAnios) {
             throw new IllegalArgumentException(

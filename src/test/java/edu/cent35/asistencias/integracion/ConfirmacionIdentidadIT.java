@@ -173,9 +173,9 @@ class ConfirmacionIdentidadIT {
         TenantContext.set(tenantId);
         var historial = cambioIdentidadRepository.historialDe(tenantId, personaId);
 
-        // Dos campos cambiaron —nombre y telefono— y el apellido quedo igual: tienen que ser
+        // Dos campos cambiaron —nombre y teléfono— y el apellido quedó igual: tienen que ser
         // dos filas y no tres. Registrar un campo que no cambio ensucia el historial y hace
-        // que buscar en el sea inutil.
+        // que buscar en el sea inútil.
         assertThat(historial).hasSize(2);
         assertThat(historial).extracting("campo")
             .containsExactlyInAnyOrder("nombre", "telefono");
@@ -239,7 +239,7 @@ class ConfirmacionIdentidadIT {
 
     private UsuarioAutenticado principal() {
         // El rol se arma en memoria y no se busca en la base: en el perfil de test Flyway esta
-        // apagado y el esquema lo genera Hibernate, asi que el catalogo de roles no existe. Solo
+        // apagado y el esquema lo genera Hibernate, así que el catálogo de roles no existe. Solo
         // hace falta para el principal de seguridad, que no lo persiste.
         Rol r = new Rol();
         r.setId((short) 1);

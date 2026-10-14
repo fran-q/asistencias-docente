@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * Datos pre-procesados para renderizar la grilla semanal de una carrera.
  * Cada {@link GrillaItem} ya tiene calculadas sus posiciones en el grid
- * CSS (columna por dia, filas por slots de 30 min desde {@code horaMin}).
+ * CSS (columna por día, filas por slots de 30 min desde {@code horaMin}).
  */
 @Value
 @Builder
@@ -19,19 +19,19 @@ public class GrillaSemanalDto {
     String carreraCodigo;
     String carreraNombre;
 
-    /** Cuantos anios dura la carrera: acota las opciones del filtro. */
+    /** Cuántos años dura la carrera: acota las opciones del filtro. */
     Short duracionAnios;
 
-    /** Anio por el que se filtro, o null si se muestran todos. */
+    /** Año por el que se filtró, o null si se muestran todos. */
     Short anioFiltrado;
-    // El ciclo que se esta viendo. Null cuando la institucion todavia no abrio ninguno: la
-    // grilla sale vacia y la pantalla lo explica, en vez de mostrar una cuadricula muda.
+    // El ciclo que se está viendo. Null cuando la institución todavía no abrió ninguno: la
+    // grilla sale vacía y la pantalla lo explica, en vez de mostrar una cuadrícula muda.
     Long cicloId;
     Short cicloAnio;
 
     int totalHorarios;
-    LocalTime horaMin;        // hora minima visible en la grilla (default 07:00)
-    LocalTime horaMax;        // hora maxima visible en la grilla (default 23:00)
+    LocalTime horaMin;        // hora mínima visible en la grilla (default 07:00)
+    LocalTime horaMax;        // hora máxima visible en la grilla (default 23:00)
     int totalSlots;           // cantidad de slots de 30 min entre horaMin y horaMax
 
     // Etiquetas de hora a mostrar en la columna izquierda (07:00, 08:00, ...).

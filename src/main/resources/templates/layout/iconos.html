@@ -9,11 +9,11 @@
   ninguna regla extra.
 
   Todos comparten viewBox 0 0 24 24, trazo de 2 y puntas redondeadas, que es el
-  criterio que ya traia el archivo original: la familia se nota cuando dos
+  criterio que ya traía el archivo original: la familia se nota cuando dos
   iconos distintos aparecen en la misma lista.
 
-  Los cinco fragmentos que ya existian (casa, libro, tilde, personas, flecha)
-  van TEXTUALES, sin tocar su geometria. Este archivo solo agrega.
+  Los cinco fragmentos que ya existían (casa, libro, tilde, personas, flecha)
+  van TEXTUALES, sin tocar su geometría. Este archivo solo agrega.
 
   Uso:  <svg th:replace="~{layout/iconos :: casa}"></svg>
 -->
@@ -22,10 +22,10 @@
 
 <!-- ============================================================================
      LOS CINCO ORIGINALES
-     Van textuales, con su geometria y su stroke-width 2, porque los referencia
+     Van textuales, con su geometría y su stroke-width 2, porque los referencia
      el navbar horizontal que se conserva por compatibilidad: si cambiaran de
-     trazo, una pantalla sin migrar mostraria iconos de otra familia.
-     Los nuevos, mas abajo, respetan el mismo criterio de trazo.
+     trazo, una pantalla sin migrar mostraría iconos de otra familia.
+     Los nuevos, más abajo, respetan el mismo criterio de trazo.
 ============================================================================= -->
 
 <svg th:fragment="casa" class="nav-icono" viewBox="0 0 24 24" width="18" height="18"
@@ -92,9 +92,9 @@
     <rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8.5 3v4M15.5 3v4"/>
 </svg>
 
-<!-- Dias sin clase. Es el calendario con una cruz encima, y de la misma familia a
-     proposito: no es otra cosa que el calendario lectivo, es el mismo con los dias que
-     quedan afuera. Un icono sin parentesco --una alerta, por ejemplo-- diria "algo anda
+<!-- Días sin clase. Es el calendario con una cruz encima, y de la misma familia a
+     propósito: no es otra cosa que el calendario lectivo, es el mismo con los días que
+     quedan afuera. Un icono sin parentesco --una alerta, por ejemplo-- diría "algo anda
      mal" cuando lo que hay es un feriado. -->
 <svg th:fragment="calendarioX" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
      stroke-width="2" stroke-linecap="round" aria-hidden="true">
@@ -103,8 +103,8 @@
 </svg>
 
 <!-- Grilla semanal. Una tabla con encabezado y columnas, que es literalmente como se ve
-     la pantalla: los dias arriba y las franjas cayendo. Antes compartia el calendario con
-     ciclos y con dias sin clase, y tres iconos iguales en una lista de siete dejan de
+     la pantalla: los días arriba y las franjas cayendo. Antes compartia el calendario con
+     ciclos y con días sin clase, y tres iconos iguales en una lista de siete dejan de
      servir para distinguir nada. -->
 <svg th:fragment="grilla" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
      stroke-width="2" stroke-linecap="round" aria-hidden="true">

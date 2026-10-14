@@ -19,7 +19,7 @@ import java.util.Optional;
 @Repository
 public interface CodigoVerificacionRepository extends JpaRepository<CodigoVerificacion, Long> {
 
-    // Ultimo codigo emitido a esa persona para ese proposito, usado o no.
+    // Último código emitido a esa persona para ese propósito, usado o no.
     @Query("""
         SELECT c FROM CodigoVerificacion c
         WHERE c.usuario.id = :usuarioId AND c.proposito = :proposito
@@ -29,7 +29,7 @@ public interface CodigoVerificacionRepository extends JpaRepository<CodigoVerifi
     Optional<CodigoVerificacion> ultimoDe(@Param("usuarioId") Long usuarioId,
                                           @Param("proposito") PropositoCodigo proposito);
 
-    // Cuantos codigos se pidieron desde un instante; sostiene el limite de reenvios.
+    // Cuántos códigos se pidieron desde un instante; sostiene el límite de reenvíos.
     @Query("""
         SELECT COUNT(c) FROM CodigoVerificacion c
         WHERE c.usuario.id = :usuarioId AND c.proposito = :proposito
@@ -39,7 +39,7 @@ public interface CodigoVerificacionRepository extends JpaRepository<CodigoVerifi
                      @Param("proposito") PropositoCodigo proposito,
                      @Param("desde") LocalDateTime desde);
 
-    // Invalida de una los codigos pendientes: al emitir uno nuevo, los anteriores dejan de servir.
+    // Invalida de una los códigos pendientes: al emitir uno nuevo, los anteriores dejan de servir.
     @Modifying
     @Query("""
         UPDATE CodigoVerificacion c SET c.usadoEn = :ahora

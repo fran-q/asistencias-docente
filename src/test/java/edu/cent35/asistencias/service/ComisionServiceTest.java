@@ -53,7 +53,7 @@ class ComisionServiceTest {
     @InjectMocks private ComisionService service;
 
     // ========================================================================
-    //  Codigo sugerido para una comision nueva
+    //  Código sugerido para una comisión nueva
     // ========================================================================
 
     @Test
@@ -103,8 +103,8 @@ class ComisionServiceTest {
     @Test
     @DisplayName("El codigo de una comision dada de baja sigue ocupado")
     void laDeBajaSigueOcupandoSuCodigo() {
-        // El indice unico no mira 'activo': sugerir el codigo de una comision inactiva daria
-        // un error recien al guardar. La consulta las trae a todas, y esto lo sostiene.
+        // El índice único no mira 'activo': sugerir el código de una comisión inactiva daría
+        // un error recién al guardar. La consulta las trae a todas, y esto lo sostiene.
         TenantContext.set(TENANT_A);
         when(comisionRepository.codigosUsados(MATERIA_ID, PERIODO_ID, TENANT_A))
             .thenReturn(java.util.List.of("A", "B"));
@@ -122,7 +122,7 @@ class ComisionServiceTest {
         verify(comisionRepository, never()).codigosUsados(any(), any(), any());
     }
 
-    // La comision vive en un periodo desde V023. El de los tests es de un ciclo abierto: los
+    // La comisión vive en un período desde V023. El de los tests es de un ciclo abierto: los
     // casos de ciclo cerrado se prueban aparte, en CicloLectivoServiceTest.
     private static final Long PERIODO_ID = 70L;
     private PeriodoLectivo periodo;
@@ -220,7 +220,7 @@ class ComisionServiceTest {
     @Test
     @DisplayName("actualizar: mover la comisión a una materia que ya tiene ese código se rechaza")
     void actualizar_colisionAlCambiarDeMateria() {
-        Comision c = comisionActivaA();                 // codigo "A" en la materia 30
+        Comision c = comisionActivaA();                 // código "A" en la materia 30
         Materia otra = materiaConTenant(TENANT_A);
         otra.setId(31L);
         otra.setCodigo("OTRA");
@@ -246,7 +246,7 @@ class ComisionServiceTest {
         Comision c = comisionActivaA();
         when(comisionRepository.findById(40L)).thenReturn(Optional.of(c));
         when(materiaRepository.findById(MATERIA_ID)).thenReturn(Optional.of(c.getMateria()));
-        // La consulta la encuentra a ella misma: eso no es una colision.
+        // La consulta la encuentra a ella misma: eso no es una colisión.
         when(comisionRepository.findByMateriaIdAndCodigoAndPeriodoId(MATERIA_ID, "A", PERIODO_ID))
             .thenReturn(Optional.of(c));
         when(comisionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

@@ -27,7 +27,7 @@ public class SeccionService {
     /** Los tres grupos del menú, con su etiqueta y sus pantallas por rol, en su mismo orden. */
     public enum Grupo {
         ASISTENCIA("asistencia", "Asistencias", "Registro y consulta de la asistencia docente."),
-        // La descripcion dice el orden de carga porque el menu ya no lo muestra: ahi los
+        // La descripción dice el orden de carga porque el menú ya no lo muestra: ahí los
         // destinos van del uso diario al anual, que es el orden inverso.
         ACADEMICO("academico", "Académico",
             "La oferta del año. Se carga en orden: ciclo lectivo, carrera, materia, comisión "
@@ -66,8 +66,8 @@ public class SeccionService {
                     "Las marcas de una fecha, con las ausencias calculadas.", "lista"),
                 new SeccionDto("Reportes", "/reportes",
                     "Filtrar por período y exportar a CSV o PDF.", "lupa"),
-                // Los mismos filtros, mirados de conjunto. Va despues de la tabla porque
-                // primero se acota el periodo y despues se lo mira.
+                // Los mismos filtros, mirados de conjunto. Va después de la tabla porque
+                // primero se acota el período y después se lo mira.
                 new SeccionDto("Gráficos", "/reportes/graficos",
                     "Cómo viene el dictado y dónde se concentran las ausencias.", "grafico"));
 

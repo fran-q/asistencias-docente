@@ -2,14 +2,14 @@
  *  table-scroll.js
  *  Dos cosas sobre los contenedores .table-wrap:
  *
- *   1. Shift + rueda del raton desplaza la tabla de costado.
+ *   1. Shift + rueda del ratón desplaza la tabla de costado.
  *   2. Se avisa con un degradado en el borde cuando la tabla sigue para ese lado.
  *
  *  Lo segundo existe porque el scroll horizontal no se anunciaba solo: en una
  *  ventana angosta la columna de acciones queda partida al medio y se lee como un
  *  error de maquetado. La barra de scroll no alcanza como aviso --es fina y en
- *  Windows aparece recien cuando uno ya la esta usando--, asi que el borde
- *  degradado es la unica senal que esta antes de que la persona intente nada.
+ *  Windows aparece recién cuando uno ya la esta usando--, así que el borde
+ *  degradado es la única señal que esta antes de que la persona intente nada.
  * ========================================================================== */
 
 (function (window, document) {
@@ -17,7 +17,7 @@
 
     // Margen de 1px: scrollWidth y clientWidth pueden diferir por redondeo de
     // subpixel aunque no haya nada que desplazar, y sin esto el degradado
-    // quedaria encendido para siempre en tablas que entran justo.
+    // quedaría encendido para siempre en tablas que entran justo.
     var MARGEN = 1;
 
     function marcarBordes(wrap) {
@@ -37,7 +37,7 @@
         }, { passive: false });
 
         // passive: el handler solo lee y toggle clases, nunca llama a
-        // preventDefault, asi que no tiene por que bloquear el scroll.
+        // preventDefault, así que no tiene por qué bloquear el scroll.
         wrap.addEventListener('scroll', function () { marcarBordes(wrap); }, { passive: true });
 
         // El ancho disponible cambia sin que haya resize de ventana: el filtro de

@@ -8,7 +8,7 @@ import lombok.Value;
 import java.time.LocalDateTime;
 
 /**
- * Item del listado de usuarios. NO contiene el password_hash
+ * Ítem del listado de usuarios. NO contiene el password_hash
  * (defensa basica - no filtramos hashes a la vista, ni siquiera
  * en logs accidentales).
  */
@@ -21,12 +21,12 @@ public class UsuarioListItemDto {
     String nombreCompleto;
     String rolCodigo;
     boolean activo;
-    // Una cuenta sin verificar no puede operar el sistema, asi que el listado lo muestra:
-    // de lo contrario se descubre recien cuando la persona avisa que no entra a ningun lado.
+    // Una cuenta sin verificar no puede operar el sistema, así que el listado lo muestra:
+    // de lo contrario se descubre recién cuando la persona avisa que no entra a ningún lado.
     boolean emailVerificado;
     LocalDateTime ultimoLogin;
-    // Si la cuenta esta dentro de la ventana de 24 horas y todavia no puede cambiar su
-    // contrasena. Lo resuelve el servicio, que es quien conoce la ventana configurada; el
+    // Si la cuenta está dentro de la ventana de 24 horas y todavía no puede cambiar su
+    // contraseña. Lo resuelve el servicio, que es quien conoce la ventana configurada; el
     // listado solo lo necesita para no ofrecer un destrabe donde no hay nada trabado.
     boolean cambioPasswordBloqueado;
 

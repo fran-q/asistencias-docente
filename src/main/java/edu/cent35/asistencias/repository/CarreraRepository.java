@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface CarreraRepository extends JpaRepository<Carrera, Long> {
 
-    // Listado ordenado por nombre, limitado al tenant via filtro Hibernate.
+    // Listado ordenado por nombre, limitado al tenant vía filtro Hibernate.
     List<Carrera> findAllByOrderByActivoDescNombreAsc();
 
     // Busca por código dentro de la institución.

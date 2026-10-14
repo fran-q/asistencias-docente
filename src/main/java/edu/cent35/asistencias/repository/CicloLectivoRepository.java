@@ -36,7 +36,7 @@ public interface CicloLectivoRepository extends JpaRepository<CicloLectivo, Long
         """)
     List<CicloLectivo> listarDelTenant(@Param("institucionId") Long institucionId);
 
-    // Un ciclo con sus periodos ya cargados, validando el tenant en la misma consulta.
+    // Un ciclo con sus períodos ya cargados, validando el tenant en la misma consulta.
     @Query("""
         SELECT DISTINCT c FROM CicloLectivo c
         LEFT JOIN FETCH c.periodos p
@@ -46,7 +46,7 @@ public interface CicloLectivoRepository extends JpaRepository<CicloLectivo, Long
     Optional<CicloLectivo> porIdEnTenant(@Param("institucionId") Long institucionId,
                                         @Param("id") Long id);
 
-    // El ciclo de un ano concreto; lo usa el alta para no permitir dos del mismo ano.
+    // El ciclo de un año concreto; lo usa el alta para no permitir dos del mismo año.
     Optional<CicloLectivo> findByInstitucionIdAndAnio(Long institucionId, Short anio);
 
     /**
@@ -65,7 +65,7 @@ public interface CicloLectivoRepository extends JpaRepository<CicloLectivo, Long
     Optional<CicloLectivo> activoEnFecha(@Param("institucionId") Long institucionId,
                                          @Param("fecha") LocalDate fecha);
 
-    // Cuantos ciclos hay en ese estado; evita que queden dos activos a la vez.
+    // Cuántos ciclos hay en ese estado; evita que queden dos activos a la vez.
     long countByInstitucionIdAndEstado(Long institucionId, EstadoCiclo estado);
 
     /**

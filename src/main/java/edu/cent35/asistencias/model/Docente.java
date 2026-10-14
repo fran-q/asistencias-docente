@@ -26,14 +26,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Un periodo de vinculo laboral entre una persona y la institucion (RF-07, ADR-0016): quien
+ * Un período de vínculo laboral entre una persona y la institución (RF-07, ADR-0016): quien
  * da clases, desde cuando y hasta cuando. No se loguea al sistema.
- * Desde V016 la identidad no vive aca sino en {@code Persona}, y una misma persona puede
- * tener varias filas: si se fue y volvio, cada periodo es una fila propia, que es lo que
- * permite responder con precision ante una inspeccion.
+ * Desde V016 la identidad no vive acá sino en {@code Persona}, y una misma persona puede
+ * tener varias filas: si se fue y volvió, cada período es una fila propia, que es lo que
+ * permite responder con precisión ante una inspección.
  * <p>
- * Los datos personales y biometricos que se persistan estan sujetos a
- * la Ley 25.326 y la Resolucion AAIP 255/2022. El consentimiento
+ * Los datos personales y biométricos que se persistan están sujetos a
+ * la Ley 25.326 y la Resolución AAIP 255/2022. El consentimiento
  * informado se modela aparte ({@code ConsentimientoBiometrico}).
  */
 @Entity
@@ -56,8 +56,8 @@ public class Docente extends BaseTenantEntity {
     @JoinColumn(name = "persona_id", nullable = false)
     private Persona persona;
 
-    // Ya no es unico por institucion: un reingreso reutiliza el legajo del periodo anterior.
-    // Que no se repita entre vinculos vigentes lo valida el service, que es donde se puede
+    // Ya no es único por institución: un reingreso reutiliza el legajo del período anterior.
+    // Que no se repita entre vínculos vigentes lo valida el service, que es donde se puede
     // expresar "vigente".
     @Column(length = 30)
     private String legajo;
@@ -82,9 +82,9 @@ public class Docente extends BaseTenantEntity {
     private LocalDateTime actualizadoEn;
 
     // Helper: delega en la persona. Sigue existiendo con esta firma porque medio sistema lo
-    // llama; cambiarlo habria obligado a tocar plantillas y servicios sin ninguna ganancia.
-    // Ojo: la persona es LAZY, asi que quien lo use fuera de una transaccion tiene que haber
-    // traido el docente con JOIN FETCH (open-in-view esta apagado).
+    // llama; cambiarlo habría obligado a tocar plantillas y servicios sin ninguna ganancia.
+    // Ojo: la persona es LAZY, así que quien lo use fuera de una transacción tiene que haber
+    // traído el docente con JOIN FETCH (open-in-view está apagado).
     public String getNombreCompleto() {
         return persona == null ? "" : persona.getNombreCompleto();
     }
@@ -118,7 +118,7 @@ public class Docente extends BaseTenantEntity {
         }
     }
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

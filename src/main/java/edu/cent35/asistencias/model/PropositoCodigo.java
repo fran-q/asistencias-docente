@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.model;
 
 /**
- * Para que se emitio un código de un solo uso. Todos los flujos comparten el mismo ciclo de vida
+ * Para que se emitió un código de un solo uso. Todos los flujos comparten el mismo ciclo de vida
  * y las mismas defensas, así que se distinguen por este valor en vez de por tablas separadas.
  */
 public enum PropositoCodigo {

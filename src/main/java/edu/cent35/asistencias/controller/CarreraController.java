@@ -68,8 +68,8 @@ public class CarreraController {
         List<Materia> materias = service.materiasDe(id);
         model.addAttribute("carrera", c);
         model.addAttribute("materias", materias);
-        // Agrupadas por anio para que se lea como un plan de estudios y no como una lista
-        // suelta. TreeMap para que los anios salgan en orden y no en el del hash.
+        // Agrupadas por año para que se lea como un plan de estudios y no como una lista
+        // suelta. TreeMap para que los años salgan en orden y no en el del hash.
         model.addAttribute("porAnio", materias.stream().collect(
             Collectors.groupingBy(Materia::getAnio, TreeMap::new, Collectors.toList())));
         model.addAttribute("activas",

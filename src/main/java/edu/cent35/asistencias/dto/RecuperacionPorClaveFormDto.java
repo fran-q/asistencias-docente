@@ -23,7 +23,7 @@ public class RecuperacionPorClaveFormDto {
     private String username;
 
     // Sin @Pattern: la clave se acepta como la haya copiado la persona --con guiones, con
-    // espacios, en minuscula-- y el servicio la normaliza antes de comparar. Un formato exigido
+    // espacios, en minúscula-- y el servicio la normaliza antes de comparar. Un formato exigido
     // acá rechazaría una clave correcta por cómo quedó pegada desde un papel.
     @NotBlank(message = "Ingresá la clave de recuperación")
     @Size(max = 60, message = "La clave de recuperación es más corta que eso")

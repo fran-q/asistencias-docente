@@ -41,13 +41,13 @@ import java.util.Set;
 /**
  * Arma el panel de la pantalla de inicio (RF-60).
  *
- * <p>Todo sale de consultas que ya existian para otras pantallas; lo unico que se agrega es
- * cruzarlas. Se resuelve entero en una sola transaccion de lectura porque es lo primero que
- * ve el operador al entrar y no puede costar mas que la pantalla que va a abrir despues.
+ * <p>Todo sale de consultas que ya existían para otras pantallas; lo único que se agrega es
+ * cruzarlas. Se resuelve entero en una sola transacción de lectura porque es lo primero que
+ * ve el operador al entrar y no puede costar más que la pantalla que va a abrir después.
  *
- * <p>Tambien explica por que no se esta tomando asistencia, para el inicio y para el pase: un
- * ciclo sin activar, un dia sin clases, una comision sin docente. Antes las dos pantallas decian
- * "no hay clases" en todos los casos, y encontrar la causa exigia revisar el calendario entero.
+ * <p>También explica por qué no se está tomando asistencia, para el inicio y para el pase: un
+ * ciclo sin activar, un día sin clases, una comisión sin docente. Antes las dos pantallas decían
+ * "no hay clases" en todos los casos, y encontrar la causa exigía revisar el calendario entero.
  */
 @Service
 @RequiredArgsConstructor
@@ -64,19 +64,19 @@ public class PanelInicioService {
     private final PuestoCapturaRepository puestoRepository;
     private final DiaNoLaborableService diaNoLaborableService;
 
-    // Cuantas clases en curso se muestran como maximo, para que el panel no crezca sin limite.
+    // Cuántas clases en curso se muestran como máximo, para que el panel no crezca sin límite.
     private static final int MAX_EN_CURSO = 6;
 
-    // Cuantas clases por venir se anticipan. Mas de tres deja de ser "que sigue" y pasa a
-    // ser la grilla del dia, que ya tiene su propia pantalla.
+    // Cuántas clases por venir se anticipan. Más de tres deja de ser "que sigue" y pasa a
+    // ser la grilla del día, que ya tiene su propia pantalla.
     private static final int MAX_PROXIMAS = 3;
 
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // Solo la cuenta de la institucion abre esta pantalla: para otro rol el aviso va sin enlace.
+    // Solo la cuenta de la institución abre esta pantalla: para otro rol el aviso va sin enlace.
     private static final String CICLOS = "/ciclos";
 
-    // Reloj inyectable: todo el panel se define contra "ahora", asi que sin poder fijarlo
+    // Reloj inyectable: todo el panel se define contra "ahora", así que sin poder fijarlo
     // los tests dependerian de la hora a la que se corren.
     private Clock clock = Clock.systemDefaultZone();
 
@@ -84,7 +84,7 @@ public class PanelInicioService {
         this.clock = clock;
     }
 
-    // Arma los tres bloques de la pantalla de inicio en una sola transaccion de lectura.
+    // Arma los tres bloques de la pantalla de inicio en una sola transacción de lectura.
     @Transactional(readOnly = true)
     public PanelInicioDto armar() {
         Long tenantId = TenantContext.getRequired();
@@ -111,12 +111,12 @@ public class PanelInicioService {
     /**
      * Las clases de este momento, para el pase.
      *
-     * <p>Quien toma asistencia tenia que saber de memoria, o ir a buscarlo al inicio, que clase
-     * correspondia y a quien estaba esperando (heuristica 6: reconocer antes que recordar). Es
-     * el mismo calculo que el inicio y no uno parecido: si el pase mostrara como en curso algo
+     * <p>Quien toma asistencia tenía que saber de memoria, o ir a buscarlo al inicio, que clase
+     * correspondía y a quien estaba esperando (heurística 6: reconocer antes que recordar). Es
+     * el mismo cálculo que el inicio y no uno parecido: si el pase mostrara como en curso algo
      * que el inicio no, las dos pantallas se contradirian sobre lo mismo.
      *
-     * <p>Con las clases viaja lo que impide marcar: por que no hay ninguna, si no hay, y lo que
+     * <p>Con las clases viaja lo que impide marcar: por qué no hay ninguna, si no hay, y lo que
      * falta cargar para que el pase reconozca a alguien y le impute su clase.
      */
     @Transactional(readOnly = true)
@@ -130,7 +130,7 @@ public class PanelInicioService {
         List<PanelInicioDto.ClaseEnCurso> enCurso = clasesEnCurso(clasesDeHoy, marcasDeHoy, ahora);
         List<PanelInicioDto.ProximaClase> proximas = proximasClases(clasesDeHoy, ahora);
 
-        // Los ciclos se piden solo si hace falta explicar un dia vacio: el pase refresca esta
+        // Los ciclos se piden solo si hace falta explicar un día vacío: el pase refresca esta
         // tarjeta cada minuto, y con clases en curso no hay nada que explicar.
         PanelInicioDto.MotivoSinClases motivo = enCurso.isEmpty() && proximas.isEmpty()
             ? motivoSinClases(tenantId, hoy, clasesDeHoy, cicloRepository.listarDelTenant(tenantId))
@@ -140,13 +140,13 @@ public class PanelInicioService {
     }
 
     // ------------------------------------------------------------------------
-    //  Bloque 1: que esta corriendo ahora
+    //  Bloque 1: qué está corriendo ahora
     // ------------------------------------------------------------------------
 
     private List<PanelInicioDto.ClaseEnCurso> clasesEnCurso(List<Horario> clasesDeHoy,
                                                             List<Asistencia> marcasDeHoy,
                                                             LocalTime ahora) {
-        // Indice por horario para no recorrer las marcas dentro del bucle de clases.
+        // Índice por horario para no recorrer las marcas dentro del bucle de clases.
         Map<Long, Asistencia> porHorario = new HashMap<>();
         for (Asistencia a : marcasDeHoy) {
             porHorario.put(a.getHorario().getId(), a);
@@ -154,9 +154,9 @@ public class PanelInicioService {
 
         List<PanelInicioDto.ClaseEnCurso> filas = new ArrayList<>();
         for (Horario h : clasesDeHoy) {
-            // La ventana la decide el propio horario, igual que en el pase: si aca se
-            // usara otro criterio, la home mostraria como en curso algo que el pase
-            // despues se niega a marcar.
+            // La ventana la decide el propio horario, igual que en el pase: si acá se
+            // usara otro criterio, la home mostraría como en curso algo que el pase
+            // después se niega a marcar.
             if (!h.estaEnCurso(ahora)) continue;
 
             Comision c = h.getComision();
@@ -178,10 +178,10 @@ public class PanelInicioService {
     }
 
     /**
-     * Las clases que todavia no abrieron su ventana, de la mas proxima en adelante.
+     * Las clases que todavía no abrieron su ventana, de la más próxima en adelante.
      *
      * <p>Se calculan siempre, pero la pantalla solo las muestra cuando no hay ninguna en
-     * curso: el bloque pasaba la mayor parte del dia diciendo "no hay nada" y ocupando un
+     * curso: el bloque pasaba la mayor parte del día diciendo "no hay nada" y ocupando un
      * tercio del ancho igual.
      */
     private List<PanelInicioDto.ProximaClase> proximasClases(List<Horario> clasesDeHoy,
@@ -228,7 +228,7 @@ public class PanelInicioService {
         }
 
         if (!clasesDeHoy.isEmpty()) {
-            // Habia clases, y ninguna esta en curso ni por venir: terminaron todas.
+            // Había clases, y ninguna está en curso ni por venir: terminaron todas.
             return PanelInicioDto.MotivoSinClases.informativo("Las clases de hoy ya terminaron.");
         }
 
@@ -244,7 +244,7 @@ public class PanelInicioService {
                 true, "Asignar docentes en Comisiones", "/comisiones", false);
         }
 
-        // Dentro del ciclo pero entre periodos, como el receso entre cuatrimestres: no es un
+        // Dentro del ciclo pero entre períodos, como el receso entre cuatrimestres: no es un
         // error, pero sin decirlo parece que se perdieron los horarios.
         Optional<CicloLectivo> activo = cicloActivo(ciclos);
         if (activo.isPresent() && activo.get().getPeriodos().stream()
@@ -276,7 +276,7 @@ public class PanelInicioService {
         Optional<CicloLectivo> activo = cicloActivo(ciclos);
         if (activo.isPresent()) {
             CicloLectivo c = activo.get();
-            // No se cierra solo a proposito --cerrar es una decision--, pero terminado y activo
+            // No se cierra solo a propósito --cerrar es una decisión--, pero terminado y activo
             // no ve ninguna clase, y el año siguiente tampoco hasta que se active.
             if (hoy.isAfter(c.getFechaFin())) {
                 return Optional.of(new ProblemaDelCiclo(
@@ -318,7 +318,7 @@ public class PanelInicioService {
     }
 
     // ------------------------------------------------------------------------
-    //  Bloque 2: el dia en numeros
+    //  Bloque 2: el día en números
     // ------------------------------------------------------------------------
 
     private PanelInicioDto.ResumenDelDia resumenDelDia(List<Horario> clasesDeHoy,
@@ -335,13 +335,13 @@ public class PanelInicioService {
             switch (a.getEstado()) {
                 case PRESENTE -> presentes++;
                 case TARDE    -> tarde++;
-                // Las ausencias TAMBIEN se persisten: las escribe el generador al cierre del
-                // dia. Antes caian en este default y no se contaban en ningun lado, asi que
-                // el tablero decia "0 ausentes" con dos filas AUSENTE en la base, y el
+                // Las ausencias TAMBIÉN se persisten: las escribe el generador al cierre del
+                // día. Antes caían en este default y no se contaban en ningún lado, así que
+                // el tablero decía "0 ausentes" con dos filas AUSENTE en la base, y el
                 // listado de asistencias --que si las muestra-- lo desmentia.
                 case AUSENTE  -> ausentes++;
             }
-            // Solo cuenta como "marco" quien efectivamente se presento. Una ausencia
+            // Solo cuenta como "marcó" quien efectivamente se presentó. Una ausencia
             // generada por el job es una fila de asistencia, no una marca: contarla daba
             // "1 de 1 ya marcaron (100%)" para un docente que justamente no vino.
             if (a.getEstado() == EstadoAsistencia.PRESENTE || a.getEstado() == EstadoAsistencia.TARDE) {
@@ -356,8 +356,8 @@ public class PanelInicioService {
             docentesConClase.add(h.getComision().getDocenteAsignado().getId());
             if (horariosConFila.contains(h.getId())) continue;
 
-            // Una clase sin marca que todavia no termino no es una ausencia, es una clase
-            // que falta. Contarlas juntas dejaria el tablero en rojo todas las mananas.
+            // Una clase sin marca que todavía no terminó no es una ausencia, es una clase
+            // que falta. Contarlas juntas dejaría el tablero en rojo todas las mananas.
             if (ahora.isAfter(h.getHoraFin())) {
                 ausentes++;
             } else {
@@ -376,11 +376,11 @@ public class PanelInicioService {
 
     /**
      * Cosas cargadas a medias que hoy solo se descubren entrando ficha por ficha, y que
-     * explican la mayoria de los "no me anda".
+     * explican la mayoría de los "no me anda".
      *
-     * <p>Primero lo que deja sin asistencia a la institucion entera --el calendario y el
-     * equipo autorizado--, despues lo que hay que resolver hoy y al final lo que le falta a
-     * cada docente o comision.
+     * <p>Primero lo que deja sin asistencia a la institución entera --el calendario y el
+     * equipo autorizado--, después lo que hay que resolver hoy y al final lo que le falta a
+     * cada docente o comisión.
      */
     private List<PanelInicioDto.Pendiente> pendientes(Long tenantId, LocalDate hoy,
                                                       List<CicloLectivo> ciclos) {
@@ -392,7 +392,7 @@ public class PanelInicioService {
                 null, p.titulo(), p.detalle(), CICLOS, true, List.of())));
 
         // Sin un equipo autorizado no hay pase ni registro de rostro posible (ADR-0015). Lleva
-        // al pase porque es ahi, desde la computadora que se va a usar, donde se autoriza.
+        // al pase porque es ahí, desde la computadora que se va a usar, donde se autoriza.
         if (puestoRepository.contarHabilitados(tenantId) == 0) {
             lista.add(new PanelInicioDto.Pendiente(null,
                 "Ningún equipo está autorizado para tomar asistencia",
@@ -401,9 +401,9 @@ public class PanelInicioService {
                 "/asistencia/pase", true, List.of()));
         }
 
-        // Va antes que las cargas incompletas porque es lo unico que hay que resolver HOY: es
-        // una jornada ya ocurrida cuyo registro dice una hora que nadie observo. La salida es
-        // obligatoria (RF-79), asi que su falta no se descarta en silencio.
+        // Va antes que las cargas incompletas porque es lo único que hay que resolver HOY: es
+        // una jornada ya ocurrida cuyo registro dice una hora que nadie observó. La salida es
+        // obligatoria (RF-79), así que su falta no se descarta en silencio.
         long salidasPendientes = bloquePresenciaRepository.countPendientesDeCierre(tenantId);
         if (salidasPendientes > 0) {
             lista.add(new PanelInicioDto.Pendiente(salidasPendientes,
@@ -420,8 +420,8 @@ public class PanelInicioService {
     /**
      * Lo que le falta a cada docente o comisión para que el pase reconozca a alguien y le impute
      * su clase: un docente sin consentimiento no puede tener rostro registrado, uno sin modelo
-     * nunca va a marcar solo, y una comision sin docente o sin horarios no genera asistencia
-     * aunque todo lo demas este bien.
+     * nunca va a marcar solo, y una comisión sin docente o sin horarios no genera asistencia
+     * aunque todo lo demás esté bien.
      *
      * <p>Cada uno nombra sus casos: el listado de docentes no dice a quién le falta el rostro,
      * y con solo la cantidad había que abrir las fichas una por una.
@@ -465,8 +465,8 @@ public class PanelInicioService {
                 aDocentes(sinModelo), false, nombres(sinModelo)));
         }
 
-        // Las del ciclo que corre hoy: contar las de un ano cerrado como "sin docente"
-        // pondria en el panel un pendiente que ya no existe.
+        // Las del ciclo que corre hoy: contar las de un año cerrado como "sin docente"
+        // pondría en el panel un pendiente que ya no existe.
         List<Comision> comisiones = comisionRepository.findActivasEnFecha(hoy, tenantId);
 
         List<String> sinDocente = comisiones.stream()

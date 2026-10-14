@@ -66,13 +66,13 @@ class PanelInicioIT {
     @Autowired private CarreraRepository carreraRepository;
     @Autowired private HorarioRepository horarioRepository;
 
-    // El nombre de institucion es unico: sin un sufijo propio, el segundo test de la clase
-    // choca contra la fila que dejo el primero.
+    // El nombre de institución es único: sin un sufijo propio, el segundo test de la clase
+    // choca contra la fila que dejó el primero.
     private static final AtomicInteger SECUENCIA = new AtomicInteger();
 
     private Long tenantId;
 
-    // La institucion ajena de los tests de aislamiento; null en los demas.
+    // La institución ajena de los tests de aislamiento; null en los demás.
     private Long otroTenantId;
 
     @BeforeEach
@@ -84,8 +84,8 @@ class PanelInicioIT {
         tenantId = i.getId();
     }
 
-    // Se borra lo sembrado para no dejarle filas colgadas a los demas tests de integracion,
-    // que comparten la misma base y algunos vacian instituciones al arrancar.
+    // Se borra lo sembrado para no dejarle filas colgadas a los demás tests de integración,
+    // que comparten la misma base y algunos vacían instituciones al arrancar.
     @AfterEach
     void limpiar() {
         TenantContext.set(tenantId);
@@ -126,7 +126,7 @@ class PanelInicioIT {
 
         assertThat(html)
             // Sin clases en curso NI por venir, el bloque ya no dice solo "no hay clases":
-            // dice por que, que es lo que hace falta para resolverlo.
+            // dice por qué, que es lo que hace falta para resolverlo.
             .contains("No hay ningún ciclo lectivo activo")
             .contains("Hoy no hay clases programadas")
             .as("sin un equipo autorizado no hay pase posible")
@@ -159,13 +159,13 @@ class PanelInicioIT {
     @Test
     @DisplayName("Las clases de hoy sin docente explican el día vacío; las de otra institución no")
     void clasesDeHoySinDocente() throws Exception {
-        // La institucion de la sesion, con su ciclo activo y nada mas.
+        // La institución de la sesión, con su ciclo activo y nada más.
         TenantContext.set(tenantId);
         periodoDe(tenantId);
         TenantContext.clear();
 
         // Otra con una clase de hoy sin docente: si la consulta perdiera el WHERE del tenant
-        // en algun JOIN, se contaria en la de la sesion (TD-003).
+        // en algún JOIN, se contaria en la de la sesión (TD-003).
         otroTenantId = institucionRepository.save(Institucion.builder()
             .nombre("Instituto ajeno " + SECUENCIA.incrementAndGet())
             .activo(true).build()).getId();
@@ -299,7 +299,7 @@ class PanelInicioIT {
         return ahora.isAfter(LocalTime.of(23, 29)) ? LocalTime.of(23, 59) : ahora.plusMinutes(30);
     }
 
-    // Principal de la aplicacion: el TenantInterceptor lo necesita para publicar el tenant.
+    // Principal de la aplicación: el TenantInterceptor lo necesita para publicar el tenant.
     private UsuarioAutenticado principal() {
         return principalConRol("ADMIN");
     }
@@ -315,7 +315,7 @@ class PanelInicioIT {
         return new UsuarioAutenticado(u);
     }
 
-    // Una comision sin docente con una clase hoy, en el ciclo activo de esa institucion.
+    // Una comisión sin docente con una clase hoy, en el ciclo activo de esa institución.
     private void claseDeHoySinDocente(Long institucionId, String codigo) {
         Carrera c = Carrera.builder().codigo("CAR-" + codigo).nombre("Carrera").activo(true).build();
         c.setInstitucionId(institucionId);
@@ -339,11 +339,11 @@ class PanelInicioIT {
     // ------------------------------------------------------------------------
     //  Ciclo lectivo para los datos de prueba (V023)
     // ------------------------------------------------------------------------
-    //  La comision tiene periodo_id NOT NULL desde V023, asi que persistir una exige antes un
-    //  ciclo con al menos un periodo. Se crea uno anual por tenant, reutilizado por todo el
+    //  La comisión tiene periodo_id NOT NULL desde V023, así que persistir una exige antes un
+    //  ciclo con al menos un período. Se crea uno anual por tenant, reutilizado por todo el
     //  test: lo que estos casos prueban no es el calendario.
-    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un metodo
-    //  al siguiente pero la instancia del test no, asi que un cache por instancia intentaba
+    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un método
+    //  al siguiente pero la instancia del test no, así que un cache por instancia intentaba
     //  crear el mismo ciclo otra vez y chocaba contra uq_ciclos_inst_anio.
     private PeriodoLectivo periodoDe(Long tenantId) {
         return periodoLectivoRepository.seleccionablesDelTenant(tenantId).stream()

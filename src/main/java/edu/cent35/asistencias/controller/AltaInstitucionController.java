@@ -31,8 +31,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Slf4j
 public class AltaInstitucionController {
 
-    // Los datos en espera viven en la sesion: no hay institucion ni usuario a los cuales
-    // asociarlos todavia, y su vida util son los minutos que dura el codigo.
+    // Los datos en espera viven en la sesión: no hay institución ni usuario a los cuales
+    // asociarlos todavía, y su vida útil son los minutos que dura el código.
     private static final String PENDIENTE = "altaInstitucionPendiente";
 
     private final AltaInstitucionService altaService;
@@ -41,7 +41,7 @@ public class AltaInstitucionController {
     /**
      * En una instalación autónoma esta pantalla no existe (ADR-0022): esa máquina atiende a una
      * sola institución, la creó la configuración inicial, y el alta manda un código por un
-     * correo que ahí no hay. Dejarla abierta seria ofrecer un tramite que no puede terminar.
+     * correo que ahí no hay. Dejarla abierta sería ofrecer un trámite que no puede terminar.
      *
      * <p>Se cierra acá y no solo escondiendo el enlace del login: un enlace que no se ve sigue
      * siendo una ruta que responde.
@@ -115,7 +115,7 @@ public class AltaInstitucionController {
         AltaInstitucionService.Rechazo resultado = altaService.comprobarCodigo(pendiente, codigo);
         if (resultado != AltaInstitucionService.Rechazo.CORRECTO) {
             // Cuando se agotan los intentos o vence, el alta se descarta entera: seguir
-            // aceptando codigos sobre unos datos que ya no valen no lleva a ningun lado.
+            // aceptando códigos sobre unos datos que ya no valen no lleva a ningún lado.
             if (resultado != AltaInstitucionService.Rechazo.INCORRECTO) {
                 sesion.removeAttribute(PENDIENTE);
                 redirect.addFlashAttribute("flashError", explicar(resultado));

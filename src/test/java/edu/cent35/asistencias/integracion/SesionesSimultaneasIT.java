@@ -124,8 +124,8 @@ class SesionesSimultaneasIT {
         mockMvc.perform(get("/carreras").with(user(principalDe(tenantA))))
             .andExpect(status().isOk());
 
-        // Si el interceptor no limpiara, este hilo seguiria teniendo el tenant A y la
-        // proxima persona en tocarlo veria datos ajenos sin enterarse.
+        // Si el interceptor no limpiara, este hilo seguiría teniendo el tenant A y la
+        // próxima persona en tocarlo vería datos ajenos sin enterarse.
         org.assertj.core.api.Assertions
             .assertThat(TenantContext.get())
             .as("el ThreadLocal tiene que quedar vacio despues de responder")
@@ -141,15 +141,15 @@ class SesionesSimultaneasIT {
             .findFirst().orElseThrow().getId();
         TenantContext.clear();
 
-        // Alfa pide una carrera de Beta. Distinguir "no existe" de "no tenes permiso"
-        // confirmaria que el registro esta ahi, y con eso se enumeran los datos ajenos
+        // Alfa pide una carrera de Beta. Distinguir "no existe" de "no tenés permiso"
+        // confirmaría que el registro está ahí, y con eso se enumeran los datos ajenos
         // probando identificadores.
         mockMvc.perform(get("/carreras/" + idDeBeta + "/editar")
                 .with(user(principalDe(tenantA))))
             .andExpect(status().is3xxRedirection());
     }
 
-    // Principal de una institucion: es lo que el TenantInterceptor lee para publicar el tenant.
+    // Principal de una institución: es lo que el TenantInterceptor lee para publicar el tenant.
     private UsuarioAutenticado principalDe(Long tenantId) {
         Rol r = new Rol();
         r.setId((short) 1);

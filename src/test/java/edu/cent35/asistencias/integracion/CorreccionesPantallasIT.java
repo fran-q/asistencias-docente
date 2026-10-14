@@ -124,16 +124,16 @@ class CorreccionesPantallasIT {
             .horaInicio(LocalTime.of(18, 30)).horaFin(LocalTime.of(20, 30))
             .toleranciaMin((short) 15).activo(true).build());
 
-        // Los roles son un catalogo global que en produccion siembra la migracion V001. Acá
+        // Los roles son un catálogo global que en producción siembra la migración V001. Acá
         // no existen: los tests corren sobre H2 con Flyway apagado y el esquema generado por
-        // Hibernate, asi que las tablas nacen vacias. Se crean si faltan.
+        // Hibernate, así que las tablas nacen vacías. Se crean si faltan.
         Rol rolInst = rolRepository.findByCodigo("INSTITUCION")
             .orElseGet(() -> rolRepository.save(Rol.builder().codigo("INSTITUCION").descripcion("Institución").build()));
         Rol rolAdmin = rolRepository.findByCodigo("ADMIN")
             .orElseGet(() -> rolRepository.save(Rol.builder().codigo("ADMIN").descripcion("Administrador").build()));
 
         // La cuenta institucional va SIN persona (V018): representa al establecimiento y no a
-        // alguien concreto, asi que su nombre para mostrar sale de la institucion.
+        // alguien concreto, así que su nombre para mostrar sale de la institución.
         Usuario inst = Usuario.builder().username("inst" + n).email("inst" + n + "@x.test").passwordHash("x").rol(rolInst).activo(true).emailVerificadoEn(LocalDateTime.now()).build();
         inst.setInstitucionId(tenantId);
         usuarioInstitucionId = usuarioRepository.save(inst).getId();
@@ -181,7 +181,7 @@ class CorreccionesPantallasIT {
     }
 
     // ========================================================================
-    //  Usuarios: el rol dejo de elegirse y de editarse
+    //  Usuarios: el rol dejó de elegirse y de editarse
     // ========================================================================
 
     @Test
@@ -331,20 +331,20 @@ class CorreccionesPantallasIT {
     }
 
     // ========================================================================
-    //  Mi cuenta: la contrasena empieza pidiendo el codigo
+    //  Mi cuenta: la contraseña empieza pidiendo el código
     // ========================================================================
 
     @Test
     @DisplayName("Mi cuenta arranca ofreciendo el código, no el campo de contraseña nueva")
     void cambioDePasswordEmpiezaPorElCodigo() throws Exception {
-        // Esta pantalla lee de la base la cuenta del principal, asi que aca hace falta una
-        // que exista de verdad; el principal ficticio de los demas tests no alcanza.
+        // Esta pantalla lee de la base la cuenta del principal, así que acá hace falta una
+        // que exista de verdad; el principal ficticio de los demás tests no alcanza.
         mockMvc.perform(get("/mi-cuenta").with(user(principalReal(usuarioAdminId, "ADMIN"))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Enviarme el código")))
-            // El formulario de la contrasena nueva no se dibuja hasta validar el codigo.
+            // El formulario de la contraseña nueva no se dibuja hasta validar el código.
             .andExpect(content().string(not(containsString("id=\"nuevaPassword\""))))
-            // Y la contrasena actual ya no se pide en ningun paso.
+            // Y la contraseña actual ya no se pide en ningún paso.
             .andExpect(content().string(not(containsString("Contraseña actual"))));
     }
 
@@ -363,7 +363,7 @@ class CorreccionesPantallasIT {
     @Test
     @DisplayName("Un docente con materias a cargo avisa por qué no se puede dar de baja, sin modal")
     void bajaImposibleAvisaDirecto() throws Exception {
-        // El docente sembrado es titular de una materia y esta asignado a una comision.
+        // El docente sembrado es titular de una materia y está asignado a una comisión.
         mockMvc.perform(get("/docentes").with(user(principal("ADMIN"))))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("data-aviso-toast")))
@@ -393,7 +393,7 @@ class CorreccionesPantallasIT {
     }
 
     // ========================================================================
-    //  Nombres: mayuscula inicial, se tipeen como se tipeen
+    //  Nombres: mayúscula inicial, se tipeen como se tipeen
     // ========================================================================
 
     @Test
@@ -441,7 +441,7 @@ class CorreccionesPantallasIT {
             assertThat(personaRepository.buscarPorDni(tenantId, dniDocente).orElseThrow().getNombreCompleto())
                 .isEqualTo("Pérez-Gómez, Ana");
         } finally {
-            // La cuenta apunta a la institucion, y limpiar() la borra al final.
+            // La cuenta apunta a la institución, y limpiar() la borra al final.
             usuarioRepository.delete(creado);
         }
     }
@@ -476,7 +476,7 @@ class CorreccionesPantallasIT {
     }
 
     // ========================================================================
-    //  Academico: ver materias, ver comisiones, grilla por anio
+    //  Académico: ver materias, ver comisiones, grilla por año
     // ========================================================================
 
     @Test
@@ -621,7 +621,7 @@ class CorreccionesPantallasIT {
             .andExpect(content().string(containsString("MCOR")));
     }
 
-    // El HTML de una pantalla, como la ve la cuenta de la institucion.
+    // El HTML de una pantalla, como la ve la cuenta de la institución.
     private String pantalla(String ruta) throws Exception {
         return mockMvc.perform(get(ruta).with(user(principal("INSTITUCION"))))
             .andExpect(status().isOk())
@@ -641,7 +641,7 @@ class CorreccionesPantallasIT {
         return new UsuarioAutenticado(u);
     }
 
-    // Principal de la aplicacion: el TenantInterceptor lo necesita para publicar el tenant.
+    // Principal de la aplicación: el TenantInterceptor lo necesita para publicar el tenant.
     private UsuarioAutenticado principal(String rol) {
         Rol r = new Rol();
         r.setId((short) 1);
@@ -656,11 +656,11 @@ class CorreccionesPantallasIT {
     // ------------------------------------------------------------------------
     //  Ciclo lectivo para los datos de prueba (V023)
     // ------------------------------------------------------------------------
-    //  La comision tiene periodo_id NOT NULL desde V023, asi que persistir una exige antes un
-    //  ciclo con al menos un periodo. Se crea uno anual por tenant, reutilizado por todo el
+    //  La comisión tiene periodo_id NOT NULL desde V023, así que persistir una exige antes un
+    //  ciclo con al menos un período. Se crea uno anual por tenant, reutilizado por todo el
     //  test: lo que estos casos prueban no es el calendario.
-    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un metodo
-    //  al siguiente pero la instancia del test no, asi que un cache por instancia intentaba
+    //  Se busca antes de crear, y no se cachea en un campo: las filas sobreviven de un método
+    //  al siguiente pero la instancia del test no, así que un cache por instancia intentaba
     //  crear el mismo ciclo otra vez y chocaba contra uq_ciclos_inst_anio.
     private PeriodoLectivo periodoDe(Long tenantId) {
         return periodoLectivoRepository.seleccionablesDelTenant(tenantId).stream()

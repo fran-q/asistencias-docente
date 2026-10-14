@@ -79,7 +79,7 @@ public class DiaNoLaborable extends BaseTenantEntity {
     @Column(nullable = false, length = 120)
     private String motivo;
 
-    // Quien lo cargo. NULL si esa cuenta ya no existe (ON DELETE SET NULL).
+    // Quien lo cargó. NULL si esa cuenta ya no existe (ON DELETE SET NULL).
     @Column(name = "creado_por")
     private Long creadoPor;
 

@@ -151,7 +151,7 @@ class PasePresenciaIT {
     }
 
     // ========================================================================
-    //  Una pasada de mas no inventa un registro
+    //  Una pasada de más no inventa un registro
     // ========================================================================
 
     @Test
@@ -166,7 +166,7 @@ class PasePresenciaIT {
         assertThat(bloquesDelTenant()).hasSize(1);
         assertThat(asistenciasDe(hoy)).hasSize(1);
 
-        // Dos minutos despues vuelve a quedar frente a la camara.
+        // Dos minutos después vuelve a quedar frente a la cámara.
         BloquePresenciaService.ResultadoPresencia repetida =
             bloqueService.registrar(docente.getId(), null, 40.0, hoy.atTime(18, 7), null);
 
@@ -198,7 +198,7 @@ class PasePresenciaIT {
         assertThat(bloquesDelTenant()).hasSize(1);
         assertThat(asistenciasDe(hoy)).hasSize(1);
 
-        // Dos minutos despues vuelve a pasar: ya registro su entrada y su salida de esta clase.
+        // Dos minutos después vuelve a pasar: ya registro su entrada y su salida de esta clase.
         BloquePresenciaService.ResultadoPresencia otraVez =
             bloqueService.registrar(docente.getId(), null, 40.0, hoy.atTime(19, 32), null);
 
@@ -217,9 +217,9 @@ class PasePresenciaIT {
     @Test
     @DisplayName("Irse antes y volver para la clase siguiente si abre una jornada nueva")
     void volverParaLaClaseSiguienteSiAbre() {
-        // El limite de la regla de arriba: lo que se bloquea es repetir LA MISMA clase, no
-        // volver a entrar. Sin esta distincion, el docente que se va y vuelve mas tarde se
-        // quedaria sin poder marcar el resto del dia.
+        // El límite de la regla de arriba: lo que se bloquea es repetir LA MISMA clase, no
+        // volver a entrar. Sin esta distinción, el docente que se va y vuelve más tarde se
+        // quedaría sin poder marcar el resto del día.
         horarioRepository.save(Horario.builder()
             .comision(comision)
             .diaSemana((byte) LocalDate.now().getDayOfWeek().getValue())
@@ -258,7 +258,7 @@ class PasePresenciaIT {
     }
 
     // Sin consentimiento vigente la marca se rechaza antes de llegar a lo que se quiere probar
-    // (RF-82). Que esa regla corra primero es deliberado, asi que el test se acomoda a ella.
+    // (RF-82). Que esa regla corra primero es deliberado, así que el test se acomoda a ella.
     private void conConsentimientoVigente() {
         Rol rol = rolRepository.findByCodigo("INSTITUCION").orElseGet(() -> {
             Rol nuevo = new Rol();

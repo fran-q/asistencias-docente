@@ -11,7 +11,7 @@ import jakarta.validation.ConstraintValidatorContext;
  */
 public class CuitValidoValidator implements ConstraintValidator<CuitValido, String> {
 
-    // Un campo vacio se da por valido: si el CUIT es obligatorio lo dice @NotBlank, no esto.
+    // Un campo vacío se da por válido: si el CUIT es obligatorio lo dice @NotBlank, no esto.
     @Override
     public boolean isValid(String valor, ConstraintValidatorContext contexto) {
         return Cuit.esValido(valor);

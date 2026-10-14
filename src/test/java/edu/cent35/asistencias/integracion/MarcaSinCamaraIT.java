@@ -111,8 +111,8 @@ class MarcaSinCamaraIT {
         int n = SECUENCIA.incrementAndGet();
         TenantContext.clear();
 
-        // El catalogo de motivos se siembra en V001, y el perfil test corre sobre H2 con
-        // Flyway apagado: aca no existe si no se crea a mano.
+        // El catálogo de motivos se siembra en V001, y el perfil test corre sobre H2 con
+        // Flyway apagado: acá no existe si no se crea a mano.
         motivoFallaId = motivoRepository.save(MotivoCargaManual.builder()
             .codigo("NO_REGISTRADO_" + n).descripcion("Docente sin rostro registrado")
             .activo(true).build()).getId();
@@ -152,7 +152,7 @@ class MarcaSinCamaraIT {
 
         // El endpoint marca con la hora del reloj, no con una que le pase el test: la clase
         // tiene que estar en curso AHORA, corra el test la hora que corra. Los topes son por
-        // las dos puntas del dia --a las 23:30 restar una hora da una clase que termina antes
+        // las dos puntas del día --a las 23:30 restar una hora da una clase que termina antes
         // de empezar-- y no por elegancia.
         LocalTime ahora = LocalTime.now();
         empiezaLaClase = ahora.isBefore(LocalTime.of(1, 0)) ? LocalTime.MIDNIGHT : ahora.minusHours(1);
@@ -172,7 +172,7 @@ class MarcaSinCamaraIT {
             return rolRepository.save(nuevo);
         });
         // El admin tiene que existir de verdad: el service lo busca por id para dejar asentado
-        // quien cargo la marca. Un principal solo en memoria hace fallar el registro.
+        // quien cargó la marca. Un principal solo en memoria hace fallar el registro.
         Usuario u = Usuario.builder()
             .persona(DatosDePrueba.persona("Secre", "Taria"))
             .username("sin.camara." + n).passwordHash("no-se-usa")
@@ -215,13 +215,13 @@ class MarcaSinCamaraIT {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
 
-        // El boton va sobre la fila del docente, con su id: elegir de esa lista y no de un
+        // El botón va sobre la fila del docente, con su id: elegir de esa lista y no de un
         // buscador es lo que hace imposible marcarle a alguien que no tiene clase ahora.
         assertThat(html).contains("pase__sin-camara");
         assertThat(html).contains("data-docente-id=\"" + docente.getId() + "\"");
         assertThat(html).contains("Ana");
 
-        // Y el cuadro, con el catalogo de motivos adentro.
+        // Y el cuadro, con el catálogo de motivos adentro.
         assertThat(html).contains("pa-sc-overlay");
         assertThat(html).contains("Docente sin rostro registrado");
     }
@@ -236,7 +236,7 @@ class MarcaSinCamaraIT {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.registrada").value(true))
             .andExpect(jsonPath("$.tipoDeMarca").value("ENTRADA"))
-            // Quien la carga tiene que poder confirmar que no se equivoco de persona.
+            // Quien la carga tiene que poder confirmar que no se equivocó de persona.
             .andExpect(jsonPath("$.docenteNombre").value(org.hamcrest.Matchers.containsString("Ana")));
 
         BloquePresencia b = unicoBloque();
@@ -245,11 +245,11 @@ class MarcaSinCamaraIT {
         assertThat(b.getAbiertoPor().getId()).isEqualTo(admin.getId());
         assertThat(b.getMotivoEntrada().getId()).isEqualTo(motivoFallaId);
         assertThat(b.getDetalleEntrada()).isEqualTo("todavía sin foto");
-        // Lo exige ck_bloques_entrada_modelo: no hubo medicion, no hay evidencia que guardar.
+        // Lo exige ck_bloques_entrada_modelo: no hubo medición, no hay evidencia que guardar.
         assertThat(b.getModeloFacialEntrada()).isNull();
         assertThat(b.getConfianzaEntrada()).isNull();
 
-        // Y la clase en curso quedo imputada, que es para lo que se marca.
+        // Y la clase en curso quedó imputada, que es para lo que se marca.
         assertThat(asistenciaRepository.findAll().stream()
             .filter(a -> tenantId.equals(a.getInstitucionId())).toList()).hasSize(1);
     }
@@ -258,7 +258,7 @@ class MarcaSinCamaraIT {
     @DisplayName("Con la jornada abierta registra la salida, no una segunda entrada")
     void conJornadaAbiertaRegistraLaSalida() throws Exception {
         // La jornada se siembra abierta en vez de marcar dos veces seguidas: las dos marcas
-        // caerian en el mismo segundo y la salida no seria posterior a la entrada.
+        // caerian en el mismo segundo y la salida no sería posterior a la entrada.
         BloquePresencia abierto = BloquePresencia.builder()
             .docente(docente).fecha(LocalDate.now()).horaEntrada(empiezaLaClase)
             .origenEntrada(OrigenMarca.AUTOMATICO).estadoCierre(EstadoCierre.ABIERTO)

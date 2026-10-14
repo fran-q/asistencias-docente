@@ -52,8 +52,8 @@ class SesionesActivasServiceTest {
         registro.registerNewSession("sesion-b", principal("ana.perez"));
         service.desplazarOtras("ana.perez", "sesion-b");
 
-        // La sesion desplazada sigue en el registro hasta que su equipo vuelva a pedir algo.
-        // Si se contara, quien entra despues veria un aviso por una sesion que ya esta cerrada.
+        // La sesión desplazada sigue en el registro hasta que su equipo vuelva a pedir algo.
+        // Si se contara, quien entra después vería un aviso por una sesión que ya está cerrada.
         registro.registerNewSession("sesion-c", principal("ana.perez"));
         assertThat(service.otrasDe("ana.perez", "sesion-c"))
             .extracting(SessionInformation::getSessionId)

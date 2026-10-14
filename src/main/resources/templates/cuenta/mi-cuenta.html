@@ -7,7 +7,7 @@
 </head>
 <body>
     <section class="mi-cuenta">
-        <!-- Primero se lee y despues se edita, igual que Mi institucion: el boton lleva al
+        <!-- Primero se lee y después se edita, igual que Mi institución: el botón lleva al
              formulario y esta pantalla se queda mostrando lo que hay. -->
         <header class="page-header page-header--with-action">
             <div>
@@ -60,18 +60,18 @@
             </dl>
 
             <!--
-              Cerrar sesion vive aca y no en la barra.
+              Cerrar sesión vive acá y no en la barra.
 
-              Antes era un boton fijo en el rincon superior derecho: la unica accion
-              permanente de toda la aplicacion, y encima al borde de la pantalla, que en
-              el celular es donde cae el pulgar al agarrar el telefono. Salir sin querer
+              Antes era un botón fijo en el rincón superior derecho: la única acción
+              permanente de toda la aplicación, y encima al borde de la pantalla, que en
+              el celular es donde cae el pulgar al agarrar el teléfono. Salir sin querer
               no rompe nada, pero en medio de una jornada de asistencia obliga a volver a
               entrar, y el pase de asistencia se toma con la clase esperando.
 
-              Va en esta tarjeta y no al final de la pantalla porque abajo estan el
-              cambio de contrasena y la verificacion del correo: dejarlo despues de todo
-              eso obligaria a scrollear un formulario largo para hacer algo de un solo
-              click. Aca queda apenas debajo de los datos de la cuenta, que es lo primero
+              Va en esta tarjeta y no al final de la pantalla porque abajo están el
+              cambio de contraseña y la verificación del correo: dejarlo después de todo
+              eso obligaría a scrollear un formulario largo para hacer algo de un solo
+              click. Acá queda apenas debajo de los datos de la cuenta, que es lo primero
               que se ve al entrar.
             -->
             <div class="form-actions">
@@ -82,7 +82,7 @@
             </div>
         </div>
 
-        <!-- Todo lo que sigue solo tiene sentido mientras el correo no este confirmado. -->
+        <!-- Todo lo que sigue solo tiene sentido mientras el correo no esté confirmado. -->
         <div class="card" th:unless="${verificado}">
             <h2>Verificar el correo</h2>
             <p class="form-hint">
@@ -131,21 +131,21 @@
         </div>
 
         <!--
-          Cambio de la propia contrasena, en tres pasos.
+          Cambio de la propia contraseña, en tres pasos.
 
-          Antes alcanzaba con escribir la contrasena actual. El problema es que una sesion
-          abierta prueba que ALGUIEN entro con esa contrasena en algun momento, no que quien
-          esta frente a la pantalla ahora sea el dueno: una sesion olvidada abierta alcanzaba
-          para quedarse con la cuenta. Ahora hace falta ademas el codigo que llega al correo,
-          que es lo unico que el sistema sabe que le pertenece.
+          Antes alcanzaba con escribir la contraseña actual. El problema es que una sesión
+          abierta prueba que ALGUIEN entró con esa contraseña en algún momento, no que quien
+          esta frente a la pantalla ahora sea el dueño: una sesión olvidada abierta alcanzaba
+          para quedarse con la cuenta. Ahora hace falta además el código que llega al correo,
+          que es lo único que el sistema sabe que le pertenece.
 
-          Los tres pasos se muestran de a uno. Cual se ve lo decide "pasoPassword", que el
-          controlador manda al redirigir; sin el, se muestra el primero.
+          Los tres pasos se muestran de a uno. Cuál se ve lo decide "pasoPassword", que el
+          controlador manda al redirigir; sin él, se muestra el primero.
         -->
         <div class="card card--form">
             <h2>Cambiar la contraseña</h2>
 
-            <!-- Paso 1: pedir el codigo ------------------------------------------------->
+            <!-- Paso 1: pedir el código ------------------------------------------------->
             <div th:unless="${pasoPassword == 'codigo' or pasoPassword == 'nueva'}">
                 <p class="text-muted">
                     Para cambiar tu contraseña primero tenés que confirmar que este correo es
@@ -159,7 +159,7 @@
                 </form>
             </div>
 
-            <!-- Paso 2: escribir el codigo ---------------------------------------------->
+            <!-- Paso 2: escribir el código ---------------------------------------------->
             <div th:if="${pasoPassword == 'codigo'}">
                 <p class="text-muted">
                     Escribí el código que te llegó a
@@ -195,7 +195,7 @@
                 </form>
             </div>
 
-            <!-- Paso 3: la contrasena nueva, dos veces ---------------------------------->
+            <!-- Paso 3: la contraseña nueva, dos veces ---------------------------------->
             <div th:if="${pasoPassword == 'nueva'}">
                 <p class="alert alert--success" role="status">
                     Código verificado. Ya podés elegir tu contraseña nueva.

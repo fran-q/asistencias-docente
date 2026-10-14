@@ -34,7 +34,7 @@ import static org.bytedeco.opencv.global.opencv_core.CV_32SC1;
 @Slf4j
 public class MotorLbphService {
 
-    // Etiqueta fija de entrenamiento: cada modelo es de un solo docente, asi que lo que importa
+    // Etiqueta fija de entrenamiento: cada modelo es de un solo docente, así que lo que importa
     // de predict() es la distancia y no el label.
     public static final int LABEL_DOCENTE = 1;
 
@@ -96,7 +96,7 @@ public class MotorLbphService {
         }
     }
 
-    // Comprime con gzip: el YAML de OpenCV baja 5-10x y asi el INSERT no pasa el max_allowed_packet.
+    // Comprime con gzip: el YAML de OpenCV baja 5-10x y así el INSERT no pasa el max_allowed_packet.
     private byte[] comprimir(byte[] datos) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (GZIPOutputStream gz = new GZIPOutputStream(out)) {

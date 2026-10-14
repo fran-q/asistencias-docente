@@ -78,7 +78,7 @@ class MiCuentaEdicionIT {
     @Autowired private CodigoVerificacionRepository codigoRepository;
     @Autowired private PlatformTransactionManager txManager;
 
-    // Se mockea el canal para leer los codigos que "llegan" a cada buzon.
+    // Se mockea el canal para leer los códigos que "llegan" a cada buzón.
     @MockBean private CanalDeCodigos notificador;
 
     private int n;
@@ -243,7 +243,7 @@ class MiCuentaEdicionIT {
     }
 
     // ========================================================================
-    //  El correo: un codigo al actual y otro al nuevo
+    //  El correo: un código al actual y otro al nuevo
     // ========================================================================
 
     @Test
@@ -415,10 +415,10 @@ class MiCuentaEdicionIT {
         return usuarioRepository.findById(adminId).orElseThrow().getPersona().getApellido();
     }
 
-    // Le abre un periodo docente a la persona de esa cuenta, para que su identidad quede
+    // Le abre un período docente a la persona de esa cuenta, para que su identidad quede
     // compartida entre los dos roles.
     //
-    // Va dentro de una transaccion a proposito: Docente.persona cascadea PERSIST, y con la
+    // Va dentro de una transacción a propósito: Docente.persona cascadea PERSIST, y con la
     // persona detachada --como sale de un findById suelto-- Hibernate rechaza el guardado.
     private void darleClases(Long usuarioId) {
         Long personaId = usuarioRepository.findById(usuarioId).orElseThrow().getPersona().getId();

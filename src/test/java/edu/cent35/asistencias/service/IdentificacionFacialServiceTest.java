@@ -125,14 +125,14 @@ class IdentificacionFacialServiceTest {
             .isTrue();
         assertThat(r.reconocido()).isFalse();
         assertThat(r.mensaje()).contains("2 personas en cuadro");
-        // Sin recuadro a proposito: pintar a una de las dos sugeriria que el sistema la eligio.
+        // Sin recuadro a propósito: pintar a una de las dos sugeriría que el sistema la eligió.
         assertThat(r.x()).isNull();
     }
 
     // ========================================================================
     //  La regla que decide si se acepta (falso positivo de 2026-08-01)
     //
-    //  Las distancias de estos casos salen del log de una sesion real, cuando el
+    //  Las distancias de estos casos salen del log de una sesión real, cuando el
     //  sistema le adjudico el mismo docente a dos personas distintas.
     // ========================================================================
 
@@ -147,7 +147,7 @@ class IdentificacionFacialServiceTest {
     @Test
     @DisplayName("Un rostro que no esta registrado se rechaza por distancia")
     void decidir_rechazaAlDesconocido() {
-        // Con el umbral viejo de 100 esto entraba: es el agujero que se cerro.
+        // Con el umbral viejo de 100 esto entraba: es el agujero que se cerró.
         assertThat(service.decidir(84.8, 88.6))
             .isEqualTo(IdentificacionFacialService.Veredicto.NO_REGISTRADO);
         assertThat(service.decidir(108.8, null))
@@ -157,8 +157,8 @@ class IdentificacionFacialServiceTest {
     @Test
     @DisplayName("Dos modelos empatados se rechazan aunque entren en el umbral")
     void decidir_rechazaElEmpate() {
-        // Caso real: 55,0 contra 56,0. Ambos comodos bajo el umbral, pero separados
-        // por un punto: cual gana lo decide una sombra, no la cara.
+        // Caso real: 55,0 contra 56,0. Ambos cómodos bajo el umbral, pero separados
+        // por un punto: cuál gana lo decide una sombra, no la cara.
         assertThat(service.decidir(55.0, 56.0))
             .as("un empate no es una identificacion")
             .isEqualTo(IdentificacionFacialService.Veredicto.AMBIGUO);
@@ -205,13 +205,13 @@ class IdentificacionFacialServiceTest {
     // La calidad va en null: al identificar en el pase no se exige, porque un docente
     // apurado en la puerta del aula no puede repetir la pose. La calidad se exige al
     // REGISTRAR, que es cuando se construye el modelo contra el que se compara.
-    // Extraccion con un unico rostro utilizable, que es el caso normal.
+    // Extracción con un único rostro utilizable, que es el caso normal.
     private DeteccionRostroService.Extraccion unRostro() {
         return new DeteccionRostroService.Extraccion(1,
             new DeteccionRostroService.RostroExtraido(new Mat(), 10, 20, 100, 100, null));
     }
 
-    // Extraccion sin ningun rostro en el cuadro.
+    // Extracción sin ningún rostro en el cuadro.
     private DeteccionRostroService.Extraccion sinRostro() {
         return new DeteccionRostroService.Extraccion(0, null);
     }

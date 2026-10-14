@@ -63,9 +63,9 @@ class InstalacionInicialIT {
         // existir-- y acá hay que deshacerlo a mano, porque los tests sí vacían la base.
         ReflectionTestUtils.setField(instalacion, "yaHayInstitucion", false);
 
-        // El perfil de test corre con Flyway apagado y el esquema generado por Hibernate, asi
+        // El perfil de test corre con Flyway apagado y el esquema generado por Hibernate, así
         // que la semilla de roles de V001 no existe. Sin el rol INSTITUCION el asistente falla
-        // con el mismo error que una base a medio migrar, que no es lo que se esta probando.
+        // con el mismo error que una base a medio migrar, que no es lo que se está probando.
         rolRepository.findByCodigo(RolCodigo.INSTITUCION.name())
             .orElseGet(() -> rolRepository.save(
                 Rol.builder().codigo(RolCodigo.INSTITUCION.name()).descripcion("Institución").build()));
@@ -163,9 +163,9 @@ class InstalacionInicialIT {
     @Test
     @DisplayName("el alta pública de instituciones no existe acá")
     void elAltaPublicaSeCierra() throws Exception {
-        // Antes de configurar todo lleva al asistente, asi que el 404 se comprueba despues: una
-        // instalacion autonoma atiende a UNA institucion, y el alta manda un codigo por un correo
-        // que en esa maquina no existe.
+        // Antes de configurar todo lleva al asistente, así que el 404 se comprueba después: una
+        // instalación autónoma atiende a UNA institución, y el alta manda un código por un correo
+        // que en esa máquina no existe.
         mvc.perform(post("/instalacion").with(csrf())
                 .param("nombreInstitucion", "Instituto unico")
                 .param("cuit", "")
@@ -196,8 +196,8 @@ class InstalacionInicialIT {
         try {
             Usuario nuevo = usuarioService.crear("secretaria", "secretaria@ejemplo.test",
                                                  "Prueba123", "Ana", "Gómez");
-            // Sin esto la cuenta se crea bien, entra al login bien, y recien ahi se descubre que
-            // VerificacionInterceptor la manda a /mi-cuenta a esperar un codigo que no llega.
+            // Sin esto la cuenta se crea bien, entra al login bien, y recién ahí se descubre que
+            // VerificacionInterceptor la manda a /mi-cuenta a esperar un código que no llega.
             assertThat(nuevo.getEmailVerificadoEn()).isNotNull();
         } finally {
             TenantContext.clear();

@@ -73,13 +73,13 @@ public class Persona extends BaseTenantEntity {
     private LocalDateTime actualizadoEn;
 
     // Helper: "Apellido, Nombre", el formato de los listados. Tolera el apellido nulo de las
-    // cuentas institucionales, que si no apareceria como "null, Secretaria".
+    // cuentas institucionales, que si no aparecería como "null, Secretaría".
     public String getNombreCompleto() {
         return apellido == null || apellido.isBlank() ? nombre : apellido + ", " + nombre;
     }
 
-    // Helper: "Nombre Apellido", el formato del saludo y la barra de navegacion. Son dos
-    // formatos distintos a proposito y los dos viven aca para que ninguna pantalla los arme
+    // Helper: "Nombre Apellido", el formato del saludo y la barra de navegación. Son dos
+    // formatos distintos a propósito y los dos viven acá para que ninguna pantalla los arme
     // por su cuenta y termine mostrando el apellido nulo colgando.
     public String getNombreParaMostrar() {
         return apellido == null || apellido.isBlank() ? nombre : nombre + " " + apellido;
@@ -101,7 +101,7 @@ public class Persona extends BaseTenantEntity {
         String a = apellido == null ? "" : apellido.strip();
         String n = nombre   == null ? "" : nombre.strip();
         if (a.isEmpty()) {
-            // Sin apellido se usan las dos primeras del nombre, que es lo unico que hay.
+            // Sin apellido se usan las dos primeras del nombre, que es lo único que hay.
             return n.length() >= 2 ? n.substring(0, 2).toUpperCase() : n.toUpperCase();
         }
         String inicialNombre = n.isEmpty() ? "" : n.substring(0, 1);

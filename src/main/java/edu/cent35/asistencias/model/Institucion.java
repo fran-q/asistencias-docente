@@ -19,11 +19,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Institucion educativa - tenant root del sistema multi-tenant.
- * Cubre RF-05 (alta de institucion).
+ * Institución educativa - tenant root del sistema multi-tenant.
+ * Cubre RF-05 (alta de institución).
  * <p>
  * No extiende {@link edu.cent35.asistencias.model.BaseTenantEntity}
- * porque ES el tenant - no pertenece a otra institucion.
+ * porque ES el tenant - no pertenece a otra institución.
  */
 @Entity
 @Table(name = "instituciones")
@@ -97,8 +97,8 @@ public class Institucion {
     @Column(name = "clave_recuperacion_hash", length = 100)
     private String claveRecuperacionHash;
 
-    // Cual de las copias guardadas es la que vale: al regenerarla, la anterior deja de servir y
-    // sin esta fecha no habria como saber cual es cual.
+    // Cuál de las copias guardadas es la que vale: al regenerarla, la anterior deja de servir y
+    // sin esta fecha no habría cómo saber cuál es cuál.
     @Column(name = "clave_recuperacion_creada_en")
     private LocalDateTime claveRecuperacionCreadaEn;
 

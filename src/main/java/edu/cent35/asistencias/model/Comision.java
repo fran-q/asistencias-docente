@@ -24,20 +24,20 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Comision de una materia. Una materia puede tener varias comisiones
+ * Comisión de una materia. Una materia puede tener varias comisiones
  * (turnos / divisiones). RF-13.
  * <p>
- * El tenant lo determina la materia padre - no se guarda explicitamente
- * un institucion_id en la tabla. La defensa multi-tenant se hace via
- * service-layer (validacion explicita de que la materia padre pertenece
+ * El tenant lo determina la materia padre - no se guarda explícitamente
+ * un institucion_id en la tabla. La defensa multi-tenant se hace vía
+ * service-layer (validación explícita de que la materia padre pertenece
  * al tenant actual).
  * <p>
  * El campo {@code docenteAsignadoId} se completa en Sprint 3 cuando
  * existan docentes gestionables. Por ahora puede ser null (V004 lo
- * habilito).
+ * habilitó).
  * <p>
- * Desde V023 la comision pertenece ademas a un periodo lectivo, que es lo que
- * la ubica en un ano calendario concreto.
+ * Desde V023 la comisión pertenece además a un período lectivo, que es lo que
+ * la ubica en un año calendario concreto.
  */
 @Entity
 @Table(
@@ -102,7 +102,7 @@ public class Comision {
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

@@ -26,7 +26,7 @@ public class HorarioListItemDto {
     String comisionCodigo;
     String materiaCodigo;
     String materiaNombre;
-    // El anio del plan y la carrera no son columnas del listado: los usan los filtros, que
+    // El año del plan y la carrera no son columnas del listado: los usan los filtros, que
     // comparan contra el data-* de la fila.
     Short materiaAnio;
     String carreraCodigo;

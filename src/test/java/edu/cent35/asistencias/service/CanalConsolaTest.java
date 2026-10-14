@@ -31,8 +31,8 @@ class CanalConsolaTest {
     private ListAppender<ILoggingEvent> capturado;
     private Logger logger;
 
-    // El recuadro con el codigo sale por System.out y no por el log: el logger le antepone
-    // marca de tiempo y clase a cada linea y rompe el marco. El test lee de donde sale.
+    // El recuadro con el código sale por System.out y no por el log: el logger le antepone
+    // marca de tiempo y clase a cada línea y rompe el marco. El test lee de donde sale.
     private PrintStream salidaOriginal;
     private ByteArrayOutputStream consola;
 
@@ -55,7 +55,7 @@ class CanalConsolaTest {
         logger.detachAppender(capturado);
     }
 
-    // Lo que quedo escrito en la terminal.
+    // Lo que quedó escrito en la terminal.
     private String terminal() {
         return consola.toString(StandardCharsets.UTF_8);
     }
@@ -82,8 +82,8 @@ class CanalConsolaTest {
 
         // El marco y las etiquetas van en ASCII: la consola de Windows no usa UTF-8 y convierte
         // los bordes de caja en signos de pregunta, justo alrededor del dato que hay que leer.
-        // Los nombres propios pueden traer acentos —eso es un dato, no formato— asi que la
-        // comprobacion es sobre los caracteres que introduce este canal, no sobre toda la salida.
+        // Los nombres propios pueden traer acentos —eso es un dato, no formato— así que la
+        // comprobación es sobre los caracteres que introduce este canal, no sobre toda la salida.
         assertThat(terminal())
             .as("el marco tiene que ser legible en una consola que no sea UTF-8")
             .doesNotContain("╔").doesNotContain("║").doesNotContain("═")
@@ -98,7 +98,7 @@ class CanalConsolaTest {
         canal.enviarCodigo(usuario(), PropositoCodigo.VERIFICACION_EMAIL,
                            "ana@ejemplo.com", "111222");
 
-        // En el log queda una linea de constancia, sin repetir el recuadro entero.
+        // En el log queda una línea de constancia, sin repetir el recuadro entero.
         assertThat(capturado.list)
             .as("la constancia en el archivo de log va como advertencia, no como info")
             .isNotEmpty()

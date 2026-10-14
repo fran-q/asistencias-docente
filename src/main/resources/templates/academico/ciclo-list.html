@@ -18,7 +18,7 @@
             <a th:href="@{/ciclos/nuevo}" class="btn btn--primary">+ Nuevo ciclo</a>
         </header>
 
-        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del titulo
+        <!-- Se lee una vez: se cierra con la cruz y se vuelve a abrir con la "i" del título
              (ayuda.js). -->
         <aside class="ayuda" data-ayuda="ciclos" aria-label="Cómo funcionan los ciclos lectivos">
             <p>
@@ -66,8 +66,8 @@
                                       th:text="${c.estado.etiqueta}">Activo</span>
                                 <!-- Un ciclo activo cuyas fechas ya pasaron sigue tomando
                                      asistencia y generando ausencias. No se cierra solo a
-                                     proposito --el cierre es una decision-- pero conviene
-                                     que se vea, o queda corriendo un ano entero de mas. -->
+                                     propósito --el cierre es una decisión-- pero conviene
+                                     que se vea, o queda corriendo un año entero de más. -->
                                 <span class="badge badge--warning"
                                       th:if="${c.estado.name() == 'ACTIVO' and c.fechaFin.isBefore(hoy)}"
                                       title="Las fechas de este ciclo ya pasaron pero sigue activo: mientras lo esté, se le siguen generando ausencias.">
@@ -83,7 +83,7 @@
                                 </ul>
                             </td>
                             <td class="table__actions">
-                                <!-- La edicion vive en el detalle (V027). Un ciclo cerrado se
+                                <!-- La edición vive en el detalle (V027). Un ciclo cerrado se
                                      abre igual, para ver que tuvo: por eso cambia el texto y
                                      no desaparece el enlace. -->
                                 <a th:href="@{/ciclos/{id}(id=${c.id})}" class="btn btn--ghost btn--sm"
@@ -141,10 +141,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="origenId">Copiar desde</label>
-                        <!-- Arranca en el segundo de la lista --el ano anterior al mas nuevo--
+                        <!-- Arranca en el segundo de la lista --el año anterior al más nuevo--
                              y el destino en el primero, que es el caso de siempre. Antes los
-                             dos arrancaban en el mas nuevo, y apretar Copiar sin tocar nada
-                             respondia "el origen y el destino son el mismo". -->
+                             dos arrancaban en el más nuevo, y apretar Copiar sin tocar nada
+                             respondía "el origen y el destino son el mismo". -->
                         <select id="origenId" name="origenId" required>
                             <option th:each="c, it : ${ciclos}" th:value="${c.id}"
                                     th:selected="${it.index == 1}"

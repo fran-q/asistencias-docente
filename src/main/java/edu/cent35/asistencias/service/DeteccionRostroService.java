@@ -85,10 +85,10 @@ public class DeteccionRostroService {
                     "La imagen no se pudo procesar. Probá sacar otra foto.");
             }
 
-            // Dos copias del gris a proposito: la ecualizada es la que ve el detector
+            // Dos copias del gris a propósito: la ecualizada es la que ve el detector
             // (le mejora el contraste), y la original es sobre la que se mide la calidad.
-            // Medir el brillo sobre la ecualizada no serviria de nada: ecualizar aplana el
-            // histograma, asi que una cara a oscuras y una bien iluminada darian parecido.
+            // Medir el brillo sobre la ecualizada no serviría de nada: ecualizar aplana el
+            // histograma, así que una cara a oscuras y una bien iluminada darian parecido.
             grisOriginal = new Mat();
             cvtColor(imagen, grisOriginal, COLOR_BGR2GRAY);
             gris = grisOriginal.clone();
@@ -163,7 +163,7 @@ public class DeteccionRostroService {
             return cantidadRostros > 1;
         }
 
-        // true si quedo un recorte utilizable, es decir si habia exactamente un rostro.
+        // true si quedó un recorte utilizable, es decir si había exactamente un rostro.
         public boolean sirve() {
             return rostro != null;
         }
@@ -206,7 +206,7 @@ public class DeteccionRostroService {
             CalidadCapturaService.Medicion calidad = calidadService.evaluar(grisOriginal, r);
 
             // El recorte que entrena si sale del gris ecualizado: es lo que estabiliza al
-            // LBPH frente a los cambios de iluminacion entre el registro y el pase.
+            // LBPH frente a los cambios de iluminación entre el registro y el pase.
             Mat rostroNormalizado = new Mat();
             try (Mat roi = new Mat(gris, r)) {
                 resize(roi, rostroNormalizado, new Size(tamano, tamano));

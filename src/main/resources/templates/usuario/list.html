@@ -28,10 +28,10 @@
                  puede estilar. select-menu.js lo reemplaza por el mismo desplegable que
                  usa el resto de la app, dejando este select oculto como el que vale. -->
             <select class="filtro__estado" data-menu aria-label="Filtrar por estado">
-                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
-                     ahi porque hay historial colgando de el, pero no es algo con lo que se
-                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
-                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <!-- Arranca en "activos". Un registro inactivo es un borrado lógico: sigue
+                     ahí porque hay historial colgando de él, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacía que el listado creciera con cosas
+                     que ya nadie usa y que el día a día tiene que saltear. -->
                 <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
@@ -50,10 +50,10 @@
                         <th data-orden="texto">Rol</th>
                         <th data-orden="texto">Estado</th>
                         <th data-orden="texto">Correo verificado</th>
-                        <!-- "Nunca" no es una fecha, asi que la celda lleva data-valor: sin el,
+                        <!-- "Nunca" no es una fecha, así que la celda lleva data-valor: sin él,
                              el tipo fecha lo interpreta como -infinito y las cuentas que nunca
                              entraron quedan primeras al ordenar de menor a mayor. Que es, de
-                             hecho, donde corresponde que esten. -->
+                             hecho, donde corresponde que estén. -->
                         <th data-orden="fecha">Último acceso</th>
                         <th class="table__actions">Acciones</th>
                     </tr>
@@ -78,8 +78,8 @@
                             <span th:unless="${u.activo}" class="badge badge--danger">Inactivo</span>
                         </td>
                         <!-- Una cuenta sin verificar no puede operar el sistema (ADR-0010):
-                             conviene verlo de un vistazo y no recien cuando la persona avisa
-                             que no puede entrar a ningun lado. -->
+                             conviene verlo de un vistazo y no recién cuando la persona avisa
+                             que no puede entrar a ningún lado. -->
                         <td th:attr="data-valor=${u.emailVerificado} ? '0' : '1'">
                             <span th:if="${u.emailVerificado}" class="badge badge--success">Sí</span>
                             <span th:unless="${u.emailVerificado}" class="badge badge--warning"

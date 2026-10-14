@@ -32,8 +32,8 @@ public class UsuarioValidoValidator implements ConstraintValidator<UsuarioValido
         return false;
     }
 
-    // Lo primero que falla, en castellano; null si el usuario sirve. Es publico porque Mi cuenta
-    // pide la regla solo cuando el usuario cambia, y eso no se puede decir con una anotacion.
+    // Lo primero que falla, en castellano; null si el usuario sirve. Es público porque Mi cuenta
+    // pide la regla solo cuando el usuario cambia, y eso no se puede decir con una anotación.
     public static String problema(String valor) {
         if (valor.length() > UsuarioValido.MAX) {
             return "Es muy largo: el máximo son " + UsuarioValido.MAX + " caracteres.";

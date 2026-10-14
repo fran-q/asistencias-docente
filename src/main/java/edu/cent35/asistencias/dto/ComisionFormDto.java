@@ -26,8 +26,8 @@ public class ComisionFormDto {
     @NotBlank(message = "El código de la comisión es obligatorio")
     @Size(min = 1, max = 30, message = "El código debe tener entre 1 y 30 caracteres")
     @Pattern(
-        // A diferencia de los codigos de Carrera/Materia (identificadores tipo "MAT-101"),
-        // el codigo de comision suele ser texto: "Mañana", "Noche", "Atención". Por eso
+        // A diferencia de los códigos de Carrera/Materia (identificadores tipo "MAT-101"),
+        // el código de comisión suele ser texto: "Mañana", "Noche", "Atención". Por eso
         // aceptamos letras acentuadas, ñ/Ñ y diéresis (ü/Ü). Si en el futuro se quiere
         // unificar con Unicode general, evaluar @Pattern.Flag.UNICODE_CHARACTER_CLASS.
         regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9 ._-]+$",

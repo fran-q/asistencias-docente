@@ -1,23 +1,23 @@
 /* =============================================================================
  *  academico-form.js
  *
- *  Dos ayudas para los formularios del modulo academico. Las dos son solo
+ *  Dos ayudas para los formularios del módulo académico. Las dos son solo
  *  comodidad: el servidor revalida igual, porque un select se puede tocar desde
- *  afuera del navegador y porque la pagina puede quedar abierta mientras otro
+ *  afuera del navegador y porque la página puede quedar abierta mientras otro
  *  edita la carrera o la materia.
  *
- *   1) Materia: el select de anio se recorta a la duracion de la carrera
+ *   1) Materia: el select de año se recorta a la duración de la carrera
  *      elegida. Ofrecer "5° año" en una tecnicatura de tres es invitar al error
- *      y despues rechazarlo con un cartel.
+ *      y después rechazarlo con un cartel.
  *
- *   2) Comision: al elegir la materia se propone su docente titular. Es quien
- *      dicta en la enorme mayoria de los casos; queda editable porque la
- *      excepcion existe y es justamente lo que hay que poder cargar.
+ *   2) Comisión: al elegir la materia se propone su docente titular. Es quien
+ *      dicta en la enorme mayoría de los casos; queda editable porque la
+ *      excepción existe y es justamente lo que hay que poder cargar.
  * ========================================================================== */
 (function (window, document) {
     'use strict';
 
-    // ---- Materia: acotar el anio a la duracion de la carrera --------------
+    // ---- Materia: acotar el año a la duración de la carrera --------------
 
     function acotarAnios() {
         const carreraSel = document.getElementById('carreraId');
@@ -29,12 +29,12 @@
             const opt = carreraSel.selectedOptions[0];
             const duracion = opt ? parseInt(opt.dataset.duracion, 10) : NaN;
 
-            // Sin carrera elegida se dejan todas: recortar a cero dejaria el select vacio
-            // y sin forma de entender por que.
+            // Sin carrera elegida se dejan todas: recortar a cero dejaría el select vacío
+            // y sin forma de entender por qué.
             const tope = isNaN(duracion) ? 10 : duracion;
 
             // Se sacan del DOM en vez de ocultarlas: hidden + disabled las deja igual
-            // en el arbol de accesibilidad, asi que un lector de pantalla seguia
+            // en el árbol de accesibilidad, así que un lector de pantalla seguía
             // anunciando "5° año ... 10° año" en una carrera de tres.
             let seleccionadoQuedaFuera = false;
             Array.prototype.slice.call(anioSel.options).forEach(function (o) {
@@ -43,7 +43,7 @@
                     o.remove();
                 }
             });
-            // Y se reponen las que vuelven a entrar si se elige una carrera mas larga.
+            // Y se reponen las que vuelven a entrar si se elige una carrera más larga.
             for (let n = anioSel.options.length + 1; n <= tope; n++) {
                 const o = document.createElement('option');
                 o.value = String(n);
@@ -51,8 +51,8 @@
                 anioSel.appendChild(o);
             }
 
-            // Si el anio que estaba elegido ya no entra, se baja al ultimo valido en vez de
-            // dejar el select mostrando una opcion deshabilitada.
+            // Si el año que estaba elegido ya no entra, se baja al último válido en vez de
+            // dejar el select mostrando una opción deshabilitada.
             if (seleccionadoQuedaFuera) anioSel.value = String(tope);
 
             if (hint) {
@@ -63,10 +63,10 @@
         }
 
         carreraSel.addEventListener('change', aplicar);
-        aplicar();   // tambien al cargar, para el modo edicion
+        aplicar();   // también al cargar, para el modo edición
     }
 
-    // ---- Comision: proponer el titular de la materia ----------------------
+    // ---- Comisión: proponer el titular de la materia ----------------------
 
     function proponerTitular() {
         const materiaSel = document.getElementById('materiaId');
@@ -74,9 +74,9 @@
         const hint       = document.getElementById('docente-hint');
         if (!materiaSel || !docenteSel) return;
 
-        // Solo se pisa el docente cuando lo cambia una persona, nunca al cargar la pagina:
-        // en el modo edicion la comision ya tiene su docente elegido, y sobrescribirlo al
-        // abrir el formulario borraria en silencio justamente la excepcion que se cargo.
+        // Solo se pisa el docente cuando lo cambia una persona, nunca al cargar la página:
+        // en el modo edición la comisión ya tiene su docente elegido, y sobrescribirlo al
+        // abrir el formulario borraría en silencio justamente la excepción que se cargó.
         materiaSel.addEventListener('change', function () {
             const opt = materiaSel.selectedOptions[0];
             const titularId = opt ? (opt.dataset.titularId || '') : '';
@@ -108,12 +108,12 @@
         });
     }
 
-    // ---- Horario: recordar que materia es la comision elegida --------------
+    // ---- Horario: recordar que materia es la comisión elegida --------------
 
     /*
-     *  El desplegable de comision es "buscable": al elegir, se cierra y deja el texto
+     *  El desplegable de comisión es "buscable": al elegir, se cierra y deja el texto
      *  adentro del campo. Si el campo se scrollea o el nombre es largo, queda cortado y
-     *  hay que volver a abrirlo para confirmar que se eligio bien. Esto lo repite debajo,
+     *  hay que volver a abrirlo para confirmar que se eligió bien. Esto lo repite debajo,
      *  en chico, donde no molesta y siempre se ve entero.
      */
     function recordarMateriaDeLaComision() {
@@ -128,7 +128,7 @@
         }
 
         sel.addEventListener('change', pintar);
-        pintar();   // tambien al cargar, por si vuelve con errores de validacion
+        pintar();   // también al cargar, por si vuelve con errores de validación
     }
 
     document.addEventListener('DOMContentLoaded', function () {

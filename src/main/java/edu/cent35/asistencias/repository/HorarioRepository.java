@@ -18,10 +18,10 @@ import java.util.List;
 @Repository
 public interface HorarioRepository extends JpaRepository<Horario, Long> {
 
-    // Horarios de una comision, ordenados por dia y hora.
+    // Horarios de una comisión, ordenados por día y hora.
     List<Horario> findByComisionIdOrderByDiaSemanaAscHoraInicioAsc(Long comisionId);
 
-    // Cuenta horarios activos de una comision (para validar baja).
+    // Cuenta horarios activos de una comisión (para validar baja).
     long countByComisionIdAndActivoTrue(Long comisionId);
 
     // Horarios activos de una carrera, para dibujar la grilla semanal.
@@ -163,7 +163,7 @@ public interface HorarioRepository extends JpaRepository<Horario, Long> {
         @Param("fecha") LocalDate fecha,
         @Param("tenantId") Long tenantId);
 
-    // Franjas de la misma comision que pisan a la propuesta; excludeId evita compararse consigo misma.
+    // Franjas de la misma comisión que pisan a la propuesta; excludeId evita compararse consigo misma.
     @Query("""
         SELECT h
           FROM Horario h

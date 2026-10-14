@@ -28,17 +28,17 @@
                  puede estilar. select-menu.js lo reemplaza por el mismo desplegable
                  que usa el resto de la app, dejando este select oculto como el que vale. -->
             <select class="filtro__estado" data-menu aria-label="Filtrar por estado">
-                <!-- Arranca en "activos". Un registro inactivo es un borrado logico: sigue
-                     ahi porque hay historial colgando de el, pero no es algo con lo que se
-                     trabaje. Mostrarlos por defecto hacia que el listado creciera con cosas
-                     que ya nadie usa y que el dia a dia tiene que saltear. -->
+                <!-- Arranca en "activos". Un registro inactivo es un borrado lógico: sigue
+                     ahí porque hay historial colgando de él, pero no es algo con lo que se
+                     trabaje. Mostrarlos por defecto hacía que el listado creciera con cosas
+                     que ya nadie usa y que el día a día tiene que saltear. -->
                 <option value="activo" selected>Solo activos</option>
                 <option value="inactivo">Solo inactivos</option>
                 <option value="">Todos los estados</option>
             </select>
             <!-- Filtros por columna. Las opciones las arma filtro-tabla.js con los valores
-                 que traen las filas: asi el desplegable ofrece exactamente lo que hay en la
-                 tabla, y sumar el filtro no obliga a pasarle el catalogo desde el controlador. -->
+                 que traen las filas: así el desplegable ofrece exactamente lo que hay en la
+                 tabla, y sumar el filtro no obliga a pasarle el catálogo desde el controlador. -->
             <select class="filtro__campo" data-filtro="duracion" data-menu
                     aria-label="Filtrar por duración">
                 <option value="">Todas las duraciones</option>

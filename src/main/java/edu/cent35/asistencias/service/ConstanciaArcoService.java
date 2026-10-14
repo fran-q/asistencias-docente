@@ -48,7 +48,7 @@ public class ConstanciaArcoService {
     /**
      * Vuelca la constancia al stream indicado.
      *
-     * @param institucion  responsable de la base de datos, que es quien responde por ella
+     * @param institución  responsable de la base de datos, que es quien responde por ella
      * @param operador     quién ejecutó la gestión
      * @param historial    consentimientos del docente, del más nuevo al más viejo
      * @param tieneModelo  si al momento de emitirla queda algún modelo facial vivo

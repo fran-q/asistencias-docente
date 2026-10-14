@@ -44,7 +44,7 @@ class ManejadorDeColisionesTest {
         String mensaje = ManejadorDeColisiones.traducir(errorDeLaBase("uq_docentes_inst_dni"));
 
         // El error real dice "Duplicate entry '1-30111222' for key 'uq_docentes_inst_dni'":
-        // nombra el indice, la tabla implicita y el valor que se intento guardar.
+        // nombra el índice, la tabla implícita y el valor que se intentó guardar.
         assertThat(mensaje)
             .doesNotContain("uq_docentes_inst_dni")
             .doesNotContain("Duplicate entry")
@@ -62,7 +62,7 @@ class ManejadorDeColisionesTest {
     }
 
     // Arma el error como llega de verdad: Spring envuelve al del driver, y el nombre del
-    // indice aparece recien en la causa mas profunda.
+    // índice aparece recién en la causa más profunda.
     private DataIntegrityViolationException errorDeLaBase(String restriccion) {
         var raiz = new SQLIntegrityConstraintViolationException(
             "Duplicate entry '1-30111222' for key '" + restriccion + "'");

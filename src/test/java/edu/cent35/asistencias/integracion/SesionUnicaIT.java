@@ -134,15 +134,15 @@ class SesionUnicaIT {
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Ya hay una sesión abierta")))
             .andExpect(content().string(containsString(USUARIO)))
-            // La otra sesion puede ser el equipo que toma asistencia: decirlo es la diferencia
-            // entre una eleccion informada y apagar el pase sin enterarse.
+            // La otra sesión puede ser el equipo que toma asistencia: decirlo es la diferencia
+            // entre una elección informada y apagar el pase sin enterarse.
             .andExpect(content().string(containsString("el pase deja de registrar")));
 
-        // Hasta que no decida, esta sesion no sirve para otra cosa.
+        // Hasta que no decida, esta sesión no sirve para otra cosa.
         mockMvc.perform(get("/docentes").session(segundo))
             .andExpect(redirectedUrl("/sesion/otra-abierta"));
 
-        // Y la primera sigue trabajando: todavia no la desplazo nadie.
+        // Y la primera sigue trabajando: todavía no la desplazo nadie.
         mockMvc.perform(get("/").session(primero)).andExpect(status().isOk());
     }
 
@@ -157,7 +157,7 @@ class SesionUnicaIT {
         mockMvc.perform(post("/sesion/otra-abierta/continuar").session(segundo).with(csrf()))
             .andExpect(redirectedUrl("/"));
 
-        // El que decidio continuar entra sin volver a pasar por el aviso.
+        // El que decidió continuar entra sin volver a pasar por el aviso.
         mockMvc.perform(get("/").session(segundo)).andExpect(status().isOk());
 
         mockMvc.perform(get("/").session(primero))
@@ -191,8 +191,8 @@ class SesionUnicaIT {
         entrar(segundo);
         mockMvc.perform(post("/sesion/otra-abierta/continuar").session(segundo).with(csrf()));
 
-        // Un tercer equipo: la unica sesion abierta es la del segundo. La del primero quedo
-        // desplazada y no tiene que sumar, o el aviso mandaria a cerrar algo ya cerrado.
+        // Un tercer equipo: la única sesión abierta es la del segundo. La del primero quedó
+        // desplazada y no tiene que sumar, o el aviso mandaría a cerrar algo ya cerrado.
         MockHttpSession tercero = new MockHttpSession();
         entrar(tercero).andExpect(redirectedUrl("/sesion/otra-abierta"));
 
@@ -212,7 +212,7 @@ class SesionUnicaIT {
         usuarioService.darDeBaja(usuarioId, 99L);
         TenantContext.clear();
 
-        // Sin esto seguiria operando media hora con una cuenta dada de baja.
+        // Sin esto seguiría operando media hora con una cuenta dada de baja.
         mockMvc.perform(get("/").session(equipo))
             .andExpect(redirectedUrl("/login?desplazada"));
     }

@@ -21,15 +21,15 @@ public class UsuarioAutenticado implements UserDetails {
     private final Long usuarioId;
     private final Long institucionId;
     // El usuario y el nombre no son final: la persona los puede cambiar desde Mi cuenta, y la
-    // sesion en curso tiene que mostrarlos nuevos sin obligarla a volver a entrar.
+    // sesión en curso tiene que mostrarlos nuevos sin obligarla a volver a entrar.
     private String username;
     private final String passwordHash;
     private String nombreCompleto;
     private final boolean activo;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    // Solo puede pasar de false a true, y dentro de la misma sesion: es una foto del momento
-    // del login que VerificacionInterceptor refresca cuando la persona valida su codigo, para
+    // Solo puede pasar de false a true, y dentro de la misma sesión: es una foto del momento
+    // del login que VerificacionInterceptor refresca cuando la persona valida su código, para
     // no obligarla a volver a entrar. Nunca se desverifica una cuenta.
     private boolean emailVerificado;
 
@@ -46,19 +46,19 @@ public class UsuarioAutenticado implements UserDetails {
         );
     }
 
-    // Indica si la cuenta ya confirmo su correo.
+    // Indica si la cuenta ya confirmó su correo.
     public boolean isEmailVerificado() {
         return emailVerificado;
     }
 
-    // La marca como verificada en la sesion en curso, tras confirmarlo contra la base.
+    // La marca como verificada en la sesión en curso, tras confirmarlo contra la base.
     public void marcarEmailVerificado() {
         this.emailVerificado = true;
     }
 
-    // Refresca el usuario y el nombre despues de que su titular los edito en Mi cuenta. Mismo
-    // criterio que marcarEmailVerificado: el principal vive en la sesion, y sin esto la barra
-    // seguiria mostrando el usuario viejo hasta el proximo ingreso.
+    // Refresca el usuario y el nombre después de que su titular los editó en Mi cuenta. Mismo
+    // criterio que marcarEmailVerificado: el principal vive en la sesión, y sin esto la barra
+    // seguiría mostrando el usuario viejo hasta el próximo ingreso.
     public void actualizarDatos(Usuario usuario) {
         this.username = usuario.getUsername();
         this.nombreCompleto = usuario.getNombreParaMostrar();

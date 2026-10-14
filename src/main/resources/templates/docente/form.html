@@ -90,7 +90,7 @@
             </form>
         </div>
 
-        <!-- Bloque comun, sin extras. Las fechas de alta y baja estaban acá como un
+        <!-- Bloque común, sin extras. Las fechas de alta y baja estaban acá como un
              th:fragment y salían DOS veces: Thymeleaf renderiza el fragmento en su lugar
              original además de donde se lo referencia, así que quedaba un "Fecha de alta"
              suelto colgando debajo del recuadro. Ahora viven en la ficha del docente,
@@ -233,11 +233,11 @@
         <!--
           Estado, constancia y baja del docente.
 
-          Esta pantalla ES la ficha: hasta ahora habia ademas una pantalla aparte
-          (/docentes/{id}/ficha) que repetia los datos personales --los mismos campos que se
-          editan arriba-- y listaba los derechos ARCO enlazando de vuelta para aca. Dos
-          pantallas para la misma persona obligaban a adivinar en cual estaba lo que uno venia
-          a hacer. Lo unico que aquella tenia y aca faltaba, la constancia, se sumo abajo.
+          Esta pantalla ES la ficha: hasta ahora había además una pantalla aparte
+          (/docentes/{id}/ficha) que repetía los datos personales --los mismos campos que se
+          editan arriba-- y listaba los derechos ARCO enlazando de vuelta para acá. Dos
+          pantallas para la misma persona obligaban a adivinar en cuál estaba lo que uno venía
+          a hacer. Lo único que aquella tenía y acá faltaba, la constancia, se sumó abajo.
         -->
         <div th:if="${modo == 'editar'}" class="card card--form">
             <h2>Ficha y estado del docente</h2>
@@ -270,7 +270,7 @@
                 <a th:href="@{/docentes/{id}/constancia(id=${docente.id})}"
                    class="btn btn--ghost btn--success">⬇ Descargar constancia</a>
 
-                <!-- Igual que en el listado: si la baja no se puede, el boton lo dice de una
+                <!-- Igual que en el listado: si la baja no se puede, el botón lo dice de una
                      vez en vez de abrir un cuadro para confirmar algo que va a fallar. -->
                 <button th:if="${docente.activo and motivoQueImpideLaBaja != null}"
                         type="button" class="btn btn--ghost btn--danger"

@@ -17,16 +17,16 @@ import java.time.LocalTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * El dia que muestra el reporte (y que se exporta al CSV) tiene que salir de
- * la FECHA de la marca, no del dia programado del horario. Mientras coinciden
- * el bug es invisible; estos casos los hacen diverger a proposito.
+ * El día que muestra el reporte (y que se exporta al CSV) tiene que salir de
+ * la FECHA de la marca, no del día programado del horario. Mientras coinciden
+ * el bug es invisible; estos casos los hacen diverger a propósito.
  */
 class AsistenciaReporteRowDtoTest {
 
     @Test
     @DisplayName("diaSemana sale de la fecha, no del dia del horario")
     void diaSemanaSaleDeLaFecha() {
-        // Horario de lunes, pero la marca quedo cargada con fecha de un sabado.
+        // Horario de lunes, pero la marca quedó cargada con fecha de un sábado.
         Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 25), (byte) 1);
 
         AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
@@ -38,7 +38,7 @@ class AsistenciaReporteRowDtoTest {
     @Test
     @DisplayName("diaSemana usa la etiqueta acentuada del enum")
     void diaSemanaConAcento() {
-        // 2026-07-22 fue miercoles.
+        // 2026-07-22 fue miércoles.
         Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 22), (byte) 3);
 
         AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);

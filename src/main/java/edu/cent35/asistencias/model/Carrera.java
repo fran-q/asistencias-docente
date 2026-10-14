@@ -22,8 +22,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Carrera o programa academico de la institucion. RF-11.
- * Tenant-scoped: pertenece a una unica institucion.
+ * Carrera o programa académico de la institución. RF-11.
+ * Tenant-scoped: pertenece a una única institución.
  */
 @Entity
 @Table(
@@ -52,10 +52,10 @@ public class Carrera extends BaseTenantEntity {
     private String nombre;
 
     /**
-     * Cuantos anios dura la carrera.
+     * Cuántos años dura la carrera.
      *
-     * <p>Acota el anio que se le puede poner a sus materias: sin esto el anio de la materia
-     * seria un entero suelto y nada impediria cargar una de "quinto" en una tecnicatura de tres.
+     * <p>Acota el año que se le puede poner a sus materias: sin esto el año de la materia
+     * sería un entero suelto y nada impediría cargar una de "quinto" en una tecnicatura de tres.
      */
     @Column(name = "duracion_anios", nullable = false)
     @Builder.Default
@@ -77,7 +77,7 @@ public class Carrera extends BaseTenantEntity {
     @Column(name = "actualizado_en", nullable = false)
     private LocalDateTime actualizadoEn;
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

@@ -55,8 +55,8 @@ public class ModeloFacial {
     @JoinColumn(name = "docente_id", nullable = false)
     private Docente docente;
 
-    // Modelo LBPH serializado, comprimido y cifrado con AES. Va a LONGBLOB porque un BLOB comun
-    // se queda corto para el tamano que ocupa.
+    // Modelo LBPH serializado, comprimido y cifrado con AES. Va a LONGBLOB porque un BLOB común
+    // se queda corto para el tamaño que ocupa.
     @JdbcTypeCode(SqlTypes.LONGVARBINARY)
     @Column(name = "embedding_cifrado", nullable = false)
     private byte[] embeddingCifrado;
@@ -90,7 +90,7 @@ public class ModeloFacial {
     @Column(name = "fecha_baja")
     private LocalDateTime fechaBaja;
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

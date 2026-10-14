@@ -25,15 +25,15 @@ import java.util.Set;
 @Slf4j
 public class VerificacionInterceptor implements HandlerInterceptor {
 
-    // Lo unico accesible sin verificar. /mi-cuenta es donde se pide y se carga el codigo, y
-    // logout tiene que seguir disponible: encerrar a alguien sin poder salir seria peor.
+    // Lo único accesible sin verificar. /mi-cuenta es donde se pide y se carga el código, y
+    // logout tiene que seguir disponible: encerrar a alguien sin poder salir sería peor.
     private static final Set<String> RUTAS_PERMITIDAS = Set.of(
         "/mi-cuenta", "/mi-cuenta/enviar-codigo", "/mi-cuenta/verificar", "/logout"
     );
 
     private final UsuarioRepository usuarioRepository;
 
-    // Deja pasar solo si la cuenta ya confirmo su correo; si no, la manda a verificarlo.
+    // Deja pasar solo si la cuenta ya confirmó su correo; si no, la manda a verificarlo.
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
                              Object handler) throws Exception {
@@ -41,7 +41,7 @@ public class VerificacionInterceptor implements HandlerInterceptor {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()
                 || !(auth.getPrincipal() instanceof UsuarioAutenticado principal)) {
-            return true;                       // sin sesion: lo resuelve Spring Security
+            return true;                       // sin sesión: lo resuelve Spring Security
         }
 
         String ruta = request.getRequestURI();
@@ -49,10 +49,10 @@ public class VerificacionInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // El principal se arma al iniciar sesion, asi que su dato de verificacion envejece.
-        // Se usa como via rapida: si YA figuraba verificado no puede haberse desverificado, y
+        // El principal se arma al iniciar sesión, así que su dato de verificación envejece.
+        // Se usa como vía rápida: si YA figuraba verificado no puede haberse desverificado, y
         // se evita la consulta. Si figura sin verificar, se relee de la base, porque puede
-        // haberse verificado en esta misma sesion y seria un encierro dejarlo afuera.
+        // haberse verificado en esta misma sesión y sería un encierro dejarlo afuera.
         if (principal.isEmailVerificado()) {
             return true;
         }

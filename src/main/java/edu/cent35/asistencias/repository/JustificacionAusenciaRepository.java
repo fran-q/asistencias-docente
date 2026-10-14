@@ -16,8 +16,8 @@ public interface JustificacionAusenciaRepository extends JpaRepository<Justifica
     // Justificación adjunta a una ausencia (relación 1:1).
     Optional<JustificacionAusencia> findByAsistenciaId(Long asistenciaId);
 
-    // Trae solo las filas de las asistencias pedidas. El reporte antes hacia findAll() y
-    // filtraba en Java: traia la tabla entera a memoria para quedarse con un punado, y el
+    // Trae solo las filas de las asistencias pedidas. El reporte antes hacía findAll() y
+    // filtraba en Java: traía la tabla entera a memoria para quedarse con un puñado, y el
     // filtro era un List.contains dentro de un stream, o sea cuadratico sobre esa tabla.
     List<JustificacionAusencia> findByAsistenciaIdIn(Collection<Long> asistenciaIds);
 }

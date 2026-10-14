@@ -26,19 +26,19 @@ public class VerificacionCuentaService {
 
     private final UsuarioRepository usuarioRepository;
     private final CodigoVerificacionService codigoService;
-    // La interfaz y no la clase: cual sale por correo y cual por consola lo decide
-    // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
+    // La interfaz y no la clase: cuál sale por correo y cuál por consola lo decide
+    // la propiedad app.mail.canal, y este servicio no tiene por qué enterarse.
     private final CanalDeCodigos notificador;
     private final PasswordEncoder passwordEncoder;
-    // Solo por el limite de un cambio cada 24 horas: la regla tiene que ser la misma que
+    // Solo por el límite de un cambio cada 24 horas: la regla tiene que ser la misma que
     // aplica "Mi cuenta", y tenerla escrita dos veces es tenerla escrita mal una de las dos.
     private final UsuarioService usuarioService;
 
     // ========================================================================
-    //  Verificacion del correo (con sesion iniciada)
+    //  Verificación del correo (con sesión iniciada)
     // ========================================================================
 
-    // Manda un codigo al correo que la cuenta tiene cargado hoy.
+    // Manda un código al correo que la cuenta tiene cargado hoy.
     @Transactional
     public void enviarCodigoDeVerificacion(Long usuarioId, String ip) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
@@ -53,7 +53,7 @@ public class VerificacionCuentaService {
         notificador.enviarCodigo(usuario, PropositoCodigo.VERIFICACION_EMAIL, usuario.getEmail(), codigo);
     }
 
-    // Confirma el correo si el codigo es correcto; solo entonces queda marcado como verificado.
+    // Confirma el correo si el código es correcto; solo entonces queda marcado como verificado.
     @Transactional
     public CodigoVerificacionService.Resultado confirmarEmail(Long usuarioId, String codigoIngresado) {
         CodigoVerificacionService.Resultado resultado =
@@ -70,7 +70,7 @@ public class VerificacionCuentaService {
     }
 
     // ========================================================================
-    //  Cambio de la propia contrasena, ya con sesion iniciada
+    //  Cambio de la propia contraseña, ya con sesión iniciada
     // ========================================================================
 
     /**
@@ -92,10 +92,10 @@ public class VerificacionCuentaService {
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + usuarioId));
 
-        // Aca si conviene mirar el limite ANTES de emitir, al reves que en la recuperacion
-        // publica: quien pide esto ya inicio sesion, asi que el mensaje no le revela a nadie
-        // nada que no supiera, y le evita gastar un codigo para enterarse al final de que no
-        // podia cambiarla. El paso 3 lo vuelve a comprobar por si lo trabaron en el medio.
+        // Acá sí conviene mirar el límite ANTES de emitir, al revés que en la recuperación
+        // pública: quien pide esto ya inició sesión, así que el mensaje no le revela a nadie
+        // nada que no supiera, y le evita gastar un código para enterarse al final de que no
+        // podía cambiarla. El paso 3 lo vuelve a comprobar por si lo trabaron en el medio.
         String impedimento = usuarioService.motivoQueImpideCambiarPassword(usuario);
         if (impedimento != null) {
             throw new IllegalStateException(impedimento);
@@ -120,7 +120,7 @@ public class VerificacionCuentaService {
     }
 
     // ========================================================================
-    //  Cambio del propio correo: un codigo al actual y otro al nuevo
+    //  Cambio del propio correo: un código al actual y otro al nuevo
     // ========================================================================
 
     /**
@@ -167,14 +167,14 @@ public class VerificacionCuentaService {
         log.info("Cambio de correo iniciado por el propio usuario: {}", usuarioId);
     }
 
-    // Paso 2: comprueba el codigo que llego al correo actual. No cambia nada por si solo.
+    // Paso 2: comprueba el código que llegó al correo actual. No cambia nada por si solo.
     @Transactional
     public CodigoVerificacionService.Resultado validarCodigoDelCorreoActual(Long usuarioId,
                                                                            String codigoIngresado) {
         return codigoService.validar(usuarioId, PropositoCodigo.CAMBIO_EMAIL, codigoIngresado);
     }
 
-    // Paso 3: manda un codigo al correo NUEVO. El codigo queda atado a esa direccion.
+    // Paso 3: manda un código al correo NUEVO. El código queda atado a esa dirección.
     @Transactional
     public void enviarCodigoAlCorreoNuevo(Long usuarioId, String correoNuevo, String ip) {
         Usuario usuario = cargar(usuarioId);
@@ -227,7 +227,7 @@ public class VerificacionCuentaService {
     }
 
     // ========================================================================
-    //  Recuperacion de contrasena (sin sesion)
+    //  Recuperación de contraseña (sin sesión)
     // ========================================================================
 
     /**
@@ -258,7 +258,7 @@ public class VerificacionCuentaService {
             notificador.enviarCodigo(
                 usuario, PropositoCodigo.RECUPERACION_PASSWORD, usuario.getEmail(), codigo);
         } catch (RuntimeException ex) {
-            // Ni el limite de reenvios ni una caida del SMTP deben delatar que la cuenta existe.
+            // Ni el límite de reenvíos ni una caida del SMTP deben delatar que la cuenta existe.
             log.warn("No se pudo emitir el codigo de recuperacion para {}: {}",
                      usuario.getId(), ex.toString());
             notificador.noSeEmitio(usuarioOEmail,
@@ -341,7 +341,7 @@ public class VerificacionCuentaService {
         }
     }
 
-    // Acepta indistintamente el nombre de usuario o el correo; si hay ambiguedad entre
+    // Acepta indistintamente el nombre de usuario o el correo; si hay ambigüedad entre
     // instituciones no elige ninguno, igual que hace el login.
     private Busqueda buscarPorUsuarioOEmail(String entrada) {
         if (entrada == null || entrada.isBlank()) {

@@ -342,7 +342,7 @@ class PuestoCapturaIT {
     }
 
     // ========================================================================
-    //  Revocacion
+    //  Revocación
     // ========================================================================
 
     @Test
@@ -423,8 +423,8 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Dos puestos nunca comparten token")
     void dosPuestosNuncaCompartenToken() {
-        // Desde V030 los dos pueden estar habilitados a la vez --una camara por entrada--,
-        // asi que la propiedad importa mas que antes: el token de uno no sirve en el otro.
+        // Desde V030 los dos pueden estar habilitados a la vez --una cámara por entrada--,
+        // así que la propiedad importa más que antes: el token de uno no sirve en el otro.
         String primero = designarEn(institucionA);
         String segundo = puestoService.designar(institucionA, "Secretaria PC-2", cuentaA)
             .getTokenEnClaro();
@@ -441,7 +441,7 @@ class PuestoCapturaIT {
         designarEn(institucionA);
 
         assertThatNombreRepetidoFalla();
-        // Pero en otra institucion el mismo nombre si va: son espacios separados.
+        // Pero en otra institución el mismo nombre si va: son espacios separados.
         assertThat(puestoService.designar(institucionB, "Secretaria PC-1", cuentaB).getPuesto())
             .isNotNull();
     }
@@ -453,8 +453,8 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("El primer puesto se autoriza desde cualquier equipo: es el arranque")
     void elPrimeroSeAutorizaDesdeDondeSea() {
-        // Sin ningun puesto nadie puede tomar asistencia, y hay que poder salir de esa
-        // situacion. Para eso alcanza con la cuenta institucional.
+        // Sin ningún puesto nadie puede tomar asistencia, y hay que poder salir de esa
+        // situación. Para eso alcanza con la cuenta institucional.
         assertThat(puestoService.designar(institucionA, "Secretaria PC-1", cuentaA))
             .isNotNull();
     }
@@ -462,7 +462,7 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Sin tope, una institucion autoriza tantos equipos como entradas tenga")
     void variosEquiposConviven() {
-        // V030: el caso que lo pide es el colegio con dos entradas. Antes habia que revocar
+        // V030: el caso que lo pide es el colegio con dos entradas. Antes había que revocar
         // el equipo de una puerta para autorizar el de la otra, y el docente terminaba
         // cruzando el edificio para marcar la salida.
         designarEn(institucionA);
@@ -475,7 +475,7 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Con el tope alcanzado no se autoriza uno mas")
     void elTopeFrenaLaDesignacion() {
-        // El tope lo pone la institucion: una con una sola puerta no quiere que un segundo
+        // El tope lo pone la institución: una con una sola puerta no quiere que un segundo
         // equipo quede habilitado por descuido.
         conTopeDeEquipos((short) 1);
         designarEn(institucionA);
@@ -505,15 +505,15 @@ class PuestoCapturaIT {
     }
 
     // ========================================================================
-    //  Revocar: solo desde el propio equipo, o con codigo
+    //  Revocar: solo desde el propio equipo, o con código
     // ========================================================================
 
     @Test
     @DisplayName("Un equipo se revoca desde la pantalla, sin estar en esa maquina")
     void seRevocaDesdeLaPantalla() {
-        // V030: con una camara por entrada, exigir estar en esa maquina obligaba a caminar
-        // hasta la que justo puede estar rota o robada, que es cuando mas urge revocarla.
-        // Lo que autoriza la revocacion es la cuenta institucional.
+        // V030: con una cámara por entrada, exigir estar en esa máquina obligaba a caminar
+        // hasta la que justo puede estar rota o robada, que es cuando más urge revocarla.
+        // Lo que autoriza la revocación es la cuenta institucional.
         designarEn(institucionA);
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
@@ -525,8 +525,8 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("El POST de revocar desde otra maquina revoca igual")
     void elPostDeRevocarDesdeAfueraRevoca() throws Exception {
-        // V030: el caso legitimo --la PC de esa puerta se rompio-- es exactamente este, y
-        // antes obligaba a pedir un codigo al correo para resolverlo.
+        // V030: el caso legítimo --la PC de esa puerta se rompió-- es exactamente este, y
+        // antes obligaba a pedir un código al correo para resolverlo.
         designarEn(institucionA);
         Long puestoId = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
@@ -540,9 +540,9 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Una cuenta de otra institucion no revoca el equipo ajeno")
     void noSeRevocaElEquipoDeOtraInstitucion() throws Exception {
-        // Lo que autoriza la revocacion es la cuenta institucional, asi que hay que
-        // asegurarse de que sea la de ESA institucion: es el control que reemplaza a la
-        // regla de estar sentado en esa maquina.
+        // Lo que autoriza la revocación es la cuenta institucional, así que hay que
+        // asegurarse de que sea la de ESA institución: es el control que reemplaza a la
+        // regla de estar sentado en esa máquina.
         designarEn(institucionA);
         Long puestoDeA = puestoRepository.deInstitucion(institucionA).get(0).getId();
 
@@ -558,7 +558,7 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("El POST directo tampoco saltea el tope: no alcanza con esconder el form")
     void elPostDirectoNoSalteaElTope() throws Exception {
-        // Una vista que no muestra el boton no frena a quien arma la peticion a mano. Por eso
+        // Una vista que no muestra el botón no frena a quien arma la petición a mano. Por eso
         // el tope vive en el service y este caso lo ejerce por HTTP.
         conTopeDeEquipos((short) 1);
         designarEn(institucionA);
@@ -614,7 +614,7 @@ class PuestoCapturaIT {
             .andReturn().getResponse().getContentAsString();
 
         assertThat(html).contains("Autorizar este equipo");
-        // Y ya no lleva el cuadro de aclaracion que estaba arriba.
+        // Y ya no lleva el cuadro de aclaración que estaba arriba.
         assertThat(html).doesNotContain("Ley 25.326");
     }
 
@@ -625,10 +625,10 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("Sin sesion, el kiosco NO manda al login: lo autoriza el equipo, no un usuario")
     void elKioscoNoRedirigeAlLogin() throws Exception {
-        // Sin cookie de puesto la peticion se rechaza, y esta bien: lo que importa es QUIEN la
+        // Sin cookie de puesto la petición se rechaza, y está bien: lo que importa es QUIEN la
         // rechaza. Tiene que ser el control del equipo —que manda a /puesto-requerido— y no
-        // Spring Security mandando al login, porque eso significaria que la cadena del kiosco
-        // no toma la ruta y el equipo nunca podria operar solo.
+        // Spring Security mandando al login, porque eso significaría que la cadena del kiosco
+        // no toma la ruta y el equipo nunca podría operar solo.
         var respuesta = mockMvc.perform(post("/kiosco/marcar").with(csrf())
                 .contentType("application/json").content("{\"imagen\":\"x\"}"))
             .andReturn().getResponse();
@@ -638,7 +638,7 @@ class PuestoCapturaIT {
             .as("no puede terminar en el login: el kiosco no se autoriza con un usuario")
             .isTrue();
         // El endpoint que consume fetch responde 403 con JSON en vez de redirigir: un
-        // redirect llegaria al script como HTML dentro de un response.json().
+        // redirect llegaría al script como HTML dentro de un response.json().
         assertThat(respuesta.getStatus())
             .as("lo rechaza el control del equipo, no el login")
             .isEqualTo(403);
@@ -647,8 +647,8 @@ class PuestoCapturaIT {
     @Test
     @DisplayName("El resto del sistema sigue exigiendo sesion")
     void elRestoSigueCerrado() {
-        // La cadena del kiosco cubre solo /kiosco/**. Si se hubiera abierto de mas, esto lo
-        // dice: /docentes tiene que seguir mandando al login sin sesion.
+        // La cadena del kiosco cubre solo /kiosco/**. Si se hubiera abierto de más, esto lo
+        // dice: /docentes tiene que seguir mandando al login sin sesión.
         try {
             var respuesta = mockMvc.perform(get("/docentes")).andReturn().getResponse();
             assertThat(respuesta.getStatus()).isEqualTo(302);
@@ -659,7 +659,7 @@ class PuestoCapturaIT {
     }
 
     // ========================================================================
-    //  Camara del puesto (V026)
+    //  Cámara del puesto (V026)
     // ========================================================================
 
     @Test
@@ -785,7 +785,7 @@ class PuestoCapturaIT {
 
     // ========================================================================
     //  helpers
-    // Le pone tope de equipos a la institucion de prueba (V030).
+    // Le pone tope de equipos a la institución de prueba (V030).
     private void conTopeDeEquipos(short tope) {
         Institucion i = institucionRepository.findById(institucionA).orElseThrow();
         i.setMaxPuestosHabilitados(tope);
@@ -795,9 +795,9 @@ class PuestoCapturaIT {
     // ========================================================================
 
     private void assertThatNombreRepetidoFalla() {
-        // Hay que revocar el actual primero: con el tope de uno, la designacion se frenaria
-        // por el tope y el test pasaria sin haber ejercitado nunca el control del nombre.
-        // El nombre sigue tomado despues de revocar, a proposito: el historial lo conserva.
+        // Hay que revocar el actual primero: con el tope de uno, la designación se frenaría
+        // por el tope y el test pasaría sin haber ejercitado nunca el control del nombre.
+        // El nombre sigue tomado después de revocar, a propósito: el historial lo conserva.
         Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
         puestoService.revocar(actual, institucionA);
 
@@ -837,8 +837,8 @@ class PuestoCapturaIT {
             .persona(DatosDePrueba.persona("Cuenta", "Prueba"))
             .rol(rol)
             .activo(true)
-            // Verificado: si no, el interceptor de verificacion bloquea antes y este test
-            // estaria midiendo el control equivocado.
+            // Verificado: si no, el interceptor de verificación bloquea antes y este test
+            // estaría midiendo el control equivocado.
             .emailVerificadoEn(LocalDateTime.now())
             .build();
         u.setInstitucionId(institucionId);

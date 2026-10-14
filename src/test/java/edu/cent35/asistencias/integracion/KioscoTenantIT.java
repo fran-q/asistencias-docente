@@ -103,7 +103,7 @@ class KioscoTenantIT {
     @DisplayName("La resolucion no se apoya en el TenantContext que hubiera quedado seteado")
     void noHeredaElTenantDelContexto() {
         // Si la consulta se apoyara en el contexto en vez de en el token, un hilo con el
-        // tenant de A resolveria el puesto de B como si fuera de A.
+        // tenant de A resolvería el puesto de B como si fuera de A.
         String tokenB = kioscoEn(institucionB, cuentaB);
         TenantContext.set(institucionA);
 
@@ -118,7 +118,7 @@ class KioscoTenantIT {
     @Test
     @DisplayName("Un puesto designado pero sin kiosco habilitado NO resuelve")
     void designadoNoAlcanza() {
-        // Designar dice "la captura ocurre aca"; habilitar el kiosco dice "ademas puede
+        // Designar dice "la captura ocurre acá"; habilitar el kiosco dice "además puede
         // ocurrir sin nadie mirando". Son dos permisos y hacen falta los dos (RF-85).
         String token = puestoService.designar(institucionA, "Secretaria", cuentaA)
             .getTokenEnClaro();
@@ -153,7 +153,7 @@ class KioscoTenantIT {
     @Test
     @DisplayName("Una credencial sin uso por mas dias que el limite deja de servir")
     void credencialVencidaNoSirve() {
-        // Lo que caduca es el token de una maquina que dejo de usarse: la que se robaron, la
+        // Lo que caduca es el token de una máquina que dejó de usarse: la que se robaron, la
         // que se dio de baja. En uso normal se renueva sola en cada marca.
         String token = kioscoEn(institucionA, cuentaA);
         conUltimoUso(institucionA, LocalDateTime.now().minusDays(31));
@@ -164,8 +164,8 @@ class KioscoTenantIT {
     @Test
     @DisplayName("Un puesto recien habilitado, sin usar todavia, si resuelve")
     void reciendHabilitadoResuelve() {
-        // Sin ultimoUsoEn cuenta desde creadoEn. Tratarlo como vencido dejaria el kiosco sin
-        // poder arrancar nunca: el primer uso no podria ocurrir.
+        // Sin ultimoUsoEn cuenta desde creadoEn. Tratarlo como vencido dejaría el kiosco sin
+        // poder arrancar nunca: el primer uso no podría ocurrir.
         String token = kioscoEn(institucionA, cuentaA);
         assertThat(unicoDe(institucionA).getUltimoUsoEn()).isNull();
 
@@ -189,7 +189,7 @@ class KioscoTenantIT {
     //  Fixtures
     // ========================================================================
 
-    // Designa un puesto y ademas lo habilita para operar sin sesion.
+    // Designa un puesto y además lo habilita para operar sin sesión.
     private String kioscoEn(Long institucionId, Usuario designante) {
         String token = puestoService
             .designar(institucionId, "Secretaria " + institucionId, designante)

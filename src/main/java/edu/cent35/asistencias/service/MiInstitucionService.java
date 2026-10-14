@@ -59,8 +59,8 @@ public class MiInstitucionService {
         inst.setUmbralSeparacionMin(umbralNuevo);
 
         // El tope de equipos autorizados (V030). Se registra igual que el umbral: decide
-        // cuantas maquinas pueden capturar datos biometricos a la vez, asi que bajarlo o
-        // subirlo tiene que poder reconstruirse despues.
+        // cuántas máquinas pueden capturar datos biométricos a la vez, así que bajarlo o
+        // subirlo tiene que poder reconstruirse después.
         Short topeAnterior = inst.getMaxPuestosHabilitados();
         Short topeNuevo = dto.getMaxPuestosHabilitados();
         if (!java.util.Objects.equals(topeAnterior, topeNuevo)) {
@@ -75,7 +75,7 @@ public class MiInstitucionService {
         return saved;
     }
 
-    // Convierte strings vacios o whitespace a null para mantener limpio el dato.
+    // Convierte strings vacíos o whitespace a null para mantener limpio el dato.
     private static String blankToNull(String s) {
         if (s == null) return null;
         String trimmed = s.trim();

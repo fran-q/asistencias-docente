@@ -1,18 +1,18 @@
 /* =============================================================================
  *  volver-al-kiosco.js
  *
- *  El login, cuando se llego desde el kiosco, vuelve solo a el si nadie lo usa.
+ *  El login, cuando se llegó desde el kiosco, vuelve solo a el si nadie lo usa.
  *
  *  El kiosco queda encendido en un mostrador y su marca lleva al login: es la puerta
- *  para quien tiene que operar el sistema en esa maquina. Pero la marca es lo mas
- *  grande de la barra y se toca sin querer, y un kiosco que quedo en el login deja de
- *  tomar asistencia hasta que alguien lo note, que puede ser al dia siguiente. Por
+ *  para quien tiene que operar el sistema en esa máquina. Pero la marca es lo más
+ *  grande de la barra y se toca sin querer, y un kiosco que quedó en el login deja de
+ *  tomar asistencia hasta que alguien lo note, que puede ser al día siguiente. Por
  *  eso, si pasa un minuto sin que nadie escriba ni toque nada, la pantalla vuelve al
  *  kiosco. Cualquier tecla o toque reinicia la cuenta: quien vino a ingresar no pierde
  *  lo que estaba escribiendo.
  *
  *  El enlace "Volver al kiosco" hace lo mismo en el momento. La plantilla trae el
- *  cuadro y este script solo si se llego con ?desde=kiosco (auth/login.html).
+ *  cuadro y este script solo si se llegó con ?desde=kiosco (auth/login.html).
  * ========================================================================== */
 (function (window, document) {
     'use strict';
@@ -34,7 +34,7 @@
         quedan -= 1;
         if (quedan <= 0) {
             window.clearInterval(reloj);
-            // replace y no assign: el login no queda en el historial, y "atras" desde el
+            // replace y no assign: el login no queda en el historial, y "atrás" desde el
             // kiosco no vuelve a esta pantalla.
             window.location.replace(destino);
             return;
@@ -43,7 +43,7 @@
     }
 
     // La cuenta vuelve a empezar junto con el reloj: si solo se repusieran los segundos, el
-    // primero despues de una tecla podia durar un instante.
+    // primero después de una tecla podía durar un instante.
     function arrancar() {
         quedan = TOTAL;
         pintar();

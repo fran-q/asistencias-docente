@@ -69,7 +69,7 @@ public class PeriodoLectivo extends BaseTenantEntity {
     @Column(name = "fecha_fin", nullable = false)
     private LocalDate fechaFin;
 
-    // Para listarlos en el orden en que ocurren y no por alfabeto, que pondria "2do
+    // Para listarlos en el orden en que ocurren y no por alfabeto, que pondría "2do
     // cuatrimestre" antes que "Anual".
     @Column(nullable = false)
     @Builder.Default

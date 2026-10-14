@@ -10,9 +10,9 @@ import lombok.Getter;
 @Getter
 public enum EtapaCaptura {
 
-    // Los giros son SUAVES a proposito. El Haar Cascade que entrena y reconoce es de rostro
+    // Los giros son SUAVES a propósito. El Haar Cascade que entrena y reconoce es de rostro
     // frontal: con un perfil marcado directamente no encuentra la cara, y si llegara a
-    // encontrar algo seria un recorte mal alineado que ensucia el modelo en vez de mejorarlo.
+    // encontrar algo sería un recorte mal alineado que ensucia el modelo en vez de mejorarlo.
     FRENTE("Mirá de frente a la cámara",
            "Cara centrada, expresión natural."),
 

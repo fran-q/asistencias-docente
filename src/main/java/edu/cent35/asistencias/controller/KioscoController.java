@@ -44,7 +44,7 @@ public class KioscoController {
     private final PaseAsistenciaService paseAsistenciaService;
     private final FrenoDeKioscoService freno;
 
-    // Nombre del atributo de sesion donde vive la racha de confirmacion.
+    // Nombre del atributo de sesión donde vive la racha de confirmación.
     private static final String RACHA = "kioscoConfirmacionIdentidad";
 
     /**
@@ -56,8 +56,8 @@ public class KioscoController {
      */
     @GetMapping
     public String pantalla(HttpServletRequest request, Model model) {
-        // La camara elegida para este equipo (V026). El kiosco es donde mas importa: nadie
-        // mira la pantalla para darse cuenta de que tomo la camara equivocada.
+        // La cámara elegida para este equipo (V026). El kiosco es donde más importa: nadie
+        // mira la pantalla para darse cuenta de que tomó la cámara equivocada.
         model.addAttribute("camaraDelPuesto", PuestoCapturaInterceptor.camaraDe(request));
         return "asistencia/kiosco";
     }
@@ -112,7 +112,7 @@ public class KioscoController {
         return racha;
     }
 
-    // El equipo que ya resolvio y valido PuestoCapturaInterceptor (RF-89).
+    // El equipo que ya resolvió y validó PuestoCapturaInterceptor (RF-89).
     private static PuestoCaptura puestoDe(HttpServletRequest request) {
         return PuestoCapturaInterceptor.puestoDe(request);
     }

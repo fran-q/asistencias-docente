@@ -53,7 +53,7 @@ public class KioscoTenantInterceptor implements HandlerInterceptor {
             .flatMap(puestoService::resolverKiosco);
 
         if (puesto.isEmpty()) {
-            // Sin sesion y sin credencial valida no hay institucion que publicar. El pedido
+            // Sin sesión y sin credencial válida no hay institución que publicar. El pedido
             // sigue su curso y muere en el control de acceso, que es donde corresponde.
             return true;
         }
@@ -73,12 +73,12 @@ public class KioscoTenantInterceptor implements HandlerInterceptor {
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
                                 Object handler, Exception ex) {
         // TenantContext lo limpia TenantInterceptor en su propio afterCompletion, que corre
-        // para todas las rutas. Repetirlo aca no haria dano, pero tener dos lugares que
+        // para todas las rutas. Repetirlo acá no haría daño, pero tener dos lugares que
         // limpian el mismo ThreadLocal invita a que alguien saque el equivocado.
         MDC.remove("puestoId");
     }
 
-    // Si hay un usuario realmente autenticado, y no el anonimo que Spring pone por defecto.
+    // Si hay un usuario realmente autenticado, y no el anónimo que Spring pone por defecto.
     private boolean haySesion() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null

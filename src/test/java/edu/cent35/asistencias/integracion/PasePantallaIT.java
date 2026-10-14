@@ -60,7 +60,7 @@ class PasePantallaIT {
     void hayUnSoloAccesoAlKiosco() throws Exception {
         String plantilla = Files.readString(PASE);
 
-        // Duplicarlo pondria en dos lugares una accion que CIERRA LA SESION, y la que se
+        // Duplicarlo pondría en dos lugares una acción que CIERRA LA SESIÓN, y la que se
         // aprieta sin querer es siempre la que sobra. Paso al moverlo del encabezado al pie
         // la vez anterior: quedaron los dos un rato.
         assertThat(plantilla.split("value=\"kiosco\"", -1).length - 1).isEqualTo(1);

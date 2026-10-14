@@ -35,9 +35,9 @@
                 </div>
 
                 <!--
-                  Una cuenta de institucion no es una persona: tiene un nombre, no un nombre
-                  y un apellido. Por eso la pantalla muestra un campo o dos segun el rol, y
-                  el apellido admite NULL en la base (migracion V014).
+                  Una cuenta de institución no es una persona: tiene un nombre, no un nombre
+                  y un apellido. Por eso la pantalla muestra un campo o dos según el rol, y
+                  el apellido admite NULL en la base (migración V014).
                 -->
                 <div class="form-row" th:if="${esInstitucion}">
                     <div class="form-group">
@@ -68,9 +68,9 @@
 
                 <div class="form-row">
                     <!--
-                      El rol dejo de ser un desplegable porque no se puede cambiar. Un rol no
+                      El rol dejó de ser un desplegable porque no se puede cambiar. Un rol no
                       es un atributo de la cuenta: es lo que la cuenta ES, y cambiarlo reescribe
-                      hacia atras el sentido de todo lo que hizo. Se muestra como dato.
+                      hacia atrás el sentido de todo lo que hizo. Se muestra como dato.
                     -->
                     <div class="form-group">
                         <label>Rol</label>
@@ -87,9 +87,9 @@
 
                     <!--
                       El estado se muestra, no se edita. Era una casilla dentro de este
-                      formulario, asi que dar de baja a alguien se guardaba junto con el nombre
-                      y el correo, sin preguntar nada: un clic distraido y esa persona no podia
-                      entrar mas. Ahora es una accion aparte, abajo, con su confirmacion.
+                      formulario, así que dar de baja a alguien se guardaba junto con el nombre
+                      y el correo, sin preguntar nada: un clic distraído y esa persona no podía
+                      entrar más. Ahora es una acción aparte, abajo, con su confirmación.
                     -->
                     <div class="form-group">
                         <label>Estado</label>
@@ -139,9 +139,9 @@
                 la propia persona desde <em>Mi cuenta</em> al iniciar sesión.
             </p>
 
-            <!-- La contrasena de otra cuenta ya no se fija desde aca. Todo cambio de
-                 contrasena exige un codigo enviado al correo de su dueno, asi que quien se
-                 quedo afuera usa la recuperacion del login. De paso ningun administrador
+            <!-- La contraseña de otra cuenta ya no se fija desde acá. Todo cambio de
+                 contraseña exige un código enviado al correo de su dueño, así que quien se
+                 quedó afuera usa la recuperación del login. De paso ningún administrador
                  conoce la clave con la que entra otra persona. -->
             <p class="text-muted">
                 <strong>¿Esta persona no puede entrar?</strong> Tiene que usar
@@ -151,11 +151,11 @@
             </p>
 
             <!--
-              La baja de la cuenta. Es un boton con confirmacion y no una casilla del
-              formulario de arriba: dejar a alguien afuera del sistema no es un dato mas que
+              La baja de la cuenta. Es un botón con confirmación y no una casilla del
+              formulario de arriba: dejar a alguien afuera del sistema no es un dato más que
               se guarda de paso con el nombre y el correo.
 
-              Igual que en Docentes, cuando la baja no se puede el boton lo dice de una vez en
+              Igual que en Docentes, cuando la baja no se puede el botón lo dice de una vez en
               vez de abrir un cuadro para confirmar algo que va a fallar.
             -->
             <div class="form-actions" th:if="${!esInstitucion}">

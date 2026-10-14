@@ -47,7 +47,7 @@ public class SesionController {
      * institución es una sola y la comparten: la sesión de al lado puede ser el equipo que está
      * tomando asistencia, y desplazarlo sin avisar apaga el pase en medio de una clase.
      *
-     * <p>Si la otra sesión se cerró mientras tanto --se fueron, o vencio-- no hay nada que
+     * <p>Si la otra sesión se cerró mientras tanto --se fueron, o venció-- no hay nada que
      * decidir: se quita la marca y se sigue de largo, en vez de preguntar por algo que ya no
      * existe.
      */

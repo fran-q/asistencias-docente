@@ -83,6 +83,6 @@ public final class TextoConsentimiento {
         """;
 
     private TextoConsentimiento() {
-        // util class
+        // útil class
     }
 }

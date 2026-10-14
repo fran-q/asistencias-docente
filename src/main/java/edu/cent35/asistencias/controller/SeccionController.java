@@ -46,7 +46,7 @@ public class SeccionController {
 
     private String armar(SeccionService.Grupo grupo, Authentication auth, Model model) {
         // Si en este grupo hay una sola pantalla, se redirige en vez de mostrar la lista.
-        // Pasa con Personal para el rol ADMIN, que solo ve Docentes. Tambien cubre el caso
+        // Pasa con Personal para el rol ADMIN, que solo ve Docentes. También cubre el caso
         // de que alguien llegue a /personal escribiendo la URL a mano.
         String destino = seccionService.destinoDelGrupo(grupo, auth);
         if (!destino.equals("/" + grupo.getRuta())) {

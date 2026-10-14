@@ -100,17 +100,17 @@ public class CicloLectivo extends BaseTenantEntity {
     @Column(name = "cerrado_en")
     private LocalDateTime cerradoEn;
 
-    // Quien cerro el ciclo. Mismo criterio que dadoDeBajaPor: el id pelado, no la relacion.
+    // Quien cerró el ciclo. Mismo criterio que dadoDeBajaPor: el id pelado, no la relación.
     @Column(name = "cerrado_por")
     private Long cerradoPor;
 
-    // Ultima vez que se reabrio despues de cerrado (V027). Al reabrir, cerradoEn y cerradoPor NO
-    // se borran: son el registro de que alguien lo cerro, y si el cierre fue un error es
-    // justamente lo que se va a querer mirar. Si esta cerrado o no lo dice el estado.
+    // Última vez que se reabrió después de cerrado (V027). Al reabrir, cerradoEn y cerradoPor NO
+    // se borran: son el registro de que alguien lo cerró, y si el cierre fue un error es
+    // justamente lo que se va a querer mirar. Si está cerrado o no lo dice el estado.
     @Column(name = "reabierto_en")
     private LocalDateTime reabiertoEn;
 
-    // Quien lo reabrio. Id pelado, igual que cerradoPor.
+    // Quien lo reabrió. Id pelado, igual que cerradoPor.
     @Column(name = "reabierto_por")
     private Long reabiertoPor;
 

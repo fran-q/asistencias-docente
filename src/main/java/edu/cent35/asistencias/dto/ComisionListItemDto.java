@@ -19,18 +19,18 @@ public class ComisionListItemDto {
     Long materiaId;
     String materiaCodigo;
     String materiaNombre;
-    // No es columna del listado: lo usa el filtro por anio del plan.
+    // No es columna del listado: lo usa el filtro por año del plan.
     Short materiaAnio;
     String carreraCodigo;
-    // La pantalla muestra el nombre; el codigo queda para uso interno.
+    // La pantalla muestra el nombre; el código queda para uso interno.
     String carreraNombre;
     String docenteNombre;       // null si no tiene docente asignado
     boolean docenteActivo;      // true si no hay docente o si está activo
     boolean activo;
     boolean materiaActiva;
     LocalDateTime actualizadoEn;
-    // A que ano y a que tramo pertenece esta oferta (V023). Sin esto el listado mezcla los
-    // anos sin decirlo, que es exactamente el problema que los ciclos vinieron a resolver.
+    // A que año y a que tramo pertenece esta oferta (V023). Sin esto el listado mezcla los
+    // años sin decirlo, que es exactamente el problema que los ciclos vinieron a resolver.
     Short cicloAnio;
     String periodoNombre;
     boolean cicloCerrado;

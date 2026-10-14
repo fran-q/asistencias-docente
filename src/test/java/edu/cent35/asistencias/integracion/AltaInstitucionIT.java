@@ -55,13 +55,13 @@ class AltaInstitucionIT {
     @Autowired private RolRepository rolRepository;
 
     // Se intercepta el envío para poder leer el código sin levantar un servidor de correo.
-    // Se mockea la interfaz, no el canal concreto: el test verifica que el codigo se
+    // Se mockea la interfaz, no el canal concreto: el test verifica que el código se
     // pida, no por donde sale.
     @MockBean private CanalDeCodigos notificador;
 
-    // El freno de envios es un unico bean que vive todo el contexto de Spring y cuenta por
-    // direccion de destino. Si todos los tests usaran el mismo correo, el cuarto quedaria
-    // frenado por los anteriores y el resultado dependeria del orden de ejecucion.
+    // El freno de envíos es un único bean que vive todo el contexto de Spring y cuenta por
+    // dirección de destino. Si todos los tests usaran el mismo correo, el cuarto quedaría
+    // frenado por los anteriores y el resultado dependería del orden de ejecución.
     private static final java.util.concurrent.atomic.AtomicInteger SECUENCIA =
         new java.util.concurrent.atomic.AtomicInteger();
     private String correo;
@@ -70,7 +70,7 @@ class AltaInstitucionIT {
     void preparar() {
         TenantContext.clear();
         limpiar();
-        // El alta busca el rol INSTITUCION: sin el, la base no esta inicializada.
+        // El alta busca el rol INSTITUCION: sin él, la base no está inicializada.
         Rol rol = new Rol();
         rol.setCodigo("INSTITUCION");
         rol.setDescripcion("Cuenta institucional");
@@ -92,7 +92,7 @@ class AltaInstitucionIT {
     }
 
     // ========================================================================
-    //  Paso 1: enviar el codigo
+    //  Paso 1: enviar el código
     // ========================================================================
 
     @Test
@@ -141,7 +141,7 @@ class AltaInstitucionIT {
         conGuiones.set("cuit", "30-44445555-8");
         crearConDatos(conGuiones, new MockHttpSession());
 
-        // Mismo numero, escrito de corrido. Sin normalizar entraria como si fuera otro.
+        // Mismo número, escrito de corrido. Sin normalizar entraría como si fuera otro.
         MultiValueMap<String, String> deCorrido = datos();
         deCorrido.set("cuit", "30444455558");
         deCorrido.set("nombreInstitucion", "Otro Instituto");
@@ -175,7 +175,7 @@ class AltaInstitucionIT {
         mockMvc.perform(post("/alta-institucion").with(csrf()).params(p))
             .andExpect(status().isOk());        // vuelve al formulario con el error
 
-        // Ni siquiera se gasta un envio de correo en un dato que no puede existir.
+        // Ni siquiera se gasta un envío de correo en un dato que no puede existir.
         verify(notificador, org.mockito.Mockito.never())
             .enviarCodigo(any(), any(), anyString(), anyString());
         assertThat(institucionRepository.count()).isZero();
@@ -190,7 +190,7 @@ class AltaInstitucionIT {
     }
 
     // ========================================================================
-    //  Paso 2: validar el codigo
+    //  Paso 2: validar el código
     // ========================================================================
 
     @Test
@@ -217,7 +217,7 @@ class AltaInstitucionIT {
 
         mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
                         .param("codigo", "000000").session(sesion))
-            .andExpect(status().isOk());          // vuelve a la pantalla del codigo
+            .andExpect(status().isOk());          // vuelve a la pantalla del código
 
         assertThat(institucionRepository.count()).isZero();
         assertThat(usuarioRepository.count()).isZero();
@@ -237,7 +237,7 @@ class AltaInstitucionIT {
                             .param("codigo", "000000").session(sesion));
         }
 
-        // Ni siquiera el codigo correcto sirve ya: los datos se descartaron.
+        // Ni siquiera el código correcto sirve ya: los datos se descartaron.
         mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
                         .param("codigo", correcto).session(sesion))
             .andExpect(status().is3xxRedirection());
@@ -296,7 +296,7 @@ class AltaInstitucionIT {
         mockMvc.perform(post("/alta-institucion").with(csrf()).params(datos()).session(deAlguien))
             .andExpect(status().is3xxRedirection());
 
-        // Otro navegador, con el codigo correcto pero sin el alta en su sesion.
+        // Otro navegador, con el código correcto pero sin el alta en su sesión.
         mockMvc.perform(post("/alta-institucion/codigo").with(csrf())
                         .param("codigo", codigoEnviado()).session(new MockHttpSession()))
             .andExpect(status().is3xxRedirection());
@@ -305,13 +305,13 @@ class AltaInstitucionIT {
     }
 
     // ========================================================================
-    //  Freno de envios
+    //  Freno de envíos
     // ========================================================================
 
     @Test
     @DisplayName("Una misma dirección no puede recibir códigos sin límite")
     void frenaLosEnviosRepetidos() throws Exception {
-        // El tope configurado son 3 por hora y por direccion.
+        // El tope configurado son 3 por hora y por dirección.
         for (int i = 0; i < 3; i++) {
             MultiValueMap<String, String> p = datos();
             p.set("nombreInstitucion", "Instituto " + i);   // nombre distinto, mismo correo
@@ -324,7 +324,7 @@ class AltaInstitucionIT {
         mockMvc.perform(post("/alta-institucion").with(csrf()).params(unoMas))
             .andExpect(status().isOk());          // vuelve al formulario con el aviso
 
-        // Salieron los tres primeros y ninguno mas: el cuarto quedo frenado.
+        // Salieron los tres primeros y ninguno más: el cuarto quedó frenado.
         verify(notificador, times(3))
             .enviarCodigo(any(), any(), anyString(), anyString());
     }
@@ -333,7 +333,7 @@ class AltaInstitucionIT {
     //  helpers
     // ========================================================================
 
-    // Recorre el alta completa: formulario, lectura del codigo enviado y confirmacion.
+    // Recorre el alta completa: formulario, lectura del código enviado y confirmación.
     private void crearInstitucionCompleta(MockHttpSession sesion) throws Exception {
         crearConDatos(datos(), sesion);
     }
@@ -348,7 +348,7 @@ class AltaInstitucionIT {
             .andExpect(status().is3xxRedirection());
     }
 
-    // Lee el codigo que la aplicacion le paso al notificador.
+    // Lee el código que la aplicación le paso al notificador.
     private String codigoEnviado() {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(notificador, atLeastOnce())

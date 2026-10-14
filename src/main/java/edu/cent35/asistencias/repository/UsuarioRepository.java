@@ -21,18 +21,18 @@ import java.util.Optional;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
-    // Busca por username dentro de una institucion concreta.
+    // Busca por username dentro de una institución concreta.
     Optional<Usuario> findByUsernameAndInstitucionId(String username, Long institucionId);
 
     // Variante por email.
     Optional<Usuario> findByEmailAndInstitucionId(String email, Long institucionId);
 
-    // Busqueda global para el login, cuando todavia no se sabe la institucion. Devuelve lista
-    // porque el username solo es unico dentro de cada institucion.
+    // Búsqueda global para el login, cuando todavía no se sabe la institución. Devuelve lista
+    // porque el username solo es único dentro de cada institución.
     List<Usuario> findByUsername(String username);
 
-    // Variante global por email, para la recuperacion de contrasena, que ocurre antes del login.
-    // Devuelve lista por el mismo motivo: el email tampoco es unico entre instituciones.
+    // Variante global por email, para la recuperación de contraseña, que ocurre antes del login.
+    // Devuelve lista por el mismo motivo: el email tampoco es único entre instituciones.
     List<Usuario> findByEmailIgnoreCase(String email);
 
     // Indica si el username ya está tomado en esa institución.
@@ -54,7 +54,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByEmailAndInstitucionId(String email, Long institucionId);
 
     // La cuenta de acceso de una persona, si la tiene. Se usa para avisar, antes de editar una
-    // identidad desde la pantalla de docentes, que el cambio tambien alcanza a su cuenta.
+    // identidad desde la pantalla de docentes, que el cambio también alcanza a su cuenta.
     @Query("""
         SELECT u FROM Usuario u
         JOIN FETCH u.persona p
@@ -65,16 +65,16 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
                                @Param("personaId") Long personaId);
 
     /**
-     * Lista los usuarios activos de una institucion, ordenados por el nombre de su persona.
+     * Lista los usuarios activos de una institución, ordenados por el nombre de su persona.
      *
      * <p><b>LEFT JOIN y no JOIN, desde V018.</b> La cuenta institucional no tiene persona, y un
-     * JOIN comun la dejaria afuera del listado: la unica cuenta que administra el sistema
-     * desapareceria de la pantalla que administra las cuentas.
+     * JOIN común la dejaría afuera del listado: la única cuenta que administra el sistema
+     * desaparecería de la pantalla que administra las cuentas.
      *
-     * <p><b>Y por eso el WHERE del tenant se corrio a la raiz.</b> Antes filtraba por
-     * {@code p.institucionId}, que ademas de acotar hacia de JOIN implicito. Con cuentas sin
-     * persona ese filtro nunca se cumpliria para ellas, asi que ahora acota por
-     * {@code u.institucionId}: Usuario es tenant-scoped por si mismo y no depende de que haya
+     * <p><b>Y por eso el WHERE del tenant se corrió a la raíz.</b> Antes filtraba por
+     * {@code p.institucionId}, que además de acotar hacía de JOIN implícito. Con cuentas sin
+     * persona ese filtro nunca se cumpliria para ellas, así que ahora acota por
+     * {@code u.institucionId}: Usuario es tenant-scoped por sí mismo y no depende de que haya
      * alguien del otro lado.
      */
     @Query("""
@@ -86,8 +86,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
         """)
     List<Usuario> listarActivosDelTenant(@Param("institucionId") Long institucionId);
 
-    // Lista todos los usuarios de una institucion, activos e inactivos. Mismo criterio que el
-    // anterior: LEFT JOIN para no perder la cuenta institucional y el tenant acotado en la raiz.
+    // Lista todos los usuarios de una institución, activos e inactivos. Mismo criterio que el
+    // anterior: LEFT JOIN para no perder la cuenta institucional y el tenant acotado en la raíz.
     @Query("""
         SELECT u FROM Usuario u
         LEFT JOIN FETCH u.persona p
@@ -96,11 +96,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
         """)
     List<Usuario> listarDelTenant(@Param("institucionId") Long institucionId);
 
-    // Cuenta usuarios activos de un rol; evita que la institucion se quede sin cuenta INSTITUCION.
+    // Cuenta usuarios activos de un rol; evita que la institución se quede sin cuenta INSTITUCION.
     long countByInstitucionIdAndRolCodigoAndActivoTrue(Long institucionId, String rolCodigo);
 
-    // Sella el ultimo login exitoso (RNF-10). Va por id porque el username no es unico global, y
-    // lleva su propia transaccion porque el listener lo dispara fuera de una abierta.
+    // Sella el último login exitoso (RNF-10). Va por id porque el username no es único global, y
+    // lleva su propia transacción porque el listener lo dispara fuera de una abierta.
     @Modifying
     @Transactional
     @Query("UPDATE Usuario u SET u.ultimoLogin = :momento WHERE u.id = :id")

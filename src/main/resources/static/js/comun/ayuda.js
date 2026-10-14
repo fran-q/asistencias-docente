@@ -1,23 +1,23 @@
 /* =============================================================================
  *  ayuda.js
  *
- *  La explicacion de una pantalla se cierra y se vuelve a abrir.
+ *  La explicación de una pantalla se cierra y se vuelve a abrir.
  *
- *  Ciclos lectivos, dias sin clase, salidas pendientes y el alta de usuarios
+ *  Ciclos lectivos, días sin clase, salidas pendientes y el alta de usuarios
  *  arrancan con un cuadro que cuenta como funcionan (aside.ayuda[data-ayuda]).
- *  Se lee una vez; despues estorba. El cuadro trae una cruz para cerrarlo, y el
- *  titulo de la pantalla una "i" discreta para volver a abrirlo, como la que
- *  explica donde esta el codigo de seguridad de una tarjeta. Lo cerrado se
+ *  Se lee una vez; después estorba. El cuadro trae una cruz para cerrarlo, y el
+ *  título de la pantalla una "i" discreta para volver a abrirlo, como la que
+ *  explica donde esta el código de seguridad de una tarjeta. Lo cerrado se
  *  recuerda en este navegador, igual que el tema: es una comodidad
  *  de quien mira, no un dato de la cuenta.
  *
- *  Sin JavaScript el cuadro queda abierto y no aparece ningun boton: se pierde el
- *  atajo, no la explicacion. Un cuadro que ya se cerro lo oculta el script del
+ *  Sin JavaScript el cuadro queda abierto y no aparece ningún botón: se pierde el
+ *  atajo, no la explicación. Un cuadro que ya se cerró lo oculta el script del
  *  <head> de base.html antes del primer paint; si no, alcanzaba a verse y
- *  desaparecia al terminar de cargar.
+ *  desaparecía al terminar de cargar.
  *
  *  La "i" se dibuja por CSS y no con texto: migas.js toma el nombre de la pantalla
- *  del <h1>, y con una letra adentro la miga diria "Ciclo lectivo 2026 i".
+ *  del <h1>, y con una letra adentro la miga diría "Ciclo lectivo 2026 i".
  * ========================================================================== */
 (function (document) {
     'use strict';
@@ -35,8 +35,8 @@
     var titulo = document.querySelector('#contenido h1');
     var cuadro = document.querySelector('#contenido .ayuda[data-ayuda]');
 
-    // Sin titulo no hay donde poner la "i": el cuadro queda abierto y sin cruz, porque
-    // cerrarlo sin forma de volver a abrirlo seria perder la explicacion.
+    // Sin título no hay donde poner la "i": el cuadro queda abierto y sin cruz, porque
+    // cerrarlo sin forma de volver a abrirlo sería perder la explicación.
     if (titulo && cuadro) {
         var clave = cuadro.getAttribute('data-ayuda');
         var nombre = cuadro.getAttribute('aria-label') || 'Cómo funciona esta pantalla';
@@ -72,7 +72,7 @@
         cerrar.addEventListener('click', function () {
             mostrar(false);
             recordar(true);
-            // El foco quedaba en un boton que ya no se ve: pasa a la "i", que es por donde
+            // El foco quedaba en un botón que ya no se ve: pasa a la "i", que es por donde
             // se vuelve a abrir.
             abrir.focus();
         });
@@ -82,13 +82,13 @@
             recordar(!abriendo);
             if (abriendo) {
                 cuadro.classList.remove('ayuda--abriendo');
-                void cuadro.offsetWidth;                  // reinicia la animacion
+                void cuadro.offsetWidth;                  // reinicia la animación
                 cuadro.classList.add('ayuda--abriendo');
             }
         });
     }
 
-    // El ocultamiento del <head> ya cumplio: de aca en adelante manda el atributo hidden.
+    // El ocultamiento del <head> ya cumplió: de acá en adelante manda el atributo hidden.
     var previo = document.getElementById('ayudas-cerradas');
     if (previo) previo.parentNode.removeChild(previo);
 })(document);

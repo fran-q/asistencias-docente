@@ -274,8 +274,8 @@ class ConsentimientoBiometricoServiceTest {
     @DisplayName("revocar: da de baja el modelo facial y lo evicta del cache")
     void revocar_dejaElRostroFueraDeUso() {
         // Marcar el consentimiento como no vigente no alcanzaba: el pase compara contra los
-        // modelos ACTIVOS del tenant y no mira el consentimiento, asi que un docente que
-        // revocaba seguia siendo reconocido. Regla dura: sin consentimiento vigente no se
+        // modelos ACTIVOS del tenant y no mira el consentimiento, así que un docente que
+        // revocaba seguía siendo reconocido. Regla dura: sin consentimiento vigente no se
         // registra NI SE USA un rostro (ADR-0005, RNF-13).
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
         when(consentimientoRepository.findByDocenteIdAndVigenteTrue(DOCENTE_ID))
@@ -299,8 +299,8 @@ class ConsentimientoBiometricoServiceTest {
     @Test
     @DisplayName("revocar: es baja logica, no borrado - eso es el derecho de cancelacion")
     void revocar_noBorraElModelo() {
-        // Revocar es el derecho de oposicion y no obliga a suprimir: el modelo queda cifrado
-        // e inactivo. El borrado fisico tiene su propio camino (ARCO / cancelacion).
+        // Revocar es el derecho de oposición y no obliga a suprimir: el modelo queda cifrado
+        // e inactivo. El borrado físico tiene su propio camino (ARCO / cancelación).
         when(docenteRepository.findById(DOCENTE_ID)).thenReturn(Optional.of(docenteActivoA()));
         when(consentimientoRepository.findByDocenteIdAndVigenteTrue(DOCENTE_ID))
             .thenReturn(Optional.of(consentimientoVigente()));

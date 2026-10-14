@@ -3,21 +3,21 @@
  *
  *  El estado del pase, compartido entre las ventanas del mismo navegador.
  *
- *  Por que. El pase necesita la camara, y la camara se suelta apenas la pagina se
+ *  Por qué. El pase necesita la cámara, y la cámara se suelta apenas la página se
  *  recarga: ir a cualquier otra pantalla lo apagaba. Ahora el pase puede vivir en
  *  una ventana propia (/asistencia/pase/ventana) y el resto del sistema se usa
  *  normal en la ventana de siempre. Para que esa ventana no quede invisible,
- *  publica aca lo que va pasando y las demas lo muestran: el punto del menu y los
+ *  publica acá lo que va pasando y las demás lo muestran: el punto del menú y los
  *  avisos de cada reconocimiento (comun/pase-aviso.js).
  *
- *  Dos canales, a proposito:
+ *  Dos canales, a propósito:
  *    - BroadcastChannel lleva lo del momento (el avance y el resultado). No guarda
- *      nada: una pantalla que se abre despues no se entera de lo que ya paso.
- *    - localStorage guarda el ULTIMO estado, que es lo que necesita una pantalla
- *      recien abierta para saber si hay un pase andando.
+ *      nada: una pantalla que se abre después no se entera de lo que ya paso.
+ *    - localStorage guarda el ÚLTIMO estado, que es lo que necesita una pantalla
+ *      recién abierta para saber si hay un pase andando.
  *
  *  El estado guardado se refresca cada pocos segundos. Si una ventana se cierra de
- *  golpe --se cuelga el navegador, se corta la luz-- lo ultimo que dejo escrito
+ *  golpe --se cuelga el navegador, se corta la luz-- lo último que dejó escrito
  *  envejece y a los FRESCO_MS deja de contar: es preferible no mostrar nada antes
  *  que mostrar para siempre un pase que ya no existe.
  * ========================================================================== */
@@ -27,7 +27,7 @@
     var CLAVE = 'pase-estado';
     var CANAL = 'visum-pase';
 
-    // Cuanto vale el ultimo estado guardado sin volver a confirmarse.
+    // Cuánto vale el último estado guardado sin volver a confirmarse.
     var FRESCO_MS = 6000;
     var LATIDO_MS = 2000;
 
@@ -52,7 +52,7 @@
         mensaje.id = ID;
         mensaje.ts = Date.now();
         if (canal) {
-            try { canal.postMessage(mensaje); } catch (e) { /* la ventana se esta cerrando */ }
+            try { canal.postMessage(mensaje); } catch (e) { /* la ventana se está cerrando */ }
         }
         return mensaje;
     }
@@ -60,8 +60,8 @@
     /**
      * Publica en que anda esta ventana:
      *   'andando'  toma asistencia
-     *   'quieto'   la camara esta prendida pero el pase esta detenido
-     *   'apagado'  la ventana sigue abierta y la camara no
+     *   'quieto'   la cámara está prendida pero el pase está detenido
+     *   'apagado'  la ventana sigue abierta y la cámara no
      *   'cerrado'  la ventana se va
      */
     function publicar(estado) {
@@ -82,18 +82,18 @@
         if (latidoId) { clearInterval(latidoId); latidoId = null; }
     }
 
-    // Cuanto lleva sostenida la identidad mientras el servidor la confirma, entre 0 y 1.
+    // Cuánto lleva sostenida la identidad mientras el servidor la confirma, entre 0 y 1.
     function progreso(fraccion) {
         emitir({ tipo: 'progreso', fraccion: fraccion });
     }
 
-    // Como termino el reconocimiento: marco la entrada, marco la salida, no se lo
-    // reconocio, no tenia clase. La clase es la del aviso: success, info, warning o error.
+    // Cómo terminó el reconocimiento: marcó la entrada, marcó la salida, no se lo
+    // reconoció, no tenía clase. La clase es la del aviso: success, info, warning o error.
     function resultado(clase, mensaje, detalle) {
         emitir({ tipo: 'resultado', clase: clase, mensaje: mensaje, detalle: detalle || null });
     }
 
-    // El ultimo estado conocido, de cualquier ventana; null si no hay ninguno o si envejecio.
+    // El último estado conocido, de cualquier ventana; null si no hay ninguno o si envejecio.
     function leer() {
         var crudo;
         try { crudo = localStorage.getItem(CLAVE); } catch (e) { return null; }
@@ -115,7 +115,7 @@
             });
         }
         // Sin BroadcastChannel el evento de localStorage alcanza para el estado, que es lo
-        // que sostiene el punto del menu. El avance y el resultado se pierden, y es el orden
+        // que sostiene el punto del menú. El avance y el resultado se pierden, y es el orden
         // correcto de prioridades si hubiera que quedarse con una sola de las dos cosas.
         window.addEventListener('storage', function (ev) {
             if (ev.key !== CLAVE || !ev.newValue) return;

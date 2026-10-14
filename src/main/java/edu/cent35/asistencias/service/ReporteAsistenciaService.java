@@ -40,11 +40,11 @@ public class ReporteAsistenciaService {
     private final AsistenciaManualRepository asistenciaManualRepository;
     private final JustificacionAusenciaRepository justificacionAusenciaRepository;
 
-    // Cuantas filas como maximo devuelve un reporte.
+    // Cuántas filas como máximo devuelve un reporte.
     @Value("${app.reportes.max-filas}")
     private int maxFilas;
 
-    // Cuantas filas devolveria el reporte sin el tope; la pantalla lo usa para avisar.
+    // Cuántas filas devolvería el reporte sin el tope; la pantalla lo usa para avisar.
     @Transactional(readOnly = true)
     public long contar(ReporteFiltroDto filtro) {
         LocalDate hoy = LocalDate.now();
@@ -57,7 +57,7 @@ public class ReporteAsistenciaService {
             filtro.getCarreraId(), filtro.getEstado(), filtro.getMetodo());
     }
 
-    // Tope configurado, para que la pantalla pueda decir cuantas filas entran.
+    // Tope configurado, para que la pantalla pueda decir cuántas filas entran.
     public int getMaxFilas() {
         return maxFilas;
     }
@@ -131,9 +131,9 @@ public class ReporteAsistenciaService {
             return List.of();
         }
 
-        // Tope duro. Un rango de un año sin filtros trae todo a memoria y de ahi al HTML,
+        // Tope duro. Un rango de un año sin filtros trae todo a memoria y de ahí al HTML,
         // que es donde el navegador se cae primero. Se corta y se avisa en vez de tardar
-        // dos minutos y morir sin explicacion: el que pidio el reporte puede acotar el
+        // dos minutos y morir sin explicación: el que pidió el reporte puede acotar el
         // rango, pero solo si sabe que le falta algo.
         boolean truncado = asistencias.size() > maxFilas;
         if (truncado) {
@@ -143,8 +143,8 @@ public class ReporteAsistenciaService {
         }
 
         // Manuales y justificaciones de ESTAS asistencias, en una consulta cada uno. Antes
-        // se hacia findAll() y se filtraba en Java: traia las dos tablas enteras a memoria
-        // para quedarse con un punado, y el filtro era un List.contains dentro de un
+        // se hacía findAll() y se filtraba en Java: traía las dos tablas enteras a memoria
+        // para quedarse con un puñado, y el filtro era un List.contains dentro de un
         // stream, o sea cuadratico sobre la tabla completa.
         List<Long> ids = asistencias.stream().map(Asistencia::getId).toList();
         Map<Long, AsistenciaManual> manualesPorId =

@@ -3,13 +3,13 @@
  *
  *  Conmuta entre modo claro y oscuro (RNF-22).
  *
- *  Aca SOLO vive el boton. Quien aplica el tema al cargar es el script inline
+ *  Acá SOLO vive el botón. Quien aplica el tema al cargar es el script inline
  *  del <head>: tiene que correr antes del primer paint, y este archivo va con
- *  defer, o sea despues. Si se aplicara desde aca, cada pagina se dibujaria
- *  oscura y saltaria a clara un instante despues.
+ *  defer, o sea después. Si se aplicara desde acá, cada página se dibujaria
+ *  oscura y saltaria a clara un instante después.
  *
- *  El cambio no es instantaneo: un tema se funde en el otro. Cuanto dura y como
- *  se ve vive en main.css ("Cambio de tema"); aca solo se elige el camino.
+ *  El cambio no es instantáneo: un tema se funde en el otro. Cuánto dura y cómo
+ *  se ve vive en main.css ("Cambio de tema"); acá solo se elige el camino.
  * ========================================================================== */
 (function (window, document) {
     'use strict';
@@ -27,7 +27,7 @@
         try { localStorage.setItem('tema', tema); } catch (e) { /* ignorado */ }
     }
 
-    // Se lee de la hoja y no se repite aca: si alguien ajusta la duracion en
+    // Se lee de la hoja y no se repite acá: si alguien ajusta la duración en
     // main.css, la clase del camino alternativo se sigue quitando a tiempo.
     function duracionMs() {
         return parseFloat(getComputedStyle(raiz).getPropertyValue('--t-tema')) || 0;
@@ -44,7 +44,7 @@
         // Sin transiciones de vista: la clase habilita el fundido de colores y se
         // quita al terminar, para que el hover recupere sus 120ms. Con un
         // temporizador y no con transitionend, que llega una vez por elemento y
-        // por propiedad: el primero que llegara cortaria el fundido de los demas.
+        // por propiedad: el primero que llegara cortaría el fundido de los demás.
         raiz.classList.add('tema-cambiando');
         aplicar(nuevo);
         clearTimeout(fin);

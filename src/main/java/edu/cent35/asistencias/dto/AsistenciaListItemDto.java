@@ -49,7 +49,7 @@ public class AsistenciaListItemDto {
     EstadoAsistencia estado;
     // null si AUSENTE calculada (no hay método).
     MetodoAsistencia metodo;
-    // Sólo presente si metodo == AUTOMATICO.
+    // Sólo presente si método == AUTOMATICO.
     BigDecimal confianza;
 
     /**

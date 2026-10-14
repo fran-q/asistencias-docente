@@ -13,8 +13,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Tests unitarios de TenantContext.
  * <p>
- * No requieren contexto de Spring (es una clase con ThreadLocal estatico),
- * por eso no usan @SpringBootTest - corren mas rapido.
+ * No requieren contexto de Spring (es una clase con ThreadLocal estático),
+ * por eso no usan @SpringBootTest - corren más rápido.
  */
 class TenantContextTest {
 

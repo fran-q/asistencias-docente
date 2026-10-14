@@ -57,8 +57,8 @@ public class ComisionController {
         try {
             comisiones = cicloId == null ? service.listar() : service.listarDelCiclo(cicloId);
         } catch (EntityNotFoundException ex) {
-            // No se deja al handler de la clase: ese dice "la comision no existe", y lo que no
-            // existe aca es el ciclo.
+            // No se deja al handler de la clase: ese dice "la comisión no existe", y lo que no
+            // existe acá es el ciclo.
             redirect.addFlashAttribute("flashError", "Ese ciclo lectivo no existe.");
             return "redirect:/comisiones";
         }
@@ -110,13 +110,13 @@ public class ComisionController {
     }
 
     /**
-     * El codigo que se le ofrece a una comision nueva, para el formulario.
+     * El código que se le ofrece a una comisión nueva, para el formulario.
      *
      * <p>Va por pedido aparte y no precalculado en el GET del formulario porque la materia y
-     * el periodo se eligen <b>dentro</b> del formulario: cuando se abre todavia no se sabe
+     * el período se eligen <b>dentro</b> del formulario: cuando se abre todavía no se sabe
      * para que materia va a ser.
      *
-     * <p>Devuelve texto pelado y no JSON: es un solo valor, y envolverlo obligaria a un DTO y
+     * <p>Devuelve texto pelado y no JSON: es un solo valor, y envolverlo obligaría a un DTO y
      * a que el navegador lo desarme para sacar un string.
      */
     @GetMapping(value = "/codigo-sugerido", produces = "text/plain;charset=UTF-8")
@@ -219,10 +219,10 @@ public class ComisionController {
         }
         model.addAttribute("docentes", docentes);
 
-        // Los periodos elegibles son los de ciclos abiertos. Si se esta editando una comision
-        // cuyo periodo ya no aparece --porque su ciclo se cerro mientras tanto-- se lo suma
-        // igual: sin eso el combo mostraria otro periodo seleccionado y guardar la mudaria de
-        // ano sin que nadie lo pidiera. El service igual va a rechazar el cambio.
+        // Los períodos elegibles son los de ciclos abiertos. Si se está editando una comisión
+        // cuyo período ya no aparece --porque su ciclo se cerró mientras tanto-- se lo suma
+        // igual: sin eso el combo mostraría otro período seleccionado y guardar la mudaria de
+        // año sin que nadie lo pidiera. El service igual va a rechazar el cambio.
         List<PeriodoLectivo> periodos = new ArrayList<>(service.periodosParaSelector());
         if (comisionActual != null && comisionActual.getPeriodo() != null
                 && periodos.stream().noneMatch(p -> p.getId().equals(comisionActual.getPeriodo().getId()))) {

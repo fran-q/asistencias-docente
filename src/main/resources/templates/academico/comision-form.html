@@ -61,10 +61,10 @@
                     </div>
                 </div>
 
-                <!-- El periodo es lo que ubica la comision en un ano concreto (V023). Sin el,
-                     la oferta de todos los anos vuelve a mezclarse, que es justo lo que los
+                <!-- El período es lo que ubica la comisión en un año concreto (V023). Sin él,
+                     la oferta de todos los años vuelve a mezclarse, que es justo lo que los
                      ciclos vinieron a separar. Solo aparecen los de ciclos abiertos: ofrecer
-                     uno cerrado seria ofrecer algo que el servidor va a rechazar. -->
+                     uno cerrado sería ofrecer algo que el servidor va a rechazar. -->
                 <div class="form-group">
                     <label for="periodoId">Período <span class="required">*</span></label>
                     <select id="periodoId" th:field="*{periodoId}" required
@@ -113,10 +113,10 @@
         <script th:src="@{/js/academico/comision-codigo.js}" defer></script>
         </div>
 
-        <!-- El th:if va en un bloque de afuera a proposito: en Thymeleaf th:replace tiene
-             MAS precedencia que th:if, asi que sobre el mismo elemento los parametros del
-             fragmento se evaluan igual en modo alta, donde la entidad todavia no existe,
-             y la pantalla revienta antes de decidir que no habia que mostrar nada. -->
+        <!-- El th:if va en un bloque de afuera a propósito: en Thymeleaf th:replace tiene
+             MÁS precedencia que th:if, así que sobre el mismo elemento los parámetros del
+             fragmento se evaluan igual en modo alta, donde la entidad todavía no existe,
+             y la pantalla revienta antes de decidir que no había que mostrar nada. -->
         <th:block th:if="${modo == 'editar'}">
             <div th:replace="~{layout/fragmentos :: datosDelSistema(
                                 ${comision.activo}, 'Activa', 'Inactiva',

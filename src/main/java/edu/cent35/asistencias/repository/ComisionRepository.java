@@ -21,7 +21,7 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
     // Comisiones de una materia; el aislamiento lo garantiza el service, que valida la materia antes.
     List<Comision> findByMateriaIdOrderByActivoDescCodigoAsc(Long materiaId);
 
-    // Comisiones del tenant por JOIN con materia. El institucionId va explicito porque el filtro
+    // Comisiones del tenant por JOIN con materia. El institucionId va explícito porque el filtro
     // de Hibernate no se propaga a las entidades JOINeadas en JPQL (TD-003).
     /**
      * Todas las comisiones de la institución, de todos los ciclos.
@@ -72,12 +72,12 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
                                 @Param("tenantId") Long tenantId);
 
     // Busca una comisión por su código dentro de la materia y el período. Desde V023 hacen
-    // falta los tres: el mismo código convive entre años a proposito.
+    // falta los tres: el mismo código convive entre años a propósito.
     Optional<Comision> findByMateriaIdAndCodigoAndPeriodoId(Long materiaId, String codigo,
                                                             Long periodoId);
 
     // Indica si el código ya está tomado en esa materia dentro de ese período. Desde V023 el
-    // período entra en la clave: el mismo código se repite entre años a proposito.
+    // período entra en la clave: el mismo código se repite entre años a propósito.
     boolean existsByMateriaIdAndCodigoAndPeriodoId(Long materiaId, String codigo, Long periodoId);
 
     // Cuenta comisiones activas de una materia, para bloquear su baja.
@@ -113,11 +113,11 @@ public interface ComisionRepository extends JpaRepository<Comision, Long> {
                                        @Param("tenantId") Long tenantId);
 
     /**
-     * Los codigos ya usados en esa materia y ese periodo, para sugerir el siguiente libre.
+     * Los códigos ya usados en esa materia y ese período, para sugerir el siguiente libre.
      *
-     * <p><b>Incluye las dadas de baja.</b> El indice unico
-     * {@code uq_comisiones_materia_codigo_periodo} no mira {@code activo}, asi que el codigo
-     * de una comision inactiva sigue ocupado: sugerirlo daria un error recien al guardar.
+     * <p><b>Incluye las dadas de baja.</b> El índice único
+     * {@code uq_comisiones_materia_codigo_periodo} no mira {@code activo}, así que el código
+     * de una comisión inactiva sigue ocupado: sugerirlo daría un error recién al guardar.
      *
      * <p><b>Donde queda el WHERE del tenant.</b> {@code m.institucionId} y
      * {@code p.institucionId} (TD-003).

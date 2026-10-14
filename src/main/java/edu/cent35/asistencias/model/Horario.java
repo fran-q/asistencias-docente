@@ -23,10 +23,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * Franja horaria semanal de una comision. RF-14.
+ * Franja horaria semanal de una comisión. RF-14.
  * <p>
- * El dia de la semana se persiste como TINYINT (1=Lunes ... 7=Domingo
- * segun ISO 8601). El enum {@link DiaSemana} provee conversion segura.
+ * El día de la semana se persiste como TINYINT (1=Lunes ... 7=Domingo
+ * según ISO 8601). El enum {@link DiaSemana} provee conversión segura.
  * <p>
  * La tolerancia (default 15 min) es el margen alrededor del horario: se
  * clasifica Presente vs Tarde cruzando la hora del registro con
@@ -34,7 +34,7 @@ import java.time.LocalTime;
  * con {@code hora_fin - tolerancia_min}. Es el mismo valor de los dos lados
  * y en los dos extremos (RF-19, RF-78, ADR-0018).
  * <p>
- * Tenant: lo determina la comision -> materia. Validacion en service.
+ * Tenant: lo determina la comisión -> materia. Validación en service.
  */
 @Entity
 @Table(name = "horarios")
@@ -75,7 +75,7 @@ public class Horario {
     private Boolean activo = true;
 
     // Cuando se dio de baja. NULL = no fue dado de baja. Con actualizado_en no alcanza:
-    // cambia con cualquier edicion posterior y deja de servir como constancia.
+    // cambia con cualquier edición posterior y deja de servir como constancia.
     @Column(name = "fecha_baja")
     private LocalDate fechaBaja;
 
@@ -92,7 +92,7 @@ public class Horario {
         return diaSemana == null ? null : DiaSemana.fromNumero(diaSemana);
     }
 
-    // Guarda el dia como su numero ISO, que es el tipo real de la columna.
+    // Guarda el día como su número ISO, que es el tipo real de la columna.
     public void setDia(DiaSemana d) {
         this.diaSemana = d == null ? null : d.getNumero();
     }
@@ -116,8 +116,8 @@ public class Horario {
      * ventana en la que el pase acepta una marca de entrada para esta clase.
      *
      * <p>Vive en el modelo y no en un servicio porque la responden tres lugares distintos:
-     * el pase, para decidir a que clase imputar la marca; el panel de inicio, para decir
-     * que clases estan corriendo; y el resolutor de bloques, para saber cual esta en curso.
+     * el pase, para decidir a qué clase imputar la marca; el panel de inicio, para decir
+     * qué clases están corriendo; y el resolutor de bloques, para saber cuál está en curso.
      * Con una copia en cada lado alcanzaba con tocar una para que la home mostrara como en
      * curso algo que el pase se negaba a marcar.
      */
@@ -198,7 +198,7 @@ public class Horario {
         return corrida;
     }
 
-    // Quien ejecuto la baja logica. NULL mientras la fila siga activa, y tambien en las bajas
+    // Quien ejecutó la baja lógica. NULL mientras la fila siga activa, y también en las bajas
     // anteriores a V017, que no lo registraban. Ver ADR-0016.
     @Column(name = "dado_de_baja_por")
     private Long dadoDeBajaPor;

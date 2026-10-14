@@ -35,7 +35,7 @@ public class FrenoDeKioscoService {
     @Value("${app.biometria.kiosco.max-por-minuto:120}")
     private int maxPorMinuto;
 
-    // Puesto -> instantes de las ultimas peticiones.
+    // Puesto -> instantes de las últimas peticiones.
     private final Map<Long, Deque<LocalDateTime>> peticiones = new ConcurrentHashMap<>();
 
     /**

@@ -34,8 +34,8 @@ public final class Cuit {
         String digitos = soloDigitos(crudo);
         if (digitos.isEmpty()) return null;
 
-        // Si no son 11 digitos no se puede armar la forma canonica. Se devuelve lo que vino
-        // recortado: la validacion del formulario ya lo rechazo, y aca inventar algo seria
+        // Si no son 11 dígitos no se puede armar la forma canónica. Se devuelve lo que vino
+        // recortado: la validación del formulario ya lo rechazó, y acá inventar algo sería
         // peor que dejarlo pasar tal cual.
         if (digitos.length() != LARGO) return crudo.trim();
 
@@ -62,14 +62,14 @@ public final class Cuit {
         return declarado == calcularVerificador(digitos);
     }
 
-    // Aplica los pesos a los diez primeros digitos y deriva el verificador de esa suma.
+    // Aplica los pesos a los diez primeros dígitos y deriva el verificador de esa suma.
     private static int calcularVerificador(String digitos) {
         int suma = 0;
         for (int i = 0; i < PESOS.length; i++) {
             suma += (digitos.charAt(i) - '0') * PESOS[i];
         }
         int verificador = 11 - (suma % 11);
-        // Los dos casos de borde de la especificacion: 11 se colapsa a 0 y 10 a 9.
+        // Los dos casos de borde de la especificación: 11 se colapsa a 0 y 10 a 9.
         if (verificador == 11) return 0;
         if (verificador == 10) return 9;
         return verificador;

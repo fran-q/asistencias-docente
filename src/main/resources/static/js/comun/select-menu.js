@@ -209,15 +209,15 @@
                 ancho = Math.max(ancho, boton.getBoundingClientRect().width);
             });
             etiqueta.textContent = previo;
-            /* Un tope opcional en pixeles (data-menu-ancho-max). Lo usan los filtros por
+            /* Un tope opcional en píxeles (data-menu-ancho-max). Lo usan los filtros por
                columna: el nombre entero de una carrera se llevaba media barra de filtros. El
-               boton recorta con puntos suspensivos y la lista, al abrirse, muestra el texto
+               botón recorta con puntos suspensivos y la lista, al abrirse, muestra el texto
                completo. */
             var tope = parseInt(select.dataset.menuAnchoMax || '0', 10);
             if (tope) {
                 ancho = Math.min(ancho, tope);
-                /* Tambien como maximo: sin esto la caja crece igual para que entre el texto
-                   del boton, y el minimo no alcanza para achicarla. */
+                /* También como máximo: sin esto la caja crece igual para que entre el texto
+                   del botón, y el mínimo no alcanza para achicarla. */
                 caja.style.maxWidth = tope + 'px';
             }
             if (ancho) caja.style.minWidth = Math.ceil(ancho) + 'px';

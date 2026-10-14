@@ -157,9 +157,9 @@ class PaseAsistenciaServiceTest {
     @Test
     @DisplayName("kiosco: una entrada registrada manda el apellido, nunca el nombre completo")
     void kioscoMandaSoloElApellido() {
-        // Es una pantalla encendida a la vista de cualquiera que pase por secretaria. El
-        // recorte se hace ACA y no en el navegador: una vez que el dato salio del servidor
-        // ya esta fuera de control, basta abrir las herramientas del navegador para verlo.
+        // Es una pantalla encendida a la vista de cualquiera que pase por secretaría. El
+        // recorte se hace ACÁ y no en el navegador: una vez que el dato salió del servidor
+        // ya está fuera de control, basta abrir las herramientas del navegador para verlo.
         identificado();
         confirmado();
         when(bloquePresenciaService.registrar(any(), any(), any(), any(), any()))
@@ -172,7 +172,7 @@ class PaseAsistenciaServiceTest {
         assertThat(r.apellido()).isEqualTo(APELLIDO);
         assertThat(r.registrada()).isTrue();
         assertThat(r.tipoDeMarca()).isEqualTo("ENTRADA");
-        // El nombre completo no puede aparecer en NINGUN campo de la respuesta.
+        // El nombre completo no puede aparecer en NINGÚN campo de la respuesta.
         assertThat(r.toString())
             .as("el nombre de pila no puede viajar al navegador")
             .doesNotContain("Juana");

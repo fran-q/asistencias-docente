@@ -29,7 +29,7 @@ import java.util.List;
  * <p>Convive con el CSV y no lo reemplaza, porque sirven a cosas distintas: el CSV se abre en
  * una planilla para seguir trabajando el dato, y el PDF se imprime o se adjunta tal cual. Por
  * eso el PDF trae menos columnas que el CSV y ninguna interna: lo que no se lee de un vistazo
- * en una hoja apaisada estorba mas de lo que aporta.
+ * en una hoja apaisada estorba más de lo que aporta.
  */
 @Service
 @Slf4j
@@ -40,9 +40,9 @@ public class ReportePdfService {
 
     /*
      * Anchos relativos de las columnas, medidos contra lo que de verdad entra en cada una a
-     * Helvetica 8 mas los 4pt de padding de cada lado. Medirlos en vez de estimarlos es lo
+     * Helvetica 8 más los 4pt de padding de cada lado. Medirlos en vez de estimarlos es lo
      * que evita que una celda se parta en dos renglones y duplique el alto de toda la tabla:
-     * "AUTOMATICO" mide 61pt y con 57 se partia en casi todas las filas.
+     * "AUTOMATICO" mide 61pt y con 57 se partía en casi todas las filas.
      */
     private static final float[] ANCHOS =
         {1.0f, 1.15f, 3.1f, 1.0f, 2.7f, 0.7f, 0.75f, 0.85f, 1.25f, 1.1f, 1.3f};
@@ -57,29 +57,29 @@ public class ReportePdfService {
     private static final Font FUENTE_CELDA    = FontFactory.getFont(FontFactory.HELVETICA, 8);
     private static final Color FONDO_CABECERA = new Color(0x33, 0x3A, 0x45);
 
-    // El aviso de reporte cortado va en rojo y en negrita. No es decoracion: es lo unico
+    // El aviso de reporte cortado va en rojo y en negrita. No es decoración: es lo único
     // que distingue esta hoja de una completa, y se imprime igual que el resto en gris.
     private static final Font FUENTE_AVISO =
         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9, new Color(0xA0, 0x1B, 0x1B));
     private static final Font FUENTE_PIE_AVISO =
         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7, new Color(0xA0, 0x1B, 0x1B));
 
-    // El bloque de referencias del pie. Un punto mas chico que el resumen: es material de
-    // consulta, se lee una vez y despues estorba.
+    // El bloque de referencias del pie. Un punto más chico que el resumen: es material de
+    // consulta, se lee una vez y después estorba.
     private static final Font FUENTE_LEYENDA =
         FontFactory.getFont(FontFactory.HELVETICA, 8, Color.DARK_GRAY);
     private static final Font FUENTE_LEYENDA_COLUMNA =
         FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.DARK_GRAY);
 
     /**
-     * Escribe el reporte al stream indicado. No lo cierra: de eso se encarga quien lo abrio,
+     * Escribe el reporte al stream indicado. No lo cierra: de eso se encarga quien lo abrió,
      * que en el controlador es el propio response.
      */
     public void escribir(OutputStream out, List<AsistenciaReporteRowDto> filas,
                          LocalDate desde, LocalDate hasta, String institucion,
                          long totalSinTope) {
-        // El reporte trae hasta un tope de filas. Si lo paso, esta hoja no es el periodo:
-        // es una parte, y los totales del pie tampoco son los del periodo.
+        // El reporte trae hasta un tope de filas. Si lo paso, esta hoja no es el período:
+        // es una parte, y los totales del pie tampoco son los del período.
         boolean cortado = totalSinTope > filas.size();
         // Apaisado: con esta cantidad de columnas, en vertical el nombre de la materia se
         // parte en dos renglones.
@@ -87,8 +87,8 @@ public class ReportePdfService {
         try {
             PdfWriter.getInstance(doc, out);
 
-            // En todas las paginas, no solo en la primera: un reporte de sesenta hojas se
-            // lee por el medio, y el aviso de arriba no llega hasta ahi. Va DESPUES del
+            // En todas las páginas, no solo en la primera: un reporte de sesenta hojas se
+            // lee por el medio, y el aviso de arriba no llega hasta ahí. Va DESPUÉS del
             // getInstance --que es cuando el writer se suscribe al documento-- y antes del
             // open: puesto antes, el pie se guarda en el Document y nadie lo dibuja.
             if (cortado) {
@@ -134,8 +134,8 @@ public class ReportePdfService {
                 }
             }
         } catch (Exception e) {
-            // El stream ya puede llevar bytes escritos, asi que no hay forma de devolver una
-            // pagina de error: se corta y se deja constancia con el detalle.
+            // El stream ya puede llevar bytes escritos, así que no hay forma de devolver una
+            // página de error: se corta y se deja constancia con el detalle.
             throw new IllegalStateException("No se pudo generar el PDF del reporte.", e);
         } finally {
             if (doc.isOpen()) doc.close();
@@ -167,8 +167,8 @@ public class ReportePdfService {
         return p;
     }
 
-    // Deja escrito de que periodo es y cuantas filas trae: sin eso, dos PDF impresos con
-    // filtros distintos son indistinguibles una vez que estan sobre el escritorio.
+    // Deja escrito de qué período es y cuántas filas trae: sin eso, dos PDF impresos con
+    // filtros distintos son indistinguibles una vez que están sobre el escritorio.
     private Paragraph subtitulo(int cantidad, LocalDate desde, LocalDate hasta,
                                 boolean cortado, long totalSinTope) {
         String cuantos = cortado
@@ -180,7 +180,7 @@ public class ReportePdfService {
         return new Paragraph(texto, FUENTE_SUBTITULO);
     }
 
-    // El aviso de que esta hoja no es el periodo entero.
+    // El aviso de que esta hoja no es el período entero.
     private Paragraph aviso(int cuantas, long totalSinTope) {
         return new Paragraph(
             "REPORTE INCOMPLETO. El tope del reporte cortó la lista: se listan " + cuantas
@@ -193,8 +193,8 @@ public class ReportePdfService {
         PdfPTable t = new PdfPTable(ANCHOS.length);
         t.setWidthPercentage(100);
         t.setWidths(ANCHOS);
-        // La cabecera se repite en cada pagina: un reporte de varias hojas sin encabezado
-        // obliga a volver a la primera para saber que columna se esta mirando.
+        // La cabecera se repite en cada página: un reporte de varias hojas sin encabezado
+        // obliga a volver a la primera para saber qué columna se está mirando.
         t.setHeaderRows(1);
 
         for (String c : CABECERAS) {
@@ -208,7 +208,7 @@ public class ReportePdfService {
         boolean gris = false;
         for (AsistenciaReporteRowDto f : filas) {
             // Filas alternadas: con tantas columnas angostas es lo que evita saltar de
-            // renglon al recorrerlas con la vista.
+            // renglón al recorrerlas con la vista.
             Color fondo = gris ? new Color(0xF2, 0xF3, 0xF5) : Color.WHITE;
             gris = !gris;
 
@@ -240,8 +240,8 @@ public class ReportePdfService {
         return f.getHoraInicio().format(HORA) + "–" + f.getHoraFin().format(HORA);
     }
 
-    // La justificacion viaja pegada al estado: una AUSENTE justificada y una que no lo esta
-    // son dos cosas distintas, y en una columna aparte quedaria casi siempre vacia.
+    // La justificación viaja pegada al estado: una AUSENTE justificada y una que no lo esta
+    // son dos cosas distintas, y en una columna aparte quedaría casi siempre vacía.
     private String estado(AsistenciaReporteRowDto f) {
         String base = texto(f.getEstado());
         return f.isJustificada() ? base + " (just.)" : base;

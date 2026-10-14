@@ -59,7 +59,7 @@ public class ModeloFacialService {
         return minimoCapturasValidas;
     }
 
-    // Cuantas capturas se toman de cada pose de la secuencia guiada.
+    // Cuántas capturas se toman de cada pose de la secuencia guiada.
     public int getCapturasPorEtapa() {
         return capturasPorEtapa;
     }
@@ -81,7 +81,7 @@ public class ModeloFacialService {
         return modeloFacialRepository.findByDocenteIdAndActivoTrue(docente.getId()).isPresent();
     }
 
-    // Indica si el docente tiene algun modelo, activo o historico; la UI lo usa para ofrecer ARCO.
+    // Indica si el docente tiene algún modelo, activo o histórico; la UI lo usa para ofrecer ARCO.
     @Transactional(readOnly = true)
     public boolean tieneModelos(Long docenteId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -89,9 +89,9 @@ public class ModeloFacialService {
             .findByDocenteIdOrderByFechaRegistroDescIdDesc(docente.getId()).isEmpty();
     }
 
-    // Borrado FISICO de todos los modelos del docente (derecho ARCO de cancelacion, RNF-14).
-    // Es la excepcion a la baja logica del sistema: una fila inactiva seguiria conteniendo el
-    // dato biometrico. Las asistencias se conservan porque la FK es ON DELETE SET NULL, y ademas
+    // Borrado FÍSICO de todos los modelos del docente (derecho ARCO de cancelación, RNF-14).
+    // Es la excepción a la baja lógica del sistema: una fila inactiva seguiría conteniendo el
+    // dato biométrico. Las asistencias se conservan porque la FK es ON DELETE SET NULL, y además
     // se evicta el recognizer del cache para que no siga reconociendo desde memoria.
     @Transactional
     public int suprimirDatosBiometricos(Long docenteId, Long usuarioActualId) {
@@ -107,7 +107,7 @@ public class ModeloFacialService {
         // 1) Evictar del cache ANTES de borrar (defensa en profundidad).
         modelos.forEach(m -> identificacionFacialService.evictarModelo(m.getId()));
 
-        // 2) DELETE fisico. La FK de asistencias es ON DELETE SET NULL:
+        // 2) DELETE físico. La FK de asistencias es ON DELETE SET NULL:
         //    el historial administrativo se conserva.
         modeloFacialRepository.deleteAll(modelos);
         modeloFacialRepository.flush();
@@ -141,8 +141,8 @@ public class ModeloFacialService {
 
         // El navegador ya filtro con estos mismos criterios antes de mandar, pero se
         // revalida igual: el cliente decide CUANDO capturar, no si la captura sirve.
-        // Ademas se exige que los recortes sean distintos entre si, que es lo unico que
-        // convierte a la secuencia guiada en algo mas que cinco veces la misma pose.
+        // Además se exige que los recortes sean distintos entre sí, que es lo único que
+        // convierte a la secuencia guiada en algo más que cinco veces la misma pose.
         List<Mat> rostros = new ArrayList<>();
         try {
             int sinRostro = 0;
@@ -235,8 +235,8 @@ public class ModeloFacialService {
 
     // ------------------------------------------------------------------------
 
-    // Explica por que fallo segun cual haya sido el descarte dominante. Antes el mensaje
-    // era siempre el mismo ("no se detecto tu cara de forma estable"), que no le decia a
+    // Explica por qué falló según cuál haya sido el descarte dominante. Antes el mensaje
+    // era siempre el mismo ("no se detectó tu cara de forma estable"), que no le decía a
     // nadie que corregir y obligaba a repetir a ciegas.
     private String explicarPorQueNoAlcanza(int aceptadas, int sinRostro, int variasPersonas,
                                            int malaCalidad, int repetidas) {

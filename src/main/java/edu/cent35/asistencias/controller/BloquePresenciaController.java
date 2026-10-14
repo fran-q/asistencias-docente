@@ -77,7 +77,7 @@ public class BloquePresenciaController {
         try {
             BloquePresenciaService.ResultadoCierreManual r =
                 // Sin equipo: esta pantalla no exige uno, y quien sostiene la hora es el
-                // admin que la carga, no una maquina (V031).
+                // admin que la carga, no una máquina (V031).
                 bloquePresenciaService.cerrarManualmente(
                     id, form.getHoraSalida(), form.getMotivoId(), form.getDetalle(),
                     principal.getUsuarioId(), null);

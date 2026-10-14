@@ -1,21 +1,21 @@
 /* =============================================================================
  *  pase-aviso.js
  *
- *  Lo que se ve del pase mientras anda en otra ventana: el punto del menu y el
+ *  Lo que se ve del pase mientras anda en otra ventana: el punto del menú y el
  *  aviso de cada reconocimiento.
  *
- *  Por que. Con el pase en su propia ventana, quien administra sigue trabajando en
+ *  Por qué. Con el pase en su propia ventana, quien administra sigue trabajando en
  *  el resto del sistema; el riesgo es el contrario al de antes: que nadie se entere
- *  de que hay una camara tomando asistencia, o de que dejo de tomarla. Entonces:
+ *  de que hay una cámara tomando asistencia, o de que dejó de tomarla. Entonces:
  *
- *    · un punto al lado de "Pase de asistencia" en el menu --verde mientras marca,
- *      rojo si la ventana esta abierta pero la camara no--;
- *    · mientras un docente sostiene la posicion, una barra con el avance, con el
+ *    · un punto al lado de "Pase de asistencia" en el menú --verde mientras marca,
+ *      rojo si la ventana está abierta pero la cámara no--;
+ *    · mientras un docente sostiene la posición, una barra con el avance, con el
  *      mismo estilo que los avisos del sistema;
- *    · al terminar, el resultado por aviso comun (toast.js).
+ *    · al terminar, el resultado por aviso común (toast.js).
  *
- *  Este archivo solo escucha. Lo que publica el pase esta en facial/pase-estado.js,
- *  que ademas ignora los mensajes de la propia ventana: la pantalla del pase ya
+ *  Este archivo solo escucha. Lo que publica el pase está en facial/pase-estado.js,
+ *  que además ignora los mensajes de la propia ventana: la pantalla del pase ya
  *  muestra su estado con sus propios elementos.
  * ========================================================================== */
 (function (window, document) {
@@ -26,17 +26,17 @@
     var punto  = document.querySelector('[data-punto-pase]');
     var enlace = punto ? punto.closest('a') : null;
 
-    // Cuanto se sostiene la barra sin noticias antes de darla por terminada. El
+    // Cuánto se sostiene la barra sin noticias antes de darla por terminada. El
     // reconocimiento manda un cuadro por segundo; si se corta sin resultado es porque el
-    // docente se corrio de la camara, y la barra no puede quedar colgada.
+    // docente se corrió de la cámara, y la barra no puede quedar colgada.
     var SIN_NOTICIAS_MS = 2500;
-    // Cada cuanto se revisa el estado guardado, para notar una ventana que se cerro de golpe.
+    // Cada cuánto se revisa el estado guardado, para notar una ventana que se cerró de golpe.
     var REVISION_MS = 2000;
 
     var barra = null;
     var barraTimeout = null;
 
-    // ---- El punto del menu -------------------------------------------------
+    // ---- El punto del menú -------------------------------------------------
 
     function pintarPunto(estado) {
         if (!punto) return;
@@ -46,7 +46,7 @@
         punto.hidden = !hay;
         punto.classList.toggle('lateral__punto--andando', andando);
         punto.classList.toggle('lateral__punto--quieto', hay && !andando);
-        // El punto solo no dice que significa: el titulo del enlace lo explica al pasar el
+        // El punto solo no dice que significa: el título del enlace lo explica al pasar el
         // mouse, y el texto oculto lo deja disponible para un lector de pantalla.
         punto.textContent = !hay ? ''
             : andando ? 'Tomando asistencia en otra ventana'

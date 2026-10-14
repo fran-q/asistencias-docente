@@ -66,8 +66,8 @@ public class CanalConsola implements CanalDeCodigos {
      */
     @Override
     public void enviarCodigo(Usuario usuario, PropositoCodigo proposito, String email, String codigo) {
-        // Marco en ASCII puro y sin acentos, a proposito: la consola de Windows no usa UTF-8,
-        // asi que los bordes de caja y las tildes salen como signos de pregunta y el recuadro
+        // Marco en ASCII puro y sin acentos, a propósito: la consola de Windows no usa UTF-8,
+        // así que los bordes de caja y las tildes salen como signos de pregunta y el recuadro
         // queda ilegible justo donde tiene que leerse.
         System.out.println("""
 
@@ -103,7 +103,7 @@ public class CanalConsola implements CanalDeCodigos {
     @Override
     public void noSeEmitio(String identificador, String motivo) {
         // Mismo criterio que enviarCodigo: ASCII puro y por System.out, para que el marco no
-        // quede roto por el prefijo del logger ni por la codificacion de la consola de Windows.
+        // quede roto por el prefijo del logger ni por la codificación de la consola de Windows.
         System.out.println("""
 
             +---------------------------------------------------------------+
@@ -128,7 +128,7 @@ public class CanalConsola implements CanalDeCodigos {
         return "consola";
     }
 
-    // Un identificador vacio impreso como nada deja la linea muda; conviene nombrarlo.
+    // Un identificador vacío impreso como nada deja la línea muda; conviene nombrarlo.
     private String vacioSiEnBlanco(String identificador) {
         return identificador == null || identificador.isBlank() ? "(vacio)" : identificador.trim();
     }

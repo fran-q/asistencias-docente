@@ -64,7 +64,7 @@ public class VentanaConfirmacionService {
         return new Estado(confirmado, Math.min(sostenido, ventanaMs), ventanaMs);
     }
 
-    // Corta la racha. Se llama al marcar y cuando no hay ningun rostro en el cuadro.
+    // Corta la racha. Se llama al marcar y cuando no hay ningún rostro en el cuadro.
     public void cortar(ConfirmacionIdentidad confirmacion) {
         confirmacion.limpiar();
     }

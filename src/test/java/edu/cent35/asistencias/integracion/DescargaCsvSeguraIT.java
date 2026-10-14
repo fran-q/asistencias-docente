@@ -209,15 +209,15 @@ class DescargaCsvSeguraIT {
     void ningunaCeldaArrancaFormula() throws Exception {
         String csv = descargar();
 
-        // Partir por ';' alcanza porque ningun valor sembrado trae ese caracter; si lo
-        // trajera, el campo iria entrecomillado y esto lo cortaria al medio.
+        // Partir por ';' alcanza porque ningún valor sembrado trae ese carácter; si lo
+        // trajera, el campo iría entrecomillado y esto lo cortaría al medio.
         for (String linea : csv.split("\r?\n")) {
             for (String celda : linea.split(";", -1)) {
                 if (celda.isEmpty()) {
                     continue;
                 }
-                // El escape de comillas va por fuera: lo que se mira es el primer caracter
-                // del valor, que es lo que la planilla lee para decidir si es una formula.
+                // El escape de comillas va por fuera: lo que se mira es el primer carácter
+                // del valor, que es lo que la planilla lee para decidir si es una fórmula.
                 String valor = celda.startsWith("\"") ? celda.substring(1) : celda;
                 assertThat(valor.isEmpty() || "=+-@\t\r".indexOf(valor.charAt(0)) < 0)
                     .as("la celda «%s» arranca con un caracter que Excel evalua", celda)

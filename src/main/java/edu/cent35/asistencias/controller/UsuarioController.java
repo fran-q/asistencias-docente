@@ -105,7 +105,7 @@ public class UsuarioController {
     }
 
     // ============================================================
-    //  Edicion
+    //  Edición
     // ============================================================
     @GetMapping("/{id}/editar")
     public String formEditar(@PathVariable Long id,
@@ -116,11 +116,11 @@ public class UsuarioController {
             model.addAttribute("form", UsuarioEditFormDto.from(u));
         }
         model.addAttribute("usuario", u);
-        // La propia cuenta no se da de baja: el boton lo dice de una vez, en vez de abrir un
+        // La propia cuenta no se da de baja: el botón lo dice de una vez, en vez de abrir un
         // cuadro para confirmar algo que el servicio va a rechazar igual.
         model.addAttribute("esPropia", actual != null && id.equals(actual.getUsuarioId()));
-        // La pantalla cambia segun el rol: una institucion lleva un solo campo de nombre y no
-        // ofrece la baja. Se resuelve aca y no en la plantilla porque Thymeleaf no puede leer
+        // La pantalla cambia según el rol: una institución lleva un solo campo de nombre y no
+        // ofrece la baja. Se resuelve acá y no en la plantilla porque Thymeleaf no puede leer
         // constantes de una clase Java.
         model.addAttribute("esInstitucion",
             RolCodigo.INSTITUCION.name().equals(u.getRol().getCodigo()));
@@ -159,7 +159,7 @@ public class UsuarioController {
             redirect.addFlashAttribute("flashMensaje", "Usuario actualizado correctamente.");
             return "redirect:/usuarios";
         } catch (ConfirmacionRequeridaException ex) {
-            // Esta cuenta pertenece a alguien que ademas da clases: el cambio de nombre se ve en
+            // Esta cuenta pertenece a alguien que además da clases: el cambio de nombre se ve en
             // la ficha del docente y en los listados de asistencia. Se avisa antes de escribir.
             Map<String, String> campos = new LinkedHashMap<>();
             campos.put("nombre", form.getNombre());
@@ -179,8 +179,8 @@ public class UsuarioController {
         }
     }
 
-    // Repone lo que la pantalla de edicion necesita cuando el formulario vuelve con errores.
-    // Si falta "esInstitucion", la plantilla lo evalua como falso y muestra la baja de una
+    // Repone lo que la pantalla de edición necesita cuando el formulario vuelve con errores.
+    // Si falta "esInstitucion", la plantilla lo evalúa como falso y muestra la baja de una
     // cuenta que no se puede dar de baja.
     private void reponerContexto(Long id, Model model) {
         Usuario u = usuarioService.buscarPorId(id);
@@ -191,7 +191,7 @@ public class UsuarioController {
     }
 
     // ============================================================
-    //  Baja y reactivacion de una cuenta
+    //  Baja y reactivación de una cuenta
     // ============================================================
     /**
      * Da de baja la cuenta. Es una acción propia, con su confirmación en pantalla, y no una

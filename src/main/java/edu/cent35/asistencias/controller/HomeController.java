@@ -23,8 +23,8 @@ public class HomeController {
     // Muestra el login, reponiendo el usuario del intento fallido anterior (nunca la contraseña).
     @GetMapping("/login")
     public String login(HttpServletRequest request, Model model) {
-        // Si venimos de un login fallido, reponemos el usuario que se intento
-        // (lo guardo el failureHandler de SecurityConfig). Se consume una sola
+        // Si venimos de un login fallido, reponemos el usuario que se intentó
+        // (lo guardó el failureHandler de SecurityConfig). Se consume una sola
         // vez para que no quede pegado en logins posteriores.
         HttpSession session = request.getSession(false);
         if (session != null) {
@@ -34,14 +34,14 @@ public class HomeController {
                 session.removeAttribute("ULTIMO_USUARIO_LOGIN");
             }
         }
-        // Se llego tocando la marca del kiosco: el login ofrece volver, y vuelve solo si nadie
-        // lo usa (volver-al-kiosco.js). Solo se reconoce este valor y el destino es fijo, asi
-        // que el parametro no puede mandar a nadie a otra parte.
+        // Se llegó tocando la marca del kiosco: el login ofrece volver, y vuelve solo si nadie
+        // lo usa (volver-al-kiosco.js). Solo se reconoce este valor y el destino es fijo, así
+        // que el parámetro no puede mandar a nadie a otra parte.
         model.addAttribute("desdeKiosco", "kiosco".equals(request.getParameter("desde")));
         return "auth/login";
     }
 
-    // Panel de inicio: como viene el dia y que quedo a medio cargar (RF-60).
+    // Panel de inicio: como viene el día y que quedó a medio cargar (RF-60).
     @GetMapping("/")
     public String home(Authentication authentication, Model model) {
         model.addAttribute("username", authentication.getName());

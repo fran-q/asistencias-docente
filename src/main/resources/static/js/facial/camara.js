@@ -1,25 +1,25 @@
 /*
- * La camara del puesto (V026).
+ * La cámara del puesto (V026).
  *
  * Las tres pantallas que capturan -el pase, el kiosco y el registro del rostro- piden la
- * camara a traves de aca y no directo a getUserMedia: asi las tres respetan la camara
- * elegida para este equipo, y las tres caen igual a la predeterminada cuando esa camara no
- * esta conectada.
+ * cámara a través de acá y no directo a getUserMedia: así las tres respetan la cámara
+ * elegida para este equipo, y las tres caen igual a la predeterminada cuando esa cámara no
+ * está conectada.
  *
- * La camara elegida llega en el atributo data-camara del <video>. Si no esta, se usa la
+ * La cámara elegida llega en el atributo data-camara del <video>. Si no esta, se usa la
  * predeterminada del sistema, que es lo que hacian antes.
  */
 window.CamaraDelPuesto = (function () {
     'use strict';
 
     /**
-     * Enciende la camara del puesto sobre ese <video> y devuelve el stream.
+     * Enciende la cámara del puesto sobre ese <video> y devuelve el stream.
      *
-     * Si la camara elegida no esta conectada, NO falla: usa la predeterminada y lo avisa en
+     * Si la cámara elegida no está conectada, NO falla: usa la predeterminada y lo avisa en
      * pantalla. Una webcam USB desenchufada no puede dejar a un docente sin poder marcar.
      *
-     * Los demas errores -permiso denegado, camara ocupada por otro programa- si se
-     * propagan. Esconderlos tomando otra camara seria peor: la persona no sabria que hay
+     * Los demás errores -permiso denegado, cámara ocupada por otro programa- si se
+     * propagan. Esconderlos tomando otra cámara sería peor: la persona no sabría que hay
      * algo que resolver.
      */
     async function abrir(video, restricciones) {
@@ -44,12 +44,12 @@ window.CamaraDelPuesto = (function () {
     }
 
     // OverconstrainedError es lo que devuelve el navegador cuando el deviceId exacto no
-    // existe en esta maquina; algunos navegadores responden NotFoundError para el mismo caso.
+    // existe en esta máquina; algunos navegadores responden NotFoundError para el mismo caso.
     function esCamaraAusente(err) {
         return err && (err.name === 'OverconstrainedError' || err.name === 'NotFoundError');
     }
 
-    // El aviso va pegado a la camara y no por el sistema de mensajes de cada pantalla: son
+    // El aviso va pegado a la cámara y no por el sistema de mensajes de cada pantalla: son
     // tres pantallas con tres sistemas distintos, y este aviso tiene que verse en las tres.
     function avisar(video, texto) {
         const caja = video.closest('.camara-caja') || video;
@@ -69,25 +69,25 @@ window.CamaraDelPuesto = (function () {
         if (aviso) aviso.remove();
     }
 
-    // Un silencio de un instante es normal --el sistema reajusta la camara al abrirla o al
-    // cambiar la luz--: se avisa recien si dura esto.
+    // Un silencio de un instante es normal --el sistema reajusta la cámara al abrirla o al
+    // cambiar la luz--: se avisa recién si dura esto.
     const SILENCIO_TOLERADO_MS = 3000;
 
     /**
-     * Avisa si la camara deja de dar imagen con el stream ya abierto.
+     * Avisa si la cámara deja de dar imagen con el stream ya abierto.
      *
-     * Son dos casos distintos. 'ended' es definitivo: se desenchufo, el sistema la corto u
-     * otra aplicacion se la llevo, y hay que volver a abrirla. 'mute' es una pausa: el
-     * dispositivo dejo de mandar cuadros y a veces vuelve solo. Sin esto los dos se veian
-     * igual que "no hay nadie adelante": la pantalla seguia diciendo que no detectaba ningun
-     * rostro con la camara muerta, y quien operaba podia tardar minutos en darse cuenta.
+     * Son dos casos distintos. 'ended' es definitivo: se desenchufó, el sistema la cortó u
+     * otra aplicación se la llevó, y hay que volver a abrirla. 'mute' es una pausa: el
+     * dispositivo dejó de mandar cuadros y a veces vuelve solo. Sin esto los dos se veían
+     * igual que "no hay nadie adelante": la pantalla seguía diciendo que no detectaba ningún
+     * rostro con la cámara muerta, y quien operaba podía tardar minutos en darse cuenta.
      *
      *   avisos.perdida   - el stream ya no sirve.
      *   avisos.sinImagen - lleva unos segundos sin cuadros; puede volver.
-     *   avisos.volvio    - despues de sinImagen, la imagen volvio.
+     *   avisos.volvio    - después de sinImagen, la imagen volvió.
      *
-     * Devuelve la funcion que deja de vigilar, para cuando se apaga la camara a proposito.
-     * stop() no dispara 'ended', pero asi ninguna pantalla depende de ese detalle.
+     * Devuelve la función que deja de vigilar, para cuando se apaga la cámara a propósito.
+     * stop() no dispara 'ended', pero así ninguna pantalla depende de ese detalle.
      */
     function vigilar(stream, avisos) {
         const pistas = stream ? stream.getVideoTracks() : [];

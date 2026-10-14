@@ -39,15 +39,15 @@ public class GrillaController {
 
         List<Carrera> carreras = grillaService.carrerasActivasParaSelector();
         model.addAttribute("carreras", carreras);
-        // El selector de ciclo: sin el, la grilla mostraria siempre el ano en curso y no habria
-        // forma de mirar como quedo armado el que viene mientras se lo prepara.
+        // El selector de ciclo: sin él, la grilla mostraría siempre el año en curso y no habría
+        // forma de mirar como quedó armado el que viene mientras se lo prepara.
         model.addAttribute("ciclos", cicloLectivoService.listar());
 
         // Auto-seleccionar la primera si no se paso nada
         if (carreraId == null && !carreras.isEmpty()) {
             carreraId = carreras.get(0).getId();
         }
-        // Un anio por vez, arrancando en 1ro. Con todos juntos las cohortes se apilan en las
+        // Un año por vez, arrancando en 1ro. Con todos juntos las cohortes se apilan en las
         // mismas franjas y la grilla deja de mostrar que esta libre y que se superpone.
         if (carreraId != null && anio == null) {
             anio = (short) 1;
@@ -61,7 +61,7 @@ public class GrillaController {
         model.addAttribute("anioSeleccionado", anio);
         model.addAttribute("cicloIdSeleccionado", cicloId);
 
-        // Dias para el header de la grilla (1=Lunes ... 7=Domingo)
+        // Días para el header de la grilla (1=Lunes ... 7=Domingo)
         model.addAttribute("dias", edu.cent35.asistencias.model.DiaSemana.values());
 
         return "academico/grilla";

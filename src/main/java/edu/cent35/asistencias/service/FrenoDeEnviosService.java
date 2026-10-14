@@ -23,7 +23,7 @@ public class FrenoDeEnviosService {
     @Value("${app.alta.max-envios-por-hora}")
     private int maxPorHora;
 
-    // Correo destino -> instantes de los ultimos envios. En memoria a proposito: es una
+    // Correo destino -> instantes de los últimos envíos. En memoria a propósito: es una
     // defensa contra el abuso casual, no un registro que deba sobrevivir a un reinicio.
     private final Map<String, Deque<LocalDateTime>> envios = new ConcurrentHashMap<>();
 
@@ -53,7 +53,7 @@ public class FrenoDeEnviosService {
         }
     }
 
-    // Libera el cupo de una direccion. Se usa cuando el envio fallo y no llego nada.
+    // Libera el cupo de una dirección. Se usa cuando el envío falló y no llegó nada.
     public void devolverCupo(String email) {
         String clave = email == null ? "" : email.trim().toLowerCase();
         Deque<LocalDateTime> recientes = envios.get(clave);

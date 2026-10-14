@@ -149,8 +149,8 @@
         return lista;
     }
 
-    // Un campo vacio o fuera de rango no puede confirmar: si dejaramos pasar, el error
-    // recien aparecerian despues de recargar la pantalla.
+    // Un campo vacío o fuera de rango no puede confirmar: si dejaramos pasar, el error
+    // recién aparecerian después de recargar la pantalla.
     function confirmar() {
         if (!campoEl.hidden && !campoInp.checkValidity()) {
             campoInp.reportValidity();
@@ -235,20 +235,20 @@
             dateMax:   form.dataset.confirmDateMax
         }).then(function (ok) {
             if (!ok) return;
-            // El valor se lee recien aca porque solo importa si confirmo. Es seguro
-            // leerlo con el modal ya cerrado: no se limpia hasta el proximo ask(), y
+            // El valor se lee recién acá porque solo importa si confirmó. Es seguro
+            // leerlo con el modal ya cerrado: no se limpia hasta el próximo ask(), y
             // no puede haber dos abiertos a la vez.
             if (nombreCampo) agregarCampoOculto(form, nombreCampo, campoInp.value);
-            // El submit() de abajo no dispara el evento, asi que envio-form.js no se
-            // entera solo: hay que avisarle antes de mandar. Si el script no esta
-            // cargado el envio sigue igual, solo sin el boton bloqueado.
+            // El submit() de abajo no dispara el evento, así que envio-form.js no se
+            // entera solo: hay que avisarle antes de mandar. Si el script no está
+            // cargado el envío sigue igual, solo sin el botón bloqueado.
             if (window.EnvioForm) window.EnvioForm.marcar(form);
-            form.submit();   // submit() programatico NO dispara el event 'submit' otra vez
+            form.submit();   // submit() programático NO dispara el event 'submit' otra vez
         });
     }
 
-    // Mete el valor elegido en el form como un input mas, reemplazando el de un intento
-    // anterior para no mandar el parametro dos veces.
+    // Mete el valor elegido en el form como un input más, reemplazando el de un intento
+    // anterior para no mandar el parámetro dos veces.
     function agregarCampoOculto(form, nombre, valor) {
         var previo = form.querySelector('input[type="hidden"][name="' + nombre + '"]');
         if (previo) previo.remove();

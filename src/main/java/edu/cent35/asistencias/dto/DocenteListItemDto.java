@@ -21,7 +21,7 @@ public class DocenteListItemDto {
     String legajo;
     String nombreCompleto;
     // Las dos letras del avatar del listado. Se resuelven en Persona y no en la plantilla:
-    // desde el template solo se ve "Apellido, Nombre", y recortarlo daria las dos primeras
+    // desde el template solo se ve "Apellido, Nombre", y recortarlo daría las dos primeras
     // del apellido en lugar de las iniciales.
     String iniciales;
     String email;
@@ -31,7 +31,7 @@ public class DocenteListItemDto {
     // sistema registrara la fecha.
     LocalDate fechaBaja;
     boolean activo;
-    // Estado del consentimiento biometrico (Sprint 3 Fase D).
+    // Estado del consentimiento biométrico (Sprint 3 Fase D).
     EstadoConsentimiento estadoConsentimiento;
 
     /**

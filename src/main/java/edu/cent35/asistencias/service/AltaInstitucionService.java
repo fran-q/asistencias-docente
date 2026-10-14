@@ -39,8 +39,8 @@ public class AltaInstitucionService {
     private final RolRepository rolRepository;
     private final PersonaRepository personaRepository;
     private final PasswordEncoder passwordEncoder;
-    // La interfaz y no la clase: cual sale por correo y cual por consola lo decide
-    // la propiedad app.mail.canal, y este servicio no tiene por que enterarse.
+    // La interfaz y no la clase: cuál sale por correo y cuál por consola lo decide
+    // la propiedad app.mail.canal, y este servicio no tiene por qué enterarse.
     private final CanalDeCodigos notificador;
     private final FrenoDeEnviosService freno;
 
@@ -70,13 +70,13 @@ public class AltaInstitucionService {
                 + "Esperá un rato antes de volver a intentar.");
         }
 
-        // Seis digitos con ceros a la izquierda, igual que el resto de los codigos del sistema.
+        // Seis dígitos con ceros a la izquierda, igual que el resto de los códigos del sistema.
         String codigoEnClaro = String.format("%06d", ALEATORIO.nextInt(1_000_000));
 
-        // El usuario todavia no existe, asi que se arma uno de paso solo para el saludo del
-        // correo. No se guarda: el notificador unicamente lee su nombre.
+        // El usuario todavía no existe, así que se arma uno de paso solo para el saludo del
+        // correo. No se guarda: el notificador únicamente lee su nombre.
         // Usuario de paso, solo para el saludo del correo: no se guarda. Se lo nombra con la
-        // institucion porque es a la institucion a la que se le esta confirmando el alta.
+        // institución porque es a la institución a la que se le está confirmando el alta.
         Usuario destinatario = Usuario.builder()
             .username(form.getNombreInstitucion().trim())
             .build();
@@ -86,8 +86,8 @@ public class AltaInstitucionService {
                 edu.cent35.asistencias.model.PropositoCodigo.VERIFICACION_EMAIL,
                 email, codigoEnClaro);
         } catch (RuntimeException ex) {
-            // Si no salio, el cupo no se consumio: devolverlo evita castigar a quien no
-            // recibio nada por una caida del servidor de correo.
+            // Si no salió, el cupo no se consumió: devolverlo evita castigar a quien no
+            // recibió nada por una caida del servidor de correo.
             freno.devolverCupo(email);
             log.error("No se pudo enviar el codigo del alta de institucion", ex);
             throw new IllegalStateException(
@@ -100,7 +100,7 @@ public class AltaInstitucionService {
                                  LocalDateTime.now().plusMinutes(minutosVigencia));
     }
 
-    // Comprueba el codigo tipeado contra el que espera, sumando el intento si falla.
+    // Comprueba el código tipeado contra el que espera, sumando el intento si falla.
     public Rechazo comprobarCodigo(AltaPendiente pendiente, String codigoTipeado) {
         if (pendiente.estaVencida()) {
             return Rechazo.VENCIDO;
@@ -147,7 +147,7 @@ public class AltaInstitucionService {
      */
     @Transactional
     public Usuario crearInstitucionConCuenta(AltaInstitucionFormDto form) {
-        // Se repite la comprobacion: entre el paso 1 y el 2 pasaron minutos, y en el medio
+        // Se repite la comprobación: entre el paso 1 y el 2 pasaron minutos, y en el medio
         // otra persona pudo haber registrado ese mismo nombre.
         verificarQueNoExista(form);
 
@@ -163,9 +163,9 @@ public class AltaInstitucionService {
             .orElseThrow(() -> new IllegalStateException(
                 "Falta el rol INSTITUCION: la base no esta inicializada correctamente."));
 
-        // Sin persona a proposito (V018): esta cuenta representa al establecimiento y no a
-        // alguien concreto. Su nombre para mostrar sale de la institucion. Las personas que la
-        // administren se cargan despues, cada una con su cuenta y su identidad.
+        // Sin persona a propósito (V018): esta cuenta representa al establecimiento y no a
+        // alguien concreto. Su nombre para mostrar sale de la institución. Las personas que la
+        // administren se cargan después, cada una con su cuenta y su identidad.
         Usuario usuario = Usuario.builder()
             .username(form.getUsername().trim())
             .email(form.getEmail().trim())
@@ -182,12 +182,12 @@ public class AltaInstitucionService {
         return guardado;
     }
 
-    // El nombre y el CUIT son unicos en TODO el sistema, no por institucion: dos colegios
+    // El nombre y el CUIT son únicos en TODO el sistema, no por institución: dos colegios
     // distintos no pueden llamarse igual ni compartir CUIT.
     private void verificarQueNoExista(AltaInstitucionFormDto form) {
         String nombre = form.getNombreInstitucion().trim();
         // Normalizado antes de comparar: si no, '30123456781' y '30-12345678-1'
-        // pasarian como dos CUIT distintos siendo el mismo numero.
+        // pasarían como dos CUIT distintos siendo el mismo número.
         String cuit = Cuit.normalizar(form.getCuit());
 
         if (institucionRepository.existsByNombre(nombre)) {
@@ -198,7 +198,7 @@ public class AltaInstitucionService {
         }
     }
 
-    // Deja null si el campo opcional vino vacio: asi el UNIQUE del CUIT no choca entre
+    // Deja null si el campo opcional vino vacío: así el UNIQUE del CUIT no choca entre
     // dos instituciones que no lo declararon, porque en SQL un NULL no repite a otro.
     private String vacioANulo(String s) {
         if (s == null) return null;

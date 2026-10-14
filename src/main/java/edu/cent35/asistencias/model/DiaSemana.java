@@ -3,7 +3,7 @@ package edu.cent35.asistencias.model;
 import java.time.LocalDate;
 
 /**
- * Dia de la semana segun ISO 8601 (1=Lunes, 7=Domingo).
+ * Día de la semana según ISO 8601 (1=Lunes, 7=Domingo).
  * Coincide con el {@code TINYINT} en {@code horarios.dia_semana}.
  */
 public enum DiaSemana {
@@ -23,13 +23,13 @@ public enum DiaSemana {
         this.etiqueta = etiqueta;
     }
 
-    // Numero ISO del dia (1=Lunes, 7=Domingo), que es lo que se guarda en la columna.
+    // Número ISO del día (1=Lunes, 7=Domingo), que es lo que se guarda en la columna.
     public byte getNumero()    { return numero; }
 
     // Nombre para mostrar, con acento ("Miércoles", "Sábado").
     public String getEtiqueta() { return etiqueta; }
 
-    // Convierte el numero guardado en la base al valor del enum.
+    // Convierte el número guardado en la base al valor del enum.
     public static DiaSemana fromNumero(byte n) {
         for (DiaSemana d : values()) {
             if (d.numero == n) return d;
@@ -37,7 +37,7 @@ public enum DiaSemana {
         throw new IllegalArgumentException("Dia de semana invalido: " + n);
     }
 
-    // Dia en que cae una fecha; LocalDate usa la misma numeracion ISO, asi que el mapeo es directo.
+    // Día en que cae una fecha; LocalDate usa la misma numeración ISO, así que el mapeo es directo.
     public static DiaSemana deLaFecha(LocalDate fecha) {
         return fromNumero((byte) fecha.getDayOfWeek().getValue());
     }

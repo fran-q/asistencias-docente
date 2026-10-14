@@ -15,12 +15,12 @@
  *        <thead><tr>
  *          <th data-orden="texto">DNI</th>
  *          <th data-orden="texto">Apellido, Nombre</th>
- *          <th data-orden="numero">Horas</th>
+ *          <th data-orden="número">Horas</th>
  *          <th data-orden="fecha">Alta</th>
  *          <th>Correo</th>                    <-- sin data-orden: no se ordena
  *        </tr></thead>
  *
- *  Tipos: texto (por defecto), numero, fecha (dd/MM/yyyy).
+ *  Tipos: texto (por defecto), número, fecha (dd/MM/yyyy).
  *
  *  El valor que se compara sale del texto de la celda, salvo que la celda traiga
  *  data-valor: eso es lo que permite ordenar una columna de estados por su

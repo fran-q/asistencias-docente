@@ -74,7 +74,7 @@ class GraficosDelReporteIT {
 
     private static final AtomicInteger SECUENCIA = new AtomicInteger();
 
-    // Dos lunes de semanas distintas, para que el grafico semanal tenga dos columnas.
+    // Dos lunes de semanas distintas, para que el gráfico semanal tenga dos columnas.
     private static final LocalDate SEMANA_1 = LocalDate.of(2026, 6, 8);
     private static final LocalDate SEMANA_2 = LocalDate.of(2026, 6, 15);
 
@@ -140,15 +140,15 @@ class GraficosDelReporteIT {
 
         ciclo = cicloRepository.save(DatosDePrueba.cicloAnualDelTenant(tenantId, 2026));
 
-        // Cada clase va en su propia comision: un docente no puede tener dos marcas del
-        // mismo horario y la misma fecha --lo impide un indice unico-- y dos de las tres
-        // caen el mismo dia.
+        // Cada clase va en su propia comisión: un docente no puede tener dos marcas del
+        // mismo horario y la misma fecha --lo impide un índice único-- y dos de las tres
+        // caen el mismo día.
         Horario turnoTarde = horarioDe("A", 18, 20);
         Horario turnoNoche = horarioDe("B", 20, 22);
 
         // Tres clases: dos en la primera semana --una entera y una ausente-- y una en la
         // segunda, cubierta entera. Con el tope en dos, la tercera solo entra si los
-        // graficos NO pasan por el camino topeado de la tabla.
+        // gráficos NO pasan por el camino topeado de la tabla.
         clase(turnoTarde, SEMANA_1, LocalTime.of(18, 0), LocalTime.of(20, 0),
               EstadoAsistencia.PRESENTE);
         clase(turnoNoche, SEMANA_1, null, null, EstadoAsistencia.AUSENTE);
@@ -186,7 +186,7 @@ class GraficosDelReporteIT {
             .contains("08/06").contains("15/06");
 
         // Dos <rect> de barra: si una coordenada quedara mal, el SVG sale igual pero torcido,
-        // asi que se leen los atributos y no solo que la pagina responda.
+        // así que se leen los atributos y no solo que la página responda.
         assertThat(contarOcurrencias(html, "class=\"grafico__barra\""))
             .isEqualTo(2);
         // Se busca el valor DENTRO de su etiqueta y no suelto: el eje del gráfico también
@@ -207,7 +207,7 @@ class GraficosDelReporteIT {
     @Test
     @DisplayName("Los graficos ven el periodo entero aunque la tabla venga cortada")
     void losGraficosNoUsanElTope() throws Exception {
-        // El tope esta en dos y hay tres clases: la tabla avisa que corto.
+        // El tope está en dos y hay tres clases: la tabla avisa que cortó.
         assertThat(pedir("/reportes"))
             .as("la tabla sigue topeada y avisando")
             .contains("de 3 · acotá el rango o los filtros");
@@ -322,7 +322,7 @@ class GraficosDelReporteIT {
         return total;
     }
 
-    // Una comision con su horario semanal, para poder tener dos clases el mismo dia.
+    // Una comisión con su horario semanal, para poder tener dos clases el mismo día.
     private Horario horarioDe(String codigoComision, int desde, int hasta) {
         Comision c = comisionRepository.save(Comision.builder()
             .materia(materia).codigo(codigoComision).docenteAsignado(docente).activo(true)

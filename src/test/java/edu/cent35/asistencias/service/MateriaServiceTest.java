@@ -125,13 +125,13 @@ class MateriaServiceTest {
 
     // Carrera activa del tenant A.
     // ========================================================================
-    //  El anio contra la duracion de la carrera
+    //  El año contra la duración de la carrera
     // ========================================================================
 
     @Test
     @DisplayName("crear: rechaza una materia de un año que la carrera no tiene")
     void crear_anioFueraDeLaCarrera() {
-        Carrera c = carreraActivaA();          // dura 3 anios
+        Carrera c = carreraActivaA();          // dura 3 años
         when(carreraRepository.findById(CARRERA_ID)).thenReturn(Optional.of(c));
         when(materiaRepository.existsByCodigo("MAT")).thenReturn(false);
 

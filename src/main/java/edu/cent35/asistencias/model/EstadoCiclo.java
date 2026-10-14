@@ -6,17 +6,17 @@ package edu.cent35.asistencias.model;
  */
 public enum EstadoCiclo {
 
-    // Se esta armando la oferta del ano que viene mientras el actual sigue corriendo. Se
+    // Se está armando la oferta del año que viene mientras el actual sigue corriendo. Se
     // editan comisiones y horarios, pero no se toma asistencia ni se generan ausencias.
     PREPARACION("En preparación"),
 
-    // El ciclo en curso. Es el unico contra el que se registra asistencia.
+    // El ciclo en curso. Es el único contra el que se registra asistencia.
     ACTIVO("Activo"),
 
-    // Termino. La estructura queda congelada --comisiones, horarios, periodos-- pero las
-    // asistencias se pueden seguir corrigiendo: una inspeccion o un reclamo llegan casi
-    // siempre despues de cerrado el ano, y no poder justificar una ausencia de marzo en
-    // febrero del ano siguiente convertiria el cierre en una trampa.
+    // Terminó. La estructura queda congelada --comisiones, horarios, períodos-- pero las
+    // asistencias se pueden seguir corrigiendo: una inspección o un reclamo llegan casi
+    // siempre después de cerrado el año, y no poder justificar una ausencia de marzo en
+    // febrero del año siguiente convertiría el cierre en una trampa.
     CERRADO("Cerrado");
 
     private final String etiqueta;

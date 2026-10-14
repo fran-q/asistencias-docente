@@ -38,8 +38,8 @@ public interface MateriaRepository extends JpaRepository<Materia, Long> {
     // Cuenta materias activas donde un docente es titular - para bloquear su baja.
     long countByDocenteTitularIdAndActivoTrue(Long docenteId);
 
-    // El anio mas alto entre las materias de la carrera; null si la carrera no tiene ninguna.
-    // Lo usa CarreraService para no dejar materias fuera del plan al acortar la duracion.
+    // El año más alto entre las materias de la carrera; null si la carrera no tiene ninguna.
+    // Lo usa CarreraService para no dejar materias fuera del plan al acortar la duración.
     @Query("SELECT MAX(m.anio) FROM Materia m WHERE m.carrera.id = :carreraId")
     Short maxAnioDeLaCarrera(@Param("carreraId") Long carreraId);
 }

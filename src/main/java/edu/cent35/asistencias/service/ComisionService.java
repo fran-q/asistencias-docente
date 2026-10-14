@@ -36,7 +36,7 @@ public class ComisionService {
     private final ComisionRepository comisionRepository;
     private final PeriodoLectivoRepository periodoRepository;
     // Para negarse a tocar la oferta de un ciclo cerrado. La regla vive en CicloLectivoService
-    // y se consulta desde aca: si solo la aplicara la pantalla de ciclos, no serviria de nada.
+    // y se consulta desde acá: si solo la aplicara la pantalla de ciclos, no serviría de nada.
     private final CicloLectivoService cicloLectivoService;
     private final MateriaRepository materiaRepository;
     private final HorarioRepository horarioRepository;
@@ -66,14 +66,14 @@ public class ComisionService {
         return comisiones;
     }
 
-    // Los anos para el selector del listado, del mas nuevo al mas viejo.
+    // Los años para el selector del listado, del más nuevo al más viejo.
     @Transactional(readOnly = true)
     public List<CicloLectivo> ciclosParaFiltro() {
         return cicloLectivoService.listar();
     }
 
-    // Touch lazy: materia + carrera + docente asignado, que el listado lee despues de cerrada
-    // la transaccion. Compartido por los dos listados para que no se desalineen.
+    // Touch lazy: materia + carrera + docente asignado, que el listado lee después de cerrada
+    // la transacción. Compartido por los dos listados para que no se desalineen.
     private void inicializarParaListado(List<Comision> comisiones) {
         comisiones.forEach(c -> {
             if (c.getMateria() != null) {
@@ -92,7 +92,7 @@ public class ComisionService {
         Long tenantId = TenantContext.getRequired();
         Comision c = comisionRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Comision no encontrada: " + id));
-        // Validar tenant via materia padre
+        // Validar tenant vía materia padre
         if (c.getMateria() == null || !tenantId.equals(c.getMateria().getInstitucionId())) {
             log.warn("Cross-tenant blocked: tenant {} intento acceder comision id={}", tenantId, id);
             throw new EntityNotFoundException("Comision no encontrada");
@@ -114,16 +114,16 @@ public class ComisionService {
     @Transactional(readOnly = true)
     public List<Comision> comisionesActivasParaSelector() {
         Long tenantId = TenantContext.getRequired();
-        // Acotado al ciclo de hoy: ofrecer comisiones de un ano que ya termino deja elegir
-        // una clase que no existe, y el rechazo llegaria recien al guardar.
+        // Acotado al ciclo de hoy: ofrecer comisiones de un año que ya terminó deja elegir
+        // una clase que no existe, y el rechazo llegaría recién al guardar.
         List<Comision> cs = comisionRepository.findActivasEnFecha(LocalDate.now(), tenantId);
         cs.forEach(c -> {
             if (c.getMateria() != null) {
                 c.getMateria().getCodigo();
                 if (c.getMateria().getCarrera() != null) c.getMateria().getCarrera().getCodigo();
             }
-            // El periodo y su ano van en la opcion: dos comisiones de una materia pueden llevar
-            // el mismo codigo en periodos distintos, y sin eso el combo mostraba dos iguales.
+            // El período y su año van en la opción: dos comisiones de una materia pueden llevar
+            // el mismo código en períodos distintos, y sin eso el combo mostraba dos iguales.
             if (c.getPeriodo() != null) c.getPeriodo().getCiclo().getAnio();
         });
         return cs;
@@ -147,7 +147,7 @@ public class ComisionService {
         return periodo;
     }
 
-    // Los periodos que se pueden elegir en el formulario: los de ciclos que aun admiten cambios.
+    // Los períodos que se pueden elegir en el formulario: los de ciclos que aún admiten cambios.
     @Transactional(readOnly = true)
     public List<PeriodoLectivo> periodosParaSelector() {
         List<PeriodoLectivo> ps =
@@ -158,20 +158,20 @@ public class ComisionService {
     }
 
     /**
-     * El codigo que se le ofrece a una comision nueva de esa materia y ese periodo.
+     * El código que se le ofrece a una comisión nueva de esa materia y ese período.
      *
      * <p><b>Sugiere, no impone.</b> El campo sigue siendo editable y el formulario valida lo
-     * que quede escrito. Eso importa porque aca el codigo no siempre es un identificador: en
-     * este sistema suele ser texto --"Manana", "Noche", "Atencion"-- y la validacion acepta
-     * acentos y espacios a proposito.
+     * que quede escrito. Eso importa porque acá el código no siempre es un identificador: en
+     * este sistema suele ser texto --"Mañana", "Noche", "Atención"-- y la validación acepta
+     * acentos y espacios a propósito.
      *
-     * <p>De ahi las tres ramas. Si la materia no tiene ninguna comision en ese periodo,
+     * <p>De ahí las tres ramas. Si la materia no tiene ninguna comisión en ese período,
      * arranca en <b>A</b>. Si las que hay son todas una letra sola, devuelve <b>la primera
-     * libre</b> y no la siguiente a la ultima: con A y C cargadas, lo que falta es la B. Si
-     * son todas numeros, el siguiente. Y si son palabras, <b>no sugiere nada</b>, porque
-     * cualquier letra que proponga pelearia con la convencion que esa institucion ya eligio.
+     * libre</b> y no la siguiente a la última: con A y C cargadas, lo que falta es la B. Si
+     * son todas números, el siguiente. Y si son palabras, <b>no sugiere nada</b>, porque
+     * cualquier letra que proponga pelearía con la convención que esa institución ya eligió.
      *
-     * <p>Devuelve vacio, nunca null: lo consume un campo de texto.
+     * <p>Devuelve vacío, nunca null: lo consume un campo de texto.
      */
     @Transactional(readOnly = true)
     public String codigoSugerido(Long materiaId, Long periodoId) {
@@ -220,8 +220,8 @@ public class ComisionService {
     public List<Materia> materiasActivasParaSelector() {
         List<Materia> ms = materiaRepository.findByActivoTrueOrderByNombreAsc();
         // Se tocan las relaciones LAZY que la plantilla va a leer: la carrera para el texto de
-        // la opcion y el titular para proponerlo como docente de la comision. Sin esto la
-        // sesion ya esta cerrada cuando Thymeleaf las pide.
+        // la opción y el titular para proponerlo como docente de la comisión. Sin esto la
+        // sesión ya está cerrada cuando Thymeleaf las pide.
         ms.forEach(m -> {
             if (m.getCarrera() != null) m.getCarrera().getCodigo();
             if (m.getDocenteTitular() != null) m.getDocenteTitular().getNombreCompleto();
@@ -281,7 +281,7 @@ public class ComisionService {
         Long tenantId = TenantContext.getRequired();
         Materia materia = obtenerMateriaValidada(materiaId, tenantId);
 
-        // La comision de un ciclo cerrado no se toca: es la oferta de un ano que ya termino.
+        // La comisión de un ciclo cerrado no se toca: es la oferta de un año que ya terminó.
         cicloLectivoService.exigirEstructuraEditable(c.getPeriodo().getCiclo());
         PeriodoLectivo periodo = obtenerPeriodoValidado(periodoId, tenantId);
 
@@ -291,11 +291,11 @@ public class ComisionService {
                 "La nueva materia '" + materia.getNombre() + "' está inactiva. Elegí una activa.");
         }
 
-        // La pregunta es una sola: ¿hay OTRA comision con ese codigo en esa materia? La
-        // version anterior la partia en tres condiciones encadenadas y el ultimo termino
-        // repetia el primero, con lo cual el chequeo se reducia a "cambia el codigo": mover
-        // una comision "A" a una materia que ya tenia una "A" pasaba de largo por aca y
-        // terminaba rebotando contra el UNIQUE de la base, con un mensaje generico.
+        // La pregunta es una sola: ¿hay OTRA comisión con ese código en esa materia? La
+        // versión anterior la partía en tres condiciones encadenadas y el último terminó
+        // repetía el primero, con lo cual el chequeo se reducía a "cambia el código": mover
+        // una comisión "A" a una materia que ya tenía una "A" pasaba de largo por acá y
+        // terminaba rebotando contra el UNIQUE de la base, con un mensaje genérico.
         String codigoNuevo = codigo.trim();
         boolean colisiona = comisionRepository
             .findByMateriaIdAndCodigoAndPeriodoId(materiaId, codigoNuevo, periodo.getId())

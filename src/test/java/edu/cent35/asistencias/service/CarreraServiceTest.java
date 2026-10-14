@@ -116,7 +116,7 @@ class CarreraServiceTest {
     }
 
     // ========================================================================
-    //  Acortar la duracion con materias ya cargadas
+    //  Acortar la duración con materias ya cargadas
     // ========================================================================
 
     @Test

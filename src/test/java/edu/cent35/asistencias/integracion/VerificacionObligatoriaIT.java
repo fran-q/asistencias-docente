@@ -109,9 +109,9 @@ class VerificacionObligatoriaIT {
     @Test
     @DisplayName("Quien verifica durante la sesion deja de estar bloqueado sin volver a entrar")
     void alVerificarSeDesbloqueaEnLaMismaSesion() throws Exception {
-        // El principal se arma al iniciar sesion, asi que nace con la marca en falso. Si el
-        // bloqueo se apoyara solo en esa foto, la persona verificaria y seguiria encerrada
-        // hasta cerrar y volver a abrir sesion.
+        // El principal se arma al iniciar sesión, así que nace con la marca en falso. Si el
+        // bloqueo se apoyara solo en esa foto, la persona verificaría y seguiría encerrada
+        // hasta cerrar y volver a abrir sesión.
         Usuario u = cuenta("verifica.ahora", null);
         UsuarioAutenticado principal = principalDe(u);
 
@@ -143,13 +143,13 @@ class VerificacionObligatoriaIT {
             .andExpect(authenticated().withUsername("ana.perez"));
 
         // Entre un ingreso y el otro, este test simula a la misma persona entrando de nuevo, no
-        // a dos equipos a la vez: se olvida la sesion anterior. En el servidor la olvida el
-        // contenedor al destruirla; MockMvc no destruye ninguna, asi que la de arriba seguiria
-        // contando y el segundo ingreso terminaria en el paso de "ya hay una sesion abierta"
+        // a dos equipos a la vez: se olvida la sesión anterior. En el servidor la olvida el
+        // contenedor al destruirla; MockMvc no destruye ninguna, así que la de arriba seguiría
+        // contando y el segundo ingreso terminaría en el paso de "ya hay una sesión abierta"
         // (ADR-0020), que es de lo que se ocupa SesionUnicaIT.
         olvidarLasSesiones();
 
-        // La sesion queda a nombre del usuario aunque se haya entrado con el correo: es lo que
+        // La sesión queda a nombre del usuario aunque se haya entrado con el correo: es lo que
         // se muestra y lo que queda en el historial de lo que hizo.
         mockMvc.perform(post("/login").with(csrf())
                 .param("username", "Ana.Perez@Ejemplo.edu.ar").param("password", "Clave12345"))
@@ -166,7 +166,7 @@ class VerificacionObligatoriaIT {
     //  helpers
     // ========================================================================
 
-    // Vacia el registro de sesiones abiertas, que vive en el contexto que los tests comparten.
+    // Vacía el registro de sesiones abiertas, que vive en el contexto que los tests comparten.
     private void olvidarLasSesiones() {
         sessionRegistry.getAllPrincipals().stream()
             .flatMap(p -> sessionRegistry.getAllSessions(p, true).stream())

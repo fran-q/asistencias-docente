@@ -50,7 +50,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         "/asistencia/pase", "/asistencia/pase/**",
         "/reconocimiento/**",
         "/docentes/*/rostro/registrar",
-        // El kiosco tambien es captura: exige equipo autorizado igual que el resto.
+        // El kiosco también es captura: exige equipo autorizado igual que el resto.
         "/kiosco", "/kiosco/**"
     };
 
@@ -91,9 +91,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // Antes que todo lo demas: en una instalacion sin configurar no hay institucion, y
-        // sin institucion no hay tenant que publicar ni correo que revisar. Se saltea la
-        // propia pantalla del asistente, que si no se redirige a si misma para siempre.
+        // Antes que todo lo demás: en una instalación sin configurar no hay institución, y
+        // sin institución no hay tenant que publicar ni correo que revisar. Se saltea la
+        // propia pantalla del asistente, que si no se redirige a sí misma para siempre.
         registry.addInterceptor(instalacionInterceptor)
                 .excludePathPatterns(SIN_INTERCEPTAR)
                 .excludePathPatterns("/instalacion", "/instalacion/**")
@@ -101,8 +101,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(kioscoTenantInterceptor)
                 .addPathPatterns(PUEDEN_SIN_SESION)
                 .order(0);
-        // Primero de todos los que miran al usuario: una sesion que todavia no dijo que hacer
-        // con la que ya estaba abierta no tiene por que llegar a publicar el tenant ni a que le
+        // Primero de todos los que miran al usuario: una sesión que todavía no dijo que hacer
+        // con la que ya estaba abierta no tiene por qué llegar a publicar el tenant ni a que le
         // revisen el correo. Se saltea /sesion/**, que es donde vive ese paso.
         registry.addInterceptor(sesionPorConfirmarInterceptor)
                 .excludePathPatterns(SIN_INTERCEPTAR)

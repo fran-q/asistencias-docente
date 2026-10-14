@@ -73,8 +73,8 @@ class CierreManualBloqueIT {
     void sembrar() {
         TenantContext.clear();
 
-        // El catalogo de motivos se siembra en V001, y el perfil test corre sobre H2 con
-        // Flyway apagado: aca no existe si no se crea a mano.
+        // El catálogo de motivos se siembra en V001, y el perfil test corre sobre H2 con
+        // Flyway apagado: acá no existe si no se crea a mano.
         motivoFallaId = motivoRepository.save(edu.cent35.asistencias.model.MotivoCargaManual.builder()
             .codigo("FALLA_RECONOCIMIENTO_" + SECUENCIA.get())
             .descripcion("Falla en el reconocimiento facial").activo(true).build()).getId();
@@ -107,7 +107,7 @@ class CierreManualBloqueIT {
         bloqueId = bloqueRepository.save(b).getId();
 
         // El admin tiene que existir de verdad: el service lo busca por id para dejar
-        // asentado quien cerro, y un principal solo en memoria hace fallar el cierre con
+        // asentado quien cerró, y un principal solo en memoria hace fallar el cierre con
         // "usuario no encontrado" — que el ExceptionHandler convierte en un redirect y
         // disimula el problema.
         Rol rol = rolRepository.findByCodigo("ADMIN").orElseGet(() -> {
@@ -180,8 +180,8 @@ class CierreManualBloqueIT {
                 .param("horaSalida", "21:30")
                 .param("motivoId", motivoOtroId.toString()))
             .andExpect(status().isOk())
-            // El texto exacto del error: "detalle" a secas tambien aparece en el
-            // placeholder del formulario, asi que el test pasaria sin el error.
+            // El texto exacto del error: "detalle" a secas también aparece en el
+            // placeholder del formulario, así que el test pasaría sin el error.
             .andExpect(content().string(containsString("contá en el detalle qué pasó")));
 
         TenantContext.set(tenantId);
@@ -207,8 +207,8 @@ class CierreManualBloqueIT {
     @Test
     @DisplayName("El panel de inicio anuncia las salidas sin registrar, y primero")
     void panelAnunciaLasSalidasPendientes() throws Exception {
-        // RF-79: la salida es obligatoria, asi que su falta se informa donde el equipo
-        // administrativo mira todos los dias, no solo en una pantalla aparte.
+        // RF-79: la salida es obligatoria, así que su falta se informa donde el equipo
+        // administrativo mira todos los días, no solo en una pantalla aparte.
         mockMvc.perform(get("/").with(user(principal())))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("salida sin registrar")))

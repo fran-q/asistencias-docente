@@ -108,8 +108,8 @@ class ReportePdfServiceTest {
     @Test
     @DisplayName("Con una salida que completo el sistema, se suma la linea del asterisco")
     void elAsteriscoSeExplicaCuandoLoHay() {
-        // La fila trae ademas dos puertas distintas y ninguna llegada observada: sirve para
-        // ver que lo que vuelve es la linea del asterisco y no el bloque entero.
+        // La fila trae además dos puertas distintas y ninguna llegada observada: sirve para
+        // ver que lo que vuelve es la línea del asterisco y no el bloque entero.
         String texto = pdfDe(conSalidaPresumida());
 
         assertThat(texto)
@@ -130,8 +130,8 @@ class ReportePdfServiceTest {
     @DisplayName("Cada dato entra entero en su celda, sin partirse en dos renglones")
     void cadaDatoEntraEnteroEnSuCelda() {
         // Sin normalizar: un dato que no entra en su columna aparece cortado —"AUTOMATI CO"—
-        // y deja de encontrarse entero. Es la unica forma de sostener los anchos, que no son
-        // una cuestion de gusto: una celda que se parte duplica el alto de todas las filas.
+        // y deja de encontrarse entero. Es la única forma de sostener los anchos, que no son
+        // una cuestión de gusto: una celda que se parte duplica el alto de todas las filas.
         String crudo = crudoDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)));
 
         assertThat(crudo)
@@ -147,7 +147,7 @@ class ReportePdfServiceTest {
     @Test
     @DisplayName("Un reporte cortado lo dice arriba, al pie de cada hoja y en el recuento")
     void elReporteCortadoLoDice() {
-        // Una fila devuelta de 5384 que habia: el tope se comio el resto.
+        // Una fila devuelta de 5384 que había: el tope se comio el resto.
         String texto = pdfDe(fila("Entrada norte", "Entrada norte", LocalTime.of(20, 10)), 5384);
 
         assertThat(texto)
@@ -190,7 +190,7 @@ class ReportePdfServiceTest {
 
     private String pdfDe(AsistenciaReporteRowDto fila, long totalSinTope) {
         // Los saltos se normalizan: una celda angosta parte su contenido en dos renglones y
-        // eso es correcto en la hoja, pero no tiene que romper una asercion de contenido.
+        // eso es correcto en la hoja, pero no tiene que romper una aserción de contenido.
         return crudoDe(fila, totalSinTope).replaceAll("\\s+", " ");
     }
 
@@ -198,7 +198,7 @@ class ReportePdfServiceTest {
         return crudoDe(fila, 1);
     }
 
-    // El mismo PDF, diciendo cuantas filas habria sin el tope: igual a la que se pasa
+    // El mismo PDF, diciendo cuántas filas habría sin el tope: igual a la que se pasa
     // significa que el reporte esta entero.
     private String crudoDe(AsistenciaReporteRowDto fila, long totalSinTope) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -216,7 +216,7 @@ class ReportePdfServiceTest {
         }
     }
 
-    // Una jornada que cerro el job, entrando por una puerta y saliendo por otra: es la
+    // Una jornada que cerró el job, entrando por una puerta y saliendo por otra: es la
     // fila que antes disparaba tres referencias distintas al pie.
     private AsistenciaReporteRowDto conSalidaPresumida() {
         return AsistenciaReporteRowDto.builder()

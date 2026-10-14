@@ -27,15 +27,15 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Operaciones sobre los usuarios (admins) de la institucion del tenant
+ * Operaciones sobre los usuarios (admins) de la institución del tenant
  * actual. Cubre RF-06.
  * <p>
  * <b>Aislamiento multi-tenant</b>: combina dos defensas:
  * <ol>
  *   <li>El filtro de Hibernate {@code "tenant"} (activado por
- *       {@code TenantFilterAspect}) hace que las queries automaticas
- *       de Spring Data filtren por institucion.</li>
- *   <li>{@link #ensureMismoTenant(Usuario)} valida explicitamente que
+ *       {@code TenantFilterAspect}) hace que las queries automáticas
+ *       de Spring Data filtren por institución.</li>
+ *   <li>{@link #ensureMismoTenant(Usuario)} valida explícitamente que
  *       cada usuario accedido pertenezca al tenant actual antes de
  *       devolver/modificar - protege casos donde el filtro no aplica
  *       (ej: {@code findById}).</li>
@@ -53,14 +53,14 @@ public class UsuarioService {
     private final PersonaRepository personaRepository;
     private final PersonaService personaService;
     private final PasswordEncoder passwordEncoder;
-    // Para cortarle la sesion a una cuenta que se da de baja.
+    // Para cortarle la sesión a una cuenta que se da de baja.
     private final edu.cent35.asistencias.seguridad.SesionesActivasService sesionesActivas;
 
-    // Horas entre una contrasena nueva y la siguiente. En cero, sin limite.
+    // Horas entre una contraseña nueva y la siguiente. En cero, sin límite.
     @Value("${app.password.horas-entre-cambios}")
     private long horasEntreCambios;
 
-    // Lista los usuarios de la institucion actual (activos + inactivos, ordenados).
+    // Lista los usuarios de la institución actual (activos + inactivos, ordenados).
     @Transactional(readOnly = true)
     public List<Usuario> listarMiInstitucion() {
         Long tenantId = TenantContext.getRequired();
@@ -122,10 +122,10 @@ public class UsuarioService {
             .persona(persona)
             .rol(rol)
             .activo(true)
-            // En una instalacion autonoma la cuenta nace verificada, porque no hay por donde
-            // verificarla: sin SMTP, el codigo no llega, y VerificacionInterceptor la deja
+            // En una instalación autónoma la cuenta nace verificada, porque no hay por donde
+            // verificarla: sin SMTP, el código no llega, y VerificacionInterceptor la deja
             // bloqueada en /mi-cuenta para siempre. La cuenta se creaba bien, entraba al login
-            // bien, y recien ahi se descubria que no podia hacer nada (ADR-0022).
+            // bien, y recién ahí se descubria que no podía hacer nada (ADR-0022).
             .emailVerificadoEn(modalidad.esAutonoma() ? LocalDateTime.now() : null)
             .build();
         nuevo.setInstitucionId(tenantId);
@@ -136,9 +136,9 @@ public class UsuarioService {
         return saved;
     }
 
-    // Un apellido en blanco se guarda como NULL: "no corresponde" y "cadena vacia" no son
-    // lo mismo, y dejar '' obligaria a cada consulta a distinguirlos. Ver migracion V014.
-    // El que viene, con mayuscula inicial como el nombre (NombrePropio).
+    // Un apellido en blanco se guarda como NULL: "no corresponde" y "cadena vacía" no son
+    // lo mismo, y dejar '' obligaría a cada consulta a distinguirlos. Ver migración V014.
+    // El que viene, con mayúscula inicial como el nombre (NombrePropio).
     private static String normalizarApellido(String apellido) {
         return (apellido == null || apellido.isBlank()) ? null : NombrePropio.normalizar(apellido);
     }
@@ -180,7 +180,7 @@ public class UsuarioService {
 
         Usuario u = buscarPorId(id);
 
-        // Si se cambia email, validar unicidad por institucion
+        // Si se cambia email, validar unicidad por institución
         String emailNuevo = email.trim();
         boolean cambioElCorreo = !emailNuevo.equalsIgnoreCase(u.getEmail());
         if (cambioElCorreo
@@ -188,15 +188,15 @@ public class UsuarioService {
             throw new IllegalArgumentException("El correo '" + emailNuevo + "' ya está en uso en esta institución");
         }
 
-        // Lo que se va a guardar, que es tambien lo que se muestra si hay que confirmar.
+        // Lo que se va a guardar, que es también lo que se muestra si hay que confirmar.
         String nombreNuevo   = NombrePropio.normalizar(nombre);
         String apellidoNuevo = normalizarApellido(apellido);
 
-        // La confirmacion va DESPUES de validar: preguntar "seguro que querés cambiarlo en todos
-        // sus roles" para despues rechazar el formulario por un correo repetido seria hacer
+        // La confirmación va DESPUÉS de validar: preguntar "seguro que querés cambiarlo en todos
+        // sus roles" para después rechazar el formulario por un correo repetido sería hacer
         // decidir sobre algo que no se iba a guardar igual.
         //
-        // Si esta persona ademas da clases, el cambio de nombre se ve en la ficha del docente y
+        // Si esta persona además da clases, el cambio de nombre se ve en la ficha del docente y
         // en los listados de asistencia.
         if (!confirmado && personaService.edicionRequiereConfirmacion(u.getPersona())) {
             String propuesto = apellidoNuevo == null ? nombreNuevo : apellidoNuevo + ", " + nombreNuevo;
@@ -220,9 +220,9 @@ public class UsuarioService {
 
         u.setEmail(emailNuevo);
 
-        // Cambiar la direccion invalida la verificacion: la anterior fue confirmada, esta no.
-        // Sin esto la cuenta seguiria figurando verificada con un correo que nadie probo, y
-        // la recuperacion de contrasena pasaria a apuntar a ese buzon sin ninguna garantia.
+        // Cambiar la dirección invalida la verificación: la anterior fue confirmada, esta no.
+        // Sin esto la cuenta seguiría figurando verificada con un correo que nadie probó, y
+        // la recuperación de contraseña pasaría a apuntar a ese buzón sin ninguna garantía.
         if (cambioElCorreo && u.getEmailVerificadoEn() != null) {
             u.setEmailVerificadoEn(null);
             log.info("Verificacion invalidada: el usuario {} cambio su correo y debe confirmarlo",
@@ -264,8 +264,8 @@ public class UsuarioService {
         u.setDadoDeBajaPor(usuarioActualId);
         Usuario guardado = usuarioRepository.save(u);
 
-        // La cuenta ya no puede entrar, pero la sesion que tenia abierta seguiria andando
-        // hasta vencer: media hora de alguien operando con una cuenta que la institucion
+        // La cuenta ya no puede entrar, pero la sesión que tenía abierta seguiría andando
+        // hasta vencer: media hora de alguien operando con una cuenta que la institución
         // acaba de dar de baja. Se la cierra en el acto.
         int cerradas = sesionesActivas.cerrarTodasDe(guardado.getUsername());
 
@@ -408,7 +408,7 @@ public class UsuarioService {
     }
 
     // ========================================================================
-    //  Limite de un cambio de contrasena cada 24 horas
+    //  Límite de un cambio de contraseña cada 24 horas
     // ========================================================================
 
     /**
@@ -423,11 +423,11 @@ public class UsuarioService {
      * ninguno de los dos puede tenerla a medias— y acá se le pone la ventana configurada y las
      * palabras.
      */
-    // Sin @Transactional a proposito: no toca la base, calcula sobre la entidad que ya
-    // trajo quien llama. Anotarlo abriria una transaccion por fila del listado.
+    // Sin @Transactional a propósito: no toca la base, calcula sobre la entidad que ya
+    // trajo quien llama. Anotarlo abriría una transacción por fila del listado.
     public String motivoQueImpideCambiarPassword(Usuario u) {
         if (horasEntreCambios <= 0) {
-            return null;                              // limite desactivado por configuracion
+            return null;                              // límite desactivado por configuración
         }
         if (u.puedeCambiarPassword(LocalDateTime.now(), Duration.ofHours(horasEntreCambios))) {
             return null;
@@ -469,7 +469,7 @@ public class UsuarioService {
                 "No podés habilitarte el cambio a vos mismo. Tiene que hacerlo otro "
                 + "administrador o la institución.");
         }
-        // buscarPorId valida el tenant y responde "no encontrado" si es de otra institucion.
+        // buscarPorId valida el tenant y responde "no encontrado" si es de otra institución.
         Usuario objetivo = buscarPorId(objetivoId);
 
         objetivo.setCambioPasswordHabilitadoEn(LocalDateTime.now());

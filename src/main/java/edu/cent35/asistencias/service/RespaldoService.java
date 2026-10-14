@@ -57,8 +57,8 @@ public class RespaldoService {
             @Value("${spring.datasource.username:}") String usuario,
             @Value("${spring.datasource.password:}") String password,
             @Value("${spring.flyway.default-schema:}") String esquemaFlyway,
-            // En la instalacion apunta al mysqldump que viene con la MariaDB empaquetada. En
-            // desarrollo alcanza con que este en el PATH, o con la ruta del XAMPP.
+            // En la instalación apunta al mysqldump que viene con la MariaDB empaquetada. En
+            // desarrollo alcanza con que esté en el PATH, o con la ruta del XAMPP.
             @Value("${app.instalacion.mysqldump:mysqldump}") String mysqldump,
             @Value("${app.instalacion.respaldo-minutos:10}") int minutosDeEspera) {
         this.url = url;
@@ -84,8 +84,8 @@ public class RespaldoService {
 
         try {
             ProcessBuilder pb = new ProcessBuilder(comando);
-            // La contrasena por variable de entorno y no en la linea de comandos: los argumentos
-            // de un proceso los ve cualquiera que liste los procesos de la maquina.
+            // La contraseña por variable de entorno y no en la línea de comandos: los argumentos
+            // de un proceso los ve cualquiera que liste los procesos de la máquina.
             pb.environment().put("MYSQL_PWD", password == null ? "" : password);
             pb.redirectErrorStream(false);
             Process proceso = pb.start();
@@ -107,7 +107,7 @@ public class RespaldoService {
             }
         } catch (IOException ex) {
             borrar(destino);
-            // El caso mas comun de todos: la herramienta no esta donde dice la configuracion.
+            // El caso más común de todos: la herramienta no esta donde dice la configuración.
             throw new IllegalStateException(
                 "No se encontró la herramienta de respaldo (" + mysqldump + "). "
                 + "Revisá app.instalacion.mysqldump.", ex);
@@ -188,8 +188,8 @@ public class RespaldoService {
         }
     }
 
-    // El primer renglon del error de la herramienta. El resto suele ser ruido, y esto va a una
-    // pantalla que lee alguien de secretaria.
+    // El primer renglón del error de la herramienta. El resto suele ser ruido, y esto va a una
+    // pantalla que lee alguien de secretaría.
     private String primeraLinea(String texto) {
         if (texto == null || texto.isBlank()) return "";
         return texto.strip().lines().findFirst().orElse("").strip();

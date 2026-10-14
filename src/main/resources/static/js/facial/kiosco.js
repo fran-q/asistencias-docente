@@ -66,7 +66,7 @@
     async function encender(esReintento) {
         if (reintentoId) { clearTimeout(reintentoId); reintentoId = null; }
         try {
-            // La camara elegida para este puesto (V026), o la predeterminada.
+            // La cámara elegida para este puesto (V026), o la predeterminada.
             stream = await CamaraDelPuesto.abrir(video, { facingMode: 'user' });
             video.srcObject = stream;
             camaraSinImagen = false;
@@ -301,7 +301,7 @@
         detalleEl.textContent = '';
     }
 
-    // El canvas del recuadro tiene que medir lo mismo que el video, o el rectangulo cae
+    // El canvas del recuadro tiene que medir lo mismo que el video, o el rectángulo cae
     // corrido respecto de la cara.
     function ajustarOverlay() {
         if (overlay.width !== video.videoWidth || overlay.height !== video.videoHeight) {

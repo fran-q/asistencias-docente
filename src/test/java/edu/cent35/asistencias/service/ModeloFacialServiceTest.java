@@ -215,7 +215,7 @@ class ModeloFacialServiceTest {
         when(consentimientoService.estadoActual(DOCENTE_ID)).thenReturn(EstadoConsentimiento.ACTIVO);
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
             .thenReturn(unRostro());
-        // La primera entra; de ahi en mas todas salen demasiado parecidas a las ya aceptadas.
+        // La primera entra; de ahí en más todas salen demasiado parecidas a las ya aceptadas.
         when(calidadService.esNovedoso(any(), any())).thenReturn(false);
 
         assertThatThrownBy(() -> service.registrar(DOCENTE_ID, capturasDe(15), USUARIO_ACTUAL_ID))
@@ -273,10 +273,10 @@ class ModeloFacialServiceTest {
         int suprimidos = service.suprimirDatosBiometricos(DOCENTE_ID, USUARIO_ACTUAL_ID);
 
         assertThat(suprimidos).isEqualTo(2);
-        // Borrado fisico: deleteAll, NO baja logica (save nunca se llama).
+        // Borrado físico: deleteAll, NO baja lógica (save nunca se llama).
         verify(modeloFacialRepository).deleteAll(List.of(activo, historico));
         verify(modeloFacialRepository, never()).save(any());
-        // Defensa en profundidad: el cache en memoria tambien se evicta.
+        // Defensa en profundidad: el cache en memoria también se evicta.
         verify(identificacionFacialService).evictarModelo(10L);
         verify(identificacionFacialService).evictarModelo(9L);
     }
@@ -347,8 +347,8 @@ class ModeloFacialServiceTest {
         return List.of(arr);
     }
 
-    // Stub de RostroExtraido con un Mat vacio. El servicio no inspecciona la imagen.
-    // Extraccion con un unico rostro utilizable, que es el caso normal.
+    // Stub de RostroExtraido con un Mat vacío. El servicio no inspecciona la imagen.
+    // Extracción con un único rostro utilizable, que es el caso normal.
     private DeteccionRostroService.Extraccion unRostro() {
         return new DeteccionRostroService.Extraccion(1,
             new DeteccionRostroService.RostroExtraido(
@@ -362,12 +362,12 @@ class ModeloFacialServiceTest {
                 new Mat(), 0, 0, 200, 200, medicion(false, motivo)));
     }
 
-    // Extraccion sin ningun rostro en el cuadro.
+    // Extracción sin ningún rostro en el cuadro.
     private DeteccionRostroService.Extraccion sinRostro() {
         return new DeteccionRostroService.Extraccion(0, null);
     }
 
-    // Extraccion descartada porque habia mas de una persona en cuadro.
+    // Extracción descartada porque había más de una persona en cuadro.
     private DeteccionRostroService.Extraccion variasPersonas(int cuantas) {
         return new DeteccionRostroService.Extraccion(cuantas, null);
     }

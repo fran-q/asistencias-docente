@@ -52,13 +52,13 @@ import java.util.List;
 public class CicloLectivoController {
 
     // Activar y cerrar se disparan desde el listado o desde el detalle, y cada uno vuelve a
-    // donde estaba. Se acepta solo esta palabra y no una direccion: un parametro que fuera una
-    // URL seria una redireccion abierta.
+    // donde estaba. Se acepta solo esta palabra y no una dirección: un parámetro que fuera una
+    // URL sería una redirección abierta.
     private static final String VOLVER_AL_DETALLE = "detalle";
 
     private final CicloLectivoService service;
 
-    // Listado con sus periodos: los ciclos son pocos --uno por ano--, asi que entran todos en
+    // Listado con sus períodos: los ciclos son pocos --uno por año--, así que entran todos en
     // una pantalla. Lo que cuelga de cada uno se ve en su detalle.
     @GetMapping
     public String listar(Model model) {
@@ -82,7 +82,7 @@ public class CicloLectivoController {
         return "academico/ciclo-detalle";
     }
 
-    // El alta, en su propia pantalla. Propone el ano que viene, que es el que se abre casi
+    // El alta, en su propia pantalla. Propone el año que viene, que es el que se abre casi
     // siempre: el en curso ya tiene su ciclo desde marzo.
     @GetMapping("/nuevo")
     public String formNuevo(Model model) {
@@ -122,13 +122,13 @@ public class CicloLectivoController {
             return "redirect:/ciclos";
         } catch (IllegalArgumentException ex) {
             model.addAttribute("error", ex.getMessage());
-            // El ano ya tenia ciclo: la pantalla ofrece entrar a ese, que es donde se suman
-            // periodos. Casi siempre era eso lo que se queria.
+            // El año ya tenía ciclo: la pantalla ofrece entrar a ese, que es donde se suman
+            // períodos. Casi siempre era eso lo que se quería.
             if (ex instanceof CicloLectivoService.CicloDelAnioExistente yaExiste) {
                 model.addAttribute("cicloExistenteId", yaExiste.getCicloId());
             }
-            // Vuelve todo lo que se habia cargado, tambien las filas sin nombre: con una
-            // redireccion se perdia, y habia que volver a repartir los periodos a mano.
+            // Vuelve todo lo que se había cargado, también las filas sin nombre: con una
+            // redirección se perdía, y había que volver a repartir los períodos a mano.
             model.addAttribute("anio", anio);
             model.addAttribute("fechaInicio", fechaInicio);
             model.addAttribute("fechaFin", fechaFin);
@@ -137,7 +137,7 @@ public class CicloLectivoController {
         }
     }
 
-    // Corrige el ano y las fechas. El ano llega solo si el ciclo esta en preparacion: en otro
+    // Corrige el año y las fechas. El año llega solo si el ciclo está en preparación: en otro
     // estado el campo va deshabilitado, el navegador no lo manda, y queda el que estaba.
     @PostMapping("/{id}/datos")
     public String actualizar(@PathVariable Long id,
@@ -156,7 +156,7 @@ public class CicloLectivoController {
         return alDetalle(id);
     }
 
-    // Suma un periodo al ciclo. El mensaje no repite el nombre: ya se ve en la lista.
+    // Suma un período al ciclo. El mensaje no repite el nombre: ya se ve en la lista.
     @PostMapping("/{id}/periodos")
     public String agregarPeriodo(@PathVariable Long id,
                                  @RequestParam(required = false) String nombre,
@@ -174,7 +174,7 @@ public class CicloLectivoController {
         return alDetalle(id);
     }
 
-    // Renombra un periodo o le cambia las fechas.
+    // Renombra un período o le cambia las fechas.
     @PostMapping("/{id}/periodos/{periodoId}")
     public String editarPeriodo(@PathVariable Long id,
                                 @PathVariable Long periodoId,
@@ -193,7 +193,7 @@ public class CicloLectivoController {
         return alDetalle(id);
     }
 
-    // Quita un periodo sin comisiones. Borrado fisico: ver CicloLectivoService.quitarPeriodo.
+    // Quita un período sin comisiones. Borrado físico: ver CicloLectivoService.quitarPeriodo.
     @PostMapping("/{id}/periodos/{periodoId}/quitar")
     public String quitarPeriodo(@PathVariable Long id,
                                 @PathVariable Long periodoId,
@@ -239,7 +239,7 @@ public class CicloLectivoController {
         return volverA(id, volver);
     }
 
-    // Reabre el ultimo ciclo cerrado. Queda en preparacion: activarlo es un paso aparte.
+    // Reabre el último ciclo cerrado. Queda en preparación: activarlo es un paso aparte.
     @PostMapping("/{id}/reabrir")
     public String reabrir(@PathVariable Long id,
                           @AuthenticationPrincipal UsuarioAutenticado principal,
@@ -298,7 +298,7 @@ public class CicloLectivoController {
         return "redirect:/ciclos";
     }
 
-    // Un ciclo o un periodo de otra institucion responde "no encontrado" y vuelve al listado,
+    // Un ciclo o un período de otra institución responde "no encontrado" y vuelve al listado,
     // sin pantalla de error: el mensaje ya dice todo lo que hay que decir.
     @ExceptionHandler(EntityNotFoundException.class)
     public String noEncontrado(EntityNotFoundException ex, RedirectAttributes redirect) {
@@ -314,8 +314,8 @@ public class CicloLectivoController {
         return VOLVER_AL_DETALLE.equals(volver) ? alDetalle(id) : "redirect:/ciclos";
     }
 
-    // Junta las tres listas paralelas del formulario en filas, cortando por la mas corta. Son
-    // todas, con nombre o sin el: si el alta se rechaza, la pantalla las vuelve a mostrar.
+    // Junta las tres listas paralelas del formulario en filas, cortando por la más corta. Son
+    // todas, con nombre o sin él: si el alta se rechaza, la pantalla las vuelve a mostrar.
     private List<PeriodoLectivo> filasDelFormulario(List<String> nombres, List<LocalDate> inicios,
                                                     List<LocalDate> fines) {
         List<PeriodoLectivo> filas = new ArrayList<>();
@@ -334,7 +334,7 @@ public class CicloLectivoController {
         return filas;
     }
 
-    // Los periodos que se crean: una fila vacia del formulario no es un periodo.
+    // Los períodos que se crean: una fila vacía del formulario no es un período.
     private static List<PeriodoLectivo> conNombre(List<PeriodoLectivo> filas) {
         return filas.stream().filter(p -> !p.getNombre().isEmpty()).toList();
     }
