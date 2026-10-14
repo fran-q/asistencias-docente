@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Comision;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;

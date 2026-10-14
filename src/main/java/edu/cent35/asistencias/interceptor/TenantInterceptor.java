@@ -1,7 +1,6 @@
 package edu.cent35.asistencias.interceptor;
+
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.servlet.http.HttpServletRequest;

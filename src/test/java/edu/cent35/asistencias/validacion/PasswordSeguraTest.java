@@ -1,6 +1,9 @@
 package edu.cent35.asistencias.validacion;
 
-import edu.cent35.asistencias.dto.*;
+import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
+import edu.cent35.asistencias.dto.CambioPasswordFormDto;
+import edu.cent35.asistencias.dto.RecuperacionCompletarFormDto;
+import edu.cent35.asistencias.dto.UsuarioCreateFormDto;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -111,7 +114,7 @@ class PasswordSeguraTest {
 
         // Cambio desde Mi cuenta: es el que pedia 10 caracteres y ahora pide lo mismo
         // que los demas. Con 9 tiene que pasar.
-        CambioPasswordDto cambio = new CambioPasswordDto();
+        CambioPasswordFormDto cambio = new CambioPasswordFormDto();
         cambio.setNuevaPassword(valida);
         cambio.setConfirmacion(valida);
         assertThat(erroresDeCampo(cambio, "nuevaPassword"))
@@ -132,8 +135,8 @@ class PasswordSeguraTest {
     //  helpers
     // ========================================================================
 
-    private Set<ConstraintViolation<CambioPasswordDto>> violacionesDe(String password) {
-        CambioPasswordDto dto = new CambioPasswordDto();
+    private Set<ConstraintViolation<CambioPasswordFormDto>> violacionesDe(String password) {
+        CambioPasswordFormDto dto = new CambioPasswordFormDto();
         dto.setNuevaPassword(password);
         dto.setConfirmacion(password);
         return validator.validateProperty(dto, "nuevaPassword").stream()

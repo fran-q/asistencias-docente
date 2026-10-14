@@ -1,8 +1,9 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
-import edu.cent35.asistencias.model.EstadoConsentimiento;
 import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoConsentimiento;
+import edu.cent35.asistencias.model.Persona;
+
 import lombok.Builder;
 import lombok.Value;
 

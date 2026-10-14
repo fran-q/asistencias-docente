@@ -1,9 +1,9 @@
 package edu.cent35.asistencias.controller;
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
+
+import edu.cent35.asistencias.dto.GrillaSemanalDto;
+import edu.cent35.asistencias.model.Carrera;
 
 import edu.cent35.asistencias.service.GrillaService;
-import edu.cent35.asistencias.model.Carrera;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

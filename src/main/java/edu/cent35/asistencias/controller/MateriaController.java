@@ -1,11 +1,14 @@
 package edu.cent35.asistencias.controller;
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
+
+import edu.cent35.asistencias.dto.MateriaFormDto;
+import edu.cent35.asistencias.dto.MateriaListItemDto;
+import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.model.Comision;
+import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.Horario;
+import edu.cent35.asistencias.model.Materia;
 
 import edu.cent35.asistencias.service.MateriaService;
-import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.Materia;
-import edu.cent35.asistencias.model.Docente;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

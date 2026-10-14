@@ -1,12 +1,11 @@
 package edu.cent35.asistencias.service;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Horario;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
+
 import edu.cent35.asistencias.config.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

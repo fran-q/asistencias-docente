@@ -1,6 +1,4 @@
 package edu.cent35.asistencias.config;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;

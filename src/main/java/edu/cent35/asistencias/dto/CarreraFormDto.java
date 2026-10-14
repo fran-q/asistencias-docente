@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Carrera;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

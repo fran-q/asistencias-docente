@@ -1,9 +1,8 @@
 package edu.cent35.asistencias.seguridad;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

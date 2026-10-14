@@ -1,11 +1,10 @@
 package edu.cent35.asistencias.config;
+
 import edu.cent35.asistencias.interceptor.InstalacionInterceptor;
 import edu.cent35.asistencias.interceptor.VerificacionInterceptor;
 import edu.cent35.asistencias.interceptor.KioscoTenantInterceptor;
 import edu.cent35.asistencias.interceptor.PuestoCapturaInterceptor;
 import edu.cent35.asistencias.interceptor.SesionPorConfirmarInterceptor;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.interceptor.TenantInterceptor;
 import lombok.RequiredArgsConstructor;

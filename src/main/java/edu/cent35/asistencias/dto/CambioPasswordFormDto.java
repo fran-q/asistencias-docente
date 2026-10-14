@@ -17,7 +17,7 @@ import lombok.Data;
  * saber qué se escribió.
  */
 @Data
-public class CambioPasswordDto {
+public class CambioPasswordFormDto {
 
     @NotBlank(message = "La nueva contraseña es obligatoria")
     @PasswordSegura

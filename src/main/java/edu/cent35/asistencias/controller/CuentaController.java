@@ -17,7 +17,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import edu.cent35.asistencias.dto.CambioPasswordDto;
+import edu.cent35.asistencias.dto.CambioPasswordFormDto;
 import edu.cent35.asistencias.service.UsuarioService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import jakarta.servlet.http.HttpSession;
@@ -54,7 +54,7 @@ public class CuentaController {
             model.addAttribute("form", new CodigoFormDto());
         }
         if (!model.containsAttribute("formPassword")) {
-            model.addAttribute("formPassword", new CambioPasswordDto());
+            model.addAttribute("formPassword", new CambioPasswordFormDto());
         }
         return "cuenta/mi-cuenta";
     }
@@ -204,7 +204,7 @@ public class CuentaController {
     // Paso 3: fija la contrasena nueva. Sin la autorizacion del paso 2 no hace nada.
     @PostMapping("/password")
     public String cambiarPassword(@AuthenticationPrincipal UsuarioAutenticado principal,
-                                  @Valid @ModelAttribute("formPassword") CambioPasswordDto form,
+                                  @Valid @ModelAttribute("formPassword") CambioPasswordFormDto form,
                                   BindingResult binding,
                                   HttpSession sesion,
                                   RedirectAttributes redirect) {

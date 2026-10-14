@@ -2,15 +2,16 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.ModalidadInstalacion;
 import edu.cent35.asistencias.dto.InstantaneaIdentidad;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
-
-import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.model.NombrePropio;
+import edu.cent35.asistencias.model.Persona;
 import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.RolCodigo;
 import edu.cent35.asistencias.model.Usuario;
+import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+
+import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.validacion.UsuarioValidoValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

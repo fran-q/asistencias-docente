@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Horario;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

@@ -1,14 +1,17 @@
 package edu.cent35.asistencias.service;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.Comision;
+import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.Materia;
+import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.repository.ComisionRepository;
+import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
+import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
+
 import edu.cent35.asistencias.config.TenantContext;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.AfterEach;

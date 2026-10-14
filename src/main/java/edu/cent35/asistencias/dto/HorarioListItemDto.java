@@ -1,8 +1,8 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.DiaSemana;
 import edu.cent35.asistencias.model.Horario;
+
 import lombok.Builder;
 import lombok.Value;
 

@@ -1,7 +1,8 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.Persona;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

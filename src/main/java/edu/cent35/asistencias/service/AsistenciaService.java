@@ -33,7 +33,6 @@ import edu.cent35.asistencias.dto.AsistenciaListItemDto;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -539,10 +538,6 @@ public class AsistenciaService {
         }
         return d;
     }
-
-    // Reloj inyectable para futuros tests (Clock.systemDefaultZone() por default).
-    @SuppressWarnings("unused")
-    private Clock clock = Clock.systemDefaultZone();
 
     // Formato de fecha para los mensajes que ve el usuario (dd/MM/yyyy).
     private static final DateTimeFormatter FORMATO_FECHA =

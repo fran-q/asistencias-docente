@@ -1,13 +1,12 @@
 package edu.cent35.asistencias.service;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
+import edu.cent35.asistencias.repository.MateriaRepository;
+
 import edu.cent35.asistencias.config.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

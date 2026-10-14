@@ -1,6 +1,4 @@
 package edu.cent35.asistencias.service;
-import edu.cent35.asistencias.model.*;
-import edu.cent35.asistencias.repository.*;
 
 /**
  * Texto legal del consentimiento informado para tratar datos biométricos del docente, según

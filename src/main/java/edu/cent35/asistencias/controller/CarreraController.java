@@ -1,9 +1,11 @@
 package edu.cent35.asistencias.controller;
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
+
+import edu.cent35.asistencias.dto.CarreraFormDto;
+import edu.cent35.asistencias.dto.CarreraListItemDto;
+import edu.cent35.asistencias.model.Carrera;
+import edu.cent35.asistencias.model.Materia;
 
 import edu.cent35.asistencias.service.CarreraService;
-import edu.cent35.asistencias.model.Carrera;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

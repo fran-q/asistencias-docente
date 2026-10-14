@@ -1,13 +1,14 @@
 package edu.cent35.asistencias.controller;
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
+
+import edu.cent35.asistencias.dto.ConsentimientoOtorgarFormDto;
+import edu.cent35.asistencias.dto.ConsentimientoRevocarFormDto;
+import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoConsentimiento;
+import edu.cent35.asistencias.model.MetodoConsentimiento;
 
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
 import edu.cent35.asistencias.service.TextoConsentimiento;
-import edu.cent35.asistencias.model.EstadoConsentimiento;
-import edu.cent35.asistencias.model.MetodoConsentimiento;
-import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;

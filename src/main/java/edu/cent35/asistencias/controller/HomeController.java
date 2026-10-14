@@ -1,6 +1,4 @@
 package edu.cent35.asistencias.controller;
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
 
 import edu.cent35.asistencias.service.PanelInicioService;
 import jakarta.servlet.http.HttpServletRequest;

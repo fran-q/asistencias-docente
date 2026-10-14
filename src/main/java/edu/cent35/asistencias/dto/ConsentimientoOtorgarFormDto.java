@@ -1,5 +1,4 @@
 package edu.cent35.asistencias.dto;
-import edu.cent35.asistencias.model.*;
 
 import jakarta.validation.constraints.AssertTrue;
 import lombok.AllArgsConstructor;

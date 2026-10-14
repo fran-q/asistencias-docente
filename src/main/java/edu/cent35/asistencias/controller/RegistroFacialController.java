@@ -1,7 +1,10 @@
 package edu.cent35.asistencias.controller;
 
-import edu.cent35.asistencias.dto.*;
-import edu.cent35.asistencias.model.*;
+import edu.cent35.asistencias.dto.RegistroFacialDto;
+import edu.cent35.asistencias.dto.RegistroFacialResultadoDto;
+import edu.cent35.asistencias.model.Docente;
+import edu.cent35.asistencias.model.EstadoConsentimiento;
+import edu.cent35.asistencias.model.EtapaCaptura;
 import edu.cent35.asistencias.service.ConsentimientoBiometricoService;
 import edu.cent35.asistencias.service.DocenteService;
 import edu.cent35.asistencias.service.ModeloFacialService;
