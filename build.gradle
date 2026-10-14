@@ -1,5 +1,6 @@
 plugins {
 	id 'java'
+	id 'checkstyle'
 	id 'org.springframework.boot' version '3.5.14'
 	id 'io.spring.dependency-management' version '1.1.7'
 	// Hace efectiva la propiedad javacpp.platform de gradle.properties: sin el, opencv-platform
@@ -96,6 +97,17 @@ tasks.register('integrationTest', Test) {
 // inactivo en silencio y 107 tests en verde no lo detectaron.
 tasks.named('check') {
 	dependsOn tasks.named('integrationTest')
+}
+
+// Checkstyle con reglas mínimas: solo las que fijan una convención que el código ya cumple
+// (imports explícitos, sin tabuladores, inyección por constructor, el logger y no la
+// consola). No es un formateador: reformatear todo a esta altura sería un diff imposible de
+// revisar. Cuelga de check, así que corre con build y en el CI. Las reglas y sus excepciones,
+// en config/checkstyle/.
+// 10.x y no la que trae Gradle por defecto (9.3), que no entiende la sintaxis de Java 21.
+checkstyle {
+	toolVersion = '10.21.4'
+	maxWarnings = 0
 }
 
 // Al correr ./gradlew bootRun activa automaticamente el perfil "local"

@@ -2,7 +2,6 @@ package edu.cent35.asistencias.dto;
 
 import edu.cent35.asistencias.validacion.PasswordSegura;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**

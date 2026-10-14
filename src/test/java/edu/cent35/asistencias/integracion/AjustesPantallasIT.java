@@ -4,7 +4,6 @@ import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;

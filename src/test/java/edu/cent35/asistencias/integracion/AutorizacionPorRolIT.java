@@ -1,8 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
-import edu.cent35.asistencias.interceptor.VerificacionInterceptor;
-import edu.cent35.asistencias.interceptor.TenantInterceptor;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.model.Institucion;

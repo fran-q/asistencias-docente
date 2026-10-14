@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.mockito.ArgumentCaptor;
 
 import java.time.LocalDateTime;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.assertj.core.api.Assertions.assertThat;

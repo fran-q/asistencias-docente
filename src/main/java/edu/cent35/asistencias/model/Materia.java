@@ -1,7 +1,5 @@
 package edu.cent35.asistencias.model;
 
-import edu.cent35.asistencias.model.Docente;
-import edu.cent35.asistencias.model.BaseTenantEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

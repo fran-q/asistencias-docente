@@ -1,6 +1,5 @@
 package edu.cent35.asistencias.service;
 
-import edu.cent35.asistencias.model.Persona;
 import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.dto.AltaInstitucionFormDto;
 import edu.cent35.asistencias.dto.AltaPendiente;

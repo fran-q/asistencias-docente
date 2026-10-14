@@ -10,9 +10,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class AsistenciasApplication {
 
-	// Levanta el contexto de Spring y el servidor embebido.
-	public static void main(String[] args) {
-		SpringApplication.run(AsistenciasApplication.class, args);
-	}
+    // Levanta el contexto de Spring y el servidor embebido.
+    public static void main(String[] args) {
+        SpringApplication.run(AsistenciasApplication.class, args);
+    }
 
 }

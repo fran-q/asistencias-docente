@@ -6,7 +6,6 @@ import edu.cent35.asistencias.model.Horario;
 import lombok.Builder;
 import lombok.Value;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**

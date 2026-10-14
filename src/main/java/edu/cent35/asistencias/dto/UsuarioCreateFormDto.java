@@ -1,12 +1,9 @@
 package edu.cent35.asistencias.dto;
 
-import edu.cent35.asistencias.model.RolCodigo;
-
 import edu.cent35.asistencias.validacion.PasswordSegura;
 import edu.cent35.asistencias.validacion.UsuarioValido;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.9 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.10 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -69,6 +69,14 @@ clase de esos paquetes. El `.editorconfig` le dice a IntelliJ que no los arme so
 
 `.gitattributes` guarda todo el texto con LF, venga de Windows, Mac o Linux, y marca los
 binarios para que git no intente compararlos.
+
+**Checkstyle vigila lo que el código ya cumple**, con reglas mínimas: imports explícitos y
+sin restos (sin usar, redundantes), espacios y no tabuladores, el salto del último renglón,
+`@Autowired` solo en los tests, el logger y no `System.out`, y tres errores que compilan
+(`equals` sin `hashCode`, `==` entre strings, `;` sueltos). Corre con `./gradlew build` y
+en el CI. No es un formateador, a propósito: reformatear todo ahora sería un diff que nadie
+puede revisar. Las reglas y sus excepciones, cada una con su motivo, están en
+`config/checkstyle/`; una excepción nueva va ahí, no apagando la regla.
 
 ## Comentarios
 

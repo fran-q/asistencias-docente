@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Checkstyle de Visum: reglas mínimas, a propósito.
+
+  Cada regla fija una convención que el código ya cumple (contexto/04-convenciones.md), para
+  que no se pierda sin que nadie lo note. No hay reglas de estilo que obliguen a reformatear:
+  a esta altura sería un diff de miles de líneas imposible de revisar.
+
+  Corre con ./gradlew build (checkstyleMain y checkstyleTest cuelgan de check), así que el CI
+  la aplica en cada push. Si una regla molesta en un caso legítimo, la excepción va en
+  suppressions.xml, con su motivo.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java"/>
+
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/suppressions.xml"/>
+    </module>
+
+    <!-- Espacios y no tabuladores, y el salto del último renglón: lo mismo que .editorconfig. -->
+    <module name="FileTabCharacter"/>
+    <module name="NewlineAtEndOfFile">
+        <property name="lineSeparator" value="lf_cr_crlf"/>
+    </module>
+    <module name="RegexpSingleline">
+        <property name="id" value="espacioAlFinal"/>
+        <property name="format" value="\s+$"/>
+        <property name="message" value="Espacio al final del renglón."/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Imports explícitos (04-convenciones, Formato): se ve de dónde sale cada tipo. -->
+        <module name="AvoidStarImport"/>
+        <module name="UnusedImports">
+            <property name="processJavadoc" value="true"/>
+        </module>
+        <module name="RedundantImport"/>
+        <module name="IllegalImport"/>
+
+        <!-- Dependencias por constructor (04-convenciones, Servicios). Los tests inyectan por
+             campo y está bien: esa excepción está en suppressions.xml. -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="inyeccionPorCampo"/>
+            <property name="format" value="^\s*@Autowired\b"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message"
+                      value="Sin @Autowired: las dependencias van por constructor (@RequiredArgsConstructor)."/>
+        </module>
+
+        <!-- Lo que sale por consola se pierde: el logger le pone hora, nivel y clase. -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="consolaEnVezDeLogger"/>
+            <property name="format" value="System\.(out|err)\.|\.printStackTrace\("/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Usá el logger (@Slf4j), no System.out ni printStackTrace."/>
+        </module>
+
+        <!-- Errores que compilan y no deberían. -->
+        <module name="EqualsHashCode"/>
+        <module name="StringLiteralEquality"/>
+        <module name="EmptyStatement"/>
+    </module>
+</module>

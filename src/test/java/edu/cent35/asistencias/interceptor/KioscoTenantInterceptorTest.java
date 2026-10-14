@@ -1,7 +1,6 @@
 package edu.cent35.asistencias.interceptor;
 
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.PuestoCaptura;
 import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;

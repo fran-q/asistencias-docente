@@ -1,8 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
-import edu.cent35.asistencias.interceptor.TenantInterceptor;
-import edu.cent35.asistencias.config.TenantFilterAspect;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
@@ -38,7 +36,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**

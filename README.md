@@ -86,7 +86,7 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 |---|---|
 | `./gradlew test` | Los unitarios. Corren en segundos y no necesitan MariaDB |
 | `./gradlew integrationTest` | Los de integración (`src/test/java/.../integracion/`), que levantan la aplicación entera |
-| `./gradlew build` | Las dos cosas. Es lo que corre el CI en cada push y en cada pull request |
+| `./gradlew build` | Las dos cosas, más Checkstyle (`config/checkstyle/`). Es lo que corre el CI en cada push y en cada pull request |
 
 `MigracionesIT` aplica las migraciones contra un MariaDB real y se saltea si no hay uno en
 `localhost:3306`.

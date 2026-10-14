@@ -8,7 +8,6 @@ import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.model.DiaNoLaborable;

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!-- Las excepciones a checkstyle.xml, cada una con su motivo. -->
+<suppressions>
+    <!-- Los tests inyectan por campo: Spring arma la clase y no hay constructor que escribir. -->
+    <suppress id="inyeccionPorCampo" files="[\\/]src[\\/]test[\\/]"/>
+
+    <!-- La consola de desarrollo imprime el código en un recuadro ASCII por System.out a
+         propósito: el prefijo del logger y su codificación lo romperían (ver la clase). -->
+    <suppress id="consolaEnVezDeLogger" files="CanalConsola\.java$"/>
+</suppressions>
