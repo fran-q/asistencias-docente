@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -73,9 +72,7 @@ class SesionUnicaIT {
 
         // Administrador y no institución: la cuenta institucional no se puede dar de baja, y
         // uno de los casos de acá es justamente la baja.
-        Rol rol = rolRepository.findByCodigo("ADMIN")
-            .orElseGet(() -> rolRepository.save(
-                Rol.builder().codigo("ADMIN").descripcion("Administrador").build()));
+        Rol rol = DatosDePrueba.rol(rolRepository, "ADMIN");
 
         Usuario u = Usuario.builder()
             .persona(DatosDePrueba.persona("Ana", "Sesiones"))

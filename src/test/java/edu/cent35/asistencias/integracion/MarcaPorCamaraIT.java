@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.IdentificacionResultadoDto;
 import edu.cent35.asistencias.model.Asistencia;
@@ -11,29 +11,16 @@ import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.ConsentimientoBiometrico;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoCierre;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.MetodoConsentimiento;
 import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.PuestoCaptura;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
-import edu.cent35.asistencias.repository.HorarioRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
-import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.IdentificacionFacialService;
@@ -61,7 +48,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -100,30 +86,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 class MarcaPorCamaraIT {
 
-    private static final AtomicInteger SECUENCIA = new AtomicInteger();
-
     // Un JPEG cualquiera: la imagen no se mira, pero el data URL tiene que decodificar.
     private static final String IMAGEN = "{\"imagen\":\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==\"}";
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private EscenarioDePrueba escenario;
     @MockBean private IdentificacionFacialService identificacionService;
 
     @Autowired private PaseAsistenciaService paseService;
     @Autowired private PuestoCapturaService puestoService;
     @Autowired private PuestoCapturaRepository puestoRepository;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private ComisionRepository comisionRepository;
-    @Autowired private HorarioRepository horarioRepository;
-    @Autowired private DocenteRepository docenteRepository;
-    @Autowired private CicloLectivoRepository cicloRepository;
-    @Autowired private PeriodoLectivoRepository periodoRepository;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private ConsentimientoBiometricoRepository consentimientoRepository;
-    @Autowired private RolRepository rolRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
 
     private Long tenantId;
     private Docente docente;
@@ -154,62 +129,21 @@ class MarcaPorCamaraIT {
         relojDelPase(Clock.fixed(hoy.atTime(LA_HORA).atZone(ZoneId.systemDefault()).toInstant(),
                                  ZoneId.systemDefault()));
 
-        Institucion inst = institucionRepository.save(Institucion.builder()
-            .nombre("Instituto de la camara " + SECUENCIA.incrementAndGet())
-            .activo(true).build());
-        tenantId = inst.getId();
+        tenantId = escenario.institucion("Instituto de la camara");
         TenantContext.set(tenantId);
 
-        Rol rol = rolRepository.findByCodigo("INSTITUCION").orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo("INSTITUCION");
-            nuevo.setDescripcion("Institucion");
-            return rolRepository.save(nuevo);
-        });
-        Usuario u = Usuario.builder()
-            .username("camara." + tenantId).email("camara." + tenantId + "@test.local")
-            .passwordHash("no-se-usa").activo(true).rol(rol)
-            .emailVerificadoEn(LocalDateTime.now())
-            .build();
-        u.setInstitucionId(tenantId);
-        cuenta = usuarioRepository.save(u);
-
-        Carrera carrera = Carrera.builder()
-            .codigo("CAM-" + tenantId).nombre("Tecnicatura").duracionAnios((short) 3)
-            .activo(true).build();
-        carrera.setInstitucionId(tenantId);
-        carrera = carreraRepository.save(carrera);
-
-        Materia materia = Materia.builder()
-            .codigo("CAM1-" + tenantId).nombre("Programación I").carrera(carrera)
-            .anio((short) 1).activo(true).build();
-        materia.setInstitucionId(tenantId);
-        materia = materiaRepository.save(materia);
-
-        docente = Docente.builder()
-            .persona(DatosDePrueba.personaDelTenant(tenantId, "42" + tenantId, "Ana", "Pérez"))
-            .fechaAlta(LocalDate.of(2020, 1, 1)).activo(true).build();
-        docente.setInstitucionId(tenantId);
-        docente = docenteRepository.save(docente);
-
-        CicloLectivo ciclo = cicloRepository.save(
-            DatosDePrueba.cicloAnualDelTenant(tenantId, hoy.getYear()));
-
-        Comision comision = comisionRepository.save(Comision.builder()
-            .materia(materia).codigo("A").docenteAsignado(docente).activo(true)
-            .periodo(ciclo.getPeriodos().get(0))
-            .build());
+        cuenta = escenario.cuenta(tenantId, "INSTITUCION", "camara." + tenantId);
+        Carrera carrera = escenario.carrera(tenantId, "CAM-" + tenantId);
+        Materia materia = escenario.materia(carrera, "CAM1-" + tenantId, "Programación I");
+        docente = escenario.docente(tenantId, "42" + tenantId);
+        CicloLectivo ciclo = escenario.ciclo(tenantId, hoy.getYear());
+        Comision comision = escenario.comision(materia, ciclo, docente, "A");
 
         // La clase está en curso a LA_HORA, con lugar de sobra a los dos lados.
-        horarioRepository.save(Horario.builder()
-            .comision(comision)
-            .diaSemana((byte) hoy.getDayOfWeek().getValue())
-            .horaInicio(LA_HORA.minusMinutes(30))
-            .horaFin(LA_HORA.plusMinutes(60))
-            .toleranciaMin((short) 15).activo(true)
-            .build());
+        escenario.horario(comision, hoy.getDayOfWeek(),
+            LA_HORA.minusMinutes(30), LA_HORA.plusMinutes(60));
 
-        conConsentimientoVigente(rol);
+        conConsentimientoVigente();
 
         // El equipo autorizado, con el kiosco encendido: el pase exige lo primero y la pantalla
         // desatendida, las dos cosas.
@@ -230,23 +164,7 @@ class MarcaPorCamaraIT {
         // El servicio es un bean del contexto, que se comparte con el resto de los tests: si
         // el reloj fijo quedara puesto, los demás creerían que son las 10:30 de hoy.
         relojDelPase(Clock.systemDefaultZone());
-        if (tenantId != null) {
-            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
-            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
-            borrar(consentimientoRepository,
-                   c -> docente != null && docente.getId().equals(c.getDocente().getId()));
-            borrar(puestoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
-                .map(Comision::getId).toList();
-            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(periodoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
-        }
+        escenario.borrarTodoDe(tenantId);
         TenantContext.clear();
     }
 
@@ -371,7 +289,6 @@ class MarcaPorCamaraIT {
             .hasSize(1);
     }
 
-
     @Test
     @DisplayName("Entra por una puerta y sale por la otra: cada marca deja su equipo")
     void laSalidaPorOtraPuertaQuedaAsentada() throws Exception {
@@ -420,7 +337,7 @@ class MarcaPorCamaraIT {
             .toList();
     }
 
-    private void conConsentimientoVigente(Rol rol) {
+    private void conConsentimientoVigente() {
         ConsentimientoBiometrico c = ConsentimientoBiometrico.builder()
             .docente(docente)
             .versionTerminos("v1")
@@ -445,10 +362,5 @@ class MarcaPorCamaraIT {
         // con un ClassCastException que no tiene nada que ver con lo que se está probando.
         PaseAsistenciaService real = AopTestUtils.getTargetObject(paseService);
         ReflectionTestUtils.setField(real, "clock", reloj);
-    }
-
-    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
-                            java.util.function.Predicate<T> condicion) {
-        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
     }
 }

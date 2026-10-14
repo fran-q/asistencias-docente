@@ -1,13 +1,11 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.model.Persona;
 import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.interceptor.TenantInterceptor;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
-import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
@@ -127,10 +125,8 @@ class CorreccionesPantallasIT {
         // Los roles son un catálogo global que en producción siembra la migración V001. Acá
         // no existen: los tests corren sobre H2 con Flyway apagado y el esquema generado por
         // Hibernate, así que las tablas nacen vacías. Se crean si faltan.
-        Rol rolInst = rolRepository.findByCodigo("INSTITUCION")
-            .orElseGet(() -> rolRepository.save(Rol.builder().codigo("INSTITUCION").descripcion("Institución").build()));
-        Rol rolAdmin = rolRepository.findByCodigo("ADMIN")
-            .orElseGet(() -> rolRepository.save(Rol.builder().codigo("ADMIN").descripcion("Administrador").build()));
+        Rol rolInst = DatosDePrueba.rol(rolRepository, "INSTITUCION");
+        Rol rolAdmin = DatosDePrueba.rol(rolRepository, "ADMIN");
 
         // La cuenta institucional va SIN persona (V018): representa al establecimiento y no a
         // alguien concreto, así que su nombre para mostrar sale de la institución.

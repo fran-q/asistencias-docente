@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.7 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.8 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -324,6 +324,18 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 - **Verificación por mutación:** cuando un test cubre un bug corregido, reintroducir el
   bug y comprobar que el test efectivamente falla. Un test que pasa igual con y sin el
   bug no prueba nada.
+- **Los datos de prueba no se copian de un test a otro.** Lo que no hace al caso sale de
+  dos lugares:
+  - `DatosDePrueba`: fábricas estáticas, sin Spring (las usan también los unitarios):
+    personas, el ciclo anual, el rol buscado o creado, y `borrar(repo, condición)`.
+  - `EscenarioDePrueba`: un componente que guarda en la base la cadena de un IT
+    —institución, cuenta verificada, carrera, materia, docente, ciclo, comisión,
+    horario— con los valores de siempre, y `borrarTodoDe(tenantId)`, que borra todo lo
+    del tenant en el orden que piden las claves foráneas.
+
+  Lo que identifica al caso —códigos, DNI, horas, el estado que se prueba— se escribe a
+  la vista en cada test. Si un IT necesita algo que el escenario no arma, lo arma él y lo
+  borra él después de `borrarTodoDe`.
 - El CI corre `./gradlew build` completo sobre cada push y PR a `main`.
 
 ## Documentación

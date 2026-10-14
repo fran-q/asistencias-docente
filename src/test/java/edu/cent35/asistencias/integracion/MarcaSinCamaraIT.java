@@ -1,34 +1,21 @@
 package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.Comision;
 import edu.cent35.asistencias.model.Docente;
 import edu.cent35.asistencias.model.EstadoCierre;
-import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MotivoCargaManual;
 import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.BloquePresencia;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
-import edu.cent35.asistencias.repository.HorarioRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
-import edu.cent35.asistencias.repository.PuestoCapturaRepository;
-import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
@@ -40,15 +27,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,21 +66,11 @@ class MarcaSinCamaraIT {
     private static final AtomicInteger SECUENCIA = new AtomicInteger();
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private ComisionRepository comisionRepository;
-    @Autowired private HorarioRepository horarioRepository;
-    @Autowired private DocenteRepository docenteRepository;
-    @Autowired private CicloLectivoRepository cicloRepository;
-    @Autowired private PeriodoLectivoRepository periodoRepository;
+    @Autowired private EscenarioDePrueba escenario;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private MotivoCargaManualRepository motivoRepository;
-    @Autowired private PuestoCapturaRepository puestoRepository;
     @Autowired private PuestoCapturaService puestoService;
-    @Autowired private RolRepository rolRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
 
     private Long tenantId;
     private Docente docente;
@@ -119,36 +93,14 @@ class MarcaSinCamaraIT {
         motivoOtroId = motivoRepository.save(MotivoCargaManual.builder()
             .codigo("OTRO").descripcion("Otro motivo (detallar)").activo(true).build()).getId();
 
-        Institucion inst = institucionRepository.save(Institucion.builder()
-            .nombre("Instituto sin camara " + n).activo(true).build());
-        tenantId = inst.getId();
+        tenantId = escenario.institucion("Instituto sin camara");
         TenantContext.set(tenantId);
 
-        Carrera carrera = Carrera.builder()
-            .codigo("SC-" + tenantId).nombre("Tecnicatura").duracionAnios((short) 3)
-            .activo(true).build();
-        carrera.setInstitucionId(tenantId);
-        carrera = carreraRepository.save(carrera);
-
-        Materia materia = Materia.builder()
-            .codigo("SC1-" + tenantId).nombre("Programación I").carrera(carrera)
-            .anio((short) 1).activo(true).build();
-        materia.setInstitucionId(tenantId);
-        materia = materiaRepository.save(materia);
-
-        docente = Docente.builder()
-            .persona(DatosDePrueba.personaDelTenant(tenantId, "42" + tenantId, "Ana", "Pérez"))
-            .fechaAlta(LocalDate.of(2020, 1, 1)).activo(true).build();
-        docente.setInstitucionId(tenantId);
-        docente = docenteRepository.save(docente);
-
-        CicloLectivo ciclo = cicloRepository.save(
-            DatosDePrueba.cicloAnualDelTenant(tenantId, LocalDate.now().getYear()));
-
-        Comision comision = comisionRepository.save(Comision.builder()
-            .materia(materia).codigo("A").docenteAsignado(docente).activo(true)
-            .periodo(ciclo.getPeriodos().get(0))
-            .build());
+        Carrera carrera = escenario.carrera(tenantId, "SC-" + tenantId);
+        Materia materia = escenario.materia(carrera, "SC1-" + tenantId, "Programación I");
+        docente = escenario.docente(tenantId, "42" + tenantId);
+        CicloLectivo ciclo = escenario.ciclo(tenantId, LocalDate.now().getYear());
+        Comision comision = escenario.comision(materia, ciclo, docente, "A");
 
         // El endpoint marca con la hora del reloj, no con una que le pase el test: la clase
         // tiene que estar en curso AHORA, corra el test la hora que corra. Los topes son por
@@ -158,28 +110,12 @@ class MarcaSinCamaraIT {
         empiezaLaClase = ahora.isBefore(LocalTime.of(1, 0)) ? LocalTime.MIDNIGHT : ahora.minusHours(1);
         LocalTime termina = ahora.isAfter(LocalTime.of(22, 59)) ? LocalTime.of(23, 59) : ahora.plusHours(1);
 
-        horarioRepository.save(Horario.builder()
-            .comision(comision)
-            .diaSemana((byte) LocalDate.now().getDayOfWeek().getValue())
-            .horaInicio(empiezaLaClase).horaFin(termina)
-            .toleranciaMin((short) 15).activo(true)
-            .build());
+        escenario.horario(comision, LocalDate.now().getDayOfWeek(), empiezaLaClase, termina);
 
-        Rol rol = rolRepository.findByCodigo("ADMIN").orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo("ADMIN");
-            nuevo.setDescripcion("Administrador");
-            return rolRepository.save(nuevo);
-        });
         // El admin tiene que existir de verdad: el service lo busca por id para dejar asentado
         // quien cargó la marca. Un principal solo en memoria hace fallar el registro.
-        Usuario u = Usuario.builder()
-            .persona(DatosDePrueba.persona("Secre", "Taria"))
-            .username("sin.camara." + n).passwordHash("no-se-usa")
-            .email("sincamara" + n + "@test.local")
-            .activo(true).rol(rol).emailVerificadoEn(LocalDateTime.now()).build();
-        u.setInstitucionId(tenantId);
-        admin = usuarioRepository.save(u);
+        admin = escenario.cuenta(tenantId, "ADMIN", "sin.camara." + n,
+                                 DatosDePrueba.persona("Secre", "Taria"));
 
         delPuesto = new Cookie(CookiePuesto.NOMBRE,
             puestoService.designar(tenantId, "Secretaria PC-" + n, admin).getTokenEnClaro());
@@ -187,20 +123,8 @@ class MarcaSinCamaraIT {
 
     @AfterEach
     void limpiar() {
+        escenario.borrarTodoDe(tenantId);
         if (tenantId != null) {
-            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
-            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
-                .map(Comision::getId).toList();
-            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(periodoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(puestoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
             motivoRepository.deleteById(motivoFallaId);
             motivoRepository.deleteById(motivoOtroId);
         }
@@ -331,11 +255,5 @@ class MarcaSinCamaraIT {
         List<BloquePresencia> bloques = bloquesDelTenant();
         assertThat(bloques).hasSize(1);
         return bloques.get(0);
-    }
-
-    private <T> void borrar(CrudRepository<T, ?> repo, Predicate<T> cual) {
-        for (T fila : repo.findAll()) {
-            if (cual.test(fila)) repo.delete(fila);
-        }
     }
 }

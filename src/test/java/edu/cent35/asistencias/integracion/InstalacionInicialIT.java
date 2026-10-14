@@ -1,7 +1,7 @@
 package edu.cent35.asistencias.integracion;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.RolCodigo;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
@@ -66,12 +66,8 @@ class InstalacionInicialIT {
         // El perfil de test corre con Flyway apagado y el esquema generado por Hibernate, así
         // que la semilla de roles de V001 no existe. Sin el rol INSTITUCION el asistente falla
         // con el mismo error que una base a medio migrar, que no es lo que se está probando.
-        rolRepository.findByCodigo(RolCodigo.INSTITUCION.name())
-            .orElseGet(() -> rolRepository.save(
-                Rol.builder().codigo(RolCodigo.INSTITUCION.name()).descripcion("Institución").build()));
-        rolRepository.findByCodigo(RolCodigo.ADMIN.name())
-            .orElseGet(() -> rolRepository.save(
-                Rol.builder().codigo(RolCodigo.ADMIN.name()).descripcion("Administrador").build()));
+        DatosDePrueba.rol(rolRepository, RolCodigo.INSTITUCION.name());
+        DatosDePrueba.rol(rolRepository, RolCodigo.ADMIN.name());
     }
 
     @Test
@@ -177,7 +173,6 @@ class InstalacionInicialIT {
 
         mvc.perform(get("/alta-institucion")).andExpect(status().isNotFound());
     }
-
 
     @Test
     @DisplayName("una cuenta creada desde adentro nace verificada: no hay correo que verificar")

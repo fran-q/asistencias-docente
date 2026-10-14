@@ -1,24 +1,14 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.Comision;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.PeriodoLectivo;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
-import edu.cent35.asistencias.repository.PuestoCapturaRepository;
-import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import org.junit.jupiter.api.AfterEach;
@@ -32,8 +22,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,16 +50,9 @@ class ComodidadesDeCargaIT {
     private static final AtomicInteger SECUENCIA = new AtomicInteger();
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
+    @Autowired private EscenarioDePrueba escenario;
     @Autowired private ComisionRepository comisionRepository;
-    @Autowired private CicloLectivoRepository cicloRepository;
-    @Autowired private PeriodoLectivoRepository periodoRepository;
-    @Autowired private PuestoCapturaRepository puestoRepository;
     @Autowired private PuestoCapturaService puestoService;
-    @Autowired private RolRepository rolRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
 
     private Long tenantA;
     private Long tenantB;
@@ -96,20 +77,8 @@ class ComodidadesDeCargaIT {
 
     @AfterEach
     void limpiar() {
-        for (Long t : List.of(tenantA, tenantB)) {
-            if (t == null) continue;
-            TenantContext.set(t);
-            final Long tenant = t;
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenant).stream()
-                .map(Comision::getId).toList();
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(puestoRepository, p -> tenant.equals(p.getInstitucionId()));
-            borrar(periodoRepository, p -> tenant.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenant.equals(c.getInstitucionId()));
-            borrar(materiaRepository, m -> tenant.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenant.equals(c.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenant.equals(u.getInstitucionId()));
-        }
+        escenario.borrarTodoDe(tenantA);
+        escenario.borrarTodoDe(tenantB);
         TenantContext.clear();
     }
 
@@ -253,48 +222,21 @@ class ComodidadesDeCargaIT {
     }
 
     private Long crearInstitucion() {
-        Institucion i = institucionRepository.save(Institucion.builder()
-            .nombre("Instituto comodidad " + SECUENCIA.incrementAndGet()).activo(true).build());
-        return i.getId();
+        return escenario.institucion("Instituto comodidad");
     }
 
     private Usuario crearCuenta(Long tenant, String codigoRol) {
-        Rol rol = rolRepository.findByCodigo(codigoRol).orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo(codigoRol);
-            nuevo.setDescripcion(codigoRol);
-            return rolRepository.save(nuevo);
-        });
-        Usuario u = Usuario.builder()
-            .username(codigoRol.toLowerCase() + "." + tenant + "." + SECUENCIA.incrementAndGet())
-            .email("c" + tenant + "." + SECUENCIA.get() + "@test.local")
-            .passwordHash("no-se-usa").activo(true).rol(rol)
-            .emailVerificadoEn(LocalDateTime.now())
-            .build();
-        u.setInstitucionId(tenant);
-        return usuarioRepository.save(u);
+        return escenario.cuenta(tenant, codigoRol,
+            codigoRol.toLowerCase() + "." + tenant + "." + SECUENCIA.incrementAndGet());
     }
 
     private Materia crearMateria(Long tenant) {
-        Carrera carrera = Carrera.builder()
-            .codigo("COM-" + tenant + "-" + SECUENCIA.incrementAndGet()).nombre("Tecnicatura")
-            .duracionAnios((short) 3).activo(true).build();
-        carrera.setInstitucionId(tenant);
-        carrera = carreraRepository.save(carrera);
-
-        Materia m = Materia.builder()
-            .codigo("COM1-" + tenant + "-" + SECUENCIA.get()).nombre("Programación I")
-            .carrera(carrera).anio((short) 1).activo(true).build();
-        m.setInstitucionId(tenant);
-        return materiaRepository.save(m);
+        int n = SECUENCIA.incrementAndGet();
+        Carrera carrera = escenario.carrera(tenant, "COM-" + tenant + "-" + n);
+        return escenario.materia(carrera, "COM1-" + tenant + "-" + n, "Programación I");
     }
 
     private CicloLectivo crearCiclo(Long tenant) {
-        return cicloRepository.save(DatosDePrueba.cicloAnualDelTenant(tenant, LocalDate.now().getYear()));
-    }
-
-    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
-                            java.util.function.Predicate<T> condicion) {
-        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
+        return escenario.ciclo(tenant, LocalDate.now().getYear());
     }
 }

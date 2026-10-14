@@ -110,12 +110,7 @@ class CierreManualBloqueIT {
         // asentado quien cerró, y un principal solo en memoria hace fallar el cierre con
         // "usuario no encontrado" — que el ExceptionHandler convierte en un redirect y
         // disimula el problema.
-        Rol rol = rolRepository.findByCodigo("ADMIN").orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo("ADMIN");
-            nuevo.setDescripcion("Administrador");
-            return rolRepository.save(nuevo);
-        });
+        Rol rol = DatosDePrueba.rol(rolRepository, "ADMIN");
         Usuario u = Usuario.builder()
             .persona(DatosDePrueba.persona("Test", "Cierre"))
             .username("test.cierre." + SECUENCIA.get()).passwordHash("test-clave-dev")

@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
+import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Rol;
@@ -63,9 +64,7 @@ class ClaveRecuperacionIT {
         usuarioRepository.deleteAll();
         institucionRepository.deleteAll();
         ReflectionTestUtils.setField(instalacion, "yaHayInstitucion", false);
-        rolRepository.findByCodigo(RolCodigo.INSTITUCION.name())
-            .orElseGet(() -> rolRepository.save(
-                Rol.builder().codigo(RolCodigo.INSTITUCION.name()).descripcion("Institución").build()));
+        DatosDePrueba.rol(rolRepository, RolCodigo.INSTITUCION.name());
     }
 
     @Test

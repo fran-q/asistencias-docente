@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Carrera;
 import edu.cent35.asistencias.model.CicloLectivo;
@@ -14,16 +14,10 @@ import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.model.DiaNoLaborable;
 import edu.cent35.asistencias.model.TipoDiaNoLaborable;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
-import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.BloquePresenciaRepository;
-import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.model.ConsentimientoBiometrico;
 import edu.cent35.asistencias.model.MetodoConsentimiento;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
@@ -78,12 +72,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CiclosLectivosIT {
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
+    @Autowired private EscenarioDePrueba escenario;
     @Autowired private ComisionRepository comisionRepository;
     @Autowired private HorarioRepository horarioRepository;
-    @Autowired private DocenteRepository docenteRepository;
     @Autowired private CicloLectivoRepository cicloRepository;
     @Autowired private AsistenciaRepository asistenciaRepository;
 
@@ -92,8 +83,6 @@ class CiclosLectivosIT {
     @Autowired private GeneradorAusenciasService generador;
     @Autowired private BloquePresenciaService bloqueService;
     @Autowired private ConsentimientoBiometricoRepository consentimientoRepository;
-    @Autowired private BloquePresenciaRepository bloqueRepository;
-    @Autowired private DiaNoLaborableRepository diaRepository;
     @Autowired private PeriodoLectivoRepository periodoLectivoRepository;
     @Autowired private RolRepository rolRepository;
     @Autowired private UsuarioRepository usuarioRepository;
@@ -113,31 +102,12 @@ class CiclosLectivosIT {
 
     @BeforeEach
     void sembrar() {
-        // El nombre de institución es único y estos tests no se limpian entre métodos: sin el
-        // sufijo, el segundo choca contra el UNIQUE antes de llegar a lo que quiere probar.
-        Institucion inst = institucionRepository.save(
-            Institucion.builder()
-                .nombre("Instituto de ciclos " + SECUENCIA.incrementAndGet())
-                .activo(true).build());
-        tenantId = inst.getId();
+        tenantId = escenario.institucion("Instituto de ciclos");
         TenantContext.set(tenantId);
 
-        Carrera carrera = Carrera.builder()
-            .codigo("TSP-" + tenantId).nombre("Tecnicatura").duracionAnios((short) 3).activo(true).build();
-        carrera.setInstitucionId(tenantId);
-        carrera = carreraRepository.save(carrera);
-
-        materia = Materia.builder()
-            .codigo("MAT1-" + tenantId).nombre("Matemática I").carrera(carrera)
-            .anio((short) 1).activo(true).build();
-        materia.setInstitucionId(tenantId);
-        materia = materiaRepository.save(materia);
-
-        docente = Docente.builder()
-            .persona(DatosDePrueba.personaDelTenant(tenantId, "30" + tenantId, "Ana", "Pérez"))
-            .fechaAlta(LocalDate.of(2020, 1, 1)).activo(true).build();
-        docente.setInstitucionId(tenantId);
-        docente = docenteRepository.save(docente);
+        Carrera carrera = escenario.carrera(tenantId, "TSP-" + tenantId);
+        materia = escenario.materia(carrera, "MAT1-" + tenantId, "Matemática I");
+        docente = escenario.docente(tenantId, "30" + tenantId);
     }
 
     /**
@@ -154,36 +124,12 @@ class CiclosLectivosIT {
      */
     @AfterEach
     void limpiar() {
-        if (tenantId != null) {
-            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
-            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
-            borrar(consentimientoRepository,
-                   c -> docente != null && docente.getId().equals(c.getDocente().getId()));
-            // Solo getId() sobre los proxies lazy: Hibernate lo devuelve sin ir a la base.
-            // Cualquier otro getter --getInstitucionId(), por ejemplo-- intenta inicializar el
-            // proxy fuera de sesión y revienta con LazyInitializationException.
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
-                .map(Comision::getId).toList();
-            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(periodoLectivoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(diaRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
-        }
+        escenario.borrarTodoDe(tenantId);
         TenantContext.clear();
     }
 
     // Borra de un repositorio las filas que cumplan la condición. Se filtra en memoria porque
     // son fixtures de un solo test: la claridad vale más que la consulta.
-    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
-                            java.util.function.Predicate<T> condicion) {
-        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
-    }
-
     // ========================================================================
     //  Copiar la oferta al año siguiente
     // ========================================================================
@@ -822,7 +768,6 @@ class CiclosLectivosIT {
             .extracting(PeriodoLectivo::getNombre)
             .containsExactly("Anual");
     }
-
 
     @Test
     @DisplayName("La pantalla de dias sin clase renderiza y aclara que apaga tambien el pase")

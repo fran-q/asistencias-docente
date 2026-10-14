@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.BloquePresencia;
@@ -12,24 +12,12 @@ import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.EstadoCierre;
 import edu.cent35.asistencias.model.EstadoSalida;
 import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.OrigenMarca;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
-import edu.cent35.asistencias.repository.HorarioRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
-import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,10 +31,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -72,25 +57,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = "app.reportes.max-filas=2")
 class GraficosDelReporteIT {
 
-    private static final AtomicInteger SECUENCIA = new AtomicInteger();
-
     // Dos lunes de semanas distintas, para que el gráfico semanal tenga dos columnas.
     private static final LocalDate SEMANA_1 = LocalDate.of(2026, 6, 8);
     private static final LocalDate SEMANA_2 = LocalDate.of(2026, 6, 15);
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private ComisionRepository comisionRepository;
-    @Autowired private HorarioRepository horarioRepository;
-    @Autowired private DocenteRepository docenteRepository;
-    @Autowired private CicloLectivoRepository cicloRepository;
-    @Autowired private PeriodoLectivoRepository periodoRepository;
+    @Autowired private EscenarioDePrueba escenario;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
-    @Autowired private RolRepository rolRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
 
     private Long tenantId;
     private Usuario cuenta;
@@ -100,45 +74,14 @@ class GraficosDelReporteIT {
 
     @BeforeEach
     void sembrar() {
-        Institucion inst = institucionRepository.save(Institucion.builder()
-            .nombre("Instituto de los gráficos " + SECUENCIA.incrementAndGet())
-            .activo(true).build());
-        tenantId = inst.getId();
+        tenantId = escenario.institucion("Instituto de los gráficos");
         TenantContext.set(tenantId);
 
-        Rol rol = rolRepository.findByCodigo("INSTITUCION").orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo("INSTITUCION");
-            nuevo.setDescripcion("Institucion");
-            return rolRepository.save(nuevo);
-        });
-        Usuario u = Usuario.builder()
-            .username("graf." + tenantId).email("graf." + tenantId + "@test.local")
-            .passwordHash("no-se-usa").activo(true).rol(rol)
-            .emailVerificadoEn(LocalDateTime.now())
-            .build();
-        u.setInstitucionId(tenantId);
-        cuenta = usuarioRepository.save(u);
-
-        Carrera carrera = Carrera.builder()
-            .codigo("GRA-" + tenantId).nombre("Tecnicatura").duracionAnios((short) 3)
-            .activo(true).build();
-        carrera.setInstitucionId(tenantId);
-        carrera = carreraRepository.save(carrera);
-
-        materia = Materia.builder()
-            .codigo("GRA1-" + tenantId).nombre("Programación I").carrera(carrera)
-            .anio((short) 1).activo(true).build();
-        materia.setInstitucionId(tenantId);
-        materia = materiaRepository.save(materia);
-
-        docente = Docente.builder()
-            .persona(DatosDePrueba.personaDelTenant(tenantId, "47" + tenantId, "Ana", "Pérez"))
-            .fechaAlta(LocalDate.of(2020, 1, 1)).activo(true).build();
-        docente.setInstitucionId(tenantId);
-        docente = docenteRepository.save(docente);
-
-        ciclo = cicloRepository.save(DatosDePrueba.cicloAnualDelTenant(tenantId, 2026));
+        cuenta = escenario.cuenta(tenantId, "INSTITUCION", "graf." + tenantId);
+        Carrera carrera = escenario.carrera(tenantId, "GRA-" + tenantId);
+        materia = escenario.materia(carrera, "GRA1-" + tenantId, "Programación I");
+        docente = escenario.docente(tenantId, "47" + tenantId);
+        ciclo = escenario.ciclo(tenantId, 2026);
 
         // Cada clase va en su propia comisión: un docente no puede tener dos marcas del
         // mismo horario y la misma fecha --lo impide un índice único-- y dos de las tres
@@ -158,20 +101,7 @@ class GraficosDelReporteIT {
 
     @AfterEach
     void limpiar() {
-        if (tenantId != null) {
-            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
-            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
-                .map(Comision::getId).toList();
-            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(periodoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
-        }
+        escenario.borrarTodoDe(tenantId);
         TenantContext.clear();
     }
 
@@ -324,16 +254,9 @@ class GraficosDelReporteIT {
 
     // Una comisión con su horario semanal, para poder tener dos clases el mismo día.
     private Horario horarioDe(String codigoComision, int desde, int hasta) {
-        Comision c = comisionRepository.save(Comision.builder()
-            .materia(materia).codigo(codigoComision).docenteAsignado(docente).activo(true)
-            .periodo(ciclo.getPeriodos().get(0))
-            .build());
-        return horarioRepository.save(Horario.builder()
-            .comision(c)
-            .diaSemana((byte) SEMANA_1.getDayOfWeek().getValue())
-            .horaInicio(LocalTime.of(desde, 0)).horaFin(LocalTime.of(hasta, 0))
-            .toleranciaMin((short) 15).activo(true)
-            .build());
+        Comision c = escenario.comision(materia, ciclo, docente, codigoComision);
+        return escenario.horario(c, SEMANA_1.getDayOfWeek(),
+            LocalTime.of(desde, 0), LocalTime.of(hasta, 0));
     }
 
     // Una clase del docente. Sin horas, queda ausente y sin jornada.
@@ -359,10 +282,5 @@ class GraficosDelReporteIT {
             .build();
         a.setInstitucionId(tenantId);
         asistenciaRepository.save(a);
-    }
-
-    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
-                            java.util.function.Predicate<T> condicion) {
-        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
     }
 }

