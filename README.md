@@ -1,106 +1,150 @@
-# Sistema de Asistencias Digital con Reconocimiento Facial
+# Visum
 
-Sistema web para automatizar el registro de asistencia docente en universidades e institutos terciarios mediante reconocimiento facial.
+[![CI](https://github.com/fran-q/asistencias-docente/actions/workflows/ci.yml/badge.svg)](https://github.com/fran-q/asistencias-docente/actions/workflows/ci.yml)
 
-> Proyecto académico - Prácticas Profesionalizantes III - CENT35 - Tierra del Fuego, Argentina.
+Registro de asistencia **docente** por reconocimiento facial, para institutos terciarios y
+universidades de Tierra del Fuego. Reemplaza la planilla de papel con firma.
+
+> Proyecto académico — Prácticas Profesionalizantes III, CENT 35. Se trabaja y se documenta
+> como un producto para un cliente real: el equipo administrativo de la institución.
+
+**Sobre el nombre.** El producto se llama Visum; el repositorio, el paquete Java
+(`edu.cent35.asistencias`) y la aplicación todavía dicen "asistencias". Es una inconsistencia
+conocida y pendiente de unificar.
 
 ## Estado
 
-**Primera entrega cerrada (junio 2026)** — los 6 sprints del cronograma
-están completos. El sistema cubre: gestión de la institución y administradores,
-estructura académica (carreras, materias, comisiones, horarios + grilla
-semanal), docentes, consentimiento biométrico (Ley 25.326), reconocimiento
-facial con OpenCV/LBPH, pase de asistencia automático, listado con
-AUSENTES calculadas, carga manual, justificaciones, y exportación de
-reportes a CSV. Documentación completa: ADRs, diagramas UML, manuales
-de administrador y técnico, changelog por sprint.
+Prototipo funcional completo, con instalador para la máquina de la institución que funciona
+sin internet ni servidor de correo. El horizonte de producto final es marzo de 2027; qué falta
+y en qué orden está en [`contexto/07-pendientes.md`](contexto/07-pendientes.md).
+
+## Por dónde empezar
+
+Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en este orden:
+
+| Archivo | Qué responde |
+|---|---|
+| [`01-proyecto.md`](contexto/01-proyecto.md) | Qué es, para quién, qué queda dentro y fuera del alcance |
+| [`02-arquitectura.md`](contexto/02-arquitectura.md) | Stack, capas, multi-tenancy, reconocimiento facial y el índice de los ADR |
+| [`03-modelo-datos.md`](contexto/03-modelo-datos.md) | Las tablas vigentes, sus invariantes y el historial de migraciones |
+| [`04-convenciones.md`](contexto/04-convenciones.md) | Cómo se escribe código acá. **Leer antes de tocar nada** |
+| [`05-trazabilidad.md`](contexto/05-trazabilidad.md) | Cada requerimiento, su estado real y dónde vive en el código |
+| [`06-glosario.md`](contexto/06-glosario.md) | El vocabulario del dominio |
+| [`07-pendientes.md`](contexto/07-pendientes.md) | Deuda técnica, brechas y rumbo hacia el producto final |
+
+## Qué hace
+
+- **Varias instituciones en una misma instalación**, aisladas entre sí.
+- **Reconocimiento facial** con LBPH (JavaCV/OpenCV). Nunca se guarda una fotografía: solo el
+  modelo derivado, comprimido y cifrado.
+- **Consentimiento biométrico** según la Ley 25.326 y la Resolución AAIP 255/2022, con registro
+  de quién lo otorgó y quién lo revocó.
+- **Entrada y salida** de cada jornada, desde la cámara de secretaría o desde un kiosco por
+  puerta, con varios equipos por institución.
+- **Ausencias generadas solas** al terminar cada clase, carga manual con motivo y
+  justificaciones.
+- **Reportes** en pantalla, PDF, CSV y gráficos.
 
 ## Stack
 
-- **Java 21** + **Spring Boot 3.5.x**
-- **Gradle** (Groovy DSL)
-- **MySQL / MariaDB 10.4+** (vía XAMPP en desarrollo local)
-- **Spring Data JPA** + **Hibernate** + **Flyway** (migraciones de esquema)
-- **Spring Security** (autenticación con sesión HTTP)
-- **Thymeleaf** (renderizado server-side)
-- **JavaCV / OpenCV** (reconocimiento facial - Sprint 4)
+- **Java 21** y **Spring Boot 3.5**, con **Gradle**
+- **MariaDB 10.4** — *solo 10.4*: el esquema no aplica sobre 10.6 en adelante (TD-011, en
+  [`07-pendientes.md`](contexto/07-pendientes.md))
+- **Spring Data JPA**, **Hibernate** y **Flyway** para las migraciones
+- **Spring Security**, con sesión HTTP
+- **Thymeleaf** para las vistas; el CSS y el JavaScript son propios, sin librerías de terceros
+- **JavaCV / OpenCV** para el reconocimiento facial y **OpenPDF** para los reportes
 
-## Características
+## Correr en local
 
-- Usuarios administradores con aislamiento total entre instituciones (200 a 400 docentes por institución).
-- Reconocimiento facial automático con data cifrada (sin almacenar fotografías).
-- Carga manual de asistencia como alternativa.
-- Cumplimiento de la Ley 25.326 y Resolución AAIP 255/2022 sobre datos biométricos.
+1. **MariaDB 10.4** (XAMPP sirve). Crear las dos bases: la primera guarda los datos y la segunda,
+   el historial de Flyway.
 
-## Estructura del proyecto
+   ```sql
+   CREATE DATABASE asistenciautomatica      CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+   CREATE DATABASE asistenciautomatica_meta CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+   ```
 
+2. **La configuración local.** Copiar
+   `src/main/resources/application-local.properties.ejemplo` a
+   `src/main/resources/application-local.properties` y completar el usuario y la contraseña de
+   la base. El archivo real está en `.gitignore` y nunca se sube.
+
+3. **Arrancar.** `bootRun` activa solo el perfil `local`, y Flyway arma las tablas al arrancar.
+
+   ```bash
+   ./gradlew bootRun
+   ```
+
+4. **La primera cuenta.** Entrar a `http://localhost:8080/alta-institucion` y dar de alta una
+   institución. Con `app.mail.canal=consola`, el código de verificación sale impreso en la
+   terminal en lugar de mandarse por correo.
+
+## Tests
+
+| Comando | Qué corre |
+|---|---|
+| `./gradlew test` | Los unitarios. Corren en segundos y no necesitan MariaDB |
+| `./gradlew integrationTest` | Los de integración (`src/test/java/.../integracion/`), que levantan la aplicación entera |
+| `./gradlew build` | Las dos cosas. Es lo que corre el CI en cada push y en cada pull request |
+
+`MigracionesIT` aplica las migraciones contra un MariaDB real y se saltea si no hay uno en
+`localhost:3306`.
+
+## Estructura
 
 ```
 asistencias/
-├── src/
-│   ├── main/
-│   │   ├── java/edu/cent35/asistencias/
-│   │   │   ├── AsistenciasApplication.java
-│   │   │   ├── controller/            (Spring @Controller)
-│   │   │   ├── service/               (lógica de negocio @Service)
-│   │   │   ├── repository/            (Spring Data JPA)
-│   │   │   ├── model/                 (@Entity, enums, BaseTenantEntity)
-│   │   │   ├── dto/                   (objetos de transporte UI ↔ controller)
-│   │   │   └── config/                (security, multi-tenancy, web/JPA config)
-│   │   └── resources/
-│   │       ├── db/migration/          (scripts Flyway V001__init.sql, ...)
-│   │       ├── static/                (CSS / JS)
-│   │       └── templates/             (vistas Thymeleaf)
-│   └── test/
-├── build.gradle
-└── README.md
+├── contexto/              La documentación de trabajo. Empezar acá.
+├── instalador/            Instalación en la máquina de la institución: .msi, scripts y guía
+├── src/main/java/edu/cent35/asistencias/
+│   ├── controller/        Pantallas y endpoints
+│   ├── service/           Lógica de negocio
+│   ├── repository/        Acceso a datos (Spring Data JPA)
+│   ├── model/             Entidades JPA y enums
+│   ├── dto/               Formularios, filas de pantalla y estado de la sesión
+│   ├── validacion/        Validaciones propias de Bean Validation
+│   ├── seguridad/         Autenticación, sesiones y la credencial del equipo de captura
+│   ├── interceptor/       Controles por petición: institución, equipo autorizado, verificación
+│   └── config/            Configuración de Spring y el contexto de institución
+├── src/main/resources/
+│   ├── db/migration/      Migraciones de Flyway. Las ya aplicadas no se editan nunca.
+│   ├── templates/         Vistas Thymeleaf, una carpeta por área
+│   └── static/            CSS y JavaScript
+├── src/test/java/         Unitarios por capa, y de integración en integracion/
+└── CHANGELOG.md           Qué cambió y por qué, en orden cronológico inverso
 ```
 
-## Roadmap (primera entrega)
+El código está organizado **por capas**. La organización original era por *feature*; se migró
+a pedido de la cátedra, y el porqué, lo que se gana, lo que se pierde y cómo volver atrás están
+en el ADR-0006.
 
-| Sprint | Período | Entregable | Estado |
-|---|---|---|---|
-| **S0** | 24-abr a 30-abr | Setup: repo + Spring Boot + MariaDB + Flyway + login dummy | ✅ |
-| **S1** | 01-may a 04-may | Multi-tenancy + autenticación real + CRUDs (Mi Institución y Usuarios) | ✅ |
-| **S2** | 05-may a 06-may | CRUD académico (carreras, materias, comisiones, horarios) + grilla semanal | ✅ |
-| **S3** | 07-may a 28-may | CRUD docentes + consentimiento biométrico | ✅ |
-| **S4** | 29-may a 11-jun | PoC reconocimiento facial con OpenCV | ✅ |
-| **S5** | 12-jun a 18-jun | MVP de asistencia automática end-to-end | ✅ |
-| **S6** | 19-jun a 24-jun | Cierre: reportes CSV + diagramas UML + manuales + changelog | ✅ |
+## Documentación extensa
 
-Detalle completo en la guía del proyecto (`Documentacion/1-catedra/`).
-
-## Documentación
-
-**No está en este repositorio.** Todo el material escrito vive en la carpeta
-`Documentacion/`, un nivel arriba de acá, junto al proyecto.
-
-Se sacó del repositorio a propósito: se trabaja en un solo lugar, y el push deja de
-arrastrar PDF y documentos de Word que cambian enteros en cada guardada aunque se toque
-una coma. El historial anterior a agosto de 2026 la conserva.
+Los ADR, los requerimientos, el marco legal y el material de la defensa viven en
+`Documentacion/`, **fuera de este repositorio**, un nivel arriba del proyecto. Se sacaron a
+propósito: el push dejaba de arrastrar documentos de Word y PDF que cambian enteros en cada
+guardada aunque se toque una coma. El historial anterior a agosto de 2026 los conserva.
 
 ```
 Documentacion/
-├── 1-catedra/          Guía, requerimientos y diagrama de BD originales de la cátedra
+├── 1-catedra/          La consigna original de la cátedra
 ├── 2-requerimientos/   Requerimientos, alcance, casos de uso y DER
 ├── 3-legal/            Consentimiento biométrico y Ley 25.326
-├── 4-arquitectura/     Los 14 ADR, referencia técnica, normalización y deuda técnica
+├── 4-arquitectura/     Los ADR, la referencia técnica y la deuda técnica
 ├── 5-informes/         Calibración del umbral, revisión de UI/UX y bitácoras
-├── 6-defensa/          Dossier, preguntas del tribunal y guiones
-└── 7-imprimibles/      Versiones PDF listas para imprimir
+└── 6-defensa/          Dossier, preguntas del tribunal y guiones
 ```
 
-Su índice es `Documentacion/README.md`, que explica por dónde entrar según lo que
-necesites.
-
-Además: [CHANGELOG por sprint](CHANGELOG.md).
+Su índice es `Documentacion/README.md`.
 
 ## Marco legal
 
-El sistema procesa datos biométricos sensibles. Cumple con:
-- **Ley Nacional N° 25.326** de Protección de Datos Personales.
-- **Resolución AAIP N° 255/2022** sobre datos biométricos.
+El sistema trata datos biométricos, que la ley considera sensibles. Cumple con:
+
+- la **Ley Nacional 25.326** de Protección de Datos Personales;
+- la **Resolución AAIP 255/2022** sobre datos biométricos.
 
 ## Autor
 
-Francisco Quiroga - CENT35 - Tierra del Fuego, Argentina.
+Francisco Quiroga — CENT 35, Tierra del Fuego, Argentina.

@@ -14,10 +14,6 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 `bloques_presencia` (V019), `ciclos_lectivos` y `periodos_lectivos` (V023) y
 `dias_no_laborables` (V024).
 
-> Nota: el `CHANGELOG.md` dice "esquema completo de 16 tablas" en el Sprint 0. En ese
-> momento eran 15 — `auditoria` existía y `codigos_verificacion` y `puestos_captura`
-> todavía no. Es un error del changelog, no del esquema.
-
 ### Núcleo tenant
 
 | Tabla | Qué guarda | Tenant-scoped |

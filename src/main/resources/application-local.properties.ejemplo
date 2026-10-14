@@ -1,0 +1,33 @@
+# =============================================================================
+#  application-local.properties.ejemplo
+#
+#  Plantilla de la configuracion de desarrollo. Copiala, en este mismo
+#  directorio, como application-local.properties y completa lo que dice
+#  COMPLETAR. Esa copia esta en .gitignore y no se sube nunca: lleva la
+#  contrasena de tu base. Esta plantilla si se versiona, y por eso no lleva
+#  ningun valor real.
+#
+#  La carga "./gradlew bootRun", que activa el perfil "local" sola.
+#  Ninguno de los dos archivos entra en el JAR que se entrega.
+# =============================================================================
+
+# ---- Base de datos ----
+# MariaDB 10.4: el esquema no aplica sobre 10.6 en adelante (TD-011). Las dos
+# bases --asistenciautomatica y asistenciautomatica_meta-- se crean a mano
+# antes del primer arranque; los comandos estan en el README.
+spring.datasource.url=jdbc:mariadb://localhost:3306/asistenciautomatica?useUnicode=true&characterEncoding=UTF-8
+spring.datasource.username=COMPLETAR
+spring.datasource.password=COMPLETAR
+spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+
+# ---- Correo ----
+# "consola" imprime los codigos de verificacion en la terminal en lugar de
+# mandarlos: alcanza para probar todos los flujos sin un servidor de correo.
+# Nunca en produccion: quien vea esa consola entra a cualquier cuenta.
+app.mail.canal=consola
+
+# ---- Comodidades de desarrollo ----
+logging.level.edu.cent35=DEBUG
+spring.jpa.show-sql=false
+spring.thymeleaf.cache=false
+spring.devtools.restart.enabled=true

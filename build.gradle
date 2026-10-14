@@ -114,7 +114,9 @@ bootRun {
 // de bootJar dejaba las credenciales dentro del otro. Cualquier empaquetado nuevo
 // queda cubierto por el withType.
 tasks.withType(Jar).configureEach {
-	exclude 'application-local.properties'
+	// El comodin cubre tambien la plantilla (.ejemplo) y la variante .yml: ninguna
+	// de las dos tiene por que viajar en un artefacto que se entrega.
+	exclude 'application-local.*'
 }
 
 // === Playwright: descarga de binarios de navegador ===
