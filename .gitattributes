@@ -1,3 +1,27 @@
+# Todo el texto se guarda con LF en el repositorio, venga de Windows, Mac o Linux.
+# Sin esto, cada maquina convertia a su manera y git avisaba en cada commit; con dos
+# personas en sistemas distintos, el diff de un cambio chico mostraria el archivo entero.
+* text=auto eol=lf
+
+# El wrapper de Gradle se ejecuta en Linux (el CI): LF siempre.
 /gradlew text eol=lf
+
+# Los scripts de lotes de Windows necesitan CRLF para ejecutarse bien.
 *.bat text eol=crlf
-*.jar binary
+*.cmd text eol=crlf
+
+# Binarios: no se convierten ni se comparan como texto.
+*.jar   binary
+*.woff2 binary
+*.woff  binary
+*.ttf   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
+*.docx  binary
+*.zip   binary
+*.msi   binary
+*.exe   binary

@@ -1,0 +1,38 @@
+# Formato de los archivos del proyecto. Lo leen IntelliJ, VS Code y la mayoria de los
+# editores sin instalar nada, asi que dos personas con editores distintos guardan igual.
+#
+# No impone un estilo nuevo: describe el que el codigo ya tiene. Se midio antes de
+# escribirlo, y se mide de nuevo si alguna regla de aca parece no coincidir.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# SQL de las migraciones y YAML del CI: dos espacios.
+[*.{sql,yml,yaml}]
+indent_size = 2
+
+# build.gradle y settings.gradle estan indentados con tabs desde el principio.
+[*.gradle]
+indent_style = tab
+
+# En Markdown, dos espacios al final de una linea son un salto: no se recortan.
+[*.md]
+trim_trailing_whitespace = false
+
+# Los scripts de Windows se ejecutan con CRLF.
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# IntelliJ junta en un import con comodin a partir de cierta cantidad de clases del mismo
+# paquete. Aca los imports son explicitos (04-convenciones), asi que el umbral va alto
+# para que nunca lo haga solo.
+[*.java]
+ij_java_class_count_to_use_import_on_demand = 999
+ij_java_names_count_to_use_import_on_demand = 999
