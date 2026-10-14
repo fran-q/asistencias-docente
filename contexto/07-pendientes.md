@@ -25,6 +25,7 @@ va el resumen operativo.
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 | TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
 | TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy; **alta para el rumbo** | Abierta — bloquea mover el motor |
+| TD-012 | Servicios que deciden según la hora y leen `now()` suelto, sin `Clock` | Baja | Abierta — se pasan cuando se los toca (`04-convenciones`, *Servicios*) |
 
 **Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB) y TD-007 (el
 aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes).
@@ -225,13 +226,13 @@ Para evitar que se proponga:
 
 Cosas que hay que arreglar y no dependen de nadie más:
 
-- [ ] **`asistencias/README.md` está desactualizado.** Dice "primera entrega cerrada",
+- [x] **`asistencias/README.md` está desactualizado.** Reescrito el 2026-10-14. Dice "primera entrega cerrada",
       describe una fase que ya no aplica y lista carpetas de `Documentacion/` que no
       existen (diagramas, manuales, imprimibles).
-- [ ] **Links rotos en `CHANGELOG.md`.** Apuntan a `docs/4-arquitectura/adr/`, ruta que
+- [x] **Links rotos en `CHANGELOG.md`.** Pasados a texto el 2026-10-14. Apuntan a `docs/4-arquitectura/adr/`, ruta que
       dejó de existir cuando la documentación salió del repositorio.
-- [ ] **`CHANGELOG.md` dice "16 tablas"** en el Sprint 0. Son 15.
-- [ ] **`Documentacion/` no está versionada ni respaldada.** Son 19 ADR, la matriz legal
+- [x] **`CHANGELOG.md` dice "16 tablas"** en el Sprint 0. Son 15. Corregido el 2026-10-14.
+- [ ] **`Documentacion/` no está versionada ni respaldada.** Son todos los ADR, la matriz legal
       y los apuntes de defensa dependiendo de que nadie borre una carpeta. De acá a marzo
       de 2027 es mucho tiempo.
 - [ ] **Inconsistencia de nombre:** el producto es Visum; el repositorio, el paquete Java

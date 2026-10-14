@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.5 · **Actualizado:** 2026-08-25 · **Estado:** vigente
+> **Versión:** 1.6 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -20,6 +20,16 @@ Las únicas excepciones son lo que impone el framework (`findById`, `@GetMapping
 Los identificadores llevan tildes y eñes donde corresponde en comentarios y mensajes,
 nunca en nombres de clase o método. Por eso el `build.gradle` fija
 `options.encoding = 'UTF-8'`: sin eso la compilación depende del locale de la máquina.
+
+**Dos excepciones, en ASCII sin tildes:**
+
+- **Los `.properties`.** Siempre estuvieron así, y no por descuido: según quién los lea, una
+  tilde guardada en UTF-8 llega cambiada.
+- **Las migraciones SQL.** Pasan por la consola de MariaDB, y una tilde mal codificada en el
+  camino no rompe el comentario: rompe el byte. Pasó: `V020` tiene en un comentario un `�`
+  que antes era una raya. Ahí quedó, porque las aplicadas no se tocan.
+
+Fuera de esos dos, un comentario sin tildes ("asi", "aca") es un error, no un estilo.
 
 ## Estructura
 
@@ -46,9 +56,23 @@ Dos aclaraciones sobre capas que ya existían y se prestaban a duda:
   `ConfirmacionIdentidad`): son objetos de transporte, no lógica de negocio, y estaban en
   `service/` sin llevar `@Service`.
 
+## Formato
+
+El formato lo fija **`.editorconfig`**, que leen IntelliJ, VS Code y casi cualquier editor
+sin instalar nada: UTF-8, LF, cuatro espacios; dos en SQL y YAML; tabs en Gradle. Describe
+el estilo que el código ya tenía —se midió antes de escribirlo—, no uno nuevo.
+
+**Imports explícitos, nunca con comodín.** Con `import ...model.*;` no se sabe de dónde
+sale una clase leyendo el archivo, y un comodín que ya no se usa no se nota: la migración a
+capas (ADR-0006) dejó `model.*` y `repository.*` en 65 archivos, varios sin usar una sola
+clase de esos paquetes. El `.editorconfig` le dice a IntelliJ que no los arme solo.
+
+`.gitattributes` guarda todo el texto con LF, venga de Windows, Mac o Linux, y marca los
+binarios para que git no intente compararlos.
+
 ## Comentarios
 
-Convención unificada en los 181 archivos fuente. Se respeta.
+Convención unificada en todos los archivos fuente. Se respeta.
 
 **Por archivo:** un Javadoc de dos oraciones arriba de la clase. Primera oración: qué
 hace. Segunda: la particularidad que hay que saber antes de tocarlo.
@@ -120,6 +144,15 @@ intento con `log.warn`.
 - `@Transactional(readOnly = true)` en las lecturas, `@Transactional` en las escrituras.
 - La anotación `@Service` no es decorativa: el pointcut de `TenantFilterAspect` matchea
   por ella. **Un service sin `@Service` no activa el filtro de tenant.**
+- **Si la lógica depende de la hora, el instante sale de un `Clock`.** Vencimientos,
+  ventanas de tiempo, "la clase de ahora", "el día de hoy": todo eso lee
+  `LocalDate.now(clock)` de un campo `private Clock clock = Clock.systemDefaultZone();`, no
+  un `now()` suelto. En producción es el mismo reloj; la diferencia es que un test puede
+  fijarlo. Sin eso, un test que arma su escenario alrededor de la hora de la máquina se
+  rompe cerca de medianoche: `MarcaPorCamaraIT` se salteaba tres horas por día por eso.
+  Lo siguen `CicloLectivoService`, `CodigoVerificacionService`, `PanelInicioService` y
+  `PaseAsistenciaService`. Los que todavía llaman `now()` directo están en
+  `07-pendientes.md`, y se pasan cuando se los toca.
 
 ## Entidades
 
@@ -128,6 +161,25 @@ intento con `log.warn`.
 - Lombok `@Getter` / `@Setter`. Evitar `@Data` en entidades JPA.
 - Los enums del dominio viven en `model/` junto a las entidades: `EstadoAsistencia`,
   `MetodoAsistencia`, `DiaSemana`, `Rol`, `MotivoCargaManual`, etc.
+
+## DTO
+
+Tres formas, según para qué sirve el objeto:
+
+| Para qué | Cómo se escribe | Ejemplo |
+|---|---|---|
+| Recibe un formulario | `@Data` + `@NoArgsConstructor`, y el nombre termina en `FormDto` | `ComisionFormDto` |
+| Sale hacia una pantalla, un reporte o una API | Inmutable: `record`, o `@Value` + `@Builder` | `AsistenciaReporteRowDto` |
+| Vive en la sesión HTTP | Clase `Serializable` (ver *Estructura*) | `AltaPendiente` |
+
+El formulario necesita setters porque Spring los usa para cargarlo; lo que sale no tiene por
+qué cambiar después de armado.
+
+Entre `record` y `@Value` hoy conviven las dos, sin un criterio que las separe del todo. **Lo
+nuevo va como `record`**, que es la forma propia de Java 21; `@Value` + `@Builder` se usa
+cuando el objeto se arma campo por campo desde una entidad (`from(...)`) o tiene tantos
+campos que un constructor posicional se vuelve ilegible. Los existentes no se migran por
+migrar.
 
 ## Migraciones
 
@@ -190,6 +242,9 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 - Las cinco pantallas de `auth/` no extienden `layout/base.html`: cargan sus scripts por
   su cuenta. No es carga duplicada, y si se agrega un script global hay que sumarlo ahí
   también.
+- **Sin `style=""` en las plantillas.** El estilo va en clases de `main.css`, con sus
+  tokens. La excepción es un valor que calcula el servidor —el ancho de una barra, la
+  altura de una columna— y va con `th:style`, porque no hay clase que pueda saberlo.
 - **Nunca escribas un color ni una duración a mano: salen de los tokens de `:root`.**
   Un valor suelto se ve bien en oscuro y se rompe en claro, que es exactamente lo que
   pasó con los badges —el de INSTITUCIÓN llegó a 1.69:1 sobre fondo claro—.
@@ -262,6 +317,17 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
   bug y comprobar que el test efectivamente falla. Un test que pasa igual con y sin el
   bug no prueba nada.
 - El CI corre `./gradlew build` completo sobre cada push y PR a `main`.
+
+## Documentación
+
+**Un número que cambia solo se escribe en un único lugar.** Cantidad de tests, de
+migraciones, de tablas, de ADR, de archivos: cada uno tiene un archivo dueño
+—`03-modelo-datos.md` las tablas, `02-arquitectura.md` los ADR— y en cualquier otro se nombra
+sin número. Copiado en dos lugares, uno queda viejo: la cantidad de ADR llegó a figurar como
+14, 18, 19 y 23 en archivos distintos al mismo tiempo.
+
+Un número que describe el pasado no envejece y puede quedarse: "V001 creó 15 tablas" sigue
+siendo cierto.
 
 ## Git
 
