@@ -32,11 +32,11 @@ import java.util.Optional;
 @Slf4j
 public class PuestoCapturaService {
 
-    // Fuente criptografica: un Random comun es predecible, y este token es la unica prueba
-    // de que un equipo esta autorizado.
+    // Fuente criptografica: un Random común es predecible, y este token es la única prueba
+    // de que un equipo está autorizado.
     private static final SecureRandom ALEATORIO = new SecureRandom();
 
-    // 32 bytes = 256 bits. En Base64 sin relleno son 43 caracteres, comodos para una cookie.
+    // 32 bytes = 256 bits. En Base64 sin relleno son 43 caracteres, cómodos para una cookie.
     private static final int BYTES_TOKEN = 32;
 
     /**
@@ -51,11 +51,11 @@ public class PuestoCapturaService {
     private long diasDeInactividad;
 
     private final PuestoCapturaRepository puestoRepository;
-    // Para leer el tope de equipos de la institucion (V030).
+    // Para leer el tope de equipos de la institución (V030).
     private final InstitucionRepository institucionRepository;
-    // Revocar a distancia exige un codigo de un solo uso. Se reusan las defensas que ya
+    // Revocar a distancia exige un código de un solo uso. Se reusan las defensas que ya
     // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
-    // inventar un segundo mecanismo que habria que endurecer por separado.
+    // inventar un segundo mecanismo que habría que endurecer por separado.
 
     /** Un puesto recién designado, con su token en claro. Es la única vez que el token existe fuera del navegador. */
     @Value
@@ -202,7 +202,7 @@ public class PuestoCapturaService {
     }
 
     // ========================================================================
-    //  Modo kiosco: operar sin sesion abierta (RF-85, ADR-0019)
+    //  Modo kiosco: operar sin sesión abierta (RF-85, ADR-0019)
     // ========================================================================
 
     /**
@@ -320,23 +320,23 @@ public class PuestoCapturaService {
             .orElse(null);
     }
 
-    /** Lo mas alto que se puede poner el tope. Mismo limite que el formulario de la institucion. */
+    /** Lo más alto que se puede poner el tope. Mismo límite que el formulario de la institución. */
     private static final short TOPE_MAXIMO = 50;
 
     /**
-     * Cambia cuantos equipos puede tener autorizados la institucion a la vez.
+     * Cambia cuántos equipos puede tener autorizados la institución a la vez.
      *
-     * <p>Vive aca --y no solo en "Mi institucion"-- porque el limite se siente en la pantalla
-     * de equipos: se topa autorizando una maquina y hasta ahora habia que irse a otra
+     * <p>Vive acá --y no solo en "Mi institución"-- porque el límite se siente en la pantalla
+     * de equipos: se topa autorizando una máquina y hasta ahora había que irse a otra
      * pantalla, cambiarlo y volver.
      *
      * <p><b>No se puede poner por debajo de lo que ya hay autorizado.</b> El control que mira
-     * el tope corre al autorizar, no sobre lo existente, asi que bajarlo a dos con tres
-     * equipos vivos no revoca ninguno: dejaria la pantalla diciendo "3 de un tope de 2", un
-     * limite que el propio sistema esta incumpliendo. Se rechaza y se dice que revoque
-     * primero, que es la unica forma de que el numero signifique algo.
+     * el tope corre al autorizar, no sobre lo existente, así que bajarlo a dos con tres
+     * equipos vivos no revoca ninguno: dejaría la pantalla diciendo "3 de un tope de 2", un
+     * límite que el propio sistema está incumpliendo. Se rechaza y se dice que revoque
+     * primero, que es la única forma de que el número signifique algo.
      *
-     * @param tope cuantos, o null para sacar el tope
+     * @param tope cuántos, o null para sacar el tope
      */
     @Transactional
     public void cambiarTope(Long institucionId, Short tope) {
@@ -351,12 +351,12 @@ public class PuestoCapturaService {
         long habilitados = contarHabilitados(institucionId);
         if (tope != null && habilitados > tope) {
             throw new IllegalArgumentException(
-                "Ya hay " + habilitados + " equipo(s) autorizado(s), asi que el tope no puede "
-                + "quedar en " + tope + ". Revoca los que sobren y despues bajalo.");
+                "Ya hay " + habilitados + " equipo(s) autorizado(s), así que el tope no puede "
+                + "quedar en " + tope + ". Revocá los que sobren y después bajalo.");
         }
 
         Institucion institucion = institucionRepository.findById(institucionId)
-            .orElseThrow(() -> new IllegalArgumentException("La institucion no existe."));
+            .orElseThrow(() -> new IllegalArgumentException("La institución no existe."));
         institucion.setMaxPuestosHabilitados(tope);
         institucionRepository.save(institucion);
 
@@ -449,7 +449,7 @@ public class PuestoCapturaService {
             MessageDigest sha = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(sha.digest(token.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException e) {
-            // SHA-256 es obligatorio en toda JVM; si falta, algo mucho peor esta roto.
+            // SHA-256 es obligatorio en toda JVM; si falta, algo mucho peor está roto.
             throw new IllegalStateException("SHA-256 no disponible en esta JVM", e);
         }
     }

@@ -39,9 +39,9 @@ public class PuestoCapturaController {
 
     private static final String VIEW = "puesto/requerido";
 
-    // A donde vuelven los POST. Es una constante y no un parametro con el origen: un destino
-    // de redirect que venga del formulario habria que validarlo contra una lista blanca, y
-    // olvidarse de hacerlo es como se abre un redirect abierto. La pantalla de gestion sirve
+    // A donde vuelven los POST. Es una constante y no un parámetro con el origen: un destino
+    // de redirect que venga del formulario habría que validarlo contra una lista blanca, y
+    // olvidarse de hacerlo es como se abre un redirect abierto. La pantalla de gestión sirve
     // igual de bien para las dos entradas.
     private static final String VUELTA = "/puestos";
 
@@ -89,26 +89,26 @@ public class PuestoCapturaController {
         model.addAttribute("bloqueado", bloqueado);
         model.addAttribute("puestos", puestoService.listar(institucionId));
         model.addAttribute("hayAlguno", hayAlguno);
-        // Designar un equipo es autorizar el tratamiento de datos sensibles en esa maquina:
+        // Designar un equipo es autorizar el tratamiento de datos sensibles en esa máquina:
         // lo decide la cuenta institucional, no cualquier administrativo.
         model.addAttribute("puedeDesignar", tieneRolInstitucion(principal));
-        // El formulario aparece cuando autorizar es realmente posible: esta maquina todavia
+        // El formulario aparece cuando autorizar es realmente posible: esta máquina todavía
         // no es un equipo y queda cupo. Es la misma regla que aplica el service, repetida en
-        // la vista para no ofrecer un boton que va a fallar.
+        // la vista para no ofrecer un botón que va a fallar.
         model.addAttribute("puedeAutorizarEsteEquipo",
             tieneRolInstitucion(principal) && esteEquipo == null && hayCupo);
         model.addAttribute("habilitados", habilitados);
         model.addAttribute("tope", tope);
         model.addAttribute("hayCupo", hayCupo);
-        // Cual de los puestos listados es esta misma maquina. Sin esto la pantalla muestra
-        // nombres y quien la mira no sabe si esta sentado en el equipo autorizado o no, que
+        // Cuál de los puestos listados es esta misma máquina. Sin esto la pantalla muestra
+        // nombres y quien la mira no sabe si está sentado en el equipo autorizado o no, que
         // es justo lo que necesita saber para revocarlo.
         model.addAttribute("idDeEsteEquipo", esteEquipo);
         model.addAttribute("desdePuesto", desdePuesto);
         return VIEW;
     }
 
-    // Si la peticion trae la cookie de un puesto habilitado de esta institucion.
+    // Si la petición trae la cookie de un puesto habilitado de esta institución.
     private boolean vieneDePuestoAutorizado(HttpServletRequest request, Long institucionId) {
         return CookiePuesto.leer(request)
             .flatMap(token -> puestoService.verificar(token, institucionId))
@@ -145,7 +145,7 @@ public class PuestoCapturaController {
 
         } catch (IllegalArgumentException e) {
             // Va como "error" y no como "flashError": el aviso flotante sirve para el
-            // resultado de una accion terminada, pero esto es un formulario que hay que
+            // resultado de una acción terminada, pero esto es un formulario que hay que
             // corregir, y el mensaje tiene que quedar al lado del campo.
             redirect.addFlashAttribute("error", e.getMessage());
             return "redirect:" + VUELTA;
@@ -173,8 +173,8 @@ public class PuestoCapturaController {
 
         try {
             puestoService.revocar(id, institucionId);
-            // Si la maquina que revoca es la revocada, ademas se le saca la credencial: sin
-            // esto seguiria mandando una cookie que ya no vale hasta que alguien la limpie.
+            // Si la máquina que revoca es la revocada, además se le saca la credencial: sin
+            // esto seguiría mandando una cookie que ya no vale hasta que alguien la limpie.
             if (esteEquipoEs(id, institucionId, request)) {
                 CookiePuesto.borrar(request, response);
             }
@@ -188,13 +188,13 @@ public class PuestoCapturaController {
     /**
      * Cambia el tope de equipos desde esta misma pantalla.
      *
-     * <p>El tope tambien se edita en "Mi institucion", junto al resto de los datos. Esta
-     * entrada existe porque el limite se siente aca: se topa al autorizar una maquina, y
-     * mandar a otra pantalla a cambiarlo y volver son tres pasos para un numero.
+     * <p>El tope también se edita en "Mi institución", junto al resto de los datos. Esta
+     * entrada existe porque el límite se siente acá: se topa al autorizar una máquina, y
+     * mandar a otra pantalla a cambiarlo y volver son tres pasos para un número.
      *
      * <p>Sigue pidiendo el rol institucional, igual que autorizar y revocar. El tope es una
-     * contencion --cada equipo autorizado guarda una credencial-- y la cuenta operativa no
-     * se amplia sola su propio limite.
+     * contención --cada equipo autorizado guarda una credencial-- y la cuenta operativa no
+     * se amplía sola su propio límite.
      */
     @PostMapping("/puestos/tope")
     @PreAuthorize("hasRole('INSTITUCION')")
@@ -203,8 +203,8 @@ public class PuestoCapturaController {
         try {
             puestoService.cambiarTope(TenantContext.getRequired(), tope);
             redirect.addFlashAttribute("flashMensaje", tope == null
-                ? "Listo: la institucion queda sin tope de equipos."
-                : "Listo: el tope quedo en " + tope + " equipo(s).");
+                ? "Listo: la institución queda sin tope de equipos."
+                : "Listo: el tope quedó en " + tope + " equipo(s).");
         } catch (IllegalArgumentException e) {
             redirect.addFlashAttribute("flashError", e.getMessage());
         }
@@ -212,7 +212,7 @@ public class PuestoCapturaController {
     }
 
     // ========================================================================
-    //  Modo kiosco: operar sin sesion abierta (RF-85, ADR-0019)
+    //  Modo kiosco: operar sin sesión abierta (RF-85, ADR-0019)
     // ========================================================================
 
     /**
@@ -266,8 +266,8 @@ public class PuestoCapturaController {
         return "redirect:" + VUELTA;
     }
 
-    // Si el puesto que se esta revocando es el de esta misma maquina. Se resuelve ANTES de
-    // revocar: despues la verificacion ya no lo encontraria y no habria como saberlo.
+    // Si el puesto que se está revocando es el de esta misma máquina. Se resuelve ANTES de
+    // revocar: después la verificación ya no lo encontraria y no habría como saberlo.
     private boolean esteEquipoEs(Long puestoId, Long institucionId, HttpServletRequest request) {
         return CookiePuesto.leer(request)
             .flatMap(token -> puestoService.verificar(token, institucionId))
@@ -304,7 +304,7 @@ public class PuestoCapturaController {
         return "redirect:" + VUELTA;
     }
 
-    // El id del puesto de esta misma maquina, o null si esta no es ningun puesto.
+    // El id del puesto de esta misma máquina, o null si esta no es ningún puesto.
     private Long idDeEsteEquipo(HttpServletRequest request, Long institucionId) {
         return CookiePuesto.leer(request)
             .flatMap(token -> puestoService.verificar(token, institucionId))

@@ -41,6 +41,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -113,7 +114,7 @@ class ComodidadesDeCargaIT {
     }
 
     // ========================================================================
-    //  Codigo sugerido
+    //  Código sugerido
     // ========================================================================
 
     @Test
@@ -167,19 +168,22 @@ class ComodidadesDeCargaIT {
     // ========================================================================
 
     @Test
-    @DisplayName("El tope se cambia desde Equipos, sin pasar por Mi institucion")
+    @DisplayName("El tope se cambia desde Equipos, sin pasar por Mi institución")
     void elTopeSeCambiaDesdeEquipos() throws Exception {
         mockMvc.perform(post("/puestos/tope").param("tope", "3")
                 .with(user(new UsuarioAutenticado(cuentaA))).with(csrf()))
-            .andExpect(status().is3xxRedirection());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("flashMensaje", "Listo: el tope quedó en 3 equipo(s)."));
 
         assertThat(puestoService.topeDeEquipos(tenantA)).isEqualTo((short) 3);
 
-        // Vacio = sin tope, que es como lo guarda la institucion que no sabe cuantas
+        // Vacío = sin tope, que es como lo guarda la institución que no sabe cuántas
         // entradas va a cubrir.
         mockMvc.perform(post("/puestos/tope")
                 .with(user(new UsuarioAutenticado(cuentaA))).with(csrf()))
-            .andExpect(status().is3xxRedirection());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("flashMensaje",
+                "Listo: la institución queda sin tope de equipos."));
 
         assertThat(puestoService.topeDeEquipos(tenantA)).isNull();
     }
@@ -190,9 +194,13 @@ class ComodidadesDeCargaIT {
         puestoService.designar(tenantA, "Entrada norte", cuentaA);
         puestoService.designar(tenantA, "Entrada sur", cuentaA);
 
+        // El rechazo llega a la pantalla tal cual: dice cuántos hay y qué hacer.
         mockMvc.perform(post("/puestos/tope").param("tope", "1")
                 .with(user(new UsuarioAutenticado(cuentaA))).with(csrf()))
-            .andExpect(status().is3xxRedirection());
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("flashError",
+                "Ya hay 2 equipo(s) autorizado(s), así que el tope no puede quedar en 1. "
+                + "Revocá los que sobren y después bajalo."));
 
         assertThat(puestoService.topeDeEquipos(tenantA))
             .as("bajarlo no revoca ninguno, así que el tope quedaría incumplido por el "
@@ -201,7 +209,7 @@ class ComodidadesDeCargaIT {
     }
 
     @Test
-    @DisplayName("Un ADMIN no cambia el tope: no se amplia su propio limite")
+    @DisplayName("Un ADMIN no cambia el tope: no se amplía su propio límite")
     void elAdminNoCambiaElTope() throws Exception {
         Usuario admin = crearCuenta(tenantA, "ADMIN");
 
