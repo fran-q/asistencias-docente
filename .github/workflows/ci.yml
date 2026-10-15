@@ -9,7 +9,11 @@ on:
 jobs:
   build:
     name: Build & Test
-    runs-on: ubuntu-latest
+    # La versión de Ubuntu va fija, no ubuntu-latest: el paquete de GTK 2 que se instala más
+    # abajo cambia de nombre entre versiones (libgtk2.0-0 hasta 22.04, libgtk2.0-0t64 desde
+    # 24.04). Con ubuntu-latest, el día que GitHub moviera la etiqueta el CI se rompería sin
+    # que nadie tocara nada; así, pasar a otra versión es una decisión y se revisa el paquete.
+    runs-on: ubuntu-24.04
 
     # MariaDB para que MigracionesIT corra acá y no solo en la máquina de desarrollo: el resto
     # de la suite usa H2 con el esquema que arma Hibernate, así que una migración desalineada
@@ -51,14 +55,41 @@ jobs:
       - name: Permisos al gradlew
         run: chmod +x ./gradlew
 
+      # OpenCV necesita GTK 2 en Linux. LBPHFaceRecognizer vive en opencv_face, y JavaCPP lo
+      # carga con una cadena de módulos: face -> objdetect -> calib3d -> features2d -> highgui.
+      # highgui son las ventanas de OpenCV, y en Linux está enlazado contra GTK 2, que un Ubuntu
+      # sin escritorio no trae. Sin este paso, el primer test que crea un reconocedor falla con
+      # UnsatisfiedLinkError: así estuvo el CI desde que entró OpenCV, en mayo de 2026, hasta
+      # octubre. En Windows no hace falta, porque ahí highgui usa las ventanas del sistema. Un
+      # servidor Linux necesita lo mismo: ver contexto/07-pendientes.md.
+      - name: GTK 2 para OpenCV
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libgtk2.0-0t64
+
+      # --continue: si una tarea falla, las que no dependen de ella corren igual. Sin él, un
+      # unitario roto cortaba el build antes de integrationTest, y así los de integración
+      # pasaron cinco meses sin correr en el CI sin que nada lo avisara.
+      # La salida queda además en build.log para el paso que resume la falla. pipefail hace que
+      # el paso termine con el código de Gradle y no con el de tee, que siempre es 0: sin él,
+      # el CI quedaría en verde con el build roto.
       - name: Build (compila, Checkstyle, tests sobre H2 y migraciones sobre MariaDB)
-        run: ./gradlew build --no-daemon
+        run: |
+          set -o pipefail
+          ./gradlew build --continue --no-daemon 2>&1 | tee build.log
         env:
           MARIADB_USER: root
           MARIADB_PASSWORD: ""
           # Acá el motor tiene que estar: si el servicio no levantó, MigracionesIT falla en vez
           # de saltearse y dejar el CI en verde sin haber aplicado una sola migración.
           MARIADB_OBLIGATORIA: si
+
+      # El log de un job solo se lee con la sesión iniciada en GitHub; las anotaciones y el
+      # resumen de la corrida los ve cualquiera. Este paso deja ahí qué falló --qué no compila,
+      # qué marcó Checkstyle, qué tests y con qué mensaje--, así se entiende sin abrir el log.
+      - name: Resumen de la falla
+        if: failure()
+        run: python3 .github/scripts/resumir_falla.py
 
       - name: Subir reporte de tests si falla
         if: failure()

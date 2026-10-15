@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.1 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.2 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -138,6 +138,10 @@ contemplaba la migración desde el principio). Salir a internet arrastra:
 - TD-008 y TD-009 pasan de teóricas a urgentes.
 - Gestión de secretos: hoy las credenciales viven en `application-local.properties`.
 - La cámara requiere HTTPS: `getUserMedia` solo funciona en contexto seguro.
+- Un servidor Linux necesita GTK 2 (`libgtk2.0-0t64` en Ubuntu 24.04) aunque no tenga
+  pantalla: el reconocedor LBPH carga el módulo de ventanas de OpenCV, enlazado contra GTK 2,
+  y sin él el reconocimiento facial no arranca. El CI ya lo instala; la imagen del servidor
+  o del contenedor tiene que traerlo (ADR-0007, aprendizaje 9).
 - Backups y retención — hoy no hay política definida, y los datos son biométricos.
 - Revisión del cifrado en tránsito y de dónde vive la clave AES.
 

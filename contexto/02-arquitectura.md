@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.6 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.7 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -299,12 +299,20 @@ comparten nombre (ADR-0022).
 `spring.jpa.hibernate.ddl-auto=validate`: el esquema lo maneja Flyway, Hibernate solo
 verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/Ushuaia`.
 
-**CI:** GitHub Actions sobre `push` y `pull_request` a `main`. JDK 21 Temurin,
-`./gradlew build --no-daemon`: compila, corre Checkstyle y las dos suites —unitarios e
-integración—, porque `check` depende de todo eso; ver `04-convenciones.md`. Los tests van
-sobre H2, salvo `MigracionesIT`, que aplica las migraciones contra un `mariadb:10.4` que
-levanta el propio workflow. Ahí el motor es obligatorio (`MARIADB_OBLIGATORIA=si`): si no
-levantó, el test falla en vez de saltearse. Sube el reporte si falla.
+**CI:** GitHub Actions sobre `push` y `pull_request` a `main`, en `ubuntu-24.04` con JDK 21
+Temurin. Antes del build instala GTK 2 (`libgtk2.0-0t64`): en Linux, el reconocedor LBPH
+arrastra el módulo de ventanas de OpenCV, enlazado contra GTK 2, y sin él OpenCV no carga
+(ADR-0007, aprendizaje 9). Después corre `./gradlew build --continue --no-daemon`: compila,
+corre Checkstyle y las dos suites —unitarios e integración—, porque `check` depende de todo
+eso; ver `04-convenciones.md`. Con `--continue`, una tarea que falla no deja sin correr a las
+que no dependen de ella. Los tests van sobre H2, salvo `MigracionesIT`, que aplica las
+migraciones contra un `mariadb:10.4` que levanta el propio workflow. Ahí el motor es
+obligatorio (`MARIADB_OBLIGATORIA=si`): si no levantó, el test falla en vez de saltearse.
+
+Si el build falla, `.github/scripts/resumir_falla.py` deja en la página de la corrida qué
+falló —qué no compila, qué marcó Checkstyle, qué tests y con qué mensaje—, porque el log solo
+se lee con la sesión iniciada en GitHub y las anotaciones las ve cualquiera. También se sube el
+reporte de tests.
 
 ## Los 24 ADR
 

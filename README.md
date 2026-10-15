@@ -91,6 +91,9 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 `MigracionesIT` aplica las migraciones contra un MariaDB real y se saltea si no hay uno en
 `localhost:3306`. En el CI corre siempre: el workflow levanta un `mariadb:10.4`.
 
+Si el CI falla, la página de la corrida dice qué falló —qué no compila, qué marcó Checkstyle,
+qué tests y con qué mensaje—, sin necesidad de abrir el log.
+
 ## Estructura
 
 ```
