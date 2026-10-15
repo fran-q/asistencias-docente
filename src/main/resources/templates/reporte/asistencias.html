@@ -147,7 +147,11 @@
                         </tr>
                     </thead>
                     <tbody role="rowgroup">
-                        <tr th:each="f : ${filas}" role="row">
+                        <!-- Cada fila puede traer una segunda con su letra chica, así que el
+                             th:each va en un th:block: puesto en el <tr>, repite ese <tr> y
+                             nada más. -->
+                        <th:block th:each="f, iter : ${filas}">
+                        <tr role="row">
                             <td role="cell" data-label="Fecha">
                                 <span th:text="${#temporals.format(f.fecha, 'dd/MM/yyyy')}">01/06/2026</span>
                                 <small class="text-muted" th:text="${f.diaSemana}">Lunes</small>
@@ -216,8 +220,57 @@
                             <td role="cell" data-label="Justificada">
                                 <span th:if="${f.justificada}" class="badge badge--success">Sí</span>
                                 <span th:unless="${f.justificada}" class="text-muted">—</span>
+                                <!-- Sólo cuando hay algo que leer. Un "Ver más" que abre una
+                                     caja vacía promete algo y después no lo tiene. -->
+                                <button th:if="${f.hayDetalle}" type="button"
+                                        class="btn btn--ghost btn--sm fila-detalle__boton"
+                                        data-fila-detalle
+                                        th:attr="aria-controls=|detalle-${iter.index}|"
+                                        aria-expanded="false"
+                                        data-abrir="Ver más" data-cerrar="Ver menos">
+                                    Ver más
+                                </button>
                             </td>
                         </tr>
+
+                        <!-- El porqué de la fila de arriba: lo que el CSV traía y la pantalla
+                             no mostraba. Va como una fila más y no como un cuadro flotante
+                             porque pertenece a esa fila y se lee junto con ella, no encima. -->
+                        <tr th:if="${f.hayDetalle}" th:id="|detalle-${iter.index}|"
+                            class="fila-detalle" role="row" hidden>
+                            <!-- Sin data-label, como la celda del estado vacío: no es el valor
+                                 de una columna sino un bloque que cruza la fila entera, y en
+                                 el teléfono una etiqueta adelante no diría nada. -->
+                            <td colspan="12" role="cell" class="fila-detalle__celda">
+                                <div class="fila-detalle__cuerpo">
+                                    <div class="fila-detalle__bloque" th:if="${f.justificada}">
+                                        <h3 class="fila-detalle__titulo">Justificación</h3>
+                                        <p class="fila-detalle__dato"
+                                           th:text="${f.motivoJustificacion}">Certificado médico</p>
+                                    </div>
+
+                                    <div class="fila-detalle__bloque"
+                                         th:if="${f.motivoManual != null or f.detalleManual != null
+                                                 or f.usuarioRegistrador != null}">
+                                        <h3 class="fila-detalle__titulo">Cargada a mano</h3>
+                                        <p class="fila-detalle__dato" th:if="${f.motivoManual != null}">
+                                            <span>Motivo:</span>
+                                            <span th:text="${f.motivoManual}">Falla de la cámara</span>
+                                        </p>
+                                        <p class="fila-detalle__dato" th:if="${f.detalleManual != null}">
+                                            <span>Detalle:</span>
+                                            <span th:text="${f.detalleManual}">Se cortó la luz</span>
+                                        </p>
+                                        <p class="fila-detalle__dato" th:if="${f.usuarioRegistrador != null}">
+                                            <span>La cargó:</span>
+                                            <span th:text="${f.usuarioRegistrador}">secretaria</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        </th:block>
+
                         <tr th:if="${#lists.isEmpty(filas)}" role="row">
                             <td role="cell" colspan="12" class="table__empty">
                                 Sin resultados para los filtros seleccionados.
@@ -228,6 +281,7 @@
             </div>
         </div>
         <script th:src="@{/js/comun/select-buscable.js}" defer></script>
+        <script th:src="@{/js/comun/fila-detalle.js}" defer></script>
     </section>
 </body>
 </html>

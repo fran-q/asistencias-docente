@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.2 · **Actualizado:** 2026-08-21 · **Estado:** vigente
+> **Versión:** 1.3 · **Actualizado:** 2026-10-14 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -268,7 +268,7 @@ correcto de lo que es.
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** y, desde 2026-09-27, el **equipo** de cada jornada en columna propia |
+| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** y, desde 2026-09-27, el **equipo** de cada jornada en columna propia. Desde 2026-10-14, un **Ver más** por fila muestra el motivo de la justificación y, de una carga a mano, el motivo, el detalle y quién la cargó: hasta ahí solo estaban en el CSV (`fila-detalle.js`, `DetalleDelReporteIT`) |
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |

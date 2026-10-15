@@ -5,10 +5,12 @@ import edu.cent35.asistencias.model.academico.CicloLectivo;
 import edu.cent35.asistencias.model.academico.Comision;
 import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.institucion.Institucion;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.model.persona.Persona;
+import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.CarreraRepository;
@@ -19,6 +21,7 @@ import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.HorarioRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
+import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
 import edu.cent35.asistencias.repository.MateriaRepository;
 import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
@@ -66,6 +69,8 @@ public class EscenarioDePrueba {
     private final ComisionRepository comisiones;
     private final HorarioRepository horarios;
     private final AsistenciaRepository asistencias;
+    private final JustificacionAusenciaRepository justificaciones;
+    private final AsistenciaManualRepository manuales;
     private final BloquePresenciaRepository bloques;
     private final ConsentimientoBiometricoRepository consentimientos;
     private final PuestoCapturaRepository puestos;
@@ -164,8 +169,9 @@ public class EscenarioDePrueba {
      * apunta a otra cosa. La institución y las personas quedan: no estorban a ningún test.
      *
      * <p>Los consentimientos y los horarios no tienen tenant propio y se buscan por su
-     * docente y su comisión. Y solo por el id: cualquier otro getter de esos proxies lazy
-     * intenta ir a la base fuera de sesión y revienta con LazyInitializationException.
+     * docente y su comisión; las justificaciones y las cargas a mano, por su asistencia. Y
+     * solo por el id: cualquier otro getter de esos proxies lazy intenta ir a la base fuera
+     * de sesión y revienta con LazyInitializationException.
      */
     public void borrarTodoDe(Long tenantId) {
         if (tenantId == null) return;
@@ -173,7 +179,11 @@ public class EscenarioDePrueba {
             .filter(d -> tenantId.equals(d.getInstitucionId())).map(Docente::getId).toList();
         List<Long> comisionIds = comisiones.findAllDelTenant(tenantId).stream()
             .map(Comision::getId).toList();
+        List<Long> asistenciaIds = asistencias.findAll().stream()
+            .filter(a -> tenantId.equals(a.getInstitucionId())).map(Asistencia::getId).toList();
 
+        borrar(justificaciones, j -> asistenciaIds.contains(j.getAsistencia().getId()));
+        borrar(manuales, m -> asistenciaIds.contains(m.getAsistencia().getId()));
         borrar(asistencias, a -> tenantId.equals(a.getInstitucionId()));
         borrar(bloques, b -> tenantId.equals(b.getInstitucionId()));
         borrar(consentimientos, c -> docenteIds.contains(c.getDocente().getId()));

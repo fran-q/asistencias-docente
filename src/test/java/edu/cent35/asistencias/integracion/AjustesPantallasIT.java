@@ -983,9 +983,14 @@ class AjustesPantallasIT {
                 java.util.regex.Pattern.compile("<td\\b[^>]*>").matcher(html);
             while (m.find()) {
                 String td = m.group();
-                // La celda de acciones y la del estado vacío no llevan etiqueta a propósito:
-                // una son botones y la otra es un mensaje, no el valor de una columna.
-                boolean exenta = td.contains("table__actions") || td.contains("table__empty");
+                // Tres celdas no llevan etiqueta a propósito, y ninguna de las tres es el
+                // valor de una columna: la de acciones son botones, la del estado vacío es un
+                // mensaje, y la del detalle es un bloque que cruza la fila entera. A esa
+                // última, una etiqueta adelante no le diría nada: no pertenece a "Justif.",
+                // cuelga de toda la fila.
+                boolean exenta = td.contains("table__actions")
+                    || td.contains("table__empty")
+                    || td.contains("fila-detalle__celda");
                 if (!exenta && !td.contains("data-label")) {
                     problemas.add(rel + " -> " + td);
                 }

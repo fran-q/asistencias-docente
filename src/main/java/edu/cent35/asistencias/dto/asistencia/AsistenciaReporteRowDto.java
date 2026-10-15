@@ -140,6 +140,25 @@ public class AsistenciaReporteRowDto {
     }
 
     /**
+     * Si la fila tiene letra chica para mostrar: el <b>porqué</b> de lo que dice.
+     *
+     * <p>Son los textos que el CSV viene trayendo desde siempre —{@code motivo_justificacion},
+     * {@code motivo_carga_manual}, {@code detalle_carga_manual}, {@code usuario_registro}— y
+     * que en pantalla no estaban por ningún lado: la columna "Justif." decía "Sí" y ahí
+     * terminaba. Quien quería saber por qué esa ausencia estaba justificada tenía que bajarse
+     * el CSV, o sea que la pantalla valía menos que su propia descarga.
+     *
+     * <p>Lo pregunta la plantilla para no ofrecer un "Ver más" que abre una caja vacía, que es
+     * peor que no ofrecerlo: promete algo y después no lo tiene.
+     */
+    public boolean isHayDetalle() {
+        return justificada
+            || motivoManual != null
+            || detalleManual != null
+            || usuarioRegistrador != null;
+    }
+
+    /**
      * Por qué puerta entró y por cuál salió, en un solo texto (RF-89, V031).
      *
      * <p>Un solo nombre cuando las dos marcas se tomaron en el mismo equipo, que es el caso

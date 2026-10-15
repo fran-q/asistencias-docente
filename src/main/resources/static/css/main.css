@@ -1476,6 +1476,31 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
 .table__actions .btn--sm { margin: 0; }
 .table__actions > * + * { margin-left: 6px; }
 
+/* ---- Fila de detalle ----
+   La letra chica de la fila de arriba, desplegada por fila-detalle.js. Se distingue
+   por la superficie y por el borde de la izquierda, que la ata visualmente a su fila:
+   sin eso, en una tabla de filas alternadas se lee como un registro más. */
+.fila-detalle > td {
+    background: var(--surface-2);
+    box-shadow: inset 3px 0 0 var(--border-strong);
+}
+.fila-detalle__cuerpo {
+    display: flex; flex-wrap: wrap;
+    gap: var(--space) var(--space-xl);
+    padding: 2px 0;
+}
+/* Ancho de lectura: un motivo escrito a mano puede ser un renglón o un párrafo, y a
+   todo el ancho de la tabla el ojo pierde el renglón al volver. */
+.fila-detalle__bloque { min-width: 13rem; max-width: 44rem; }
+.fila-detalle__titulo {
+    margin: 0 0 4px; font-size: .7rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .07em; color: var(--text-dim);
+}
+.fila-detalle__dato { margin: 0 0 2px; font-size: .86rem; text-wrap: pretty; }
+.fila-detalle__dato > span:first-child { color: var(--text-muted); }
+/* El botón no empuja la insignia: va al lado y en la misma línea. */
+.fila-detalle__boton { margin-left: 8px; }
+
 .table__empty { text-align: center; color: var(--text-muted); padding: 44px 20px !important; }
 .table__empty svg { color: var(--text-dim); margin-bottom: 12px; }
 .table__empty strong { display: block; color: var(--text); font-weight: 500; margin-bottom: 4px; }
@@ -2757,6 +2782,17 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
     .table--tarjetas tbody tr:has(.table__empty) { border: none; background: none; padding: 0; }
     .table--tarjetas td.table__empty { display: block; text-align: center; border-bottom: none; }
     .table--tarjetas td.table__empty::before { content: none; }
+
+    /* El detalle es la continuación de la tarjeta de arriba, no otra tarjeta: apilado
+       se pega a ella y le saca el margen que separa un registro del siguiente. */
+    .table--tarjetas tbody tr.fila-detalle {
+        margin-top: calc(var(--gap) * -1);
+        border-top-left-radius: 0; border-top-right-radius: 0;
+    }
+    /* Alineado a la izquierda: en modo tarjeta los valores van a la derecha porque
+       enfrentan a su etiqueta, pero acá no hay etiqueta enfrente --hay un párrafo-- y
+       a la derecha se pierde el renglón al volver. */
+    .table--tarjetas tr.fila-detalle td { border-bottom: none; text-align: left; }
 }
 
 /* ============================================================================
