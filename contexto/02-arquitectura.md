@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.7 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.8 · **Actualizado:** 2026-10-15 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -335,13 +335,13 @@ qué se descartó.
 | 0012 | Captura guiada del rostro | Vigente |
 | 0013 | Ventana de confirmación del pase | Vigente |
 | 0014 | Margen mínimo contra el segundo candidato | Vigente |
-| 0015 | Puesto autorizado para la captura biométrica | Propuesta |
-| 0016 | Persona separada de usuario y de vínculo docente | Propuesta |
+| 0015 | Puesto autorizado para la captura biométrica | Vigente — su tope de uno y la revocación anclada al equipo, cambiados por V030 |
+| 0016 | Persona separada de usuario y de vínculo docente | Propuesta — implementada; falta el plazo legal de conservación para aceptarla |
 | 0017 | Marca de salida y bloque de presencia | Vigente |
 | 0018 | La tolerancia es simétrica y bidireccional | Vigente — reemplaza la decisión 1 de ADR-0008 |
-| 0019 | Modo kiosco: tomar asistencia sin sesión abierta | Propuesta |
-| 0020 | Una sesión por cuenta, y la desplaza quien entra | Propuesta |
-| 0021 | La marca sin cámara la carga el admin, en el momento | Propuesta |
-| 0022 | Instalación autónoma: instalador, servicio y primera cuenta sin correo | Propuesta |
+| 0019 | Modo kiosco: tomar asistencia sin sesión abierta | Vigente |
+| 0020 | Una sesión por cuenta, y la desplaza quien entra | Vigente |
+| 0021 | La marca sin cámara la carga el admin, en el momento | Vigente |
+| 0022 | Instalación autónoma: instalador, servicio y primera cuenta sin correo | Vigente |
 | 0023 | Autoría de cada cambio y acciones sensibles | Propuesta |
 | 0024 | `model/` y `dto/` se dividen por dominio | Vigente |

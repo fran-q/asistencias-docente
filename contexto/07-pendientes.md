@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.2 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.3 · **Actualizado:** 2026-10-15 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -126,6 +126,28 @@ build verde** y por eso conviene tenerlas escritas:
 
 ---
 
+## Decisiones abiertas
+
+- [ ] **Con varios equipos (V030), la contraseña institucional sola alcanza para mover la
+      captura biométrica a otra máquina.** ADR-0015 lo había cerrado el 2026-09-05: un solo
+      equipo, y revocarlo solo desde él o con un código al correo. V030 permitió varios y pasó
+      la revocación a la pantalla, así que hoy alcanza con autorizar un equipo nuevo —sin
+      tope— o con revocar uno desde la pantalla y autorizar el propio —con el tope lleno—.
+      Opciones: aceptarlo como riesgo y escribirlo; volver a pedir el código al correo para
+      revocar desde otro equipo; o pedirlo para autorizar cualquier equipo después del
+      primero. Mientras tanto, un tope igual a la cantidad real de entradas impide sumar un
+      equipo, pero no cambiarlo por otro. Los comentarios de `PuestoCapturaService.designar`
+      todavía describen la regla de un equipo. Detalle en ADR-0015, *Varios equipos, con tope
+      propio*.
+
+- [ ] **ADR-0016 espera el plazo legal de conservación.** Está implementado desde el
+      2026-09-03, pero el propio ADR condiciona su aceptación a poder citar la norma que obliga
+      a conservar los registros de asistencia docente, y por cuántos años: una resolución del
+      Ministerio de Educación provincial o el reglamento del CENT 35. Sin eso, la retención que
+      construye no tiene con qué sostenerse frente a un pedido de supresión.
+
+---
+
 ## Rumbo hacia el producto final
 
 Definido por el cliente. **El orden de esta lista no implica prioridad ni cronograma.**
@@ -237,9 +259,10 @@ Cosas que hay que arreglar y no dependen de nadie más:
 - [x] **Links rotos en `CHANGELOG.md`.** Pasados a texto el 2026-10-14. Apuntan a `docs/4-arquitectura/adr/`, ruta que
       dejó de existir cuando la documentación salió del repositorio.
 - [x] **`CHANGELOG.md` dice "16 tablas"** en el Sprint 0. Son 15. Corregido el 2026-10-14.
-- [ ] **`Documentacion/` no está versionada ni respaldada.** Son todos los ADR, la matriz legal
-      y los apuntes de defensa dependiendo de que nadie borre una carpeta. De acá a marzo
-      de 2027 es mucho tiempo.
+- [ ] **`Documentacion/` no tiene respaldo.** Desde el 2026-10-14 es un repositorio git
+      propio, así que tiene historial, pero vive solo en esta máquina: falta el remoto
+      privado. Son todos los ADR, la matriz legal y los apuntes de defensa dependiendo de
+      que nadie borre una carpeta. De acá a marzo de 2027 es mucho tiempo.
 - [ ] **Inconsistencia de nombre:** el producto es Visum; el repositorio, el paquete Java
       y la aplicación dicen "asistencias".
 - [ ] **Alcance ampliado sin documentar:** la funcionalidad agregada después del
