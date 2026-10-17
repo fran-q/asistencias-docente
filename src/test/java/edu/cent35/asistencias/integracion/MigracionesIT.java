@@ -6,19 +6,31 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -33,6 +45,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * <p><b>Qué comprueba, en orden.</b> Que todas las migraciones aplican de cero sin error sobre una
  * base vacía; que ninguna quedó pendiente ni fallida; y que el esquema que producen tiene
  * exactamente las tablas y columnas que el resto del sistema da por sentadas.
+ *
+ * <p><b>Y que los CHECK rechacen lo que deben.</b> H2 tampoco tiene ninguno de los CHECK de las
+ * migraciones, así que uno mal escrito —o uno que dejara de existir— no lo notaría ningún otro
+ * test. Acá están los de los bloques de presencia y el umbral de la institución (V019, V020,
+ * V029 y V031), más el índice único que impide dos bloques abiertos del mismo docente. Hasta el
+ * 2026-10-17 se probaban a mano.
  *
  * <p><b>Por qué se saltea si no hay MariaDB.</b> Las migraciones están escritas en SQL de
  * MySQL/MariaDB —{@code MODIFY COLUMN}, {@code COMMENT}, tipos propios— así que no corren en
@@ -134,9 +152,11 @@ class MigracionesIT {
         }
     }
 
-    @Test
-    @DisplayName("Las migraciones aplican de cero y dejan el esquema que las entidades esperan")
-    void migracionesDesdeCero() throws Exception {
+    /**
+     * Lo primero de cada test. En el CI el motor tiene que estar (ver MOTOR_OBLIGATORIO); en
+     * una máquina sin MariaDB, el test se saltea.
+     */
+    private static void exigirMotor() {
         if (MOTOR_OBLIGATORIO) {
             assertThat(hayMotor)
                 .as("MARIADB_OBLIGATORIA=si y no hay MariaDB en localhost:%s: %s", PUERTO, porQueNoHayMotor)
@@ -144,18 +164,41 @@ class MigracionesIT {
         }
         assumeTrue(hayMotor,
             "Sin MariaDB en localhost:" + PUERTO + "; se saltea la verificación de migraciones");
+    }
 
-        Flyway flyway = Flyway.configure()
-            .dataSource(URL_BASE + BASE, USUARIO, CLAVE)
-            .locations("classpath:db/migration")
-            // Las migraciones califican las tablas como ${esquema}.tabla porque en la
-            // aplicación el historial vive en otra base y, sin calificar, el CREATE TABLE
-            // terminaría ahí. Acá el esquema es esta base descartable: es justamente lo que
-            // el placeholder permite, que la misma migración corra contra cualquier nombre.
-            .placeholders(java.util.Map.of("esquema", BASE))
-            .load();
+    // La base ya migrada, para que la usen todos los tests de la clase. Ver migrada().
+    private static Flyway flywayMigrada;
 
-        flyway.migrate();
+    /**
+     * Migra la base descartable la primera vez que un test la pide, y después la reusa: todos
+     * los tests de esta clase trabajan sobre el mismo esquema recién migrado, en el orden que
+     * JUnit decida.
+     *
+     * <p>Se guarda recién cuando la migración terminó bien. Si fallara, el test siguiente
+     * vuelve a intentarlo y falla igual, en vez de correr sobre un esquema a medias.
+     */
+    private static synchronized Flyway migrada() {
+        if (flywayMigrada == null) {
+            Flyway nueva = Flyway.configure()
+                .dataSource(URL_BASE + BASE, USUARIO, CLAVE)
+                .locations("classpath:db/migration")
+                // Las migraciones califican las tablas como ${esquema}.tabla porque en la
+                // aplicación el historial vive en otra base y, sin calificar, el CREATE TABLE
+                // terminaría ahí. Acá el esquema es esta base descartable: es justamente lo que
+                // el placeholder permite, que la misma migración corra contra cualquier nombre.
+                .placeholders(Map.of("esquema", BASE))
+                .load();
+            nueva.migrate();
+            flywayMigrada = nueva;
+        }
+        return flywayMigrada;
+    }
+
+    @Test
+    @DisplayName("Las migraciones aplican de cero y dejan el esquema que las entidades esperan")
+    void migracionesDesdeCero() throws Exception {
+        exigirMotor();
+        Flyway flyway = migrada();
 
         // 1) Ninguna quedó pendiente ni fallida.
         List<String> problemas = new ArrayList<>();
@@ -298,6 +341,229 @@ class MigracionesIT {
             assertThat(columnasDe(tabla))
                 .as("la baja de %s tiene que dejar constancia de quien la hizo", tabla)
                 .contains("dado_de_baja_por");
+        }
+    }
+
+    // ========================================================================
+    //  Los CHECK
+    // ========================================================================
+
+    /**
+     * Cada CHECK rechaza lo que tiene que rechazar, y es él quien lo rechaza.
+     *
+     * <p>Cada caso parte de una fila que entra y le cambia una sola cosa. Lo que se comprueba es
+     * que el motor la rechace <b>nombrando ese constraint</b>: rechazada por otro, el caso no
+     * probaría lo que dice; y si el CHECK desapareciera, la fila entraría y el caso fallaría.
+     */
+    @ParameterizedTest(name = "{0}: {1}")
+    @MethodSource("filasQueUnCheckRechaza")
+    @DisplayName("Cada CHECK rechaza lo suyo, y es él quien lo rechaza")
+    void cadaCheckRechazaLoSuyo(String constraint, String caso, String tabla,
+                                Map<String, Object> fila) {
+        exigirMotor();
+        migrada();
+
+        assertThatThrownBy(() -> insertar(tabla, fila))
+            .as("%s tendría que rechazar %s", constraint, caso)
+            .isInstanceOf(SQLException.class)
+            .hasMessageContaining("`" + constraint + "`");
+    }
+
+    static Stream<Arguments> filasQueUnCheckRechaza() {
+        String bloques = "bloques_presencia";
+        return Stream.of(
+            // V019: los diez de bloques_presencia.
+            Arguments.of("ck_bloques_origen_entrada", "una entrada que no es por rostro ni a mano",
+                bloques, con(abierto(), "origen_entrada", "CAMARA")),
+            Arguments.of("ck_bloques_origen_salida", "una salida de origen desconocido",
+                bloques, con(cerrado(), "origen_salida", "OTRO")),
+            Arguments.of("ck_bloques_estado_cierre", "un estado de cierre que no existe",
+                bloques, con(cerrado(), "estado_cierre", "CERRADO")),
+            Arguments.of("ck_bloques_estado_salida", "un estado de salida que no existe",
+                bloques, con(cerrado(), "estado_salida", "TARDE")),
+            Arguments.of("ck_bloques_confianza_entrada", "una confianza de entrada mayor que 1",
+                bloques, con(abierto(), "confianza_entrada", new BigDecimal("1.0001"))),
+            Arguments.of("ck_bloques_confianza_salida", "una confianza de salida negativa",
+                bloques, con(cerrado(), "confianza_salida", new BigDecimal("-0.0001"))),
+            Arguments.of("ck_bloques_cierre_coherente", "un bloque abierto con hora de salida",
+                bloques, con(abierto(), "hora_salida", "10:00:00")),
+            Arguments.of("ck_bloques_cierre_coherente", "un bloque cerrado sin hora de salida",
+                bloques, con(cerrado(), "hora_salida", null)),
+            Arguments.of("ck_bloques_salida_posterior", "una salida a la misma hora que la entrada",
+                bloques, con(cerrado(), "hora_salida", "08:00:00")),
+            Arguments.of("ck_bloques_entrada_modelo", "una entrada a mano con confianza del rostro",
+                bloques, con(abierto(), "origen_entrada", "MANUAL", "motivo_entrada_id", 1,
+                             "confianza_entrada", new BigDecimal("0.9"))),
+            Arguments.of("ck_bloques_entrada_modelo", "una entrada a mano con modelo facial",
+                bloques, con(abierto(), "origen_entrada", "MANUAL", "motivo_entrada_id", 1,
+                             "modelo_facial_entrada_id", 1)),
+            Arguments.of("ck_bloques_salida_modelo", "una salida presunta con confianza del rostro",
+                bloques, con(cerrado(), "estado_cierre", "SIN_CIERRE", "origen_salida", "PRESUNTO",
+                             "estado_salida", "SIN_MARCA", "confianza_salida", new BigDecimal("0.9"))),
+
+            // V019, sobre la institución: el hueco entre clases va de 0 a 4 horas.
+            Arguments.of("ck_instituciones_umbral_separacion", "un umbral de más de cuatro horas",
+                "instituciones", institucion(241)),
+            Arguments.of("ck_instituciones_umbral_separacion", "un umbral negativo",
+                "instituciones", institucion(-1)),
+
+            // V020: el cierre del admin lleva motivo, y ningún otro cierre lleva motivo, autor ni
+            // detalle.
+            Arguments.of("ck_bloques_cierre_admin", "un cierre del admin sin motivo",
+                bloques, con(cerrado(), "estado_cierre", "CERRADO_POR_ADMIN", "origen_salida", "MANUAL")),
+            Arguments.of("ck_bloques_cierre_admin", "un cierre por rostro con motivo",
+                bloques, con(cerrado(), "motivo_cierre_id", 1)),
+            Arguments.of("ck_bloques_cierre_admin", "un cierre por rostro con autor",
+                bloques, con(cerrado(), "cerrado_por_usuario_id", 1)),
+            Arguments.of("ck_bloques_cierre_admin", "un cierre por rostro con detalle",
+                bloques, con(cerrado(), "detalle_cierre", "Corregida a mano")),
+
+            // V029: el espejo, del lado de la entrada.
+            Arguments.of("ck_bloques_entrada_admin", "una entrada a mano sin motivo",
+                bloques, con(abierto(), "origen_entrada", "MANUAL")),
+            Arguments.of("ck_bloques_entrada_admin", "una entrada por rostro con motivo",
+                bloques, con(abierto(), "motivo_entrada_id", 1)),
+            Arguments.of("ck_bloques_entrada_admin", "una entrada por rostro con autor",
+                bloques, con(abierto(), "abierto_por_usuario_id", 1)),
+            Arguments.of("ck_bloques_entrada_admin", "una entrada por rostro con detalle",
+                bloques, con(abierto(), "detalle_entrada", "Sin cámara")),
+
+            // V031: el equipo de la salida solo existe si hubo salida.
+            Arguments.of("ck_bloques_puesto_salida_con_salida", "un equipo de salida en un bloque abierto",
+                bloques, con(abierto(), "puesto_salida_id", 1)));
+    }
+
+    /**
+     * Las formas válidas entran. Sin esto, un CHECK escrito de más —que rechazara también lo
+     * correcto— pasaría por bueno: los casos de arriba solo miran que se rechace.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("filasValidas")
+    @DisplayName("Las formas válidas de un bloque y de una institución entran")
+    void lasFormasValidasEntran(String caso, String tabla, Map<String, Object> fila) {
+        exigirMotor();
+        migrada();
+
+        assertThatCode(() -> insertar(tabla, fila))
+            .as("%s tendría que entrar", caso)
+            .doesNotThrowAnyException();
+    }
+
+    static Stream<Arguments> filasValidas() {
+        String bloques = "bloques_presencia";
+        return Stream.of(
+            Arguments.of("un bloque abierto por rostro", bloques, abierto()),
+            Arguments.of("un bloque cerrado por rostro, en hora", bloques, cerrado()),
+            Arguments.of("la confianza en sus dos bordes, 1 y 0",
+                bloques, con(cerrado(), "confianza_entrada", BigDecimal.ONE,
+                             "confianza_salida", BigDecimal.ZERO)),
+            Arguments.of("una entrada a mano, con motivo, autor y detalle",
+                bloques, con(abierto(), "origen_entrada", "MANUAL", "motivo_entrada_id", 1,
+                             "abierto_por_usuario_id", 1, "detalle_entrada", "Sin cámara")),
+            Arguments.of("un cierre del admin, con motivo, autor y detalle",
+                bloques, con(cerrado(), "estado_cierre", "CERRADO_POR_ADMIN", "origen_salida", "MANUAL",
+                             "motivo_cierre_id", 1, "cerrado_por_usuario_id", 1,
+                             "detalle_cierre", "Se fue sin marcar")),
+            Arguments.of("un bloque sin cierre, con la salida presunta",
+                bloques, con(cerrado(), "estado_cierre", "SIN_CIERRE", "origen_salida", "PRESUNTO",
+                             "estado_salida", "SIN_MARCA")),
+            Arguments.of("un bloque cerrado, con el equipo de la salida",
+                bloques, con(cerrado(), "puesto_salida_id", 1)),
+            Arguments.of("un umbral de cero minutos", "instituciones", institucion(0)),
+            Arguments.of("un umbral de cuatro horas justas", "instituciones", institucion(240)));
+    }
+
+    /**
+     * Un docente no puede tener dos bloques abiertos a la vez, y uno cerrado no cuenta. Lo
+     * sostiene el índice único sobre una columna generada que vale el docente mientras el bloque
+     * está abierto y NULL cuando no; era el punto en duda de V019, porque descansa en que un
+     * UNIQUE admite repetir NULL.
+     */
+    @Test
+    @DisplayName("Un docente no tiene dos bloques abiertos, pero sí uno abierto y otro cerrado")
+    void unSoloBloqueAbiertoPorDocente() {
+        exigirMotor();
+        migrada();
+        Map<String, Object> otroMasTarde = con(abierto(), "hora_entrada", "11:00:00");
+
+        assertThatThrownBy(() -> insertar("bloques_presencia", List.of(abierto(), otroMasTarde)))
+            .isInstanceOf(SQLException.class)
+            .hasMessageContaining("uq_bloques_un_solo_abierto_por_docente");
+
+        assertThatCode(() -> insertar("bloques_presencia", List.of(cerrado(), otroMasTarde)))
+            .doesNotThrowAnyException();
+    }
+
+    // Un bloque abierto por rostro: lo mínimo que la tabla acepta. Los ids no apuntan a nada,
+    // ver insertar().
+    private static Map<String, Object> abierto() {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("institucion_id", 1);
+        fila.put("docente_id", 1);
+        fila.put("fecha", "2026-09-01");
+        fila.put("hora_entrada", "08:00:00");
+        fila.put("origen_entrada", "AUTOMATICO");
+        fila.put("estado_cierre", "ABIERTO");
+        return fila;
+    }
+
+    // El mismo bloque, cerrado por rostro y en hora.
+    private static Map<String, Object> cerrado() {
+        return con(abierto(), "estado_cierre", "CERRADO_POR_ROSTRO", "hora_salida", "10:00:00",
+                   "origen_salida", "AUTOMATICO", "estado_salida", "EN_HORA");
+    }
+
+    // Una institución con el umbral que se pida; lo demás, lo mínimo.
+    private static Map<String, Object> institucion(int umbral) {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("nombre", "Instituto del umbral");
+        fila.put("umbral_separacion_min", umbral);
+        return fila;
+    }
+
+    // Una copia de la fila con valores cambiados, de a pares: columna, valor, columna, valor.
+    private static Map<String, Object> con(Map<String, Object> base, Object... pares) {
+        Map<String, Object> fila = new LinkedHashMap<>(base);
+        for (int i = 0; i < pares.length; i += 2) {
+            fila.put((String) pares[i], pares[i + 1]);
+        }
+        return fila;
+    }
+
+    private static void insertar(String tabla, Map<String, Object> fila) throws SQLException {
+        insertar(tabla, List.of(fila));
+    }
+
+    /**
+     * Inserta las filas en una transacción y la deshace al final, entren o no: cada caso arranca
+     * de las tablas vacías.
+     *
+     * <p>Con las claves foráneas apagadas en la sesión. Lo que se prueba son los CHECK, y así un
+     * caso no necesita sembrar la institución, el docente, el usuario, el motivo y el modelo
+     * facial a los que apunta. Los CHECK siguen activos: los gobierna otra variable,
+     * {@code check_constraint_checks}.
+     */
+    private static void insertar(String tabla, List<Map<String, Object>> filas) throws SQLException {
+        try (Connection c = DriverManager.getConnection(URL_BASE + BASE, USUARIO, CLAVE)) {
+            c.setAutoCommit(false);
+            try (Statement st = c.createStatement()) {
+                st.execute("SET SESSION foreign_key_checks = 0");
+            }
+            try {
+                for (Map<String, Object> fila : filas) {
+                    String sql = "INSERT INTO " + tabla + " (" + String.join(", ", fila.keySet())
+                        + ") VALUES (" + String.join(", ", Collections.nCopies(fila.size(), "?")) + ")";
+                    try (PreparedStatement ps = c.prepareStatement(sql)) {
+                        int i = 1;
+                        for (Object valor : fila.values()) {
+                            ps.setObject(i++, valor);
+                        }
+                        ps.executeUpdate();
+                    }
+                }
+            } finally {
+                c.rollback();
+            }
         }
     }
 

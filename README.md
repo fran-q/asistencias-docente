@@ -88,8 +88,9 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 | `./gradlew integrationTest` | Los de integración (`src/test/java/.../integracion/`), que levantan la aplicación entera |
 | `./gradlew build` | Las dos cosas, más Checkstyle (`config/checkstyle/`). Es lo que corre el CI en cada push y en cada pull request |
 
-`MigracionesIT` aplica las migraciones contra un MariaDB real y se saltea si no hay uno en
-`localhost:3306`. En el CI corre siempre: el workflow levanta un `mariadb:10.4`.
+`MigracionesIT` aplica las migraciones contra un MariaDB real y prueba que los CHECK de los
+bloques de presencia rechacen lo que deben. Se saltea si no hay MariaDB en `localhost:3306`;
+en el CI corre siempre, porque el workflow levanta un `mariadb:10.4`.
 
 Si el CI falla, la página de la corrida dice qué falló —qué no compila, qué marcó Checkstyle,
 qué tests y con qué mensaje—, sin necesidad de abrir el log.

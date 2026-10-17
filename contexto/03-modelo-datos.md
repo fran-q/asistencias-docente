@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.0 · **Actualizado:** 2026-08-14 · **Estado:** vigente
+> **Versión:** 1.1 · **Actualizado:** 2026-10-17 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -21,7 +21,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 | `instituciones` | Tenant root. Nombre, CUIT, contacto. | — (es la raíz) |
 | `roles` | Catálogo global: `INSTITUCION`, `ADMIN`. | No |
 | `usuarios` | Login del sistema. Solo institución y admins. **El docente no es usuario.** | Sí |
-| `codigos_verificacion` | Códigos de un solo uso: verificar el correo, recuperar la contraseña, revocar el puesto y cambiar el correo (uno al actual y otro al nuevo). `proposito` no tiene CHECK: los valores los fija `PropositoCodigo`. | Vía usuario |
+| `codigos_verificacion` | Códigos de un solo uso: verificar el correo, recuperar la contraseña y cambiar el correo (uno al actual y otro al nuevo). Revocar un equipo a distancia también pedía uno, hasta V030. `proposito` no tiene CHECK: los valores los fija `PropositoCodigo`. | Vía usuario |
 | `puestos_captura` | Equipos autorizados a capturar datos biométricos. Guarda el hash del token, no el token. Desde V025 puede habilitarse para operar **sin sesión** (ADR-0019). Ver ADR-0015. | Sí |
 
 ### Personas
@@ -122,30 +122,29 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
   entrada no tiene un estado propio: el bloque nace abierto de las dos formas, y lo único que
   las distingue es de dónde salió la hora (ADR-0021).
 
-⚠ **Ninguno de estos CHECK se ejercita en los tests.** El perfil `test` corre sobre H2 con
-`flyway.enabled=false` y `ddl-auto=create-drop`, así que el esquema de los tests sale de
-las entidades y no de las migraciones. Un build verde no dice nada sobre estos
-constraints. Es la misma clase de punto ciego que dejó pasar el problema de esquema de V015.
+✅ **Los CHECK de esta tabla los ejercita `MigracionesIT`** contra MariaDB desde el
+2026-10-17, en cada build del CI: los diez de V019, el de V020, el de V029 y el de V031, más
+el índice único que impide dos bloques abiertos del mismo docente. Cada caso rompe una sola
+regla y espera que la rechace ese constraint, por nombre; y las formas válidas también se
+prueban, para que un CHECK escrito de más no pase por bueno. El resto de la suite no los ve:
+el perfil `test` corre sobre H2 con `flyway.enabled=false` y `ddl-auto=create-drop`, así que
+su esquema sale de las entidades y no de las migraciones.
 
-✅ **Verificados a mano contra MariaDB 10.4.32**, aplicando cada migración sobre una copia
-estructural de la base real:
+Antes se verificaban a mano contra MariaDB 10.4.32, aplicando cada migración sobre una copia
+estructural de la base real. De esa verificación queda lo que el test no cubre:
 
-- **V019** (2026-09-01): entra limpia, el UNIQUE sobre la columna generada funciona —era el
-  punto que estaba en duda—, los diez CHECK rechazan lo que deben y el `ON DELETE SET NULL`
-  conserva el bloque tras borrar el modelo facial.
+- **V019** (2026-09-01): el `ON DELETE SET NULL` conserva el bloque tras borrar el modelo
+  facial.
 - **V025** (2026-09-06): `ck_puestos_kiosco_fechado` rechaza habilitar el kiosco sin fecha;
   deshabilitar conserva el rastro; el `RESTRICT` impide borrar un puesto que originó marcas y
   la baja lógica sí lo permite; suprimir la cuenta que habilitó el kiosco deja
   `kiosco_habilitado_por` en NULL sin romper la fila.
 - **V029** (2026-09-19): aplica limpia sobre la tabla ya poblada —las filas existentes son
-  todas `AUTOMATICO` con las columnas nuevas en NULL, que es la rama permitida—. Los cuatro
-  casos que `ck_bloques_entrada_admin` tiene que rechazar los rechaza: entrada a mano sin
-  motivo, entrada por rostro con motivo, con autor, o con detalle. Y el `ON DELETE SET NULL`
-  deja el bloque en pie, con su motivo, después de suprimir la cuenta que lo cargó.
+  todas `AUTOMATICO` con las columnas nuevas en NULL, que es la rama permitida—, y el
+  `ON DELETE SET NULL` deja el bloque en pie, con su motivo, después de suprimir la cuenta que
+  lo cargó.
 
-**Como no está automatizado, hay que repetirlo si se toca el esquema de estas tablas.**
-`MigracionesIT` sí verifica que todas las migraciones apliquen de cero contra MariaDB y que
-las columnas estén; lo que no comprueba es que los CHECK rechacen.
+**Eso sigue siendo a mano: hay que repetirlo si se toca el esquema de estas tablas.**
 
 **`horarios`**
 - `dia_semana` entre 1 y 7 (ISO 8601, 1 = lunes).

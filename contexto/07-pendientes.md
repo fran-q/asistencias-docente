@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.3 · **Actualizado:** 2026-10-15 · **Estado:** vigente
+> **Versión:** 1.4 · **Actualizado:** 2026-10-17 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -103,8 +103,8 @@ formalmente al alcance acordado en `Documentacion/2-requerimientos/`.
 
 ## Lo que deja abierto la marca de salida
 
-Cerrada la funcionalidad (ADR-0017, ADR-0018), quedan cuatro cosas que **no se ven en un
-build verde** y por eso conviene tenerlas escritas:
+Cerrada la funcionalidad (ADR-0017, ADR-0018), quedaron cosas que **no se ven en un build
+verde** y por eso conviene tenerlas escritas:
 
 - [ ] **Avisarle al equipo administrativo que cambió la clasificación de llegadas.** Con
       tolerancia 15, quien llega 18:05 pasó de TARDE a PRESENTE. Es el efecto buscado, pero
@@ -117,12 +117,10 @@ build verde** y por eso conviene tenerlas escritas:
       no. El proyecto no tiene infraestructura de tests de JS y no vale la pena montarla por
       esto solo, pero conviene saber que esa línea se rompe en silencio.
 
-- [ ] **Los CHECK de V019, V020 y V029 se verifican a mano.** El perfil `test` corre sobre H2 con
-      Flyway apagado, así que ningún constraint de esas migraciones se ejercita. Se probaron
-      contra MariaDB 10.4.32 el 2026-09-01 —los diez de V019, uno por uno— pero **hay que
-      repetirlo si se toca el esquema de la tabla**. `MigracionesIT` sí verifica que las
-      migraciones apliquen de cero y que las columnas estén; lo que no comprueba es que los
-      CHECK rechacen lo que deben.
+- [x] **Los CHECK de V019, V020 y V029 se verificaban a mano.** Automatizado el 2026-10-17:
+      `MigracionesIT` los ejercita contra MariaDB, en el CI en cada push, junto con el de V031
+      y el índice único de los bloques abiertos. Quedan a mano los `ON DELETE SET NULL` y los
+      CHECK de otras tablas (ver `03-modelo-datos.md`).
 
 ---
 

@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.8 · **Actualizado:** 2026-10-15 · **Estado:** vigente
+> **Versión:** 1.9 · **Actualizado:** 2026-10-17 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -306,7 +306,8 @@ arrastra el módulo de ventanas de OpenCV, enlazado contra GTK 2, y sin él Open
 corre Checkstyle y las dos suites —unitarios e integración—, porque `check` depende de todo
 eso; ver `04-convenciones.md`. Con `--continue`, una tarea que falla no deja sin correr a las
 que no dependen de ella. Los tests van sobre H2, salvo `MigracionesIT`, que aplica las
-migraciones contra un `mariadb:10.4` que levanta el propio workflow. Ahí el motor es
+migraciones contra un `mariadb:10.4` que levanta el propio workflow y prueba que los CHECK de
+los bloques de presencia rechacen lo que deben. Ahí el motor es
 obligatorio (`MARIADB_OBLIGATORIA=si`): si no levantó, el test falla en vez de saltearse.
 
 Si el build falla, `.github/scripts/resumir_falla.py` deja en la página de la corrida qué
