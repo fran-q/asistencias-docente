@@ -33,18 +33,21 @@ jobs:
           --health-timeout=5s
           --health-retries=30
 
+    # Las acciones van en su última versión mayor, que corre sobre Node 24. Con las @v4 cada
+    # corrida avisaba que Node 20 deja de tener soporte y que setup-java v4 ya no se actualiza.
+    # Ninguna de las mayores nuevas cambia lo que se usa acá: las entradas son las mismas.
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Configurar JDK 21 (Temurin)
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Cache de Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.gradle/caches
@@ -93,7 +96,7 @@ jobs:
 
       - name: Subir reporte de tests si falla
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: reports
           path: build/reports/
