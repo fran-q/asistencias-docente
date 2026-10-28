@@ -10,14 +10,18 @@ import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.academico.Materia;
 import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.asistencia.AsistenciaManual;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
 import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoCierre;
 import edu.cent35.asistencias.model.asistencia.JustificacionAusencia;
 import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
 import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
+import edu.cent35.asistencias.model.asistencia.OrigenMarca;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaManualRepository;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
+import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.JustificacionAusenciaRepository;
 import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
@@ -60,13 +64,16 @@ class DetalleDelReporteIT {
     @Autowired private MockMvc mockMvc;
     @Autowired private EscenarioDePrueba escenario;
     @Autowired private AsistenciaRepository asistenciaRepository;
+    @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private AsistenciaManualRepository manualRepository;
     @Autowired private JustificacionAusenciaRepository justificacionRepository;
     @Autowired private MotivoCargaManualRepository motivoRepository;
 
     private Long tenantId;
     private Short motivoId;
+    private Short motivoSinRostroId;
     private Usuario secretaria;
+    private Usuario preceptor;
     private Usuario institucion;
 
     @BeforeEach
@@ -119,6 +126,30 @@ class DetalleDelReporteIT {
             .detalleAdicional("Se cortó la luz y el equipo quedó sin cámara toda la mañana.")
             .build());
 
+        // 4) De una entrada sin cámara (ADR-0021): el porqué está en el bloque y no en
+        //    asistencias_manuales. La registró otra cuenta y con otro motivo, para que nada de
+        //    lo que se busca en la pantalla pueda venir de la fila 3.
+        preceptor = escenario.cuenta(tenantId, "ADMIN", "preceptor." + tenantId,
+                                     DatosDePrueba.persona("Raúl", "Díaz"));
+        MotivoCargaManual sinRostro = motivoRepository.save(MotivoCargaManual.builder()
+            .codigo("SIN_ROSTRO_" + tenantId).descripcion("Docente sin rostro registrado")
+            .activo(true).build());
+        motivoSinRostroId = sinRostro.getId();
+        BloquePresencia jornada = BloquePresencia.builder()
+            .docente(docente).fecha(LocalDate.of(2026, 9, 26)).horaEntrada(LocalTime.of(8, 52))
+            .origenEntrada(OrigenMarca.MANUAL).estadoCierre(EstadoCierre.ABIERTO)
+            .abiertoPor(preceptor).motivoEntrada(sinRostro)
+            .detalleEntrada("Docente nueva: el rostro se le registra la semana que viene.")
+            .build();
+        jornada.setInstitucionId(tenantId);
+        bloqueRepository.save(jornada);
+        Asistencia sinCamara = Asistencia.builder()
+            .docente(docente).comision(comision).horario(horario).bloque(jornada)
+            .fecha(LocalDate.of(2026, 9, 26)).horaRegistrada(LocalTime.of(8, 52))
+            .estado(EstadoAsistencia.PRESENTE).metodo(MetodoAsistencia.MANUAL).build();
+        sinCamara.setInstitucionId(tenantId);
+        asistenciaRepository.save(sinCamara);
+
         TenantContext.clear();
     }
 
@@ -134,9 +165,12 @@ class DetalleDelReporteIT {
     @AfterEach
     void limpiar() {
         escenario.borrarTodoDe(tenantId);
-        // El motivo es del catálogo y no del tenant: lo armó este test y lo borra él.
+        // Los motivos son del catálogo y no del tenant: los armó este test y los borra él.
         if (motivoId != null) {
             motivoRepository.deleteById(motivoId);
+        }
+        if (motivoSinRostroId != null) {
+            motivoRepository.deleteById(motivoSinRostroId);
         }
         TenantContext.clear();
     }
@@ -164,6 +198,18 @@ class DetalleDelReporteIT {
     }
 
     @Test
+    @DisplayName("De una entrada sin cámara se lee el motivo, el detalle y quién la registró")
+    void laEntradaSinCamaraCuentaSuPorque() throws Exception {
+        String html = reporte();
+
+        assertThat(html).contains("Entrada sin cámara");
+        assertThat(html).contains("Docente sin rostro registrado");
+        assertThat(html).contains("Docente nueva: el rostro se le registra la semana que viene.");
+        assertThat(html).contains("La registró:");
+        assertThat(html).contains(preceptor.getUsername());
+    }
+
+    @Test
     @DisplayName("El detalle arranca cerrado")
     void elDetalleArrancaCerrado() throws Exception {
         // Si naciera abierto, la tabla mostraría de entrada el doble de filas y el reporte
@@ -184,15 +230,15 @@ class DetalleDelReporteIT {
     @Test
     @DisplayName("Una fila sin nada atrás no ofrece Ver más")
     void sinLetraChicaNoHayBoton() throws Exception {
-        // Tres filas sembradas y solo dos tienen algo que contar: la automática y sin
+        // Cuatro filas sembradas y solo tres tienen algo que contar: la automática y sin
         // justificar no tiene. Un "Ver más" que abre una caja vacía promete algo y después
         // no lo tiene.
         String html = reporte();
 
         assertThat(contar(html, "data-fila-detalle"))
-            .as("una de las tres filas no tiene letra chica")
-            .isEqualTo(2);
-        assertThat(contar(html, "class=\"fila-detalle\"")).isEqualTo(2);
+            .as("una de las cuatro filas no tiene letra chica")
+            .isEqualTo(3);
+        assertThat(contar(html, "class=\"fila-detalle\"")).isEqualTo(3);
     }
 
     private String reporte() throws Exception {

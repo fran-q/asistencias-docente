@@ -23,8 +23,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * Detalle 1:1 de una asistencia con {@code metodo == MANUAL} (RF-22 a RF-24).
- * Guarda quién la cargó, con qué motivo y el detalle adicional opcional.
+ * Detalle 1:1 de una carga a mano (RF-22 a RF-24): quién la cargó, con qué motivo y el
+ * detalle adicional opcional. Una asistencia MANUAL que viene de una entrada sin cámara no
+ * tiene fila acá, porque eso ya lo guarda su bloque (V029, ADR-0021).
  */
 @Entity
 @Table(

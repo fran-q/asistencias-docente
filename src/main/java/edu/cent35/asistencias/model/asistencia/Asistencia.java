@@ -39,8 +39,9 @@ import java.time.LocalTime;
  * Cubre tanto el flujo automático (reconocimiento facial) como el manual
  * (carga por un admin con motivo del catálogo). La distinción es la columna
  * {@link #metodo}: {@code AUTOMATICO} guarda además {@link #modeloFacial}
- * y {@link #confianza}; {@code MANUAL} requiere un detalle adicional en
- * la tabla {@code asistencias_manuales}.
+ * y {@link #confianza}; {@code MANUAL} lleva el motivo en
+ * {@code asistencias_manuales} si fue una carga a mano, o en su bloque si
+ * la cubre una entrada sin cámara (ADR-0021).
  * <p>
  * <b>Tenant-scoped</b>: tiene {@code institucion_id} denormalizado para
  * reforzar el aislamiento y acelerar reportes.

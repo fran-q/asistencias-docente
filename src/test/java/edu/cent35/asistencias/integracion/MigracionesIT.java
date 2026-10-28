@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,6 +53,10 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * test. Acá están los de los bloques de presencia y el umbral de la institución (V019, V020,
  * V029 y V031), más el índice único que impide dos bloques abiertos del mismo docente. Hasta el
  * 2026-10-17 se probaban a mano.
+ *
+ * <p><b>Y que una migración que corrige datos toque solo lo que debe.</b> Sobre una base vacía
+ * no corrige nada, así que pasaría en verde con cualquier criterio: V033 se prueba aparte, con
+ * filas sembradas.
  *
  * <p><b>Por qué se saltea si no hay MariaDB.</b> Las migraciones están escritas en SQL de
  * MySQL/MariaDB —{@code MODIFY COLUMN}, {@code COMMENT}, tipos propios— así que no corren en
@@ -494,6 +500,100 @@ class MigracionesIT {
             .doesNotThrowAnyException();
     }
 
+    /**
+     * V033 pasa a MANUAL las asistencias que imputó una entrada sin cámara, y ninguna otra.
+     *
+     * <p>Sobre la base recién migrada la migración no encontró nada que corregir, así que acá se
+     * vuelve a correr su UPDATE —el texto del archivo, no una copia— sobre filas sembradas para
+     * el caso. Las cuatro que no tienen que cambiar son cada una un límite del criterio: la de
+     * un bloque por rostro, la del job sin bloque, la que tiene evidencia biométrica y la que
+     * apunta a un bloque de otra institución.
+     */
+    @Test
+    @DisplayName("V033 pasa a MANUAL las asistencias de una entrada sin cámara, y ninguna otra")
+    void v033CorrigeSoloLasDeEntradaSinCamara() throws Exception {
+        exigirMotor();
+        migrada();
+        Map<Long, String> metodoDespues = new LinkedHashMap<>();
+
+        try (Connection c = DriverManager.getConnection(URL_BASE + BASE, USUARIO, CLAVE)) {
+            c.setAutoCommit(false);
+            try (Statement st = c.createStatement()) {
+                st.execute("SET SESSION foreign_key_checks = 0");
+            }
+            try {
+                // Una jornada abierta a mano, una por rostro y otra a mano de la institución 2.
+                // Un docente por bloque: dos abiertos del mismo los rechaza el índice único.
+                Map<String, Object> aMano = con(abierto(), "origen_entrada", "MANUAL",
+                                                "motivo_entrada_id", 1, "abierto_por_usuario_id", 1);
+                insertarEn(c, "bloques_presencia", con(aMano, "id", 101, "docente_id", 1));
+                insertarEn(c, "bloques_presencia", con(abierto(), "id", 102, "docente_id", 2));
+                insertarEn(c, "bloques_presencia",
+                           con(aMano, "id", 103, "docente_id", 3, "institucion_id", 2));
+
+                Object[] evidencia = {"modelo_facial_id", 7, "confianza", new BigDecimal("0.9100")};
+                insertarEn(c, "asistencias", asistencia(1, 101));
+                insertarEn(c, "asistencias", con(asistencia(2, 102), evidencia));
+                insertarEn(c, "asistencias", con(asistencia(3, null), "estado", "AUSENTE"));
+                insertarEn(c, "asistencias", con(asistencia(4, 101), evidencia));
+                insertarEn(c, "asistencias", asistencia(5, 103));
+
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate(sentenciaDe("V033__entrada_sin_camara_como_manual.sql"));
+                }
+                try (Statement st = c.createStatement();
+                     ResultSet rs = st.executeQuery("SELECT id, metodo FROM asistencias ORDER BY id")) {
+                    while (rs.next()) {
+                        metodoDespues.put(rs.getLong(1), rs.getString(2));
+                    }
+                }
+            } finally {
+                c.rollback();
+            }
+        }
+
+        assertThat(metodoDespues).containsExactly(
+            Map.entry(1L, "MANUAL"),
+            Map.entry(2L, "AUTOMATICO"),
+            Map.entry(3L, "AUTOMATICO"),
+            Map.entry(4L, "AUTOMATICO"),
+            Map.entry(5L, "AUTOMATICO"));
+    }
+
+    // Una asistencia por rostro de la institución 1, con el bloque que se pida o ninguno. El
+    // docente y el horario salen del id para no chocar con el UNIQUE de la clase y el día.
+    private static Map<String, Object> asistencia(long id, Integer bloqueId) {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("id", id);
+        fila.put("institucion_id", 1);
+        fila.put("docente_id", id);
+        fila.put("comision_id", 1);
+        fila.put("horario_id", id);
+        fila.put("fecha", "2026-09-01");
+        fila.put("hora_registrada", "08:00:00");
+        fila.put("estado", "PRESENTE");
+        fila.put("metodo", "AUTOMATICO");
+        if (bloqueId != null) {
+            fila.put("bloque_id", bloqueId);
+        }
+        return fila;
+    }
+
+    // La sentencia de una migración tal como está en el archivo, sin sus comentarios y con el
+    // esquema de esta base en lugar del placeholder.
+    private static String sentenciaDe(String archivo) throws Exception {
+        try (InputStream in = MigracionesIT.class.getResourceAsStream("/db/migration/" + archivo)) {
+            assertThat(in).as("no está la migración %s", archivo).isNotNull();
+            String sql = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                .lines()
+                .filter(linea -> !linea.strip().startsWith("--"))
+                .collect(Collectors.joining("\n"))
+                .replace("${esquema}", BASE)
+                .strip();
+            return sql.endsWith(";") ? sql.substring(0, sql.length() - 1) : sql;
+        }
+    }
+
     // Un bloque abierto por rostro: lo mínimo que la tabla acepta. Los ids no apuntan a nada,
     // ver insertar().
     private static Map<String, Object> abierto() {
@@ -551,19 +651,25 @@ class MigracionesIT {
             }
             try {
                 for (Map<String, Object> fila : filas) {
-                    String sql = "INSERT INTO " + tabla + " (" + String.join(", ", fila.keySet())
-                        + ") VALUES (" + String.join(", ", Collections.nCopies(fila.size(), "?")) + ")";
-                    try (PreparedStatement ps = c.prepareStatement(sql)) {
-                        int i = 1;
-                        for (Object valor : fila.values()) {
-                            ps.setObject(i++, valor);
-                        }
-                        ps.executeUpdate();
-                    }
+                    insertarEn(c, tabla, fila);
                 }
             } finally {
                 c.rollback();
             }
+        }
+    }
+
+    // Una fila, en la conexión y la transacción de quien llama.
+    private static void insertarEn(Connection c, String tabla, Map<String, Object> fila)
+            throws SQLException {
+        String sql = "INSERT INTO " + tabla + " (" + String.join(", ", fila.keySet())
+            + ") VALUES (" + String.join(", ", Collections.nCopies(fila.size(), "?")) + ")";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
+            int i = 1;
+            for (Object valor : fila.values()) {
+                ps.setObject(i++, valor);
+            }
+            ps.executeUpdate();
         }
     }
 

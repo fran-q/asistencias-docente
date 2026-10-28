@@ -7,8 +7,10 @@ import edu.cent35.asistencias.model.academico.Carrera;
 import edu.cent35.asistencias.model.academico.CicloLectivo;
 import edu.cent35.asistencias.model.academico.Comision;
 import edu.cent35.asistencias.model.academico.Materia;
+import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.asistencia.BloquePresencia;
 import edu.cent35.asistencias.model.asistencia.EstadoCierre;
+import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
 import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
 import edu.cent35.asistencias.model.asistencia.OrigenMarca;
 import edu.cent35.asistencias.model.institucion.Usuario;
@@ -173,9 +175,15 @@ class MarcaSinCamaraIT {
         assertThat(b.getModeloFacialEntrada()).isNull();
         assertThat(b.getConfianzaEntrada()).isNull();
 
-        // Y la clase en curso quedó imputada, que es para lo que se marca.
-        assertThat(asistenciaRepository.findAll().stream()
-            .filter(a -> tenantId.equals(a.getInstitucionId())).toList()).hasSize(1);
+        // Y la clase en curso quedó imputada, que es para lo que se marca. Como MANUAL, porque la
+        // registró un admin: hasta el 2026-10-28 quedaba AUTOMATICO, y el reporte, el listado y
+        // el PDF la mostraban como reconocida por la cámara.
+        List<Asistencia> imputadas = asistenciaRepository.findAll().stream()
+            .filter(a -> tenantId.equals(a.getInstitucionId())).toList();
+        assertThat(imputadas).hasSize(1);
+        assertThat(imputadas.get(0).getMetodo()).isEqualTo(MetodoAsistencia.MANUAL);
+        assertThat(imputadas.get(0).getModeloFacial()).isNull();
+        assertThat(imputadas.get(0).getConfianza()).isNull();
     }
 
     @Test

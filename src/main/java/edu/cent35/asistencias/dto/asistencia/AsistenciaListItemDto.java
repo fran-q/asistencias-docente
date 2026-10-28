@@ -53,6 +53,12 @@ public class AsistenciaListItemDto {
     BigDecimal confianza;
 
     /**
+     * Si la clase la cubre una jornada que un admin abrió sin cámara (ADR-0021). Es MANUAL,
+     * pero su hora es una llegada: la registró en el momento, con el docente adelante.
+     */
+    boolean entradaSinCamara;
+
+    /**
      * Hora en que el docente se retiró, tomada de su bloque de presencia (RF-74).
      *
      * <p>Null en las marcas anteriores a V019, en las cargas manuales sin bloque y mientras
@@ -73,18 +79,20 @@ public class AsistenciaListItemDto {
     /**
      * Si {@link #horaRegistrada} es de verdad la hora en que el docente llegó.
      *
-     * <p>Bajo el título "Entrada" conviven tres cosas: la hora en que la cámara lo reconoció
-     * —una llegada observada—, el momento en que un administrador cargó el registro a mano, y
-     * la hora de fin de la clase que el job le pone a una ausencia. Las dos últimas no son
-     * llegadas de nadie, y mostradas igual que la primera afirman algo que no pasó.
+     * <p>Bajo el título "Entrada" conviven tres cosas: la hora en que la cámara lo reconoció o
+     * un admin registró su entrada sin cámara —una llegada observada—, el momento en que un
+     * administrador cargó el registro a mano después, y la hora de fin de la clase que el job
+     * le pone a una ausencia. Las dos últimas no son llegadas de nadie, y mostradas igual que
+     * la primera afirman algo que no pasó.
      */
     public boolean isHoraDeLlegada() {
-        return metodo == MetodoAsistencia.AUTOMATICO && estado != EstadoAsistencia.AUSENTE;
+        return (metodo == MetodoAsistencia.AUTOMATICO || entradaSinCamara)
+            && estado != EstadoAsistencia.AUSENTE;
     }
 
-    /** Si la cargó a mano un administrador: la hora del asiento no es la de nadie llegando. */
+    /** Si la cargó a mano un administrador después: la hora del asiento no es la de nadie llegando. */
     public boolean isCargaManual() {
-        return metodo == MetodoAsistencia.MANUAL;
+        return metodo == MetodoAsistencia.MANUAL && !entradaSinCamara;
     }
 
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
@@ -110,6 +118,8 @@ public class AsistenciaListItemDto {
             .estado(a.getEstado())
             .metodo(a.getMetodo())
             .confianza(a.getConfianza())
+            .entradaSinCamara(a.getBloque() != null
+                && a.getBloque().getOrigenEntrada() == OrigenMarca.MANUAL)
             .build();
     }
 

@@ -10,6 +10,6 @@ public enum MetodoAsistencia {
     // El sistema reconoció al docente por reconocimiento facial.
     AUTOMATICO,
 
-    // Un admin cargó la asistencia a mano (con motivo del catálogo).
+    // Un admin la cargó a mano o registró la entrada sin cámara, con motivo del catálogo.
     MANUAL
 }

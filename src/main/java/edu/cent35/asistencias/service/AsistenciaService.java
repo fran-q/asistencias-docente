@@ -11,6 +11,7 @@ import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
 import edu.cent35.asistencias.model.asistencia.JustificacionAusencia;
 import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
 import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
+import edu.cent35.asistencias.model.asistencia.OrigenMarca;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
@@ -190,6 +191,11 @@ public class AsistenciaService {
      * bloque es lo que acredita su presencia. Con eso el cálculo es uno solo y no hay un caso
      * especial que después alguien tenga que recordar.
      *
+     * <p><b>El método sale de cómo se abrió el bloque</b>, igual que el modelo y la confianza.
+     * Una entrada que un admin registró sin cámara (ADR-0021) da asistencias MANUAL: hasta el
+     * 2026-10-28 se grababan como AUTOMATICO, y el reporte, el listado y el PDF las mostraban
+     * como reconocidas por la cámara. Las anteriores las corrigió V033.
+     *
      * <p>Es idempotente por (docente, horario, fecha) igual que {@link #marcarAutomatica}: si
      * la clase ya tenía marca —porque el docente la registró por su cuenta, porque la cargó un
      * admin o porque el job ya pasó— se devuelve la que estaba y no se pisa nada.
@@ -217,7 +223,11 @@ public class AsistenciaService {
             .fecha(fecha)
             .horaRegistrada(horaLlegada.withNano(0))
             .estado(calcularEstado(horario, horaLlegada))
-            .metodo(MetodoAsistencia.AUTOMATICO)
+            // Los tres salen de la entrada y por eso no pueden discrepar: una entrada a mano
+            // no tiene modelo ni confianza (V019), y MANUAL es justo lo que el CHECK de V001
+            // pide para que falten.
+            .metodo(bloque.getOrigenEntrada() == OrigenMarca.MANUAL
+                ? MetodoAsistencia.MANUAL : MetodoAsistencia.AUTOMATICO)
             .modeloFacial(bloque.getModeloFacialEntrada())
             .confianza(bloque.getConfianzaEntrada())
             .build();

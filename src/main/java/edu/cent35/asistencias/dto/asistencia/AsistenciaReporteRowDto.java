@@ -6,7 +6,9 @@ import edu.cent35.asistencias.model.asistencia.AsistenciaManual;
 import edu.cent35.asistencias.model.asistencia.BloquePresencia;
 import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
 import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
 import edu.cent35.asistencias.model.asistencia.OrigenMarca;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import lombok.Builder;
 import lombok.Value;
 
@@ -41,7 +43,17 @@ public class AsistenciaReporteRowDto {
     BigDecimal confianza;
     String motivoManual;           // motivo del catálogo si la marca es MANUAL
     String detalleManual;          // detalle adicional opcional del cargador
-    String usuarioRegistrador;     // username del admin que la cargó manualmente
+    String usuarioRegistrador;     // username del admin que la cargó o registró la entrada
+
+    /**
+     * Si la clase la cubre una jornada que un admin abrió sin cámara (ADR-0021).
+     *
+     * <p>Es MANUAL como una carga a mano, pero no es lo mismo. El admin la registró en el
+     * momento, con el docente adelante, así que su hora sí es una llegada. Y el motivo, el
+     * detalle y quién la registró están en el bloque, no en {@code asistencias_manuales}.
+     */
+    boolean entradaSinCamara;
+
     boolean justificada;           // true si la AUSENTE tiene justificación adjunta
     String motivoJustificacion;    // motivo de la justificación, si la hay
 
@@ -117,8 +129,8 @@ public class AsistenciaReporteRowDto {
      * <p>En esa columna conviven tres cosas distintas, y hasta acá se mostraban iguales:
      *
      * <ul>
-     *   <li><b>Marca automática</b>: la hora en que la cámara lo reconoció, o el inicio de la
-     *       clase si ya estaba adentro. Es una llegada observada.</li>
+     *   <li><b>Llegada observada</b>: la hora en que la cámara lo reconoció o en que un admin
+     *       registró su entrada sin cámara, o el inicio de la clase si ya estaba adentro.</li>
      *   <li><b>Carga manual</b>: el momento en que el administrador cargó el registro, que es
      *       a propósito y no un dato que se tipea (ver {@code AsistenciaService.marcarManual}).
      *       Puede ser de otro día y de otro horario que el de la clase.</li>
@@ -130,13 +142,16 @@ public class AsistenciaReporteRowDto {
      * las sigue trayendo en {@code hora_registrada}, que es el nombre correcto de lo que son.
      */
     public boolean isHoraDeLlegada() {
-        return MetodoAsistencia.AUTOMATICO.name().equals(metodo)
+        return (MetodoAsistencia.AUTOMATICO.name().equals(metodo) || entradaSinCamara)
             && !EstadoAsistencia.AUSENTE.name().equals(estado);
     }
 
-    /** Si la cargó a mano un administrador: la hora del asiento no es la de nadie llegando. */
+    /**
+     * Si la cargó a mano un administrador después: la hora del asiento no es la de nadie
+     * llegando. Una entrada sin cámara también es MANUAL, pero se registró en el momento.
+     */
     public boolean isCargaManual() {
-        return MetodoAsistencia.MANUAL.name().equals(metodo);
+        return MetodoAsistencia.MANUAL.name().equals(metodo) && !entradaSinCamara;
     }
 
     /**
@@ -217,6 +232,8 @@ public class AsistenciaReporteRowDto {
                                                AsistenciaManual manualOrNull,
                                                String motivoJustOrNull,
                                                Integer minutosFueraDeClase) {
+        BloquePresencia entradaSinCamara = a.getBloque() != null
+            && a.getBloque().getOrigenEntrada() == OrigenMarca.MANUAL ? a.getBloque() : null;
         return AsistenciaReporteRowDto.builder()
             .asistenciaId(a.getId())
             .fecha(a.getFecha())
@@ -250,14 +267,34 @@ public class AsistenciaReporteRowDto {
             .minutosFueraDeClase(minutosFueraDeClase)
             .llegadaDentroDelMargen(llegadaDentroDelMargen(a))
             .salidaDentroDelMargen(salidaDentroDelMargen(a))
-            .motivoManual(manualOrNull != null && manualOrNull.getMotivo() != null
-                ? manualOrNull.getMotivo().getDescripcion() : null)
-            .detalleManual(manualOrNull != null ? manualOrNull.getDetalleAdicional() : null)
-            .usuarioRegistrador(manualOrNull != null && manualOrNull.getUsuario() != null
-                ? manualOrNull.getUsuario().getUsername() : null)
+            .motivoManual(motivoAMano(manualOrNull, entradaSinCamara))
+            .detalleManual(detalleAMano(manualOrNull, entradaSinCamara))
+            .usuarioRegistrador(autorAMano(manualOrNull, entradaSinCamara))
+            .entradaSinCamara(entradaSinCamara != null)
             .justificada(motivoJustOrNull != null)
             .motivoJustificacion(motivoJustOrNull)
             .build();
+    }
+
+    // El motivo de la carga a mano o, si no la hay, el de la entrada sin cámara (V029). Nunca
+    // vienen las dos: una carga a mano no abre jornada.
+    private static String motivoAMano(AsistenciaManual manual, BloquePresencia entradaSinCamara) {
+        MotivoCargaManual motivo = manual != null ? manual.getMotivo()
+            : entradaSinCamara != null ? entradaSinCamara.getMotivoEntrada() : null;
+        return motivo == null ? null : motivo.getDescripcion();
+    }
+
+    private static String detalleAMano(AsistenciaManual manual, BloquePresencia entradaSinCamara) {
+        return manual != null ? manual.getDetalleAdicional()
+            : entradaSinCamara != null ? entradaSinCamara.getDetalleEntrada() : null;
+    }
+
+    // Quién la cargó o registró la entrada. Null si esa cuenta ya no existe: la FK del bloque
+    // es ON DELETE SET NULL (V029).
+    private static String autorAMano(AsistenciaManual manual, BloquePresencia entradaSinCamara) {
+        Usuario autor = manual != null ? manual.getUsuario()
+            : entradaSinCamara != null ? entradaSinCamara.getAbiertoPor() : null;
+        return autor == null ? null : autor.getUsername();
     }
 
     // Día que acompaña a la fecha. Sale de la fecha y no del día programado del horario: si por

@@ -5,8 +5,13 @@ import edu.cent35.asistencias.model.academico.Comision;
 import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.academico.Materia;
 import edu.cent35.asistencias.model.asistencia.Asistencia;
+import edu.cent35.asistencias.model.asistencia.BloquePresencia;
 import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoCierre;
 import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
+import edu.cent35.asistencias.model.asistencia.OrigenMarca;
+import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -85,6 +90,67 @@ class AsistenciaReporteRowDtoTest {
             .as("no llegó nadie: esa hora es cuando terminó la clase")
             .isFalse();
         assertThat(fila.isCargaManual()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Una entrada sin cámara es MANUAL, pero su hora sí es una llegada")
+    void laEntradaSinCamaraEsUnaLlegada() {
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.PRESENTE, MetodoAsistencia.MANUAL);
+        a.setBloque(jornadaAbierta(OrigenMarca.MANUAL));
+
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.isEntradaSinCamara()).isTrue();
+        assertThat(fila.isHoraDeLlegada())
+            .as("el admin la registró en el momento, con el docente adelante")
+            .isTrue();
+        assertThat(fila.isCargaManual())
+            .as("no es una carga posterior: no tiene que decir 'cargada' al lado de la hora")
+            .isFalse();
+    }
+
+    @Test
+    @DisplayName("El motivo, el detalle y el autor de una entrada sin cámara salen de su bloque")
+    void elPorqueDeLaEntradaSinCamaraSaleDelBloque() {
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.PRESENTE, MetodoAsistencia.MANUAL);
+        a.setBloque(jornadaAbierta(OrigenMarca.MANUAL));
+
+        // Sin fila en asistencias_manuales: una entrada sin cámara no la tiene.
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.getMotivoManual()).isEqualTo("Docente sin rostro registrado");
+        assertThat(fila.getDetalleManual()).isEqualTo("Todavía no se le registró el rostro");
+        assertThat(fila.getUsuarioRegistrador()).isEqualTo("preceptoria");
+        assertThat(fila.isHayDetalle()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Una jornada abierta por rostro no es una entrada sin cámara")
+    void laJornadaPorRostroNoEsSinCamara() {
+        Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
+                                     EstadoAsistencia.PRESENTE, MetodoAsistencia.AUTOMATICO);
+        a.setBloque(jornadaAbierta(OrigenMarca.AUTOMATICO));
+
+        AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
+
+        assertThat(fila.isEntradaSinCamara()).isFalse();
+        assertThat(fila.isHayDetalle()).isFalse();
+    }
+
+    // Una jornada abierta con el origen que pida el caso. La de origen MANUAL lleva su motivo,
+    // su detalle y quién la registró, como exige ck_bloques_entrada_admin (V029).
+    private BloquePresencia jornadaAbierta(OrigenMarca origen) {
+        BloquePresencia.BloquePresenciaBuilder b = BloquePresencia.builder()
+            .id(6L).fecha(LocalDate.of(2026, 7, 20)).horaEntrada(LocalTime.of(7, 58))
+            .origenEntrada(origen).estadoCierre(EstadoCierre.ABIERTO);
+        if (origen == OrigenMarca.MANUAL) {
+            b.motivoEntrada(MotivoCargaManual.builder().descripcion("Docente sin rostro registrado").build())
+             .detalleEntrada("Todavía no se le registró el rostro")
+             .abiertoPor(Usuario.builder().username("preceptoria").build());
+        }
+        return b.build();
     }
 
     // Arma una asistencia con la fecha y el día de horario que pida el caso.

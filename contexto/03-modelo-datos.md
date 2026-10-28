@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.1 · **Actualizado:** 2026-10-17 · **Estado:** vigente
+> **Versión:** 1.2 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -51,7 +51,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 | `asistencias` | El núcleo. Fecha, hora, estado, método, confianza. | Sí (denormalizado) |
 | `bloques_presencia` | El lapso continuo de permanencia de un docente, con su marca de entrada y de salida. Abarca todos los horarios que el umbral de la institución mantenga juntos (V019). | Sí (denormalizado) |
 | `motivos_carga_manual` | Catálogo global: `FALLA_CAMARA`, `FALLA_RECONOCIMIENTO`, `NO_REGISTRADO`, `OTRO`. | No |
-| `asistencias_manuales` | Detalle 1:1 de las marcas manuales: admin responsable, motivo, detalle. | Vía asistencia |
+| `asistencias_manuales` | Detalle 1:1 de las cargas a mano (RF-22): admin responsable, motivo, detalle. Una entrada sin cámara no tiene fila acá: lo suyo está en el bloque (V029). | Vía asistencia |
 | `justificaciones_ausencia` | 1:1 sobre una ausencia: motivo y documento opcional. | Vía asistencia |
 
 ---
@@ -67,6 +67,11 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
 - `metodo ∈ {AUTOMATICO, MANUAL}`.
 - Si `metodo = MANUAL`, entonces `modelo_facial_id` y `confianza` son `NULL`. Está
   forzado por CHECK.
+- **`MANUAL` son dos cosas, y las separa el bloque.** La carga a mano posterior (RF-22) no
+  tiene bloque y sí fila en `asistencias_manuales`. Las clases que cubre una entrada sin cámara
+  (ADR-0021) tienen un bloque con `origen_entrada = MANUAL`, que guarda el motivo y el autor;
+  su hora sí es de llegada. Hasta el 2026-10-28 estas se grababan `AUTOMATICO`, y V033
+  corrigió las ya grabadas.
 - `confianza` entre 0 y 1, `DECIMAL(5,4)`.
 - FK a `modelos_faciales` con `ON DELETE SET NULL`: si el docente ejerce ARCO y se borra
   su modelo, **el historial de asistencias se conserva**.
@@ -222,6 +227,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V032__clave_de_recuperacion` | `instituciones.clave_recuperacion_hash` y `clave_recuperacion_creada_en`: lo que destraba la cuenta institucional donde no hay correo (ADR-0022). Se guarda el hash, no la clave |
 | `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
 | `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
+| `V033__entrada_sin_camara_como_manual` | Sin cambio de esquema: pasa a `MANUAL` las asistencias de bloques con entrada a mano, que se grababan `AUTOMATICO`. El JOIN exige la misma institución en asistencia y bloque. `MigracionesIT` la prueba con filas sembradas |
 
 ### Invariantes que agregó V028
 

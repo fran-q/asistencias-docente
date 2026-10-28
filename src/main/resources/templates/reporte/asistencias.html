@@ -249,10 +249,14 @@
                                            th:text="${f.motivoJustificacion}">Certificado médico</p>
                                     </div>
 
+                                    <!-- Las dos son MANUAL y se leen distinto: la carga a mano se
+                                         asentó después, y la entrada sin cámara se registró con
+                                         el docente adelante, así que su hora sí es la de llegada. -->
                                     <div class="fila-detalle__bloque"
                                          th:if="${f.motivoManual != null or f.detalleManual != null
                                                  or f.usuarioRegistrador != null}">
-                                        <h3 class="fila-detalle__titulo">Cargada a mano</h3>
+                                        <h3 class="fila-detalle__titulo"
+                                            th:text="${f.entradaSinCamara} ? 'Entrada sin cámara' : 'Cargada a mano'">Cargada a mano</h3>
                                         <p class="fila-detalle__dato" th:if="${f.motivoManual != null}">
                                             <span>Motivo:</span>
                                             <span th:text="${f.motivoManual}">Falla de la cámara</span>
@@ -262,7 +266,7 @@
                                             <span th:text="${f.detalleManual}">Se cortó la luz</span>
                                         </p>
                                         <p class="fila-detalle__dato" th:if="${f.usuarioRegistrador != null}">
-                                            <span>La cargó:</span>
+                                            <span th:text="${f.entradaSinCamara} ? 'La registró:' : 'La cargó:'">La cargó:</span>
                                             <span th:text="${f.usuarioRegistrador}">secretaria</span>
                                         </p>
                                     </div>

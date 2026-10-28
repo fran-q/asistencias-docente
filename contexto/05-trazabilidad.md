@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.3 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.4 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -136,7 +136,7 @@ reporte.
 | RF-81 | Imputación por permanencia efectiva | ✅ | `AsistenciaService.imputarDelBloque`, `BloquePresenciaService.clasesCubiertas`, en el cierre por rostro y en el del job |
 | RF-82 | Cierre biométrico exige consentimiento vigente | ✅ | `BloquePresenciaService.registrar`, primera guarda del método |
 | RF-83 | Cierre manual del bloque | ✅ | `BloquePresenciaService.cerrarManualmente`, `BloquePresenciaController`, `bloques-pendientes.html`, columnas de V020 |
-| — | Entrada sin cámara, desde el pase | ✅ | `BloquePresenciaService.registrarSinCamara`, `PaseAsistenciaService.marcarSinCamara`, `POST /asistencia/pase/sin-camara`, columnas de V029 (ADR-0021). **Fuera del documento de requerimientos**: es el espejo de RF-83 del lado de la entrada, y la vía para el docente sin consentimiento vigente |
+| — | Entrada sin cámara, desde el pase | ✅ | `BloquePresenciaService.registrarSinCamara`, `PaseAsistenciaService.marcarSinCamara`, `POST /asistencia/pase/sin-camara`, columnas de V029 (ADR-0021). **Fuera del documento de requerimientos**: es el espejo de RF-83 del lado de la entrada, y la vía para el docente sin consentimiento vigente. Sus asistencias son **MANUAL** desde el 2026-10-28: se grababan AUTOMATICO, y el reporte, el listado y el PDF las mostraban como reconocidas por la cámara. V033 corrigió las anteriores (`HoraDeLlegadaIT`, `MarcaSinCamaraIT`) |
 
 **Fuga de consentimiento, cerrada el 2026-09-01.** Revocar el consentimiento marcaba
 `vigente = false` pero **no tocaba el modelo facial**, y el pase compara contra los modelos
@@ -268,7 +268,7 @@ correcto de lo que es.
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** y, desde 2026-09-27, el **equipo** de cada jornada en columna propia. Desde 2026-10-14, un **Ver más** por fila muestra el motivo de la justificación y, de una carga a mano, el motivo, el detalle y quién la cargó: hasta ahí solo estaban en el CSV (`fila-detalle.js`, `DetalleDelReporteIT`) |
+| RF-27 | Reporte por docente | ✅ | `ReporteController` → filtro `docenteId`. Desde 2026-09-02 incluye **minutos dictados sobre programados** y, desde 2026-09-27, el **equipo** de cada jornada en columna propia. Desde 2026-10-14, un **Ver más** por fila muestra el motivo de la justificación y, de una carga a mano, el motivo, el detalle y quién la cargó: hasta ahí solo estaban en el CSV (`fila-detalle.js`, `DetalleDelReporteIT`). Desde 2026-10-28 muestra lo mismo de una entrada sin cámara, leído de su bloque |
 | RF-28 | Reporte por materia | ✅ | filtro `materiaId` |
 | RF-29 | Reporte por carrera | ✅ | filtro `carreraId` |
 | RF-30 | Filtros avanzados | 🟡 | `ReporteFiltroDto`: `desde`, `hasta`, `docenteId`, `materiaId`, `carreraId`, `estado`, `metodo` |

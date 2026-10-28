@@ -13,11 +13,13 @@ import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
 import edu.cent35.asistencias.model.asistencia.EstadoCierre;
 import edu.cent35.asistencias.model.asistencia.EstadoSalida;
 import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.asistencia.MotivoCargaManual;
 import edu.cent35.asistencias.model.asistencia.OrigenMarca;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
+import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +49,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * registro cargado a las 14:32 se leía como un docente que llegó a las 14:32 a una clase de
  * las 18:00, y una ausencia se leía como una llegada justo al terminar la clase.
  *
- * <p>Las tres filas que siembra este test son los tres orígenes, el mismo día y para el mismo
- * docente, y se miran en las tres superficies que muestran esa hora: el listado del día, el
- * reporte en pantalla y el PDF. El CSV no entra: su columna se llama {@code hora_registrada},
+ * <p>Las cuatro filas que siembra este test son los orígenes posibles, el mismo día y para el
+ * mismo docente, y se miran en las tres superficies que muestran esa hora: el listado del día,
+ * el reporte en pantalla y el PDF. El CSV no entra: su columna se llama {@code hora_registrada},
  * que es exactamente lo que trae, y es el archivo que se abre para trabajar el dato crudo.
+ *
+ * <p><b>La cuarta es la que confunde.</b> Una entrada que un admin registró sin cámara
+ * (ADR-0021) es MANUAL igual que una carga a mano, pero se registró en el momento, con el
+ * docente adelante: su hora sí es una llegada. Un criterio que mire solo el método la esconde.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -60,17 +66,20 @@ class HoraDeLlegadaIT {
     // Un lunes de junio de 2026, para que el horario de lunes le corresponda.
     private static final LocalDate LUNES = LocalDate.of(2026, 6, 15);
 
-    private static final LocalTime LLEGO         = LocalTime.of(18, 5, 23);
-    private static final LocalTime LA_CARGARON   = LocalTime.of(14, 32);
-    private static final LocalTime TERMINO_CLASE = LocalTime.of(20, 0);
+    private static final LocalTime LLEGO            = LocalTime.of(18, 5, 23);
+    private static final LocalTime LA_CARGARON      = LocalTime.of(14, 32);
+    private static final LocalTime TERMINO_CLASE    = LocalTime.of(20, 0);
+    private static final LocalTime LLEGO_SIN_CAMARA = LocalTime.of(16, 7, 12);
 
     @Autowired private MockMvc mockMvc;
     @Autowired private EscenarioDePrueba escenario;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
+    @Autowired private MotivoCargaManualRepository motivoRepository;
 
     private Long tenantId;
     private Usuario cuenta;
+    private Short motivoId;
 
     @BeforeEach
     void sembrar() {
@@ -88,6 +97,7 @@ class HoraDeLlegadaIT {
         Horario deLaCamara = clase(materia, docente, ciclo, "A", 18, 20);
         Horario cargadaAMano = clase(materia, docente, ciclo, "B", 8, 10);
         Horario ausente = clase(materia, docente, ciclo, "C", 10, 12);
+        Horario sinCamara = clase(materia, docente, ciclo, "D", 16, 18);
 
         // 1. La cámara lo reconoció: hay jornada y la hora es una llegada de verdad.
         BloquePresencia bloque = BloquePresencia.builder()
@@ -110,11 +120,32 @@ class HoraDeLlegadaIT {
         // 3. La generó el job al terminar la clase, con la hora de fin como marca de tiempo.
         asistencia(docente, ausente, LocalTime.of(12, 0), EstadoAsistencia.AUSENTE,
                    MetodoAsistencia.AUTOMATICO, null);
+
+        // 4. La cámara no lo reconoció y un admin registró su entrada en el momento. Es MANUAL,
+        //    pero tiene jornada: esa hora es la de llegada. El motivo lo exige
+        //    ck_bloques_entrada_admin (V029), y el catálogo no existe en H2 si no se crea.
+        MotivoCargaManual motivo = motivoRepository.save(MotivoCargaManual.builder()
+            .codigo("SIN_ROSTRO_" + tenantId).descripcion("Docente sin rostro registrado")
+            .activo(true).build());
+        motivoId = motivo.getId();
+        BloquePresencia aMano = BloquePresencia.builder()
+            .docente(docente).fecha(LUNES).horaEntrada(LLEGO_SIN_CAMARA)
+            .origenEntrada(OrigenMarca.MANUAL).abiertoPor(cuenta).motivoEntrada(motivo)
+            .estadoCierre(EstadoCierre.ABIERTO)
+            .build();
+        aMano.setInstitucionId(tenantId);
+        aMano = bloqueRepository.save(aMano);
+        asistencia(docente, sinCamara, LLEGO_SIN_CAMARA, EstadoAsistencia.PRESENTE,
+                   MetodoAsistencia.MANUAL, aMano);
     }
 
     @AfterEach
     void limpiar() {
         escenario.borrarTodoDe(tenantId);
+        // El motivo es del catálogo y no del tenant: lo armó este test y lo borra él.
+        if (motivoId != null) {
+            motivoRepository.deleteById(motivoId);
+        }
         TenantContext.clear();
     }
 
@@ -131,7 +162,10 @@ class HoraDeLlegadaIT {
             .doesNotContain("14:32:00")
             .as("la ausencia que generó el job no tiene llegada: la hora de fin de la clase "
                 + "no es alguien entrando")
-            .doesNotContain("12:00:00");
+            .doesNotContain("12:00:00")
+            .as("la entrada sin cámara es MANUAL, pero se registró con el docente adelante")
+            .contains("16:07:12")
+            .doesNotContain("cargada 16:07");
     }
 
     @Test
@@ -143,7 +177,9 @@ class HoraDeLlegadaIT {
             .contains("18:05:23")
             .contains("cargada 14:32")
             .doesNotContain("14:32:00")
-            .doesNotContain("12:00:00");
+            .doesNotContain("12:00:00")
+            .contains("16:07:12")
+            .doesNotContain("cargada 16:07");
     }
 
     @Test
@@ -159,6 +195,8 @@ class HoraDeLlegadaIT {
         assertThat(hoja)
             .as("la llegada observada, en HH:mm como el resto de las horas del PDF")
             .contains("18:05")
+            .as("también la que registró un admin sin cámara")
+            .contains("16:07")
             .as("ni la hora del asiento ni la de fin de la clase se imprimen como entrada")
             .doesNotContain("14:32");
     }
