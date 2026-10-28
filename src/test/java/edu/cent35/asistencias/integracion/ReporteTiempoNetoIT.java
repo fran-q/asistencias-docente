@@ -23,7 +23,6 @@ import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.service.PuestoCapturaService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -71,7 +70,6 @@ class ReporteTiempoNetoIT {
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private PuestoCapturaRepository puestoRepository;
-    @Autowired private PuestoCapturaService puestoService;
 
     private Long tenantId;
     private Docente docente;
@@ -93,8 +91,8 @@ class ReporteTiempoNetoIT {
             LocalTime.of(18, 0), LocalTime.of(20, 0));
 
         // Dos equipos: el docente entra por una puerta y sale por la otra (V031).
-        puestoService.designar(tenantId, "Entrada norte", cuenta);
-        puestoService.designar(tenantId, "Entrada sur", cuenta);
+        escenario.equipo(tenantId, "Entrada norte", cuenta);
+        escenario.equipo(tenantId, "Entrada sur", cuenta);
         PuestoCaptura norte = puestoPorNombre("Entrada norte");
         PuestoCaptura sur = puestoPorNombre("Entrada sur");
 

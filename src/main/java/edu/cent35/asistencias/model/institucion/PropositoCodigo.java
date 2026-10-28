@@ -19,7 +19,11 @@ public enum PropositoCodigo {
 
     // Confirmar la dirección nueva antes de que la cuenta pase a usarla. El código guarda esa
     // dirección: la cuenta cambia a la que efectivamente lo recibió, no a la que diga la sesión.
-    EMAIL_NUEVO("Confirmación del correo nuevo");
+    EMAIL_NUEVO("Confirmación del correo nuevo"),
+
+    // Autorizar un equipo de captura cuando la institución ya tuvo alguno (ADR-0015). Convierte
+    // "sé la contraseña institucional" en "sé la contraseña y entro al buzón de la institución".
+    AUTORIZACION_PUESTO("Autorización de un equipo de captura");
 
     private final String etiqueta;
 

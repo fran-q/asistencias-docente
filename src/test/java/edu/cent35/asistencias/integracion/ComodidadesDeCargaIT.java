@@ -160,8 +160,8 @@ class ComodidadesDeCargaIT {
     @Test
     @DisplayName("No se puede dejar el tope por debajo de los equipos que ya hay")
     void elTopeNoPuedeQuedarIncumplido() throws Exception {
-        puestoService.designar(tenantA, "Entrada norte", cuentaA);
-        puestoService.designar(tenantA, "Entrada sur", cuentaA);
+        escenario.equipo(tenantA, "Entrada norte", cuentaA);
+        escenario.equipo(tenantA, "Entrada sur", cuentaA);
 
         // El rechazo llega a la pantalla tal cual: dice cuántos hay y qué hacer.
         mockMvc.perform(post("/puestos/tope").param("tope", "1")

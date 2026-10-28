@@ -139,6 +139,7 @@ public class CanalConsola implements CanalDeCodigos {
             case RECUPERACION_PASSWORD -> "recuperar la contrasena";
             case CAMBIO_EMAIL -> "cambiar el correo (este va al correo actual)";
             case EMAIL_NUEVO -> "confirmar el correo nuevo";
+            case AUTORIZACION_PUESTO -> "autorizar un equipo de captura";
         };
     }
 }

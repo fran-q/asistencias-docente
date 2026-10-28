@@ -7,6 +7,7 @@ import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.academico.Materia;
 import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.model.persona.Persona;
@@ -15,6 +16,7 @@ import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.CarreraRepository;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
+import edu.cent35.asistencias.repository.CodigoVerificacionRepository;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.ConsentimientoBiometricoRepository;
 import edu.cent35.asistencias.repository.DiaNoLaborableRepository;
@@ -27,6 +29,8 @@ import edu.cent35.asistencias.repository.PeriodoLectivoRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.service.CodigoVerificacionService;
+import edu.cent35.asistencias.service.PuestoCapturaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -75,6 +79,9 @@ public class EscenarioDePrueba {
     private final ConsentimientoBiometricoRepository consentimientos;
     private final PuestoCapturaRepository puestos;
     private final DiaNoLaborableRepository diasSinClase;
+    private final CodigoVerificacionRepository codigos;
+    private final PuestoCapturaService puestoService;
+    private final CodigoVerificacionService codigoService;
 
     // ========================================================================
     //  Armado
@@ -160,6 +167,16 @@ public class EscenarioDePrueba {
             .build());
     }
 
+    // Un equipo autorizado, con el código al correo si la institución ya tuvo otro (ADR-0015).
+    // El código se emite acá y no viaja a ningún lado: el control tiene sus casos en
+    // PuestoCapturaIT, y lo que este test quiere es el equipo.
+    public PuestoCapturaService.PuestoDesignado equipo(Long tenantId, String nombre, Usuario cuenta) {
+        String codigo = puestoService.pideCodigoParaAutorizar(tenantId)
+            ? codigoService.emitir(cuenta, PropositoCodigo.AUTORIZACION_PUESTO, cuenta.getEmail(), "127.0.0.1")
+            : null;
+        return puestoService.designar(tenantId, nombre, cuenta, codigo);
+    }
+
     // ========================================================================
     //  Desarmado
     // ========================================================================
@@ -196,6 +213,7 @@ public class EscenarioDePrueba {
         borrar(materias, m -> tenantId.equals(m.getInstitucionId()));
         borrar(carreras, c -> tenantId.equals(c.getInstitucionId()));
         borrar(docentes, d -> docenteIds.contains(d.getId()));
+        borrar(codigos, c -> tenantId.equals(c.getInstitucionId()));
         borrar(usuarios, u -> tenantId.equals(u.getInstitucionId()));
     }
 }

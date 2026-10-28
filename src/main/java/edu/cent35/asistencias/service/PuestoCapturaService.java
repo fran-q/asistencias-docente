@@ -1,7 +1,9 @@
 package edu.cent35.asistencias.service;
 
+import edu.cent35.asistencias.config.ModalidadInstalacion;
 import edu.cent35.asistencias.model.biometria.PuestoCaptura;
 import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
@@ -54,6 +56,13 @@ public class PuestoCapturaService {
     private final PuestoCapturaRepository puestoRepository;
     // Para leer el tope de equipos de la institución (V030).
     private final InstitucionRepository institucionRepository;
+    // Autorizar un equipo después del primero pide un código al correo. Se reusan las defensas
+    // de los otros flujos --vigencia, tope de intentos, un solo uso-- en vez de inventar un
+    // segundo mecanismo que habría que endurecer por separado.
+    private final CodigoVerificacionService codigoService;
+    private final CanalDeCodigos notificador;
+    // Sin correo no hay código que mandar: ver pideCodigoParaAutorizar.
+    private final ModalidadInstalacion modalidad;
 
     // El reloj de la credencial: un puesto sin uso por más de diasDeInactividad deja de
     // servir para el kiosco.
@@ -63,9 +72,6 @@ public class PuestoCapturaService {
     void setClock(Clock clock) {
         this.clock = clock;
     }
-    // Revocar a distancia exige un código de un solo uso. Se reusan las defensas que ya
-    // tienen los otros dos flujos --vigencia, tope de intentos, un solo uso-- en vez de
-    // inventar un segundo mecanismo que habría que endurecer por separado.
 
     /** Un puesto recién designado, con su token en claro. Es la única vez que el token existe fuera del navegador. */
     @Value
@@ -75,29 +81,35 @@ public class PuestoCapturaService {
     }
 
     /**
-     * Registra el equipo desde el que se está llamando y devuelve el token que hay que dejarle
+     * Registra el equipo desde el que llega la petición y devuelve el token que hay que dejarle
      * en la cookie. El token en claro no se guarda en ningún lado: se devuelve una vez y
      * después solo existe en ese navegador.
+     *
+     * <p><b>El primero es un arranque.</b> Sin ningún equipo nadie puede tomar asistencia, y
+     * hay que poder salir de esa situación desde cualquier máquina: para eso alcanza con la
+     * cuenta institucional. Es el primero de la historia de la institución, no el primero
+     * habilitado. Si contaran solo los habilitados, revocar todos desde la pantalla y después
+     * autorizar uno propio abriría la misma puerta que cierra el párrafo siguiente.
+     *
+     * <p><b>Los demás piden un código al correo de la institución</b> (ADR-0015). Desde V030
+     * conviven varios equipos y se revocan desde la pantalla, así que la contraseña sola
+     * alcanzaba para llevarse la captura biométrica a cualquier computadora: autorizándola, o
+     * revocando antes uno habilitado si el tope estaba lleno. El código convierte "sé la
+     * contraseña" en "sé la contraseña y entro al buzón de la institución". La instalación
+     * autónoma no lo pide, porque no tiene correo: ver {@link #pideCodigoParaAutorizar}.
+     *
+     * <p>El código se controla último, después del nombre y del tope: un nombre repetido es un
+     * dato a corregir y no tiene por qué gastar un intento del código que llegó al correo.
+     *
+     * <p>Todo esto vive acá y no en la pantalla porque una vista que esconde el formulario no
+     * frena un POST hecho a mano. El tope se guarda en la base (V030) y se controla acá.
+     *
+     * @param codigo el que llegó al correo; no se mira cuando no hace falta
+     * @throws CodigoRechazado si hacía falta el código y faltó o no es válido
      */
-    /**
-     * Designa el equipo desde el que llega la petición.
-     *
-     * <p><b>Uno por institución.</b> Mientras haya un equipo habilitado no se puede autorizar
-     * otro: para mudar la captura hay que revocar el actual primero, y eso se hace desde ese
-     * mismo equipo. Las dos reglas juntas son las que sostienen que la captura biométrica
-     * ocurre en una máquina conocida — con la contraseña institucional sola, desde afuera, no
-     * alcanza para llevarse el puesto a otro lado.
-     *
-     * <p><b>El primero es un arranque.</b> Sin ningún puesto nadie puede tomar asistencia, y
-     * hay que poder salir de esa situación desde cualquier máquina; para eso alcanza con la
-     * cuenta institucional.
-     *
-     * <p>La restricción vive acá y no en la pantalla porque una vista que esconde el
-     * formulario no frena un POST hecho a mano. Y también en la base, con el índice único que
-     * agrega V022, porque un servicio no frena un INSERT.
-     */
-    @Transactional
-    public PuestoDesignado designar(Long institucionId, String nombre, Usuario designadoPor) {
+    @Transactional(noRollbackFor = CodigoRechazado.class)
+    public PuestoDesignado designar(Long institucionId, String nombre, Usuario designadoPor,
+                                    String codigo) {
         String limpio = nombre == null ? "" : nombre.trim();
         if (limpio.isEmpty()) {
             throw new IllegalArgumentException("El puesto necesita un nombre.");
@@ -117,6 +129,9 @@ public class PuestoCapturaService {
                 "Ya hay un puesto con ese nombre en esta institución. Elegí otro para poder "
                 + "distinguirlos cuando haya que revocar uno.");
         }
+        if (pideCodigoParaAutorizar(institucionId)) {
+            exigirCodigo(designadoPor, codigo);
+        }
 
         byte[] crudo = new byte[BYTES_TOKEN];
         ALEATORIO.nextBytes(crudo);
@@ -135,6 +150,85 @@ public class PuestoCapturaService {
                  guardado.getId(), limpio, institucionId);
 
         return new PuestoDesignado(guardado, tokenEnClaro);
+    }
+
+    /**
+     * Hacía falta el código para autorizar el equipo y faltó o no es válido.
+     *
+     * <p><b>Es un tipo aparte para que el intento fallido quede contado.</b> {@link #designar}
+     * no deshace su transacción ante esta excepción. Si la deshiciera, se perdería también el
+     * intento que {@code CodigoVerificacionService.validar} acaba de sumar, y el tope de
+     * intentos —lo único que vuelve inviable probar el millón de códigos de seis dígitos— no
+     * se alcanzaría nunca. Hasta que se lanza, designar no escribió nada más, así que no queda
+     * otra cosa a medias.
+     *
+     * <p>Hereda de {@code IllegalArgumentException} para que la pantalla la muestre junto al
+     * formulario, como cualquier otro dato a corregir.
+     */
+    public static class CodigoRechazado extends IllegalArgumentException {
+        public CodigoRechazado(String mensaje) {
+            super(mensaje);
+        }
+    }
+
+    /**
+     * Si autorizar un equipo en esta institución pide el código al correo (ADR-0015).
+     *
+     * <p>Lo pide si la institución tuvo alguno alguna vez, aunque hoy estén todos revocados.
+     *
+     * <p><b>En la instalación autónoma no lo pide nunca, y es una decisión.</b> Ahí no hay
+     * correo, y la clave de recuperación no sirve de reemplazo: la regenera cualquiera que
+     * tenga la contraseña institucional, así que pedirla no agregaría nada. Esa instalación
+     * solo se alcanza desde la red del edificio, y el riesgo quedó aceptado por escrito.
+     */
+    @Transactional(readOnly = true)
+    public boolean pideCodigoParaAutorizar(Long institucionId) {
+        return !modalidad.esAutonoma() && puestoRepository.tuvoAlguno(institucionId);
+    }
+
+    /**
+     * Manda el código para autorizar un equipo al correo de la cuenta que lo pide.
+     *
+     * <p>Va al correo que la cuenta tiene cargado y no a uno que se escriba en la pantalla: si
+     * el destino lo eligiera quien pide, el código no probaría nada.
+     */
+    @Transactional
+    public void pedirCodigoParaAutorizar(Usuario solicitante, String ip) {
+        String codigo = codigoService.emitir(
+            solicitante, PropositoCodigo.AUTORIZACION_PUESTO, solicitante.getEmail(), ip);
+        notificador.enviarCodigo(
+            solicitante, PropositoCodigo.AUTORIZACION_PUESTO, solicitante.getEmail(), codigo);
+        log.info("Codigo para autorizar un equipo emitido para el usuario {}", solicitante.getId());
+    }
+
+    // Valida el código contra la cuenta que autoriza. Un campo vacío se rechaza sin llamar a
+    // validar(): no es un intento de adivinar, es alguien que todavía no pidió el código.
+    private void exigirCodigo(Usuario designadoPor, String codigo) {
+        if (codigo == null || codigo.isBlank()) {
+            throw new CodigoRechazado("Para autorizar otro equipo hace falta el código que "
+                + "llega al correo de la institución. Pedilo con el botón de arriba.");
+        }
+        if (designadoPor == null) {
+            throw new CodigoRechazado("No se pudo identificar la cuenta que autoriza el equipo.");
+        }
+        CodigoVerificacionService.Resultado resultado = codigoService.validar(
+            designadoPor.getId(), PropositoCodigo.AUTORIZACION_PUESTO, codigo);
+        if (resultado != CodigoVerificacionService.Resultado.OK) {
+            log.warn("Autorizacion de equipo rechazada por el codigo: usuario={}, resultado={}",
+                     designadoPor.getId(), resultado);
+            throw new CodigoRechazado(mensajeDelCodigo(resultado));
+        }
+    }
+
+    // Lo que la pantalla le dice a quien tipeó el código.
+    private String mensajeDelCodigo(CodigoVerificacionService.Resultado resultado) {
+        return switch (resultado) {
+            case OK -> "";
+            case INEXISTENTE -> "No hay ningún código pendiente. Pedí uno nuevo.";
+            case VENCIDO -> "El código venció. Pedí uno nuevo.";
+            case INCORRECTO -> "El código no es correcto.";
+            case SIN_INTENTOS -> "Se agotaron los intentos. Pedí un código nuevo.";
+        };
     }
 
     /**
@@ -309,8 +403,8 @@ public class PuestoCapturaService {
      * hasta la computadora que justo puede estar rota o robada, que es cuando más urge
      * revocarla. Lo que autoriza es la cuenta institucional, y solo sobre sus propios equipos.
      *
-     * <p>Lo que no se abrió es la designación: autorizar un equipo sigue siendo desde él
-     * (ADR-0015), y eso es lo que sostiene dónde ocurre la captura biométrica.
+     * <p>Revocar desde acá no alcanza para mudar la captura: autorizar el equipo que la
+     * reemplace pide el código al correo de la institución (ver {@link #designar}).
      */
     @Transactional
     public void revocar(Long puestoId, Long institucionId) {

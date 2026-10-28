@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.9 · **Actualizado:** 2026-10-17 · **Estado:** vigente
+> **Versión:** 1.10 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -336,7 +336,7 @@ qué se descartó.
 | 0012 | Captura guiada del rostro | Vigente |
 | 0013 | Ventana de confirmación del pase | Vigente |
 | 0014 | Margen mínimo contra el segundo candidato | Vigente |
-| 0015 | Puesto autorizado para la captura biométrica | Vigente — su tope de uno y la revocación anclada al equipo, cambiados por V030 |
+| 0015 | Puesto autorizado para la captura biométrica | Vigente — su tope de uno y la revocación anclada al equipo, cambiados por V030; desde el 2026-10-28, autorizar un equipo después del primero pide un código al correo |
 | 0016 | Persona separada de usuario y de vínculo docente | Propuesta — implementada; falta el plazo legal de conservación para aceptarla |
 | 0017 | Marca de salida y bloque de presencia | Vigente |
 | 0018 | La tolerancia es simétrica y bidireccional | Vigente — reemplaza la decisión 1 de ADR-0008 |

@@ -29,8 +29,9 @@
         </header>
 
         <!-- Este equipo no está autorizado. Desde V030 puede haber varios a la vez -una
-             cámara por entrada- pero cada uno se autoriza desde sí mismo: si no, cualquiera
-             con la cuenta institucional se lleva la captura a donde quiera (ADR-0015). -->
+             cámara por entrada- pero cada uno se autoriza desde sí mismo y, después del
+             primero, con un código al correo de la institución: si no, cualquiera con la
+             cuenta institucional se lleva la captura a donde quiera (ADR-0015). -->
         <div class="card" th:if="${bloqueado and hayAlguno}">
             <p>
                 Esta computadora <strong>no es uno</strong> de los equipos autorizados de tu
@@ -38,7 +39,8 @@
             </p>
             <p class="puesto__nota" th:if="${puedeDesignar}">
                 Si esta computadora también toma asistencia —otra entrada, otro turno—,
-                autorizala acá abajo: cada equipo se autoriza <strong>desde sí mismo</strong>.
+                autorizala acá abajo: cada equipo se autoriza <strong>desde sí mismo</strong><span
+                    th:if="${pideCodigo}">, con un código que llega al correo de la institución</span>.
             </p>
             <p class="puesto__nota">
                 Desde este equipo sí podés hacer todo lo demás: ver el listado del día,
@@ -51,7 +53,8 @@
         </div>
 
         <!-- Designar. Solo la cuenta institucional: habilitar un equipo es autorizar el
-             tratamiento de datos sensibles en esa máquina. -->
+             tratamiento de datos sensibles en esa máquina. Después del primero, además, con
+             un código al correo de la institución (ADR-0015). -->
         <div class="card" th:if="${puedeAutorizarEsteEquipo}">
             <h2>Autorizar este equipo</h2>
             <p th:unless="${hayAlguno}" class="alert alert--warning" role="alert">
@@ -69,10 +72,27 @@
                 habilitar otra máquina a distancia.
             </p>
 
-            <form th:action="@{/puestos/designar}" method="post" novalidate>
-                <!-- Un nombre repetido no es un error de formato del campo, así que no lo
-                     puede reportar la validación del navegador: llega del servidor y se
-                     muestra acá, junto al formulario que hay que corregir. -->
+            <!-- Pedir el código es otro formulario: manda un correo y vuelve acá, sin
+                 autorizar nada todavía. Va primero porque es el primer paso. -->
+            <th:block th:if="${pideCodigo}">
+                <p>
+                    Como tu institución ya tuvo equipos autorizados, para sumar otro hace falta
+                    además un <strong>código que llega al correo de la institución</strong>.
+                    Así, la contraseña sola no alcanza para llevarse la captura de rostros a
+                    cualquier computadora.
+                </p>
+                <div class="form-actions">
+                    <form th:action="@{/puestos/designar/codigo}" method="post" class="inline-form">
+                        <button type="submit" class="btn btn--ghost btn--sm"
+                                data-texto-enviando="Enviando...">Mandar el código al correo</button>
+                    </form>
+                </div>
+            </th:block>
+
+            <form th:action="@{/puestos/designar}" method="post" novalidate data-codigo-form>
+                <!-- Un nombre repetido o un código equivocado no son errores de formato del
+                     campo, así que no los puede reportar la validación del navegador: llegan
+                     del servidor y se muestran acá, junto al formulario que hay que corregir. -->
                 <div th:if="${error}" class="alert alert--error" role="alert">
                     <p th:text="${error}">Error</p>
                 </div>
@@ -86,10 +106,32 @@
                         revocarlo. Que diga dónde está, no quién lo usa.
                     </small>
                 </div>
+
+                <!-- Las seis casillas, igual que en el resto de los códigos del sistema. Lo que
+                     viaja es el campo oculto; las casillas son la parte visible (codigo-input.js). -->
+                <div class="form-group" th:if="${pideCodigo}">
+                    <label id="codigo-puesto-etiqueta">Código del correo <span class="required">*</span></label>
+                    <input type="hidden" name="codigo" data-codigo-valor>
+                    <div class="codigo-input" role="group" aria-labelledby="codigo-puesto-etiqueta"
+                         data-codigo-casillas>
+                        <input inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Dígito 1" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 2" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 3" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 4" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 5" placeholder=" ">
+                        <input inputmode="numeric" maxlength="1" aria-label="Dígito 6" placeholder=" ">
+                    </div>
+                    <small class="form-hint">
+                        Vence a los pocos minutos y sirve una sola vez.
+                    </small>
+                </div>
+
                 <button type="submit" class="btn btn--primary"
                         data-texto-enviando="Autorizando...">Autorizar este equipo</button>
             </form>
         </div>
+        <script th:if="${puedeAutorizarEsteEquipo and pideCodigo}"
+                th:src="@{/js/comun/codigo-input.js}" defer></script>
 
         <!-- Sin cupo no hay formulario que completar. Sin este párrafo la pantalla se queda
              muda: se ve una tabla de equipos y ninguna explicación de por qué no se puede

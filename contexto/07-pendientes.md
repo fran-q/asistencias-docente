@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.4 · **Actualizado:** 2026-10-17 · **Estado:** vigente
+> **Versión:** 1.5 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -126,17 +126,14 @@ verde** y por eso conviene tenerlas escritas:
 
 ## Decisiones abiertas
 
-- [ ] **Con varios equipos (V030), la contraseña institucional sola alcanza para mover la
-      captura biométrica a otra máquina.** ADR-0015 lo había cerrado el 2026-09-05: un solo
-      equipo, y revocarlo solo desde él o con un código al correo. V030 permitió varios y pasó
-      la revocación a la pantalla, así que hoy alcanza con autorizar un equipo nuevo —sin
-      tope— o con revocar uno desde la pantalla y autorizar el propio —con el tope lleno—.
-      Opciones: aceptarlo como riesgo y escribirlo; volver a pedir el código al correo para
-      revocar desde otro equipo; o pedirlo para autorizar cualquier equipo después del
-      primero. Mientras tanto, un tope igual a la cantidad real de entradas impide sumar un
-      equipo, pero no cambiarlo por otro. Los comentarios de `PuestoCapturaService.designar`
-      todavía describen la regla de un equipo. Detalle en ADR-0015, *Varios equipos, con tope
-      propio*.
+- [x] **Con varios equipos (V030), la contraseña institucional sola alcanzaba para mover la
+      captura biométrica a otra máquina.** Resuelta el 2026-10-28: autorizar un equipo después
+      del primero de la historia de la institución pide un código al correo de la institución,
+      también si antes se revocaron todos. En la instalación autónoma no hay correo y no se
+      pide. Ahí el riesgo queda aceptado: el sistema solo se alcanza desde la red del edificio,
+      y la clave de recuperación no sirve de segundo control porque la regenera cualquiera que
+      tenga la contraseña. Si una instalación autónoma se abriera a internet, hay que volver a
+      decidirlo. Detalle en ADR-0015, *Después del primero, un código al correo*.
 
 - [ ] **ADR-0016 espera el plazo legal de conservación.** Está implementado desde el
       2026-09-03, pero el propio ADR condiciona su aceptación a poder citar la norma que obliga

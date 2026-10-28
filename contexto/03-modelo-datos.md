@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.2 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.3 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -21,7 +21,7 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 | `instituciones` | Tenant root. Nombre, CUIT, contacto. | — (es la raíz) |
 | `roles` | Catálogo global: `INSTITUCION`, `ADMIN`. | No |
 | `usuarios` | Login del sistema. Solo institución y admins. **El docente no es usuario.** | Sí |
-| `codigos_verificacion` | Códigos de un solo uso: verificar el correo, recuperar la contraseña y cambiar el correo (uno al actual y otro al nuevo). Revocar un equipo a distancia también pedía uno, hasta V030. `proposito` no tiene CHECK: los valores los fija `PropositoCodigo`. | Vía usuario |
+| `codigos_verificacion` | Códigos de un solo uso: verificar el correo, recuperar la contraseña, cambiar el correo (uno al actual y otro al nuevo) y, desde el 2026-10-28, autorizar un equipo de captura después del primero (ADR-0015). Revocar un equipo a distancia también pedía uno, hasta V030. `proposito` no tiene CHECK: los valores los fija `PropositoCodigo`. | Vía usuario |
 | `puestos_captura` | Equipos autorizados a capturar datos biométricos. Guarda el hash del token, no el token. Desde V025 puede habilitarse para operar **sin sesión** (ADR-0019). Ver ADR-0015. | Sí |
 
 ### Personas
@@ -316,6 +316,12 @@ hay forma de habilitar una a distancia (ADR-0015). Lo que se abrió es cuántas 
 la vez. **Revocar, en cambio, ahora se hace desde la pantalla**: con una cámara por entrada,
 exigir estar en esa máquina obligaba a caminar hasta la que justo puede estar rota o robada,
 que es cuando más urge revocarla.
+
+Las dos cosas juntas dejaron que la contraseña institucional sola alcanzara para llevarse la
+captura a otra máquina. Desde el 2026-10-28 lo cierra el servicio, no el esquema: autorizar un
+equipo después del primero de la historia de la institución pide un código al correo, salvo en
+la instalación autónoma (ADR-0015). "El primero de la historia" se lee de `puestos_captura`
+contando también los revocados, y por eso esos se conservan con baja lógica.
 
 ### Invariantes que agregaron V021 y V022
 

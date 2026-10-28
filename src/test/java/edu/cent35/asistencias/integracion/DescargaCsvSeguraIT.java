@@ -21,7 +21,6 @@ import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.service.PuestoCapturaService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -70,7 +69,6 @@ class DescargaCsvSeguraIT {
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private PuestoCapturaRepository puestoRepository;
-    @Autowired private PuestoCapturaService puestoService;
 
     private Long tenantId;
     private Usuario cuenta;
@@ -96,7 +94,7 @@ class DescargaCsvSeguraIT {
             LocalTime.of(18, 0), LocalTime.of(20, 0));
 
         // El nombre del equipo lo escribe la institución y también viaja al CSV.
-        puestoService.designar(tenantId, "-Entrada norte", cuenta);
+        escenario.equipo(tenantId, "-Entrada norte", cuenta);
         PuestoCaptura puesto = puestoRepository.deInstitucion(tenantId).get(0);
 
         BloquePresencia bloque = BloquePresencia.builder()

@@ -20,7 +20,6 @@ import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.MotivoCargaManualRepository;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
-import edu.cent35.asistencias.service.PuestoCapturaService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +71,6 @@ class MarcaSinCamaraIT {
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
     @Autowired private MotivoCargaManualRepository motivoRepository;
-    @Autowired private PuestoCapturaService puestoService;
 
     private Long tenantId;
     private Docente docente;
@@ -120,7 +118,7 @@ class MarcaSinCamaraIT {
                                  DatosDePrueba.persona("Secre", "Taria"));
 
         delPuesto = new Cookie(CookiePuesto.NOMBRE,
-            puestoService.designar(tenantId, "Secretaria PC-" + n, admin).getTokenEnClaro());
+            escenario.equipo(tenantId, "Secretaria PC-" + n, admin).getTokenEnClaro());
     }
 
     @AfterEach

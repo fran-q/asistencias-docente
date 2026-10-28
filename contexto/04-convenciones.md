@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.12 · **Actualizado:** 2026-10-14 · **Estado:** vigente
+> **Versión:** 1.13 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -356,8 +356,10 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
     personas, el ciclo anual, el rol buscado o creado, y `borrar(repo, condición)`.
   - `EscenarioDePrueba`: un componente que guarda en la base la cadena de un IT
     —institución, cuenta verificada, carrera, materia, docente, ciclo, comisión,
-    horario— con los valores de siempre, y `borrarTodoDe(tenantId)`, que borra todo lo
-    del tenant en el orden que piden las claves foráneas.
+    horario— con los valores de siempre; `equipo(...)`, que autoriza un equipo de captura
+    y, si no es el primero, le emite el código del correo (ADR-0015); y
+    `borrarTodoDe(tenantId)`, que borra todo lo del tenant en el orden que piden las
+    claves foráneas.
 
   Lo que identifica al caso —códigos, DNI, horas, el estado que se prueba— se escribe a
   la vista en cada test. Si un IT necesita algo que el escenario no arma, lo arma él y lo

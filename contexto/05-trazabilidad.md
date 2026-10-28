@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.4 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.5 · **Actualizado:** 2026-10-28 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -497,7 +497,7 @@ formalmente al alcance acordado.
 | Grilla semanal por carrera | `GrillaController`, `GrillaService` | Visualización de horarios |
 | Validación de superposición de horarios | `ManejadorDeColisiones` | Evita cargar dos clases encimadas |
 | Alta autogestionada de institución | `AltaInstitucionController` | ADR-0010 |
-| Puestos de captura autorizados | `PuestoCapturaService`, `PuestoCapturaInterceptor`, `puestos_captura` | ADR-0015 — la captura biométrica solo desde equipos registrados. Habilita el acceso móvil al resto |
+| Puestos de captura autorizados | `PuestoCapturaService`, `PuestoCapturaInterceptor`, `puestos_captura` | ADR-0015 — la captura biométrica solo desde equipos registrados. Habilita el acceso móvil al resto. Desde el 2026-10-28, autorizar un equipo después del primero pide un código al correo de la institución, salvo en la instalación autónoma (`PuestoCapturaIT`) |
 | Marca sin cámara desde el pase | `BloquePresenciaService.registrarSinCamara`, V029 | ADR-0021 — el docente al que el reconocimiento no acierta se quedaba sin forma de registrar en el momento |
 | Una sesión por cuenta | `SesionesActivasService`, `SesionPorConfirmarInterceptor` | ADR-0020 |
 | Asistente de primer arranque | `InstalacionService`, `InstalacionController`, `InstalacionInterceptor`, `auth/instalacion.html` | ADR-0022 — en una instalación local no hay SMTP, y sin correo el alta por código no se puede completar: la instalación quedaría sin forma de crear su primera cuenta. **Apagado por defecto** (`app.instalacion.asistente-inicial`), y se apaga solo apenas existe una institución |

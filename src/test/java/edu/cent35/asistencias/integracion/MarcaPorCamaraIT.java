@@ -40,7 +40,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.util.AopTestUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
-import edu.cent35.asistencias.service.PuestoCapturaService;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -94,7 +93,6 @@ class MarcaPorCamaraIT {
     @MockBean private IdentificacionFacialService identificacionService;
 
     @Autowired private PaseAsistenciaService paseService;
-    @Autowired private PuestoCapturaService puestoService;
     @Autowired private PuestoCapturaRepository puestoRepository;
     @Autowired private AsistenciaRepository asistenciaRepository;
     @Autowired private BloquePresenciaRepository bloqueRepository;
@@ -147,7 +145,7 @@ class MarcaPorCamaraIT {
 
         // El equipo autorizado, con el kiosco encendido: el pase exige lo primero y la pantalla
         // desatendida, las dos cosas.
-        tokenDelPuesto = puestoService.designar(tenantId, "Secretaría", cuenta).getTokenEnClaro();
+        tokenDelPuesto = escenario.equipo(tenantId, "Secretaría", cuenta).getTokenEnClaro();
         PuestoCaptura p = puestoRepository.deInstitucion(tenantId).get(0);
         p.setKioscoHabilitado(true);
         p.setKioscoHabilitadoEn(LocalDateTime.now());
@@ -296,7 +294,7 @@ class MarcaPorCamaraIT {
         // docente sale por donde le queda más cerca. Sin el equipo de salida, la jornada
         // afirmaría que salió por donde entró, que es un dato falso y no uno incompleto.
         PuestoCaptura norte = puestoRepository.deInstitucion(tenantId).get(0);
-        String tokenSur = puestoService.designar(tenantId, "Entrada sur", cuenta).getTokenEnClaro();
+        String tokenSur = escenario.equipo(tenantId, "Entrada sur", cuenta).getTokenEnClaro();
         PuestoCaptura sur = puestoRepository.deInstitucion(tenantId).stream()
             .filter(p -> "Entrada sur".equals(p.getNombre()))
             .findFirst().orElseThrow();

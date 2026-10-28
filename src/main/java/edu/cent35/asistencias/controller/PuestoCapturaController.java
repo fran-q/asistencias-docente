@@ -97,6 +97,9 @@ public class PuestoCapturaController {
         // la vista para no ofrecer un botón que va a fallar.
         model.addAttribute("puedeAutorizarEsteEquipo",
             tieneRolInstitucion(principal) && esteEquipo == null && hayCupo);
+        // Después del primero, autorizar pide el código al correo (ADR-0015). La vista lo
+        // pregunta para mostrar el campo; el que lo exige es el service.
+        model.addAttribute("pideCodigo", puestoService.pideCodigoParaAutorizar(institucionId));
         model.addAttribute("habilitados", habilitados);
         model.addAttribute("tope", tope);
         model.addAttribute("hayCupo", hayCupo);
@@ -120,11 +123,14 @@ public class PuestoCapturaController {
      *
      * <p>No recibe ningún identificador de máquina: el equipo que se designa es,
      * necesariamente, el que envía esta petición. No hay forma de habilitar una máquina a
-     * distancia, que es justamente lo que le da sentido al control.
+     * distancia. Después del primero, además, hace falta el código que llegó al correo de
+     * la institución: estar frente a la máquina no alcanza si esa máquina es la de quien
+     * consiguió la contraseña (ADR-0015).
      */
     @PostMapping("/puestos/designar")
     @PreAuthorize("hasRole('INSTITUCION')")
     public String designar(@RequestParam String nombre,
+                           @RequestParam(name = "codigo", required = false) String codigo,
                            @AuthenticationPrincipal UsuarioAutenticado principal,
                            HttpServletRequest request,
                            HttpServletResponse response,
@@ -135,7 +141,7 @@ public class PuestoCapturaController {
 
         try {
             PuestoCapturaService.PuestoDesignado alta = puestoService.designar(
-                institucionId, nombre, designante);
+                institucionId, nombre, designante, codigo);
 
             CookiePuesto.escribir(request, response, alta.getTokenEnClaro());
             redirect.addFlashAttribute("flashMensaje",
@@ -153,14 +159,46 @@ public class PuestoCapturaController {
     }
 
     /**
-     * Revoca el puesto desde esa misma máquina, y le borra la cookie: dejarla sería guardar
+     * Manda al correo de la institución el código que pide autorizar un equipo después del
+     * primero (ADR-0015).
+     *
+     * <p>Va a la dirección que la cuenta tiene cargada, nunca a una que llegue en el pedido:
+     * ver {@link PuestoCapturaService#pedirCodigoParaAutorizar}.
+     */
+    @PostMapping("/puestos/designar/codigo")
+    @PreAuthorize("hasRole('INSTITUCION')")
+    public String pedirCodigoParaAutorizar(@AuthenticationPrincipal UsuarioAutenticado principal,
+                                           HttpServletRequest request,
+                                           RedirectAttributes redirect) {
+        Usuario solicitante = usuarioRepository.findById(principal.getUsuarioId()).orElse(null);
+        if (solicitante == null) {
+            return "redirect:" + VUELTA;
+        }
+        try {
+            puestoService.pedirCodigoParaAutorizar(solicitante, CuentaController.ipDe(request));
+            redirect.addFlashAttribute("flashMensaje",
+                "Te mandamos un código al correo de la institución. Vence en unos minutos.");
+        } catch (IllegalStateException e) {
+            // El límite de pedidos por hora: el mensaje ya dice qué hacer.
+            redirect.addFlashAttribute("flashError", e.getMessage());
+        } catch (RuntimeException e) {
+            log.warn("No se pudo enviar el codigo para autorizar un equipo: {}", e.toString());
+            redirect.addFlashAttribute("flashError",
+                "No pudimos enviar el correo en este momento. Probá de nuevo en un rato.");
+        }
+        return "redirect:" + VUELTA;
+    }
+
+    /**
+     * Revoca un equipo y, si es esta misma máquina, le borra la cookie: dejarla sería guardar
      * una credencial que ya no sirve.
      *
      * <p><b>Desde V030 se revoca desde acá, sin estar en esa máquina.</b> Con una sola puerta
      * la regla anterior se sostenía —el equipo era uno y estaba a la vista—, pero con una
      * cámara por entrada obliga a caminar hasta la máquina que justamente puede estar rota o
      * robada, que es cuando más urge revocarla. Lo que autoriza sigue siendo la cuenta
-     * institucional; lo que no cambió es que designar un equipo solo se puede desde él.
+     * institucional. Que revocar sea libre no deja mudar la captura: autorizar el equipo que
+     * la reemplace pide el código al correo de la institución.
      */
     @PostMapping("/puestos/{id}/revocar")
     @PreAuthorize("hasRole('INSTITUCION')")

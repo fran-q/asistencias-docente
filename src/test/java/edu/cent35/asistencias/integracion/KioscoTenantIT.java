@@ -119,7 +119,8 @@ class KioscoTenantIT {
     void designadoNoAlcanza() {
         // Designar dice "la captura ocurre acá"; habilitar el kiosco dice "además puede
         // ocurrir sin nadie mirando". Son dos permisos y hacen falta los dos (RF-85).
-        String token = puestoService.designar(institucionA, "Secretaria", cuentaA)
+        // Sin código: es el primer equipo de la institución (ADR-0015).
+        String token = puestoService.designar(institucionA, "Secretaria", cuentaA, null)
             .getTokenEnClaro();
 
         assertThat(puestoService.resolverKiosco(token)).isEmpty();
@@ -190,8 +191,9 @@ class KioscoTenantIT {
 
     // Designa un puesto y además lo habilita para operar sin sesión.
     private String kioscoEn(Long institucionId, Usuario designante) {
+        // Sin código: es el primer equipo de la institución (ADR-0015).
         String token = puestoService
-            .designar(institucionId, "Secretaria " + institucionId, designante)
+            .designar(institucionId, "Secretaria " + institucionId, designante, null)
             .getTokenEnClaro();
         PuestoCaptura p = unicoDe(institucionId);
         p.setKioscoHabilitado(true);

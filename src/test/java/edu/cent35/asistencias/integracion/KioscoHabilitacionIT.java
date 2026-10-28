@@ -486,7 +486,8 @@ class KioscoHabilitacionIT {
     }
 
     private String designarEn(Long institucionId, Usuario quien) {
-        return puestoService.designar(institucionId, "Secretaria PC-1", quien).getTokenEnClaro();
+        // Sin código: es el primer equipo de la institución (ADR-0015).
+        return puestoService.designar(institucionId, "Secretaria PC-1", quien, null).getTokenEnClaro();
     }
 
     private Usuario cuenta(String username, Long institucionId) {

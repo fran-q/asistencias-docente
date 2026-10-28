@@ -97,6 +97,16 @@ public interface PuestoCapturaRepository extends JpaRepository<PuestoCaptura, Lo
                          @Param("nombre") String nombre,
                          @Param("idExcluido") Long idExcluido);
 
+    /**
+     * Si la institución tuvo alguna vez un equipo, habilitado o revocado. Es lo que separa el
+     * primero, que se autoriza con la cuenta sola, de los demás, que piden código (ADR-0015).
+     */
+    @Query("""
+        SELECT COUNT(p) > 0 FROM PuestoCaptura p
+        WHERE p.institucionId = :institucionId
+    """)
+    boolean tuvoAlguno(@Param("institucionId") Long institucionId);
+
     /** Cuántos puestos habilitados tiene la institución; cero significa que no puede tomar asistencia. */
     @Query("""
         SELECT COUNT(p) FROM PuestoCaptura p

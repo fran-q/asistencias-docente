@@ -124,7 +124,8 @@ class KioscoPantallaIT {
     void designadoNoAlcanza() throws Exception {
         // Designar dice "la captura ocurre acá"; habilitar el kiosco dice "además puede
         // ocurrir sin nadie mirando". Son dos permisos distintos (RF-85).
-        String token = puestoService.designar(institucionId, "Secretaria", cuenta)
+        // Sin código: es el primer equipo de la institución (ADR-0015).
+        String token = puestoService.designar(institucionId, "Secretaria", cuenta, null)
             .getTokenEnClaro();
 
         var respuesta = mockMvc.perform(get("/kiosco").cookie(new Cookie(CookiePuesto.NOMBRE, token)))
@@ -197,7 +198,8 @@ class KioscoPantallaIT {
 
     // Designa el equipo y además lo habilita para operar sin sesión.
     private String kioscoHabilitado() {
-        String token = puestoService.designar(institucionId, "Secretaria", cuenta)
+        // Sin código: es el primer equipo de la institución (ADR-0015).
+        String token = puestoService.designar(institucionId, "Secretaria", cuenta, null)
             .getTokenEnClaro();
         PuestoCaptura p = puestoRepository.deInstitucion(institucionId).get(0);
         p.setKioscoHabilitado(true);

@@ -63,6 +63,7 @@ public class NotificadorEmailService implements CanalDeCodigos {
             case RECUPERACION_PASSWORD -> "Código para recuperar tu contraseña - Asistencias";
             case CAMBIO_EMAIL -> "Código para cambiar tu correo - Asistencias";
             case EMAIL_NUEVO -> "Confirmá tu correo nuevo - Asistencias";
+            case AUTORIZACION_PUESTO -> "Código para autorizar un equipo de captura - Asistencias";
         };
     }
 
@@ -79,6 +80,10 @@ public class NotificadorEmailService implements CanalDeCodigos {
             case EMAIL_NUEVO ->
                 "Pediste usar esta dirección como el correo de tu cuenta. Con este código la "
                 + "confirmás, y desde ese momento la cuenta pasa a usarla.";
+            case AUTORIZACION_PUESTO ->
+                "Pediste autorizar una computadora más para tomar asistencia con la cámara y "
+                + "registrar rostros. Si no lo pediste vos, alguien tiene la contraseña de la "
+                + "institución: cambiala y revisá los equipos autorizados.";
         };
 
         return """

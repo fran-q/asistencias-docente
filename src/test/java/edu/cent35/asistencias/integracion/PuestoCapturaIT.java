@@ -4,14 +4,17 @@ import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.biometria.PuestoCaptura;
 import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
 import edu.cent35.asistencias.model.institucion.Rol;
 import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.repository.CodigoVerificacionRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.PuestoCapturaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
 import edu.cent35.asistencias.seguridad.CookiePuesto;
 import edu.cent35.asistencias.seguridad.UsuarioAutenticado;
+import edu.cent35.asistencias.service.CodigoVerificacionService;
 import edu.cent35.asistencias.service.PuestoCapturaService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,10 +34,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -62,6 +68,11 @@ class PuestoCapturaIT {
     @Autowired private UsuarioRepository usuarioRepository;
     @Autowired private RolRepository rolRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private CodigoVerificacionService codigoService;
+    @Autowired private CodigoVerificacionRepository codigoRepository;
+
+    @Value("${app.verificacion.max-intentos}")
+    private int maxIntentos;
 
     private Long institucionA;
     private Long institucionB;
@@ -423,7 +434,8 @@ class PuestoCapturaIT {
         // Desde V030 los dos pueden estar habilitados a la vez --una cámara por entrada--,
         // así que la propiedad importa más que antes: el token de uno no sirve en el otro.
         String primero = designarEn(institucionA);
-        String segundo = puestoService.designar(institucionA, "Secretaria PC-2", cuentaA)
+        String segundo = puestoService
+            .designar(institucionA, "Secretaria PC-2", cuentaA, codigoPara(cuentaA))
             .getTokenEnClaro();
 
         assertThat(primero).isNotEqualTo(segundo);
@@ -439,7 +451,7 @@ class PuestoCapturaIT {
 
         assertThatNombreRepetidoFalla();
         // Pero en otra institución el mismo nombre si va: son espacios separados.
-        assertThat(puestoService.designar(institucionB, "Secretaria PC-1", cuentaB).getPuesto())
+        assertThat(puestoService.designar(institucionB, "Secretaria PC-1", cuentaB, null).getPuesto())
             .isNotNull();
     }
 
@@ -451,8 +463,8 @@ class PuestoCapturaIT {
     @DisplayName("El primer puesto se autoriza desde cualquier equipo: es el arranque")
     void elPrimeroSeAutorizaDesdeDondeSea() {
         // Sin ningún puesto nadie puede tomar asistencia, y hay que poder salir de esa
-        // situación. Para eso alcanza con la cuenta institucional.
-        assertThat(puestoService.designar(institucionA, "Secretaria PC-1", cuentaA))
+        // situación. Para eso alcanza con la cuenta institucional, sin código.
+        assertThat(puestoService.designar(institucionA, "Secretaria PC-1", cuentaA, null))
             .isNotNull();
     }
 
@@ -463,8 +475,8 @@ class PuestoCapturaIT {
         // el equipo de una puerta para autorizar el de la otra, y el docente terminaba
         // cruzando el edificio para marcar la salida.
         designarEn(institucionA);
-        puestoService.designar(institucionA, "Entrada norte", cuentaA);
-        puestoService.designar(institucionA, "Entrada sur", cuentaA);
+        puestoService.designar(institucionA, "Entrada norte", cuentaA, codigoPara(cuentaA));
+        puestoService.designar(institucionA, "Entrada sur", cuentaA, codigoPara(cuentaA));
 
         assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(3);
     }
@@ -473,12 +485,13 @@ class PuestoCapturaIT {
     @DisplayName("Con el tope alcanzado no se autoriza uno mas")
     void elTopeFrenaLaDesignacion() {
         // El tope lo pone la institución: una con una sola puerta no quiere que un segundo
-        // equipo quede habilitado por descuido.
+        // equipo quede habilitado por descuido. Con un código válido, para que lo único que
+        // pueda frenarlo sea el tope.
         conTopeDeEquipos((short) 1);
         designarEn(institucionA);
 
         try {
-            puestoService.designar(institucionA, "Mi notebook", cuentaA);
+            puestoService.designar(institucionA, "Mi notebook", cuentaA, codigoPara(cuentaA));
             throw new AssertionError("tendria que haber rechazado la designacion");
         } catch (IllegalArgumentException esperado) {
             assertThat(esperado.getMessage()).contains("tope");
@@ -495,14 +508,167 @@ class PuestoCapturaIT {
 
         puestoService.revocar(actual, institucionA);
 
-        assertThat(puestoService.designar(institucionA, "Secretaria PC-2", cuentaA).getPuesto())
+        assertThat(puestoService
+                .designar(institucionA, "Secretaria PC-2", cuentaA, codigoPara(cuentaA))
+                .getPuesto())
             .as("con el anterior revocado, el lugar quedo libre")
             .isNotNull();
         assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
     }
 
     // ========================================================================
-    //  Revocar: solo desde el propio equipo, o con código
+    //  Después del primero, un código al correo de la institución (ADR-0015)
+    // ========================================================================
+
+    @Test
+    @DisplayName("El segundo equipo no se autoriza sin el codigo que llega al correo")
+    void elSegundoPideElCodigo() {
+        // Desde V030 conviven varios equipos: sin esto, la contraseña institucional sola
+        // alcanzaba para autorizar la computadora de cualquiera.
+        designarEn(institucionA);
+
+        assertThatThrownBy(() -> puestoService.designar(institucionA, "Entrada sur", cuentaA, null))
+            .isInstanceOf(PuestoCapturaService.CodigoRechazado.class)
+            .hasMessageContaining("correo");
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Con el codigo del correo, el segundo equipo se autoriza")
+    void conElCodigoSeAutoriza() {
+        designarEn(institucionA);
+
+        assertThat(puestoService
+                .designar(institucionA, "Entrada sur", cuentaA, codigoPara(cuentaA))
+                .getTokenEnClaro())
+            .isNotBlank();
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("El codigo sirve para un solo equipo")
+    void elCodigoSirveUnaSolaVez() {
+        designarEn(institucionA);
+        String codigo = codigoPara(cuentaA);
+        puestoService.designar(institucionA, "Entrada sur", cuentaA, codigo);
+
+        assertThatThrownBy(() -> puestoService.designar(institucionA, "Entrada este", cuentaA, codigo))
+            .isInstanceOf(PuestoCapturaService.CodigoRechazado.class);
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Los intentos fallidos quedan contados: agotados, ni el codigo correcto sirve")
+    void losIntentosFallidosQuedanContados() {
+        // Lo que vuelve inviable probar el millón de códigos es el tope de intentos. Si el
+        // rechazo deshiciera la transacción, se llevaría puesto el intento que se acaba de
+        // sumar y el tope no se alcanzaría nunca: por eso CodigoRechazado no la deshace.
+        designarEn(institucionA);
+        String bueno = codigoPara(cuentaA);
+        String malo = "000000".equals(bueno) ? "111111" : "000000";
+
+        for (int i = 0; i < maxIntentos; i++) {
+            assertThatThrownBy(() -> puestoService.designar(institucionA, "Entrada sur", cuentaA, malo))
+                .isInstanceOf(PuestoCapturaService.CodigoRechazado.class);
+        }
+
+        assertThatThrownBy(() -> puestoService.designar(institucionA, "Entrada sur", cuentaA, bueno))
+            .isInstanceOf(PuestoCapturaService.CodigoRechazado.class)
+            .hasMessageContaining("intentos");
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Revocar todos no vuelve libre al primero: cuenta el primero de la historia")
+    void revocarTodosNoLiberaElCodigo() {
+        // Si contaran solo los habilitados, revocar todos desde la pantalla y autorizar el
+        // propio sería la misma puerta de siempre, con un paso más.
+        designarEn(institucionA);
+        Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
+        puestoService.revocar(actual, institucionA);
+
+        assertThatThrownBy(() -> puestoService.designar(institucionA, "Mi notebook", cuentaA, null))
+            .isInstanceOf(PuestoCapturaService.CodigoRechazado.class);
+        assertThat(puestoService.contarHabilitados(institucionA)).isZero();
+    }
+
+    @Test
+    @DisplayName("El codigo de la cuenta de otra institucion no autoriza un equipo en esta")
+    void elCodigoDeOtraInstitucionNoSirve() {
+        // El código queda atado a la cuenta que lo pidió, y esa cuenta a su institución.
+        designarEn(institucionA);
+        String deB = codigoPara(cuentaB);
+
+        assertThatThrownBy(() -> puestoService.designar(institucionA, "Entrada sur", cuentaA, deB))
+            .isInstanceOf(PuestoCapturaService.CodigoRechazado.class);
+        assertThat(puestoService.contarHabilitados(institucionA)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Por HTTP, sin codigo no se autoriza ni se deja la cookie")
+    void elPostSinCodigoNoAutoriza() throws Exception {
+        designarEn(institucionA);
+
+        mockMvc.perform(post("/puestos/designar")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
+                .param("nombre", "Notebook de alguien"))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("error", org.hamcrest.Matchers.containsString("correo")))
+            .andExpect(cookie().doesNotExist(CookiePuesto.NOMBRE));
+
+        assertThat(puestoRepository.deInstitucion(institucionA)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Por HTTP, con el codigo se autoriza y se deja la cookie")
+    void elPostConCodigoAutoriza() throws Exception {
+        designarEn(institucionA);
+
+        mockMvc.perform(post("/puestos/designar")
+                .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
+                .param("nombre", "Entrada sur")
+                .param("codigo", codigoPara(cuentaA)))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(cookie().exists(CookiePuesto.NOMBRE));
+
+        assertThat(puestoRepository.deInstitucion(institucionA)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("La pantalla pide el codigo despues del primero, y no antes")
+    void laPantallaPideElCodigoSoloDespuesDelPrimero() throws Exception {
+        String sinEquipos = mockMvc.perform(get("/puestos")
+                .with(user(new UsuarioAutenticado(cuentaA))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(sinEquipos)
+            .contains("Autorizar este equipo")
+            .doesNotContain("Mandar el código al correo")
+            .doesNotContain("name=\"codigo\"");
+
+        designarEn(institucionA);
+
+        String conUno = mockMvc.perform(get(PANTALLA_BLOQUEO)
+                .with(user(new UsuarioAutenticado(cuentaA))))
+            .andExpect(status().isOk())
+            .andReturn().getResponse().getContentAsString();
+        assertThat(conUno)
+            .contains("Mandar el código al correo")
+            .contains("name=\"codigo\"");
+    }
+
+    @Test
+    @DisplayName("Pedir el codigo es solo de la cuenta institucional")
+    void pedirElCodigoEsDeLaCuentaInstitucional() throws Exception {
+        Usuario admin = cuentaConRol("admin.codigo", institucionA, "ADMIN");
+
+        mockMvc.perform(post("/puestos/designar/codigo")
+                .with(user(new UsuarioAutenticado(admin))).with(csrf()))
+            .andExpect(status().isForbidden());
+    }
+
+    // ========================================================================
+    //  Revocar: desde la pantalla, sin estar en esa máquina (V030)
     // ========================================================================
 
     @Test
@@ -556,14 +722,17 @@ class PuestoCapturaIT {
     @DisplayName("El POST directo tampoco saltea el tope: no alcanza con esconder el form")
     void elPostDirectoNoSalteaElTope() throws Exception {
         // Una vista que no muestra el botón no frena a quien arma la petición a mano. Por eso
-        // el tope vive en el service y este caso lo ejerce por HTTP.
+        // el tope vive en el service y este caso lo ejerce por HTTP. Lleva un código válido:
+        // sin él, el rechazo podría venir del código y el tope quedaría sin probar.
         conTopeDeEquipos((short) 1);
         designarEn(institucionA);
 
         mockMvc.perform(post("/puestos/designar")
                 .with(user(new UsuarioAutenticado(cuentaA))).with(csrf())
-                .param("nombre", "Notebook de alguien"))
-            .andExpect(status().is3xxRedirection());
+                .param("nombre", "Notebook de alguien")
+                .param("codigo", codigoPara(cuentaA)))
+            .andExpect(status().is3xxRedirection())
+            .andExpect(flash().attribute("error", org.hamcrest.Matchers.containsString("tope")));
 
         assertThat(puestoRepository.deInstitucion(institucionA))
             .as("el segundo equipo se pasaba del tope de la institucion")
@@ -798,17 +967,27 @@ class PuestoCapturaIT {
         Long actual = puestoRepository.deInstitucion(institucionA).get(0).getId();
         puestoService.revocar(actual, institucionA);
 
+        // Con un código válido, para que lo único que pueda frenarlo sea el nombre.
         try {
-            puestoService.designar(institucionA, "Secretaria PC-1", cuentaA);
+            puestoService.designar(institucionA, "Secretaria PC-1", cuentaA, codigoPara(cuentaA));
             throw new AssertionError("tendria que haber rechazado el nombre repetido");
         } catch (IllegalArgumentException esperado) {
             assertThat(esperado.getMessage()).contains("nombre");
         }
     }
 
+    // El primer equipo de la institución: no pide código.
     private String designarEn(Long institucionId) {
         Usuario designante = institucionId.equals(institucionA) ? cuentaA : cuentaB;
-        return puestoService.designar(institucionId, "Secretaria PC-1", designante).getTokenEnClaro();
+        return puestoService.designar(institucionId, "Secretaria PC-1", designante, null)
+            .getTokenEnClaro();
+    }
+
+    // Un código para autorizar otro equipo, como el que llegaría al correo de la cuenta. Se
+    // emite directo para no depender de un servidor de correo.
+    private String codigoPara(Usuario cuenta) {
+        return codigoService.emitir(cuenta, PropositoCodigo.AUTORIZACION_PUESTO,
+                                    cuenta.getEmail(), "127.0.0.1");
     }
 
     private Usuario cuenta(String username, Long institucionId) {
@@ -844,6 +1023,7 @@ class PuestoCapturaIT {
 
     private void limpiar() {
         puestoRepository.deleteAll();
+        codigoRepository.deleteAll();
         usuarioRepository.deleteAll();
         rolRepository.deleteAll();
         institucionRepository.deleteAll();
