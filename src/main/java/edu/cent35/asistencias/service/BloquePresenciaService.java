@@ -38,6 +38,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -765,6 +766,22 @@ public class BloquePresenciaService {
             return entrada.plusMinutes(1);
         }
         return fin;
+    }
+
+    /**
+     * Desde qué hora está adentro cada docente que ese día tiene la jornada abierta (RF-81).
+     *
+     * <p>Lo pregunta el job de ausencias antes de declarar ausente una clase. Si la jornada
+     * empezó antes de que la clase terminara, el docente la está cubriendo, y esa clase se le
+     * imputa al cerrar la jornada: es el mismo solapamiento que usa {@link #clasesCubiertas},
+     * con la salida todavía por venir.
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, LocalTime> entradasDeJornadasAbiertas(Long institucionId, LocalDate fecha) {
+        return bloqueRepository.findAbiertosHasta(institucionId, fecha).stream()
+            .filter(b -> fecha.equals(b.getFecha()))
+            .collect(Collectors.toMap(b -> b.getDocente().getId(), BloquePresencia::getHoraEntrada,
+                                      (una, otra) -> una));
     }
 
     // ------------------------------------------------------------------------

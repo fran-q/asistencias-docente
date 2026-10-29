@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.5 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.6 · **Actualizado:** 2026-10-29 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -133,7 +133,7 @@ reporte.
 | RF-78 | Clasificación de la salida | ✅ | `Horario.salidaEnHora`, `BloquePresenciaService.clasificarSalida`, columna `estado_salida` |
 | RF-79 | Aviso de salidas pendientes | ✅ | `PanelInicioService.pendientes` los anuncia antes que las cargas incompletas (son lo único que hay que resolver hoy), con enlace a `/asistencias/bloques/pendientes`. Solo el calendario y el equipo autorizado van antes: sin ellos no toma asistencia nadie |
 | RF-80 | La asistencia no depende de la marca de salida | ✅ | `BloquePresenciaService.cerrarBloquesVencidos`, llamado por `GeneradorAusenciasService` antes de generar ausencias |
-| RF-81 | Imputación por permanencia efectiva | ✅ | `AsistenciaService.imputarDelBloque`, `BloquePresenciaService.clasesCubiertas`, en el cierre por rostro y en el del job |
+| RF-81 | Imputación por permanencia efectiva | ✅ | `AsistenciaService.imputarDelBloque`, `BloquePresenciaService.clasesCubiertas`, en el cierre por rostro y en el del job. Desde 2026-10-29 el job no genera la ausencia de una clase que cubre una jornada abierta: la decide el cierre. Antes, el docente con tres clases seguidas quedaba ausente en la del medio (`AusenciasConJornadaAbiertaIT`) |
 | RF-82 | Cierre biométrico exige consentimiento vigente | ✅ | `BloquePresenciaService.registrar`, primera guarda del método |
 | RF-83 | Cierre manual del bloque | ✅ | `BloquePresenciaService.cerrarManualmente`, `BloquePresenciaController`, `bloques-pendientes.html`, columnas de V020 |
 | — | Entrada sin cámara, desde el pase | ✅ | `BloquePresenciaService.registrarSinCamara`, `PaseAsistenciaService.marcarSinCamara`, `POST /asistencia/pase/sin-camara`, columnas de V029 (ADR-0021). **Fuera del documento de requerimientos**: es el espejo de RF-83 del lado de la entrada, y la vía para el docente sin consentimiento vigente. Sus asistencias son **MANUAL** desde el 2026-10-28: se grababan AUTOMATICO, y el reporte, el listado y el PDF las mostraban como reconocidas por la cámara. V033 corrigió las anteriores (`HoraDeLlegadaIT`, `MarcaSinCamaraIT`) |

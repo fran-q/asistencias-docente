@@ -25,6 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -145,6 +146,38 @@ class GeneradorAusenciasServiceTest {
 
         // La marca real gano la carrera: 0 creadas, sin excepción propagada.
         assertThat(creadas).isZero();
+    }
+
+    @Test
+    @DisplayName("no genera la ausencia de una clase que cubre una jornada abierta")
+    void noGenera_laCubreUnaJornadaAbierta() {
+        // Entró 17:55 y sigue adentro: la clase de 18 a 20 se le imputa al cerrar la jornada.
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
+            .thenReturn(List.of(horarioLunes18a20()));
+        when(bloquePresenciaService.entradasDeJornadasAbiertas(TENANT_A, LUNES))
+            .thenReturn(Map.of(DOCENTE_ID, LocalTime.of(17, 55)));
+
+        int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(20, 30));
+
+        assertThat(creadas).isZero();
+        verify(asistenciaRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("si genera la de una clase que termino antes de que el docente entrara")
+    void genera_laClaseTerminoAntesDeLaJornada() {
+        // Entró 20:15 a otra clase: la de 18 a 20 ya había terminado, y no la estaba cubriendo.
+        when(horarioRepository.findActivosDelDiaConDocente(eq((byte) 1), any(), eq(TENANT_A)))
+            .thenReturn(List.of(horarioLunes18a20()));
+        when(bloquePresenciaService.entradasDeJornadasAbiertas(TENANT_A, LUNES))
+            .thenReturn(Map.of(DOCENTE_ID, LocalTime.of(20, 15)));
+        when(asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(DOCENTE_ID, HORARIO_ID, LUNES))
+            .thenReturn(Optional.empty());
+        when(asistenciaRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        int creadas = service.generarParaInstitucion(TENANT_A, LUNES, LocalTime.of(20, 30));
+
+        assertThat(creadas).isEqualTo(1);
     }
 
     // ------------------------------------------------------------------------

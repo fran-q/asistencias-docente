@@ -21,12 +21,14 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Job programado que cierra el día: primero cierra los bloques de presencia que quedaron sin
  * marca de salida e imputa lo que cada docente cubrió (RF-79 a RF-81), y recién después
- * materializa las ausencias de los horarios que nadie marcó (RF-19), con método AUTOMATICO y
- * hora_registrada = hora_fin, de modo que se puedan justificar y entren en los reportes.
+ * materializa las ausencias de los horarios que nadie marcó ni está cubriendo (RF-19), con
+ * método AUTOMATICO y hora_registrada = hora_fin, de modo que se puedan justificar y entren
+ * en los reportes.
  * Como el scheduler no pasa por TenantInterceptor, itera las instituciones activas seteando
  * y limpiando el TenantContext a mano, y es idempotente: el UNIQUE de la base resuelve la
  * carrera contra un pase facial simultáneo y correrlo dos veces no duplica nada.
@@ -105,6 +107,11 @@ public class GeneradorAusenciasService {
      * ausencia AUTOMATICA por cada docente que tenía clase, que no es un dato incompleto sino
      * uno falso: dice que alguien faltó un día en que la institución estaba cerrada. Se corta
      * antes de consultar los horarios porque no hay nada que evaluar.
+     *
+     * <p><b>Tampoco declara ausente a quien sigue adentro</b> (2026-10-29). Las clases de una
+     * jornada abierta, salvo la que estaba en curso al entrar, se imputan recién al cerrarla.
+     * Con tres clases seguidas y el job corriendo durante la tercera, el docente quedaba
+     * ausente en la del medio; y quien llegaba antes de su primera clase, ausente en esa.
      */
     public int generarParaInstitucion(Long institucionId, LocalDate fecha, LocalTime ahora) {
         if (diaNoLaborableService.esDiaSinClases(institucionId, fecha)) {
@@ -116,12 +123,22 @@ public class GeneradorAusenciasService {
         byte diaSemana = (byte) fecha.getDayOfWeek().getValue();
         List<Horario> horarios =
             horarioRepository.findActivosDelDiaConDocente(diaSemana, fecha, institucionId);
+        // Quién sigue adentro y desde cuándo: ver el corte del bucle.
+        Map<Long, LocalTime> adentroDesde =
+            bloquePresenciaService.entradasDeJornadasAbiertas(institucionId, fecha);
 
         int creadas = 0;
         for (Horario h : horarios) {
             if (!ahora.isAfter(h.getHoraFin())) continue;      // la clase no terminó
             Docente docente = h.getComision().getDocenteAsignado();
             if (docente == null || Boolean.FALSE.equals(docente.getActivo())) continue;
+
+            // Entró antes de que la clase terminara y todavía no salió: la está cubriendo, y
+            // se le imputa al cerrar la jornada. Generarle la ausencia ahora la dejaba escrita
+            // antes que esa imputación, que no pisa nada, y quedaba ausente en una clase que
+            // dio entera.
+            LocalTime entrada = adentroDesde.get(docente.getId());
+            if (entrada != null && entrada.isBefore(h.getHoraFin())) continue;
 
             // Idempotencia a nivel aplicación: si ya hay marca, no hay ausencia.
             boolean yaTieneMarca = asistenciaRepository
