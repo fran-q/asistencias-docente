@@ -95,7 +95,7 @@
                                 th:classappend="${#fields.hasErrors('estado')} ? 'is-invalid'">
                             <option th:each="e : ${estadosPosibles}"
                                     th:value="${e}"
-                                    th:text="${e}">PRESENTE</option>
+                                    th:text="${e.etiqueta}">Presente</option>
                         </select>
                         <span class="form-error" th:if="${#fields.hasErrors('estado')}"
                               th:errors="*{estado}">err</span>

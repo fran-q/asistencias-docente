@@ -215,6 +215,22 @@ class HoraDeLlegadaIT {
     }
 
     @Test
+    @DisplayName("El filtro del listado dice el estado con su nombre, igual que el reporte")
+    void elFiltroDelListadoNoMuestraElValorCrudo() throws Exception {
+        assertThat(pedir("/asistencias?fecha=2026-06-15"))
+            .contains(">Ausente</option>")
+            .doesNotContain(">AUSENTE</option>");
+    }
+
+    @Test
+    @DisplayName("El formulario de carga manual dice el estado con su nombre")
+    void laCargaManualNoMuestraElValorCrudo() throws Exception {
+        assertThat(pedir("/asistencias/manual/nueva"))
+            .contains(">Ausente</option>")
+            .doesNotContain(">AUSENTE</option>");
+    }
+
+    @Test
     @DisplayName("En el PDF la columna Entra queda vacia si no hubo llegada")
     void elPdfTampoco() throws Exception {
         byte[] pdf = mockMvc.perform(get("/reportes/pdf")

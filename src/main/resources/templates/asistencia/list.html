@@ -30,8 +30,8 @@
                     <option value="">Todos</option>
                     <option th:each="e : ${estadosPosibles}"
                             th:value="${e}"
-                            th:text="${e}"
-                            th:selected="${e == estadoFiltro}">PRESENTE</option>
+                            th:text="${e.etiqueta}"
+                            th:selected="${e == estadoFiltro}">Presente</option>
                 </select>
             </div>
             <div class="form-actions form-actions--inline">
