@@ -4,6 +4,7 @@ import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.persona.InstantaneaIdentidad;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.model.persona.NombrePropio;
+import edu.cent35.asistencias.model.persona.OrigenCambioIdentidad;
 import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.ComisionRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -126,7 +127,7 @@ public class DocenteService {
             personaRepository.save(persona);
             // Un reingreso confirmado puede venir con datos distintos a los guardados: queda
             // registrado igual que cualquier otra edición, con su propio origen.
-            personaService.registrarCambios(persona, antes, usuarioActualId, "REINGRESO");
+            personaService.registrarCambios(persona, antes, usuarioActualId, OrigenCambioIdentidad.REINGRESO);
             log.info("Alta de docente sobre persona existente CONFIRMADA: persona_id={}, institucion_id={}",
                      persona.getId(), tenantId);
         } else {
@@ -214,7 +215,7 @@ public class DocenteService {
         persona.setEmail(blankToNull(email));
         persona.setTelefono(blankToNull(telefono));
         personaRepository.save(persona);
-        personaService.registrarCambios(persona, antes, usuarioActualId, "DOCENTE");
+        personaService.registrarCambios(persona, antes, usuarioActualId, OrigenCambioIdentidad.DOCENTE);
 
         // Del vínculo solo se edita el legajo. La fecha de alta no se toca: es el registro de
         // cuando ingreso, no un campo más del legajo.

@@ -3,9 +3,10 @@ package edu.cent35.asistencias.model.asistencia;
 /**
  * De dónde salió la hora de entrada o de salida de un {@link BloquePresencia} (RF-74, RF-80).
  * <p>
- * No es lo mismo que {@link MetodoAsistencia}: acá existe un tercer caso, {@link #PRESUNTO},
- * que no es ni una marca automática ni una carga humana sino una hora que completó el
- * sistema para poder operar. Las tres tienen distinto valor probatorio y por eso se
+ * No es lo mismo que {@link MetodoAsistencia}, aunque dos valores se llamen igual: este dice de
+ * dónde salió una hora de la jornada, y aquel cómo se registró la asistencia de una clase. Acá
+ * {@link #PRESUNTO} no es ni una marca automática ni una carga humana sino una hora que completó
+ * el sistema para poder operar. Las tres tienen distinto valor probatorio y por eso se
  * distinguen: ver el CHECK {@code ck_bloques_entrada_modelo} de V019.
  */
 public enum OrigenMarca {
@@ -14,10 +15,12 @@ public enum OrigenMarca {
     // origen que lleva modelo facial y confianza.
     AUTOMATICO,
 
-    // La cargó un administrador, con motivo del catálogo (RF-83).
+    // La cargó un administrador, con motivo del catálogo: la salida (RF-83) o la entrada sin
+    // cámara (ADR-0021).
     MANUAL,
 
     // Nadie la registró: la completó el job tomando el fin de la última clase del bloque.
-    // Sirve para imputar la asistencia, pero nunca se presenta como una hora observada.
+    // Sirve para imputar la asistencia, pero nunca se presenta como una hora observada. Solo
+    // existe del lado de la salida (ck_bloques_origen_entrada): una entrada siempre la vio alguien.
     PRESUNTO
 }

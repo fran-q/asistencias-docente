@@ -1,5 +1,20 @@
 package edu.cent35.asistencias.integracion;
 
+import edu.cent35.asistencias.model.academico.EstadoCiclo;
+import edu.cent35.asistencias.model.academico.TipoDiaNoLaborable;
+import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
+import edu.cent35.asistencias.model.asistencia.EstadoCierre;
+import edu.cent35.asistencias.model.asistencia.EstadoSalida;
+import edu.cent35.asistencias.model.asistencia.MetodoAsistencia;
+import edu.cent35.asistencias.model.asistencia.OrigenMarca;
+import edu.cent35.asistencias.model.biometria.MetodoConsentimiento;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
+import edu.cent35.asistencias.model.institucion.RolCodigo;
+import edu.cent35.asistencias.model.persona.CampoIdentidad;
+import edu.cent35.asistencias.model.persona.OrigenCambioIdentidad;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.MigrationInfo;
 import org.junit.jupiter.api.AfterAll;
@@ -9,8 +24,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
 
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -21,12 +40,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +74,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * test. Acá están los de los bloques de presencia y el umbral de la institución (V019, V020,
  * V029 y V031), los que atan el método de una asistencia a su estado (V034), y el índice único
  * que impide dos bloques abiertos del mismo docente. Hasta el 2026-10-17 se probaban a mano.
+ *
+ * <p><b>Y que los enums digan lo mismo que la base.</b> Cada enum persistido se compara con el
+ * CHECK de su columna, y uno nuevo que nadie sumara a esa comparación hace fallar el test.
  *
  * <p><b>Y que una migración que corrige datos toque solo lo que debe.</b> Sobre una base vacía
  * no corrige nada, así que pasaría en verde con cualquier criterio: V033 y V034 se prueban
@@ -347,6 +371,124 @@ class MigracionesIT {
             assertThat(columnasDe(tabla))
                 .as("la baja de %s tiene que dejar constancia de quien la hizo", tabla)
                 .contains("dado_de_baja_por");
+        }
+    }
+
+    // ========================================================================
+    //  Los enums
+    // ========================================================================
+
+    /**
+     * Cada enum persistido tiene los mismos valores que el CHECK de su columna.
+     *
+     * <p>Un valor que está en el enum y no en el CHECK revienta recién en MariaDB, porque el
+     * resto de la suite corre sobre H2, sin estos CHECK. Al revés queda un valor que la base
+     * acepta y el sistema no conoce: así sobrevivió {@code DIGITAL} hasta V035. Se compara contra
+     * lo que el motor tiene guardado, no contra el texto de las migraciones.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("enumsConSuCheck")
+    @DisplayName("Cada enum persistido tiene los mismos valores que su CHECK")
+    void cadaEnumCoincideConSuCheck(String constraint, Class<?> tipo, Set<String> valores)
+            throws Exception {
+        exigirMotor();
+        migrada();
+
+        Set<String> clausulas = leer("SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS "
+            + "WHERE CONSTRAINT_SCHEMA = '" + BASE + "' AND CONSTRAINT_NAME = '" + constraint + "'");
+        assertThat(clausulas).as("tiene que existir el CHECK %s", constraint).hasSize(1);
+
+        Set<String> enLaBase = Pattern.compile("'([^']*)'").matcher(clausulas.iterator().next())
+            .results().map(m -> m.group(1)).collect(Collectors.toSet());
+        assertThat(enLaBase)
+            .as("%s tiene que admitir lo mismo que %s", constraint, tipo.getSimpleName())
+            .containsExactlyInAnyOrderElementsOf(valores);
+    }
+
+    static Stream<Arguments> enumsConSuCheck() {
+        return Stream.of(
+            comparacion("ck_asistencias_estado", EstadoAsistencia.class),
+            comparacion("ck_asistencias_metodo", MetodoAsistencia.class),
+            comparacion("ck_bloques_estado_cierre", EstadoCierre.class),
+            comparacion("ck_bloques_estado_salida", EstadoSalida.class),
+            comparacion("ck_bloques_origen_salida", OrigenMarca.class),
+            // Sin PRESUNTO, a propósito: una entrada siempre la vio alguien.
+            comparacion("ck_bloques_origen_entrada", OrigenMarca.class, OrigenMarca.PRESUNTO),
+            comparacion("ck_ciclos_estado", EstadoCiclo.class),
+            comparacion("ck_consentimientos_metodo", MetodoConsentimiento.class),
+            comparacion("ck_dias_tipo", TipoDiaNoLaborable.class),
+            comparacion("ck_cambios_campo", CampoIdentidad.class),
+            comparacion("ck_cambios_origen", OrigenCambioIdentidad.class));
+    }
+
+    // Un CHECK, el enum de su columna y lo que tiene que admitir: todo el enum, menos lo excluido.
+    private static Arguments comparacion(String constraint, Class<? extends Enum<?>> tipo,
+                                         Enum<?>... excluidos) {
+        Set<String> valores = nombres(tipo);
+        for (Enum<?> excluido : excluidos) {
+            valores.remove(excluido.name());
+        }
+        return Arguments.of(constraint, tipo, valores);
+    }
+
+    private static Set<String> nombres(Class<? extends Enum<?>> tipo) {
+        Set<String> valores = new LinkedHashSet<>();
+        for (Enum<?> valor : tipo.getEnumConstants()) {
+            valores.add(valor.name());
+        }
+        return valores;
+    }
+
+    /** Los roles no tienen CHECK sino un catálogo sembrado, y tiene que decir lo mismo que el enum. */
+    @Test
+    @DisplayName("Los roles sembrados son los que el sistema entiende")
+    void losRolesSembradosCoincidenConSuEnum() throws Exception {
+        exigirMotor();
+        migrada();
+
+        assertThat(leer("SELECT codigo FROM roles"))
+            .containsExactlyInAnyOrderElementsOf(nombres(RolCodigo.class));
+    }
+
+    /**
+     * Ningún enum de una entidad se queda afuera de esa comparación, y todos se guardan por nombre.
+     *
+     * <p>Sin esto, un enum nuevo simplemente no estaría en la lista y la comparación seguiría en
+     * verde sin mirarlo. Y uno sin {@code EnumType.STRING} se guardaría por posición: agregar un
+     * valor en el medio cambiaría lo que dicen las filas ya grabadas, sin que nada falle.
+     *
+     * <p>No necesita el motor: mira las clases.
+     */
+    @Test
+    @DisplayName("Todo enum de una entidad se guarda por nombre y tiene con qué compararse")
+    void ningunEnumSeQuedaAfuera() throws Exception {
+        Set<Object> comparados = enumsConSuCheck().map(a -> a.get()[1])
+            .collect(Collectors.toCollection(HashSet::new));
+        // Sin CHECK, a propósito: los valores los fija el enum (ver 03-modelo-datos), y un código
+        // ya emitido con un propósito que se retira tiene que poder vencer solo.
+        comparados.add(PropositoCodigo.class);
+
+        ClassPathScanningCandidateComponentProvider escaner =
+            new ClassPathScanningCandidateComponentProvider(false);
+        escaner.addIncludeFilter(new AnnotationTypeFilter(Entity.class));
+        Set<BeanDefinition> entidades = escaner.findCandidateComponents("edu.cent35.asistencias.model");
+        assertThat(entidades).as("el escaneo tiene que encontrar las entidades").isNotEmpty();
+
+        for (BeanDefinition entidad : entidades) {
+            for (Field campo : Class.forName(entidad.getBeanClassName()).getDeclaredFields()) {
+                if (!campo.getType().isEnum()) {
+                    continue;
+                }
+                String donde = entidad.getBeanClassName() + "." + campo.getName();
+                Enumerated enumerado = campo.getAnnotation(Enumerated.class);
+                assertThat(enumerado).as("%s tiene que llevar @Enumerated", donde).isNotNull();
+                assertThat(enumerado.value())
+                    .as("%s tiene que guardarse por nombre", donde)
+                    .isEqualTo(EnumType.STRING);
+                assertThat(comparados)
+                    .as("%s tiene que estar en enumsConSuCheck", donde)
+                    .contains(campo.getType());
+            }
         }
     }
 

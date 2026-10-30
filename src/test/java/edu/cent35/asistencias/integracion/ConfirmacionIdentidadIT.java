@@ -5,7 +5,9 @@ import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.model.institucion.Institucion;
 import edu.cent35.asistencias.model.institucion.Rol;
 import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.model.persona.CampoIdentidad;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.OrigenCambioIdentidad;
 import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.CambioIdentidadRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -178,16 +180,16 @@ class ConfirmacionIdentidadIT {
         // que buscar en el sea inútil.
         assertThat(historial).hasSize(2);
         assertThat(historial).extracting("campo")
-            .containsExactlyInAnyOrder("nombre", "telefono");
+            .containsExactlyInAnyOrder(CampoIdentidad.NOMBRE, CampoIdentidad.TELEFONO);
 
         var cambioDelNombre = historial.stream()
-            .filter(c -> c.getCampo().equals("nombre")).findFirst().orElseThrow();
+            .filter(c -> c.getCampo() == CampoIdentidad.NOMBRE).findFirst().orElseThrow();
         assertThat(cambioDelNombre.getValorAnterior())
             .as("lo que decia antes es justamente el dato que sirve para reconstruir")
             .isEqualTo("Juan");
         assertThat(cambioDelNombre.getValorNuevo()).isEqualTo("Juan Carlos");
         assertThat(cambioDelNombre.getUsuarioId()).isEqualTo(99L);
-        assertThat(cambioDelNombre.getOrigen()).isEqualTo("DOCENTE");
+        assertThat(cambioDelNombre.getOrigen()).isEqualTo(OrigenCambioIdentidad.DOCENTE);
         assertThat(cambioDelNombre.getFecha()).isNotNull();
     }
 

@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.4 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.5 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -58,7 +58,9 @@ El consolidado `V001` crea 16. Después: `personas` (V016), `cambios_identidad` 
 
 ## Invariantes
 
-Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
+Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez. Cada enum
+persistido tiene los mismos valores que el CHECK de su columna: lo compara `MigracionesIT`
+contra MariaDB (ver *Enums* en `04-convenciones.md`).
 
 **`asistencias`**
 - `UNIQUE (docente_id, horario_id, fecha)` — una marca por docente, horario y día. Es la
@@ -231,6 +233,8 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
 | `V033__entrada_sin_camara_como_manual` | Sin cambio de esquema: pasa a `MANUAL` las asistencias de bloques con entrada a mano, que se grababan `AUTOMATICO`. El JOIN exige la misma institución en asistencia y bloque. `MigracionesIT` la prueba con filas sembradas |
 | `V034__metodo_sistema_para_ausencias_del_job` | `asistencias.metodo` suma `SISTEMA`: las ausencias del job dejan de compartir `AUTOMATICO` con la cámara, y las ya grabadas se reetiquetan. Dos CHECK nuevos atan el método al estado. `MigracionesIT` prueba la conversión con filas sembradas |
+| `V035__consentimiento_sin_metodo_digital` | `ck_consentimientos_metodo` deja de admitir `DIGITAL`, reservado para un login del docente que quedó fuera del alcance. Nada lo escribió nunca |
+| `V036__cambios_identidad_en_mayusculas` | `cambios_identidad.campo` pasa a mayúsculas, como los demás enums, ahora que `campo` y `origen` son enums en Java (`CampoIdentidad`, `OrigenCambioIdentidad`) |
 
 ### Invariantes que agregó V028
 

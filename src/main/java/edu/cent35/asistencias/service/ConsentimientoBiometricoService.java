@@ -38,10 +38,9 @@ import java.util.Optional;
  * (mismo patrón que {@code Comision}). El service nunca toca un docente que
  * no sea del tenant actual.
  * <p>
- * <b>Quien otorga/revoca</b>: en Sprint 3 lo hace el admin (rol
- * {@code INSTITUCION} o {@code ADMIN}) en representación del docente, que
- * firma en papel. En Sprint 4 se habilitará que el docente acepte por sí
- * mismo vía login propio (método {@code DIGITAL}).
+ * <b>Quien otorga/revoca</b>: lo hace el admin (rol {@code INSTITUCION} o
+ * {@code ADMIN}) en representación del docente, que firma en papel: el docente
+ * no tiene cuenta ni interfaz.
  */
 @Service
 @RequiredArgsConstructor

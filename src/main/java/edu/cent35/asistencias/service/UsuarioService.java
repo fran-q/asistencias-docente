@@ -7,6 +7,7 @@ import edu.cent35.asistencias.model.institucion.Rol;
 import edu.cent35.asistencias.model.institucion.RolCodigo;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.NombrePropio;
+import edu.cent35.asistencias.model.persona.OrigenCambioIdentidad;
 import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.PersonaRepository;
 import edu.cent35.asistencias.repository.RolRepository;
@@ -224,7 +225,7 @@ public class UsuarioService {
             persona.setNombre(nombreNuevo);
             persona.setApellido(apellidoNuevo);
             personaRepository.save(persona);
-            personaService.registrarCambios(persona, antes, usuarioActualId, "USUARIO");
+            personaService.registrarCambios(persona, antes, usuarioActualId, OrigenCambioIdentidad.USUARIO);
         }
 
         u.setEmail(emailNuevo);
@@ -360,7 +361,7 @@ public class UsuarioService {
                 personaRepository.save(persona);
                 // Origen USUARIO: el cambio entra por la cuenta. Que lo hizo la propia persona lo
                 // dice usuario_id, que es el de esa misma cuenta.
-                personaService.registrarCambios(persona, antes, usuarioId, "USUARIO");
+                personaService.registrarCambios(persona, antes, usuarioId, OrigenCambioIdentidad.USUARIO);
             }
         }
 

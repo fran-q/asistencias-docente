@@ -3,6 +3,8 @@ package edu.cent35.asistencias.model.persona;
 import edu.cent35.asistencias.model.BaseTenantEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -48,8 +50,9 @@ public class CambioIdentidad extends BaseTenantEntity {
     @Column(name = "usuario_id", nullable = false, updatable = false)
     private Long usuarioId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20, updatable = false)
-    private String campo;
+    private CampoIdentidad campo;
 
     // NULL cuando el campo estaba vacío antes del cambio.
     @Column(name = "valor_anterior", length = 120, updatable = false)
@@ -58,10 +61,9 @@ public class CambioIdentidad extends BaseTenantEntity {
     @Column(name = "valor_nuevo", length = 120, updatable = false)
     private String valorNuevo;
 
-    // Desde qué pantalla se hizo: DOCENTE, USUARIO o REINGRESO. Importa porque el mismo cambio
-    // hecho desde la ficha del docente o desde la cuenta se explica distinto.
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20, updatable = false)
-    private String origen;
+    private OrigenCambioIdentidad origen;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

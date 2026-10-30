@@ -339,7 +339,7 @@ class MarcaPorCamaraIT {
         ConsentimientoBiometrico c = ConsentimientoBiometrico.builder()
             .docente(docente)
             .versionTerminos("v1")
-            .metodo(MetodoConsentimiento.DIGITAL)
+            .metodo(MetodoConsentimiento.ESCRITO)
             .fechaConsentimiento(hoy.minusDays(1).atStartOfDay())
             .vigente(true)
             .registradoPor(cuenta)

@@ -6,7 +6,9 @@ import edu.cent35.asistencias.dto.persona.ImpactoIdentidadDto;
 import edu.cent35.asistencias.dto.persona.InstantaneaIdentidad;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.CambioIdentidad;
+import edu.cent35.asistencias.model.persona.CampoIdentidad;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.model.persona.OrigenCambioIdentidad;
 import edu.cent35.asistencias.model.persona.Persona;
 import edu.cent35.asistencias.repository.CambioIdentidadRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
@@ -96,14 +98,14 @@ public class PersonaService {
      */
     @Transactional
     public void registrarCambios(Persona persona, InstantaneaIdentidad antes, Long usuarioId,
-                                 String origen) {
+                                 OrigenCambioIdentidad origen) {
         InstantaneaIdentidad despues = InstantaneaIdentidad.de(persona);
 
-        anotarSiCambio(persona, "dni",      antes.dni(),      despues.dni(),      usuarioId, origen);
-        anotarSiCambio(persona, "nombre",   antes.nombre(),   despues.nombre(),   usuarioId, origen);
-        anotarSiCambio(persona, "apellido", antes.apellido(), despues.apellido(), usuarioId, origen);
-        anotarSiCambio(persona, "email",    antes.email(),    despues.email(),    usuarioId, origen);
-        anotarSiCambio(persona, "telefono", antes.telefono(), despues.telefono(), usuarioId, origen);
+        anotarSiCambio(persona, CampoIdentidad.DNI,      antes.dni(),      despues.dni(),      usuarioId, origen);
+        anotarSiCambio(persona, CampoIdentidad.NOMBRE,   antes.nombre(),   despues.nombre(),   usuarioId, origen);
+        anotarSiCambio(persona, CampoIdentidad.APELLIDO, antes.apellido(), despues.apellido(), usuarioId, origen);
+        anotarSiCambio(persona, CampoIdentidad.EMAIL,    antes.email(),    despues.email(),    usuarioId, origen);
+        anotarSiCambio(persona, CampoIdentidad.TELEFONO, antes.telefono(), despues.telefono(), usuarioId, origen);
     }
 
     // Historial de una identidad, del cambio más reciente al más viejo.
@@ -112,8 +114,8 @@ public class PersonaService {
         return cambioIdentidadRepository.historialDe(TenantContext.getRequired(), personaId);
     }
 
-    private void anotarSiCambio(Persona persona, String campo, String anterior, String nuevo,
-                                Long usuarioId, String origen) {
+    private void anotarSiCambio(Persona persona, CampoIdentidad campo, String anterior, String nuevo,
+                                Long usuarioId, OrigenCambioIdentidad origen) {
         if (Objects.equals(anterior, nuevo)) {
             return;
         }

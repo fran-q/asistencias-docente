@@ -1080,7 +1080,7 @@ class CiclosLectivosIT {
         ConsentimientoBiometrico c = ConsentimientoBiometrico.builder()
             .docente(docente)
             .versionTerminos("v1")
-            .metodo(MetodoConsentimiento.DIGITAL)
+            .metodo(MetodoConsentimiento.ESCRITO)
             .fechaConsentimiento(LocalDate.of(2026, 1, 1).atStartOfDay())
             .vigente(true)
             .registradoPor(registrante)

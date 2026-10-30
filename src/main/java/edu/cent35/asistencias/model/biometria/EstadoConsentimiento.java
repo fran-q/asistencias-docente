@@ -11,7 +11,7 @@ public enum EstadoConsentimiento {
     // El docente nunca otorgó consentimiento (no hay filas para él).
     NUNCA_OTORGADO,
 
-    // Hay un consentimiento vigente: fecha_revocacion IS NULL.
+    // Hay un consentimiento vigente: la fila más reciente tiene vigente = true.
     ACTIVO,
 
     // El consentimiento más reciente fue revocado por el docente o el admin.

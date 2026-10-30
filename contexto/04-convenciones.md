@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.13 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.14 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -186,6 +186,28 @@ intento con `log.warn`.
 - Lombok `@Getter` / `@Setter`. Evitar `@Data` en entidades JPA.
 - Los enums viven junto a las entidades de su dominio: `asistencia/EstadoAsistencia`,
   `academico/DiaSemana`, `institucion/RolCodigo`.
+
+## Enums
+
+Un estado o un tipo con valores cerrados es un enum, no un texto suelto. Las reglas salen de
+lo que ya pasó: `AUTOMATICO` llegó a significar dos cosas a la vez, `DIGITAL` quedó aceptado por
+la base sin que nada lo pudiera escribir, y `cambios_identidad` guardaba texto que recién
+validaba MariaDB.
+
+- **Un valor dice una sola cosa.** Si hay que explicarlo con un "o", son dos valores.
+- **El Javadoc dice qué significa cada valor y con qué CHECK coincide.** Si cambia el
+  comportamiento, cambia el comentario en el mismo commit.
+- **Sin valores reservados para el futuro.** Un valor que ningún camino del código escribe es
+  un estado que la base admite y el sistema no conoce.
+- **Si se guarda en la base:** `@Enumerated(EnumType.STRING)`, nunca por posición, y un CHECK
+  con los mismos valores en la migración. `MigracionesIT` compara los dos contra MariaDB, y falla
+  si una entidad suma un enum que no está en `enumsConSuCheck`. La excepción es
+  `PropositoCodigo`, sin CHECK a propósito: un código ya emitido con un propósito que se retira
+  tiene que poder vencer solo.
+- **Si se muestra, lleva `etiqueta`.** La pantalla y el PDF muestran la etiqueta. El CSV lleva
+  el valor, que es el dato crudo con el que se trabaja.
+- **Si dos campos dicen lo mismo, los ata un CHECK.** Sin eso el acuerdo entre los dos lo
+  sostiene solo el código, y una fila escrita por otro camino los deja contradiciéndose.
 
 ## DTO
 
