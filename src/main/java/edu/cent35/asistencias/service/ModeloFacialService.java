@@ -193,7 +193,9 @@ public class ModeloFacialService {
                 .ifPresent(anterior -> {
                     anterior.setActivo(false);
                     anterior.setFechaBaja(LocalDateTime.now());
-                    modeloFacialRepository.save(anterior);
+                    // Con flush, antes de insertar el nuevo: la base admite un solo modelo activo
+                    // por docente (V037), y sin él Hibernate haría el INSERT antes que este UPDATE.
+                    modeloFacialRepository.saveAndFlush(anterior);
                     log.info("Modelo facial anterior dado de baja: id={}", anterior.getId());
                 });
 

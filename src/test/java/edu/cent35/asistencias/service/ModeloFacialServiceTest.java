@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -172,6 +174,14 @@ class ModeloFacialServiceTest {
         // El anterior se marcó inactivo + fecha de baja antes de guardar el nuevo.
         assertThat(anterior.getActivo()).isFalse();
         assertThat(anterior.getFechaBaja()).isNotNull();
+
+        // Y llegó a la base antes del INSERT, con flush. La base admite un solo modelo activo
+        // por docente (V037), y Hibernate hace los INSERT con IDENTITY antes que los UPDATE
+        // pendientes: sin flush, volver a registrar un rostro revienta contra el UNIQUE. Solo
+        // pasa en MariaDB, porque el esquema de H2 no tiene ese índice.
+        InOrder orden = inOrder(modeloFacialRepository);
+        orden.verify(modeloFacialRepository).saveAndFlush(anterior);
+        orden.verify(modeloFacialRepository).save(any());
     }
 
     @Test

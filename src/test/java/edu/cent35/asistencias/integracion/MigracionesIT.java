@@ -593,7 +593,28 @@ class MigracionesIT {
             Arguments.of("ck_asistencias_sistema", "una ausencia del job con jornada",
                 "asistencias", con(ausenciaDelJob(), "bloque_id", 1)),
             Arguments.of("ck_asistencias_camara_presente", "una ausencia registrada por la cámara",
-                "asistencias", con(asistencia(1, null), "estado", "AUSENTE")));
+                "asistencias", con(asistencia(1, null), "estado", "AUSENTE")),
+
+            // V037: lo que dicen varias columnas sobre un mismo estado tiene que coincidir.
+            Arguments.of("ck_bloques_cierre_origen", "un cierre por rostro con la salida presunta",
+                bloques, con(cerrado(), "origen_salida", "PRESUNTO")),
+            Arguments.of("ck_bloques_cierre_origen", "un cierre por rostro sin marca de salida",
+                bloques, con(cerrado(), "estado_salida", "SIN_MARCA")),
+            Arguments.of("ck_bloques_cierre_origen", "un cierre del admin con la salida por rostro",
+                bloques, con(cerrado(), "estado_cierre", "CERRADO_POR_ADMIN", "motivo_cierre_id", 1)),
+            Arguments.of("ck_bloques_cierre_origen", "un bloque sin cierre con la salida a mano",
+                bloques, con(cerrado(), "estado_cierre", "SIN_CIERRE", "origen_salida", "MANUAL",
+                             "estado_salida", "SIN_MARCA")),
+            Arguments.of("ck_bloques_cierre_origen", "un bloque sin cierre que se fue en hora",
+                bloques, con(cerrado(), "estado_cierre", "SIN_CIERRE", "origen_salida", "PRESUNTO")),
+            Arguments.of("ck_consentimientos_vigencia", "un consentimiento vigente y revocado",
+                "consentimientos_biometricos", con(consentimiento(), "fecha_revocacion", "2026-09-01 10:00:00")),
+            Arguments.of("ck_consentimientos_vigencia", "uno que dejó de estar vigente sin revocarse",
+                "consentimientos_biometricos", con(consentimiento(), "vigente", 0)),
+            Arguments.of("ck_carreras_baja_coherente", "una carrera activa con fecha de baja",
+                "carreras", con(carrera(), "fecha_baja", "2026-09-01")),
+            Arguments.of("ck_carreras_baja_coherente", "una carrera dada de baja sin fecha",
+                "carreras", con(carrera(), "activo", 0)));
     }
 
     /**
@@ -640,7 +661,133 @@ class MigracionesIT {
             Arguments.of("una ausencia cargada a mano", "asistencias",
                 con(asistencia(1, null), "metodo", "MANUAL", "estado", "AUSENTE")),
             Arguments.of("una entrada sin cámara, con su jornada", "asistencias",
-                con(asistencia(1, 1), "metodo", "MANUAL")));
+                con(asistencia(1, 1), "metodo", "MANUAL")),
+            Arguments.of("un cierre del admin que se fue antes", bloques,
+                con(cerrado(), "estado_cierre", "CERRADO_POR_ADMIN", "origen_salida", "MANUAL",
+                    "estado_salida", "ANTICIPADA", "motivo_cierre_id", 1)),
+            Arguments.of("un consentimiento vigente", "consentimientos_biometricos", consentimiento()),
+            Arguments.of("un consentimiento revocado", "consentimientos_biometricos",
+                con(consentimiento(), "vigente", 0, "fecha_revocacion", "2026-09-01 10:00:00")),
+            Arguments.of("una carrera activa", "carreras", carrera()),
+            Arguments.of("una carrera dada de baja, con su fecha", "carreras",
+                con(carrera(), "activo", 0, "fecha_baja", "2026-09-01")),
+            Arguments.of("un equipo operando como kiosco", "puestos_captura",
+                con(puesto(), "kiosco_habilitado", 1, "kiosco_habilitado_en", "2026-09-01 10:00:00")),
+            // Revocar no baja la bandera del kiosco, a propósito: dice que el equipo estaba operando
+            // solo cuando se revocó. Lo que cierra la puerta es que se miren las dos columnas.
+            Arguments.of("un equipo revocado que estaba operando como kiosco", "puestos_captura",
+                con(puesto(), "activo", 0, "fecha_baja", "2026-09-01",
+                    "kiosco_habilitado", 1, "kiosco_habilitado_en", "2026-09-01 10:00:00")));
+    }
+
+    /**
+     * Toda tabla con baja lógica ata {@code activo} y {@code fecha_baja} con un CHECK (V037).
+     *
+     * <p>Mira el esquema y no una lista escrita acá: una tabla nueva con baja lógica que se
+     * olvide del CHECK hace fallar el test sin que nadie tenga que acordarse de sumarla.
+     */
+    @Test
+    @DisplayName("Toda tabla con baja lógica ata activo y fecha_baja con un CHECK")
+    void todaBajaLogicaEstaAtada() throws Exception {
+        exigirMotor();
+        migrada();
+
+        Set<String> conBaja = leer("SELECT b.TABLE_NAME FROM information_schema.COLUMNS b "
+            + "JOIN information_schema.COLUMNS a ON a.TABLE_SCHEMA = b.TABLE_SCHEMA "
+            + "  AND a.TABLE_NAME = b.TABLE_NAME AND a.COLUMN_NAME = 'activo' "
+            + "WHERE b.TABLE_SCHEMA = '" + BASE + "' AND b.COLUMN_NAME = 'fecha_baja'");
+        assertThat(conBaja).contains("usuarios", "docentes", "carreras", "puestos_captura");
+
+        for (String tabla : conBaja) {
+            Set<String> clausulas = leer("SELECT CHECK_CLAUSE FROM information_schema.CHECK_CONSTRAINTS "
+                + "WHERE CONSTRAINT_SCHEMA = '" + BASE + "' AND TABLE_NAME = '" + tabla + "'");
+            assertThat(clausulas)
+                .as("%s tiene que atar activo y fecha_baja", tabla)
+                .anyMatch(c -> c.contains("`activo`") && c.contains("`fecha_baja`"));
+        }
+    }
+
+    /**
+     * Lo que el sistema supone único mientras esté activo, la base lo garantiza (V037): un
+     * consentimiento vigente y un modelo facial activo por docente, y un ciclo activo por
+     * institución. Hasta acá lo cuidaba solo el servicio, que no frena dos pedidos simultáneos.
+     *
+     * <p>Mismo mecanismo que el bloque abierto de V019: un UNIQUE sobre una columna generada que
+     * vale NULL cuando no aplica, porque un UNIQUE admite repetir NULL. Por eso también se prueba
+     * que uno activo y uno que ya no lo está conviven: es lo que conserva el historial.
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("unoSoloPorVez")
+    @DisplayName("Lo que tiene que ser único mientras está activo, lo es")
+    void unoSoloPorVez(String indice, String tabla, Map<String, Object> activo,
+                       Map<String, Object> otroActivo, Map<String, Object> yaNoActivo) {
+        exigirMotor();
+        migrada();
+
+        assertThatThrownBy(() -> insertar(tabla, List.of(activo, otroActivo)))
+            .isInstanceOf(SQLException.class)
+            .hasMessageContaining(indice);
+
+        assertThatCode(() -> insertar(tabla, List.of(activo, yaNoActivo)))
+            .doesNotThrowAnyException();
+    }
+
+    static Stream<Arguments> unoSoloPorVez() {
+        Map<String, Object> vigente = consentimiento();
+        Map<String, Object> ciclo = new LinkedHashMap<>();
+        ciclo.put("institucion_id", 1);
+        ciclo.put("anio", 2026);
+        ciclo.put("fecha_inicio", "2026-03-01");
+        ciclo.put("fecha_fin", "2026-12-20");
+        ciclo.put("estado", "ACTIVO");
+        Map<String, Object> ciclo2027 = con(ciclo, "anio", 2027,
+                                            "fecha_inicio", "2027-03-01", "fecha_fin", "2027-12-20");
+        return Stream.of(
+            Arguments.of("uq_consentimientos_un_vigente_por_docente", "consentimientos_biometricos",
+                vigente, con(vigente, "version_terminos", "v2"),
+                con(vigente, "vigente", 0, "fecha_revocacion", "2026-09-01 10:00:00")),
+            Arguments.of("uq_modelos_un_activo_por_docente", "modelos_faciales",
+                modelo(), modelo(), con(modelo(), "activo", 0, "fecha_baja", "2026-09-01 10:00:00")),
+            Arguments.of("uq_ciclos_un_activo_por_institucion", "ciclos_lectivos",
+                ciclo, ciclo2027, con(ciclo2027, "estado", "CERRADO")));
+    }
+
+    // Un consentimiento vigente: lo mínimo que la tabla acepta. Los ids no apuntan a nada.
+    private static Map<String, Object> consentimiento() {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("docente_id", 1);
+        fila.put("version_terminos", "v1");
+        fila.put("metodo", "ESCRITO");
+        fila.put("registrado_por_usuario_id", 1);
+        return fila;
+    }
+
+    // Un modelo facial activo. El contenido no importa: lo que se prueba es su estado.
+    private static Map<String, Object> modelo() {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("docente_id", 1);
+        fila.put("embedding_cifrado", new byte[] {1});
+        fila.put("algoritmo", "LBPH");
+        fila.put("version_algoritmo", "1");
+        fila.put("dimensiones", 1);
+        fila.put("registrado_por_usuario_id", 1);
+        return fila;
+    }
+
+    private static Map<String, Object> carrera() {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("institucion_id", 1);
+        fila.put("codigo", "TSDS");
+        fila.put("nombre", "Tecnicatura");
+        return fila;
+    }
+
+    private static Map<String, Object> puesto() {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("institucion_id", 1);
+        fila.put("nombre", "Entrada norte");
+        fila.put("token_hash", "hash");
+        return fila;
     }
 
     /**
@@ -778,6 +925,68 @@ class MigracionesIT {
             Map.entry(2L, "AUTOMATICO"),
             Map.entry(3L, "AUTOMATICO"),
             Map.entry(4L, "MANUAL"));
+    }
+
+    /**
+     * V037 les pone fecha a las cuentas que el sistema dio de baja sin ella, y a ninguna otra.
+     *
+     * <p>{@code UsuarioService.darDeBaja} ponía {@code activo = 0} sin tocar {@code fecha_baja}, y
+     * el CHECK nuevo rechaza esa combinación. Las filas se siembran con los CHECK apagados, como
+     * en la prueba de V034: el esquema migrado ya no admite el estado de antes.
+     */
+    @Test
+    @DisplayName("V037 completa la fecha de las cuentas dadas de baja sin ella, y de ninguna otra")
+    void v037CompletaLaFechaDeLasCuentasDadasDeBaja() throws Exception {
+        exigirMotor();
+        migrada();
+        Map<Long, String> fechaDespues = new LinkedHashMap<>();
+
+        try (Connection c = DriverManager.getConnection(URL_BASE + BASE, USUARIO, CLAVE)) {
+            c.setAutoCommit(false);
+            try (Statement st = c.createStatement()) {
+                st.execute("SET SESSION foreign_key_checks = 0");
+                st.execute("SET SESSION check_constraint_checks = 0");
+            }
+            try {
+                // 1: dada de baja por el código viejo. Toma la fecha de su última modificación.
+                insertarEn(c, "usuarios",
+                           con(usuario(1), "activo", 0, "actualizado_en", "2026-05-04 10:00:00"));
+                // 2: activa.
+                insertarEn(c, "usuarios", usuario(2));
+                // 3: dada de baja con su fecha, que no se pisa.
+                insertarEn(c, "usuarios", con(usuario(3), "activo", 0, "fecha_baja", "2026-01-15"));
+
+                try (Statement st = c.createStatement()) {
+                    st.execute("SET SESSION check_constraint_checks = 1");
+                    st.executeUpdate(sentenciaDe("V037__estados_atados_en_la_base.sql", "UPDATE"));
+                }
+                try (Statement st = c.createStatement();
+                     ResultSet rs = st.executeQuery("SELECT id, fecha_baja FROM usuarios ORDER BY id")) {
+                    while (rs.next()) {
+                        fechaDespues.put(rs.getLong(1), String.valueOf(rs.getString(2)));
+                    }
+                }
+            } finally {
+                c.rollback();
+            }
+        }
+
+        assertThat(fechaDespues).containsExactly(
+            Map.entry(1L, "2026-05-04"),
+            Map.entry(2L, "null"),
+            Map.entry(3L, "2026-01-15"));
+    }
+
+    // Una cuenta activa: lo mínimo que la tabla acepta. Los ids no apuntan a nada.
+    private static Map<String, Object> usuario(long id) {
+        Map<String, Object> fila = new LinkedHashMap<>();
+        fila.put("id", id);
+        fila.put("institucion_id", 1);
+        fila.put("rol_id", 1);
+        fila.put("username", "cuenta" + id);
+        fila.put("email", "cuenta" + id + "@ejemplo.edu.ar");
+        fila.put("password_hash", "no-se-usa");
+        return fila;
     }
 
     // Una ausencia como la genera el job desde V034: SISTEMA, sin jornada ni evidencia.

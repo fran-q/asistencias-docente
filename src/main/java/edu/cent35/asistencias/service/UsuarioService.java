@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -271,6 +272,7 @@ public class UsuarioService {
         }
 
         u.setActivo(false);
+        u.setFechaBaja(LocalDate.now(clock));
         u.setDadoDeBajaPor(usuarioActualId);
         Usuario guardado = usuarioRepository.save(u);
 
@@ -284,12 +286,13 @@ public class UsuarioService {
         return guardado;
     }
 
-    // Vuelve a habilitar una cuenta dada de baja. Se limpia quien la dio de baja: arrastrarlo
-    // describiria una baja que ya no esta vigente.
+    // Vuelve a habilitar una cuenta dada de baja. Se limpia cuándo y quién la dio de baja:
+    // arrastrarlos describiría una baja que ya no está vigente.
     @Transactional
     public Usuario reactivar(Long id) {
         Usuario u = buscarPorId(id);
         u.setActivo(true);
+        u.setFechaBaja(null);
         u.setDadoDeBajaPor(null);
         Usuario guardado = usuarioRepository.save(u);
         log.info("Usuario reactivado: id={}, username={}", guardado.getId(), guardado.getUsername());

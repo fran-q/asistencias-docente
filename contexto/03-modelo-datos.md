@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.5 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.6 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -182,10 +182,76 @@ reportes.
 
 ---
 
+## Estados y transiciones
+
+Qué estados tiene cada entidad, cuál pasa a cuál y qué lo sostiene. Las transiciones viven en
+los servicios; acá está la lista completa, para no tener que reconstruirla leyendo el código.
+**Si un cambio agrega una transición, se agrega acá.** Lo que no figura no está permitido.
+
+**Asistencia** (`estado`, `metodo`). Una vez grabada no cambia: es el registro de un hecho.
+
+**Bloque de presencia** (`estado_cierre`)
+
+| De | A | Por | Dónde |
+|---|---|---|---|
+| — | `ABIERTO` | La cámara, o un admin sin cámara | `BloquePresenciaService.registrar`, `registrarSinCamara` |
+| `ABIERTO` | `CERRADO_POR_ROSTRO` | La cámara, a la salida | `registrar` |
+| `ABIERTO` | `SIN_CIERRE` | El job, terminada la franja | `cerrarBloquesVencidos` |
+| Cualquiera | `CERRADO_POR_ADMIN` | Un admin: sin cámara, desde salidas pendientes o corrigiendo una salida | `cerrarManualmente` |
+
+La base sostiene que cada cierre lleve su origen y su estado de salida
+(`ck_bloques_cierre_coherente`, `ck_bloques_cierre_origen`), que solo el del admin lleve motivo
+(`ck_bloques_cierre_admin`) y que haya un solo `ABIERTO` por docente.
+
+**Ciclo lectivo** (`estado`)
+
+| De | A | Dónde | Condición |
+|---|---|---|---|
+| — | `PREPARACION` | `CicloLectivoService` | Siempre nace así |
+| `PREPARACION` | `ACTIVO` | `activar` | Que no haya otro activo |
+| `PREPARACION`, `ACTIVO` | `CERRADO` | `cerrar` | Ninguna |
+| `CERRADO` | `PREPARACION` | `reabrir` | Que sea el último cerrado y no haya otro activo |
+
+De `ACTIVO` no se vuelve a `PREPARACION`, y `reabrir` no va directo a `ACTIVO`: el ciclo pudo
+haberse cerrado sin llegar a correr. La base sostiene un solo `ACTIVO` por institución (V037).
+
+**Consentimiento biométrico** (`vigente`, `fecha_revocacion`). Nace vigente
+(`ConsentimientoBiometricoService`), si no hay otro. `revocar` lo deja revocado, da de baja el
+modelo facial y lo saca del cache. Un revocado no vuelve: el consentimiento nuevo es otra fila.
+La base sostiene que las dos columnas coincidan y que haya uno solo vigente por docente (V037).
+
+**Modelo facial** (`activo`). Nace activo y da de baja al anterior
+(`ModeloFacialService.registrar`, con flush, porque la base admite uno solo activo por docente).
+Se da de baja al volver a registrar el rostro o al revocar el consentimiento. Por ARCO se borra
+físicamente. No se reactiva.
+
+**Equipo de captura** (`activo`, `kiosco_habilitado`). `designar` lo habilita. `habilitarKiosco`
+se hace desde ese mismo equipo, y `deshabilitarKiosco` desde cualquiera. `revocar` es definitivo:
+volver a autorizar esa máquina crea otra fila.
+
+⚠ **`activo = 0` con `kiosco_habilitado = 1` es válido, a propósito.** Revocar no baja la
+bandera: dice que el equipo estaba operando solo cuando se revocó. Lo que cierra la puerta es
+`PuestoCaptura.operaDesatendido`, que mira las dos columnas.
+
+**Docente, usuario, carrera, materia, comisión y horario** (`activo`, `fecha_baja`). Dar de baja
+y reactivar van y vuelven; reactivar limpia la fecha y quién la dio. Ver *Baja lógica*.
+
+**Lo que la base no puede sostener**, porque cruza tablas o depende de la hora. Lo cuidan los
+servicios, y por eso tienen tests propios:
+
+- Solo se justifica una asistencia `AUSENTE` (`AsistenciaService`).
+- Un rostro se usa únicamente con consentimiento vigente (los tres puntos de `CLAUDE.md`).
+- Se toma asistencia solo con un ciclo `ACTIVO` y fuera de los días sin clases.
+- El job no genera la ausencia de una clase que cubre una jornada abierta: la decide el cierre.
+
+---
+
 ## Baja lógica
 
 Regla general del sistema: nada se borra. Las entidades tienen `activo BOOLEAN` y, desde
-V012, `fecha_baja DATE`.
+V012, `fecha_baja DATE`. Desde V037 un CHECK en cada tabla ata las dos: activo sin fecha, o dado
+de baja con fecha. Hasta entonces lo sostenía solo el código, y `UsuarioService.darDeBaja` ponía
+`activo = 0` sin fecha.
 
 **Una sola excepción: la supresión biométrica por derecho ARCO.**
 `ModeloFacialService.suprimirDatosBiometricos` hace `DELETE` físico de todos los modelos
@@ -235,6 +301,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V034__metodo_sistema_para_ausencias_del_job` | `asistencias.metodo` suma `SISTEMA`: las ausencias del job dejan de compartir `AUTOMATICO` con la cámara, y las ya grabadas se reetiquetan. Dos CHECK nuevos atan el método al estado. `MigracionesIT` prueba la conversión con filas sembradas |
 | `V035__consentimiento_sin_metodo_digital` | `ck_consentimientos_metodo` deja de admitir `DIGITAL`, reservado para un login del docente que quedó fuera del alcance. Nada lo escribió nunca |
 | `V036__cambios_identidad_en_mayusculas` | `cambios_identidad.campo` pasa a mayúsculas, como los demás enums, ahora que `campo` y `origen` son enums en Java (`CampoIdentidad`, `OrigenCambioIdentidad`) |
+| `V037__estados_atados_en_la_base` | Lo que sostenía solo el código: la salida de un bloque coherente, `vigente` con `fecha_revocacion`, `activo` con `fecha_baja` en diez tablas, y un solo consentimiento vigente, modelo activo y ciclo activo. Completa la fecha de las cuentas dadas de baja sin ella. Ver *Estados y transiciones* |
 
 ### Invariantes que agregó V028
 

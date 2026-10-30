@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -207,6 +208,9 @@ class UsuarioServiceTest {
 
         assertThat(dadoDeBaja.getActivo()).isFalse();
         assertThat(dadoDeBaja.getDadoDeBajaPor()).isEqualTo(USUARIO_ACTUAL);
+        assertThat(dadoDeBaja.getFechaBaja())
+            .as("sin la fecha, la base rechaza la baja: ck_usuarios_baja_coherente (V037)")
+            .isNotNull();
     }
 
     @Test
@@ -214,6 +218,7 @@ class UsuarioServiceTest {
     void reactivar_limpiaLaBaja() {
         Usuario admin = usuarioActivo(50L, RolCodigo.ADMIN);
         admin.setActivo(false);
+        admin.setFechaBaja(LocalDate.of(2026, 9, 1));
         admin.setDadoDeBajaPor(USUARIO_ACTUAL);
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(admin));
         when(usuarioRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -223,6 +228,9 @@ class UsuarioServiceTest {
         assertThat(reactivado.getActivo()).isTrue();
         assertThat(reactivado.getDadoDeBajaPor())
             .as("arrastrarlo describiria una baja que ya no esta vigente")
+            .isNull();
+        assertThat(reactivado.getFechaBaja())
+            .as("con fecha y activa, la base la rechaza: ck_usuarios_baja_coherente (V037)")
             .isNull();
     }
 
