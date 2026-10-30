@@ -42,7 +42,7 @@
 
         <div class="card card--no-padding listado-caja aire-arriba">
             <div class="table-wrap">
-                <table class="table table--tarjetas" role="table">
+                <table class="table table--tarjetas table--acciones-fijas" role="table">
                     <thead role="rowgroup">
                         <tr role="row">
                             <th role="columnheader">Entrada</th>
@@ -114,9 +114,18 @@
                                       class="text-muted">—</span>
                             </td>
                             <td role="cell" class="table__actions">
-                                <a th:if="${a.id != null and a.estado.name() == 'AUSENTE'}"
+                                <a th:if="${a.id != null and a.estado.name() == 'AUSENTE' and !a.justificada}"
                                    th:href="@{/asistencias/{id}/justificar(id=${a.id})}"
                                    class="btn btn--ghost btn--sm">Justificar</a>
+                                <!-- Solo la del job, que no la midió ni la declaró nadie. Una
+                                     marca de la cámara o una carga a mano no se reemplazan. -->
+                                <a th:if="${a.corregible}"
+                                   th:href="@{/asistencias/manual/nueva(docenteId=${a.docenteId},horarioId=${a.horarioId},fecha=${a.fecha})}"
+                                   title="El docente estuvo: reemplazá esta ausencia con una carga a mano"
+                                   class="btn btn--ghost btn--sm">Corregir</a>
+                                <span th:if="${a.justificada}" class="text-muted">
+                                    <small>justificada</small>
+                                </span>
                                 <span th:if="${a.calculada}" class="text-muted">
                                     <small>cargá manual para justificar</small>
                                 </span>

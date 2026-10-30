@@ -1,6 +1,6 @@
 # 06 — Glosario
 
-> **Versión:** 1.1 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.2 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** aparece un término nuevo del dominio o cambia el significado
 > de uno existente.
 
@@ -60,6 +60,7 @@ Sistema; el CSV lleva el valor.
 
 **Carga manual** — Registro de asistencia hecho a mano cuando el reconocimiento falla o
 no está disponible. Siempre lleva motivo y queda asociada al administrador que la hizo.
+También corrige una ausencia generada por el job, si el docente estuvo: la reemplaza.
 
 **Justificación** — Motivo por el que una ausencia se considera justificada. Opcionalmente
 con documento adjunto.

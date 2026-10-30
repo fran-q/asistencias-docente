@@ -83,11 +83,20 @@ public class AsistenciaController {
     //  Carga manual
     // ========================================================================
 
+    // El listado llega con la clase elegida cuando se corrige una ausencia del job. Los parámetros
+    // solo precargan el formulario: si se puede reemplazar o no lo decide el service.
     @GetMapping("/manual/nueva")
-    public String formManual(Model model) {
+    public String formManual(
+            @RequestParam(name = "docenteId", required = false) Long docenteId,
+            @RequestParam(name = "horarioId", required = false) Long horarioId,
+            @RequestParam(name = "fecha", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            Model model) {
         if (!model.containsAttribute("form")) {
             model.addAttribute("form", AsistenciaManualFormDto.builder()
-                .fecha(LocalDate.now(clock))
+                .docenteId(docenteId)
+                .horarioId(horarioId)
+                .fecha(fecha != null ? fecha : LocalDate.now(clock))
                 .estado(EstadoAsistencia.PRESENTE)
                 .build());
         }
@@ -122,12 +131,17 @@ public class AsistenciaController {
         }
     }
 
-    // Carga docentes, horarios y motivos que necesitan los combos del formulario.
+    // Carga docentes, horarios y motivos que necesitan los combos del formulario. El aviso de que
+    // se corrige una ausencia lo decide lo que hay en la base, no la URL: así no se le promete a
+    // nadie un reemplazo que no existe, y sigue ahí si el formulario vuelve con un error.
     private void agregarDatosManualForm(Model model) {
         model.addAttribute("docentes", docenteService.listar());
         model.addAttribute("horarios", horarioService.listar());
         model.addAttribute("motivos", asistenciaService.motivosActivos());
         model.addAttribute("estadosPosibles", EstadoAsistencia.values());
+        AsistenciaManualFormDto form = (AsistenciaManualFormDto) model.getAttribute("form");
+        model.addAttribute("corrigeAusencia", asistenciaService.tieneAusenciaDelSistema(
+            form.getDocenteId(), form.getHorarioId(), form.getFecha()));
     }
 
     // ========================================================================

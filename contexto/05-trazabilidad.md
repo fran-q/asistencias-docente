@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.7 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.8 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -244,7 +244,7 @@ invisible. Ver `07-pendientes.md`.
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-22 | Carga manual de asistencia | ✅ | `AsistenciaController` → `/asistencias/manual/nueva` |
+| RF-22 | Carga manual de asistencia | ✅ | `AsistenciaController` → `/asistencias/manual/nueva`. Desde 2026-10-30 también reemplaza una ausencia del job, con el botón *Corregir* del listado (`AsistenciaService.marcarManual`). Ninguna otra marca |
 | RF-23 | Motivo de carga manual | ✅ | Catálogo `motivos_carga_manual` (seed en V001) + `detalle_adicional` |
 | RF-24 | Trazabilidad de carga manual | ✅ | Tabla `asistencias_manuales` (usuario, motivo, fecha) |
 

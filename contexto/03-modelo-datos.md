@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.6 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.7 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -188,7 +188,16 @@ Qué estados tiene cada entidad, cuál pasa a cuál y qué lo sostiene. Las tran
 los servicios; acá está la lista completa, para no tener que reconstruirla leyendo el código.
 **Si un cambio agrega una transición, se agrega acá.** Lo que no figura no está permitido.
 
-**Asistencia** (`estado`, `metodo`). Una vez grabada no cambia: es el registro de un hecho.
+**Asistencia** (`estado`, `metodo`). Una vez grabada no cambia: es el registro de un hecho. La
+única excepción es la ausencia del job, que no registra un hecho sino que no hubo marca:
+
+| De | A | Por | Dónde |
+|---|---|---|---|
+| `SISTEMA` + `AUSENTE` | `MANUAL` + `PRESENTE` o `TARDE` | Un admin, con motivo, desde *Corregir* en el listado | `AsistenciaService.marcarManual` |
+
+Pisa la misma fila, así que la clase sigue con una sola marca, y el motivo y el autor quedan en
+`asistencias_manuales`. No corre si la ausencia ya está justificada, ni si la comisión cambió de
+docente después: `marcarManual` exige que sea el asignado hoy, y esa clase queda para justificar.
 
 **Bloque de presencia** (`estado_cierre`)
 
@@ -240,6 +249,7 @@ y reactivar van y vuelven; reactivar limpia la fecha y quién la dio. Ver *Baja 
 servicios, y por eso tienen tests propios:
 
 - Solo se justifica una asistencia `AUSENTE` (`AsistenciaService`).
+- Una ausencia justificada no se reemplaza con una carga a mano (`AsistenciaService`).
 - Un rostro se usa únicamente con consentimiento vigente (los tres puntos de `CLAUDE.md`).
 - Se toma asistencia solo con un ciclo `ACTIVO` y fuera de los días sin clases.
 - El job no genera la ausencia de una clase que cubre una jornada abierta: la decide el cierre.

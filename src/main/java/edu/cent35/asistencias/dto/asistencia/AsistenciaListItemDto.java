@@ -76,6 +76,9 @@ public class AsistenciaListItemDto {
      */
     boolean salidaPresumida;
 
+    // Si ya tiene una justificación adjunta: alguien ya revisó esa ausencia.
+    boolean justificada;
+
     /**
      * Si {@link #horaRegistrada} es de verdad la hora en que el docente llegó.
      *
@@ -95,8 +98,16 @@ public class AsistenciaListItemDto {
         return metodo == MetodoAsistencia.MANUAL && !entradaSinCamara;
     }
 
+    /**
+     * Si un admin la puede reemplazar con una carga a mano: solo una ausencia que generó el job
+     * y que nadie revisó todavía (ver {@code AsistenciaService.marcarManual}).
+     */
+    public boolean isCorregible() {
+        return metodo == MetodoAsistencia.SISTEMA && !justificada;
+    }
+
     // Arma la fila del listado a partir de la entidad, resolviendo lo que el template va a mostrar.
-    public static AsistenciaListItemDto from(Asistencia a) {
+    public static AsistenciaListItemDto from(Asistencia a, boolean justificada) {
         Horario h = a.getHorario();
         return AsistenciaListItemDto.builder()
             .id(a.getId())
@@ -120,6 +131,7 @@ public class AsistenciaListItemDto {
             .confianza(a.getConfianza())
             .entradaSinCamara(a.getBloque() != null
                 && a.getBloque().getOrigenEntrada() == OrigenMarca.MANUAL)
+            .justificada(justificada)
             .build();
     }
 

@@ -21,6 +21,14 @@
                     <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">Error</p>
                 </div>
 
+                <!-- Se llega acá con el botón Corregir del listado. -->
+                <div th:if="${corrigeAusencia}" class="alert alert--info" role="note">
+                    <p>
+                        Estás corrigiendo una ausencia que generó el sistema: esta carga la
+                        reemplaza. Indicá el estado y el motivo.
+                    </p>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="docenteId">Docente <span class="required">*</span></label>

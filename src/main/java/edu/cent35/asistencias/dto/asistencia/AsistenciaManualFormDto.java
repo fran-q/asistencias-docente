@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -29,6 +30,8 @@ public class AsistenciaManualFormDto {
 
     @NotNull(message = "Indicá la fecha")
     @PastOrPresent(message = "La fecha no puede ser futura")
+    // El input type="date" solo entiende este formato: con el del idioma ("7/9/26") llega vacío.
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fecha;
 
     // La hora ya no se pide: la pone el sistema al guardar, porque lo que se asienta es

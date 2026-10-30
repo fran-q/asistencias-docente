@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Registra las asistencias del docente, sea por reconocimiento facial o por carga manual
@@ -267,6 +268,13 @@ public class AsistenciaService {
      *
      * <p>El motivo es obligatorio y sale de un catálogo: es lo que después permite contar
      * cuántas cargas manuales hubo por falla de cámara y cuántas por otra cosa.
+     *
+     * <p><b>Puede reemplazar una ausencia que generó el job, y ninguna otra marca.</b> Esa
+     * ausencia no la midió ni la declaró nadie: dice que no hubo marca, no que el docente
+     * faltó. Si estuvo y nadie lo registró a tiempo —en el kiosco no hay carga a mano—,
+     * justificarla dejaría la clase figurando ausente para siempre. Se pisa la misma fila, así
+     * que la clase sigue teniendo una sola marca, y el motivo y el autor quedan en
+     * {@code asistencias_manuales} como en cualquier carga.
      */
     @Transactional
     public Asistencia marcarManual(Long docenteId, Long horarioId, java.time.LocalDate fecha,
@@ -312,11 +320,9 @@ public class AsistenciaService {
                 + " y el horario elegido es de " + diaDelHorario.getEtiqueta()
                 + ". Elegí una fecha que caiga un " + diaDelHorario.getEtiqueta() + ".");
         }
-        if (asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(docenteId, horarioId, fecha)
-                .isPresent()) {
-            throw new IllegalArgumentException(
-                "Ya existe una marca para ese docente, horario y fecha.");
-        }
+        Optional<Asistencia> existente =
+            asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(docenteId, horarioId, fecha);
+        existente.ifPresent(a -> validarQueSePuedaReemplazar(a, estado));
 
         MotivoCargaManual motivo = motivoCargaManualRepository.findById(motivoId)
             .orElseThrow(() -> new IllegalArgumentException("El motivo seleccionado no existe."));
@@ -328,15 +334,15 @@ public class AsistenciaService {
             .orElseThrow(() -> new EntityNotFoundException(
                 "Usuario actual no encontrado: " + usuarioActualId));
 
-        Asistencia asistencia = Asistencia.builder()
+        Asistencia asistencia = existente.orElseGet(() -> Asistencia.builder()
             .docente(docente)
             .comision(horario.getComision())
             .horario(horario)
             .fecha(fecha)
-            .horaRegistrada(horaRegistrada.withSecond(0).withNano(0))
-            .estado(estado)
-            .metodo(MetodoAsistencia.MANUAL)
-            .build();
+            .build());
+        asistencia.setHoraRegistrada(horaRegistrada.withSecond(0).withNano(0));
+        asistencia.setEstado(estado);
+        asistencia.setMetodo(MetodoAsistencia.MANUAL);
         asistencia.setInstitucionId(tenantId);
         Asistencia guardada = asistenciaRepository.save(asistencia);
 
@@ -348,9 +354,47 @@ public class AsistenciaService {
             .build();
         asistenciaManualRepository.save(detalle);
 
-        log.info("Asistencia MANUAL marcada: id={}, docente={}, horario={}, fecha={}, estado={}, motivo={}",
-                 guardada.getId(), docenteId, horarioId, fecha, estado, motivo.getCodigo());
+        log.info("Asistencia MANUAL marcada: id={}, docente={}, horario={}, fecha={}, estado={}, "
+                 + "motivo={}, reemplaza una ausencia del job={}",
+                 guardada.getId(), docenteId, horarioId, fecha, estado, motivo.getCodigo(),
+                 existente.isPresent());
         return guardada;
+    }
+
+    /**
+     * Si una carga a mano puede reemplazar la asistencia que esa clase ya tiene.
+     *
+     * <p>Una marca de la cámara y una carga de un admin son hechos registrados, y no se
+     * reescriben. Reemplazar una ausencia por otra no dice nada nuevo. Y una ausencia ya
+     * justificada la revisó alguien: pisarla dejaría la justificación colgada de una clase
+     * presente, que ningún CHECK puede frenar porque cruza dos tablas.
+     */
+    private void validarQueSePuedaReemplazar(Asistencia existente, EstadoAsistencia estado) {
+        if (existente.getMetodo() != MetodoAsistencia.SISTEMA) {
+            throw new IllegalArgumentException(
+                "Ya existe una marca para ese docente, horario y fecha.");
+        }
+        if (estado == EstadoAsistencia.AUSENTE) {
+            throw new IllegalArgumentException(
+                "Esa clase ya figura como ausente. Si hay un motivo, justificala desde el "
+                + "listado del día.");
+        }
+        if (justificacionAusenciaRepository.findByAsistenciaId(existente.getId()).isPresent()) {
+            throw new IllegalArgumentException(
+                "Esa ausencia ya está justificada: alguien ya revisó este caso, y cargarle una "
+                + "asistencia dejaría la justificación colgada de una clase presente.");
+        }
+    }
+
+    // Si esa clase tiene una ausencia del job: la única marca que una carga a mano puede reemplazar.
+    @Transactional(readOnly = true)
+    public boolean tieneAusenciaDelSistema(Long docenteId, Long horarioId, LocalDate fecha) {
+        if (docenteId == null || horarioId == null || fecha == null) {
+            return false;
+        }
+        return asistenciaRepository.findByDocenteIdAndHorarioIdAndFecha(docenteId, horarioId, fecha)
+            .filter(a -> a.getMetodo() == MetodoAsistencia.SISTEMA)
+            .isPresent();
     }
 
     // Justifica una ausencia ya persistida como AUSENTE (RF-25, RF-26); las calculadas no aplican.
@@ -415,8 +459,9 @@ public class AsistenciaService {
         // 1) Asistencias realmente persistidas para esa fecha.
         List<AsistenciaListItemDto> resultado = new ArrayList<>();
         List<Asistencia> persistidas = asistenciaRepository.findDelDia(TenantContext.getRequired(), fecha);
+        Set<Long> justificadas = justificadas(persistidas);
         for (Asistencia a : persistidas) {
-            resultado.add(AsistenciaListItemDto.from(a));
+            resultado.add(AsistenciaListItemDto.from(a, justificadas.contains(a.getId())));
         }
 
         // Set de claves (docenteId, horarioId) ya cubiertas por marcas reales.
@@ -446,6 +491,21 @@ public class AsistenciaService {
             .thenComparing(AsistenciaListItemDto::getDocenteNombre,
                            Comparator.nullsLast(Comparator.naturalOrder())));
         return resultado;
+    }
+
+    // Cuáles de esas asistencias ya tienen justificación, para no ofrecer lo que se rechazaría. La
+    // justificación no tiene tenant propio: se busca por ids que ya salieron de esta institución.
+    private Set<Long> justificadas(List<Asistencia> asistencias) {
+        List<Long> ausentes = asistencias.stream()
+            .filter(a -> a.getEstado() == EstadoAsistencia.AUSENTE)
+            .map(Asistencia::getId)
+            .toList();
+        if (ausentes.isEmpty()) {
+            return Set.of();
+        }
+        return justificacionAusenciaRepository.findByAsistenciaIdIn(ausentes).stream()
+            .map(j -> j.getAsistencia().getId())
+            .collect(Collectors.toSet());
     }
 
     // ------------------------------------------------------------------------

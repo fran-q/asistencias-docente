@@ -18,7 +18,7 @@ public enum MetodoAsistencia {
     MANUAL("Manual"),
 
     // La generó el job al terminar la clase sin ninguna marca (RF-19). Siempre es una ausencia,
-    // y nunca tiene jornada.
+    // y nunca tiene jornada. Es la única que un admin puede reemplazar con una carga a mano.
     SISTEMA("Sistema");
 
     private final String etiqueta;
