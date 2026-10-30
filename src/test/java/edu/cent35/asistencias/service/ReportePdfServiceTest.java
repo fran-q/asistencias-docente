@@ -139,9 +139,10 @@ class ReportePdfServiceTest {
             .contains("18:00–20:00")
             .contains("Entrada norte")
             .contains("120/120")
-            .contains("PRESENTE")
-            .as("el metodo es el mas largo de los valores fijos y el que primero se parte")
-            .contains("AUTOMATICO");
+            .contains("Presente")
+            .as("el metodo sale con su etiqueta, no con el valor del enum")
+            .contains("Cámara")
+            .doesNotContain("AUTOMATICO");
     }
 
     @Test

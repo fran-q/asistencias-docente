@@ -1,6 +1,6 @@
 # 06 — Glosario
 
-> **Versión:** 1.0 · **Actualizado:** 2026-08-14 · **Estado:** vigente
+> **Versión:** 1.1 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** aparece un término nuevo del dominio o cambia el significado
 > de uno existente.
 
@@ -53,8 +53,10 @@ estado con el que se guardaron: **el histórico no se recalculó**.
 
 **Estado de asistencia** — `PRESENTE`, `TARDE` o `AUSENTE`.
 
-**Método de asistencia** — `AUTOMATICO` (reconocimiento facial) o `MANUAL` (cargado por
-un administrador).
+**Método de asistencia** — Cómo se registró: `AUTOMATICO` (la cámara reconoció al docente),
+`MANUAL` (la cargó un administrador, después o en el momento) o `SISTEMA` (el job generó la
+ausencia al terminar la clase sin marca). En pantalla y en el PDF se leen Cámara, Manual y
+Sistema; el CSV lleva el valor.
 
 **Carga manual** — Registro de asistencia hecho a mano cuando el reconocimiento falla o
 no está disponible. Siempre lleva motivo y queda asociada al administrador que la hizo.

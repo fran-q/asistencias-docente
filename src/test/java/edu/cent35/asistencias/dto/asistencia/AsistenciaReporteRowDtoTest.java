@@ -82,7 +82,7 @@ class AsistenciaReporteRowDtoTest {
     void laAusenciaNoTieneLlegada() {
         // El job le pone la hora de fin de la clase como marca de tiempo del asiento.
         Asistencia a = asistenciaCon(LocalDate.of(2026, 7, 20), (byte) 1,
-                                     EstadoAsistencia.AUSENTE, MetodoAsistencia.AUTOMATICO);
+                                     EstadoAsistencia.AUSENTE, MetodoAsistencia.SISTEMA);
 
         AsistenciaReporteRowDto fila = AsistenciaReporteRowDto.from(a, null, null);
 

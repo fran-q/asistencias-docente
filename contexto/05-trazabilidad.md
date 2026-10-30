@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.6 · **Actualizado:** 2026-10-29 · **Estado:** vigente
+> **Versión:** 1.7 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -81,7 +81,7 @@ en ADR-0007.
 | RF-16 | Detección e identificación facial | ✅ | `DeteccionRostroService`, `IdentificacionFacialService`, `MotorLbphService` |
 | RF-17 | Registro automático de asistencia | ✅ | `PaseAsistenciaController` → `POST /asistencia/pase/marcar`, `PaseAsistenciaService` |
 | RF-18 | Determinación automática de materia y horario | ✅ | `PaseAsistenciaService` |
-| RF-19 | Clasificación del estado | ✅ | `AsistenciaService.calcularEstado`, `Horario.llegadaEnHora`, `GeneradorAusenciasService`. Segundo desvío cerrado por ADR-0018 |
+| RF-19 | Clasificación del estado | ✅ | `AsistenciaService.calcularEstado`, `Horario.llegadaEnHora`, `GeneradorAusenciasService`. Segundo desvío cerrado por ADR-0018. Desde V034 las ausencias del job tienen método `SISTEMA`: compartían `AUTOMATICO` con la cámara, y el filtro de método mezclaba las dos |
 | RF-20 | Retroalimentación visual | ✅ | `templates/asistencia/pase.html` + `facial/pase-asistencia.js`: entrada en verde con «ENTRA · Nombre», salida en azul con «SALE · Nombre». El azul quedó libre al desaparecer «ya estaba marcado» del flujo normal. Con el pase en su propia ventana (`/asistencia/pase/ventana`), el resto del sistema muestra el punto del menú y el avance de cada reconocimiento: `facial/pase-estado.js` publica y `comun/pase-aviso.js` lo muestra. Un reconocido sin clase dice por qué (`BloquePresenciaService.motivoSinClaseAhora`): sin ciclo activo, sin clases hoy, a qué hora empieza la próxima y desde cuándo marcar, o a qué hora terminaron. Sin nombrar a nadie (RF-87) |
 | RF-21 | Registro de metadatos | ✅ | Tabla `asistencias` |
 

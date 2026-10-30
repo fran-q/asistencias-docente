@@ -60,8 +60,8 @@
                     <option value="">Todos</option>
                     <option th:each="e : ${estadosPosibles}"
                             th:value="${e}"
-                            th:text="${e}"
-                            th:selected="${e == filtro.estado}">PRESENTE</option>
+                            th:text="${e.etiqueta}"
+                            th:selected="${e == filtro.estado}">Presente</option>
                 </select>
             </div>
             <div class="form-group">
@@ -70,8 +70,8 @@
                     <option value="">Todos</option>
                     <option th:each="m : ${metodosPosibles}"
                             th:value="${m}"
-                            th:text="${m}"
-                            th:selected="${m == filtro.metodo}">AUTOMATICO</option>
+                            th:text="${m.etiqueta}"
+                            th:selected="${m == filtro.metodo}">Cámara</option>
                 </select>
             </div>
             <div class="form-actions form-actions--inline">
@@ -213,7 +213,7 @@
                                       class="badge badge--danger">Ausente</span>
                             </td>
                             <td role="cell" data-label="Método">
-                                <span th:text="${f.metodo}">AUTOMATICO</span>
+                                <span th:text="${f.metodoEtiqueta}">Cámara</span>
                                 <small th:if="${f.confianza != null}" class="text-muted"
                                        th:text="|conf ${#numbers.formatDecimal(f.confianza,1,4)}|">conf 0.85</small>
                             </td>

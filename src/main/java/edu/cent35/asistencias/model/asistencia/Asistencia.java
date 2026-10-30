@@ -36,12 +36,12 @@ import java.time.LocalTime;
 /**
  * Marca de asistencia de un docente a una clase concreta (RF-17 a RF-21).
  * <p>
- * Cubre tanto el flujo automático (reconocimiento facial) como el manual
- * (carga por un admin con motivo del catálogo). La distinción es la columna
- * {@link #metodo}: {@code AUTOMATICO} guarda además {@link #modeloFacial}
- * y {@link #confianza}; {@code MANUAL} lleva el motivo en
- * {@code asistencias_manuales} si fue una carga a mano, o en su bloque si
- * la cubre una entrada sin cámara (ADR-0021).
+ * Cubre el flujo automático (reconocimiento facial), el manual (carga por un
+ * admin con motivo del catálogo) y las ausencias que genera el job. La
+ * distinción es la columna {@link #metodo}: {@code AUTOMATICO} guarda además
+ * {@link #modeloFacial} y {@link #confianza}; {@code MANUAL} lleva el motivo
+ * en {@code asistencias_manuales} si fue una carga a mano, o en su bloque si
+ * la cubre una entrada sin cámara (ADR-0021); {@code SISTEMA} no lleva nada.
  * <p>
  * <b>Tenant-scoped</b>: tiene {@code institucion_id} denormalizado para
  * reforzar el aislamiento y acelerar reportes.

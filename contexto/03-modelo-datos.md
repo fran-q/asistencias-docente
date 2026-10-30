@@ -1,6 +1,6 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.3 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.4 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
 Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
@@ -64,9 +64,11 @@ Reglas que el esquema garantiza y que no hay que revalidar desde cero cada vez:
 - `UNIQUE (docente_id, horario_id, fecha)` — una marca por docente, horario y día. Es la
   base de la idempotencia del pase.
 - `estado ∈ {PRESENTE, TARDE, AUSENTE}`.
-- `metodo ∈ {AUTOMATICO, MANUAL}`.
-- Si `metodo = MANUAL`, entonces `modelo_facial_id` y `confianza` son `NULL`. Está
-  forzado por CHECK.
+- `metodo ∈ {AUTOMATICO, MANUAL, SISTEMA}`: la cámara, un administrador o el job.
+- Solo `AUTOMATICO` puede tener `modelo_facial_id` y `confianza`. Está forzado por CHECK.
+- **El método está atado al estado** (V034). `SISTEMA` siempre es `AUSENTE` y nunca tiene
+  jornada (`ck_asistencias_sistema`); `AUTOMATICO` nunca es `AUSENTE`, porque la cámara no
+  registra a quien no vino (`ck_asistencias_camara_presente`). Los ejercita `MigracionesIT`.
 - **`MANUAL` son dos cosas, y las separa el bloque.** La carga a mano posterior (RF-22) no
   tiene bloque y sí fila en `asistencias_manuales`. Las clases que cubre una entrada sin cámara
   (ADR-0021) tienen un bloque con `origen_entrada = MANUAL`, que guarda el motivo y el autor;
@@ -228,6 +230,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V028__tipo_de_dia_sin_clase` | `dias_no_laborables.tipo`: nacional, provincial, institucional, receso u otro, para filtrar el listado. Los anteriores quedan `OTRO` |
 | `V029__entrada_sin_camara` | Quién abrió el bloque a mano y por qué: `abierto_por_usuario_id`, `motivo_entrada_id`, `detalle_entrada` (ADR-0021) |
 | `V033__entrada_sin_camara_como_manual` | Sin cambio de esquema: pasa a `MANUAL` las asistencias de bloques con entrada a mano, que se grababan `AUTOMATICO`. El JOIN exige la misma institución en asistencia y bloque. `MigracionesIT` la prueba con filas sembradas |
+| `V034__metodo_sistema_para_ausencias_del_job` | `asistencias.metodo` suma `SISTEMA`: las ausencias del job dejan de compartir `AUTOMATICO` con la cámara, y las ya grabadas se reetiquetan. Dos CHECK nuevos atan el método al estado. `MigracionesIT` prueba la conversión con filas sembradas |
 
 ### Invariantes que agregó V028
 

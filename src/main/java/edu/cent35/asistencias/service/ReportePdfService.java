@@ -42,7 +42,8 @@ public class ReportePdfService {
      * Anchos relativos de las columnas, medidos contra lo que de verdad entra en cada una a
      * Helvetica 8 más los 4pt de padding de cada lado. Medirlos en vez de estimarlos es lo
      * que evita que una celda se parta en dos renglones y duplique el alto de toda la tabla:
-     * "AUTOMATICO" mide 61pt y con 57 se partía en casi todas las filas.
+     * cuando el método salía crudo, "AUTOMATICO" medía 61pt y con 57 se partía en casi todas
+     * las filas. Desde V034 sale la etiqueta, más corta, y el ancho quedó con aire.
      */
     private static final float[] ANCHOS =
         {1.0f, 1.15f, 3.1f, 1.0f, 2.7f, 0.7f, 0.75f, 0.85f, 1.25f, 1.1f, 1.3f};
@@ -222,7 +223,7 @@ public class ReportePdfService {
             agregar(t, dictado(f), fondo);
             agregar(t, f.getEquipos(), fondo);
             agregar(t, estado(f), fondo);
-            agregar(t, texto(f.getMetodo()), fondo);
+            agregar(t, texto(f.getMetodoEtiqueta()), fondo);
         }
         return t;
     }
@@ -243,7 +244,7 @@ public class ReportePdfService {
     // La justificación viaja pegada al estado: una AUSENTE justificada y una que no lo esta
     // son dos cosas distintas, y en una columna aparte quedaría casi siempre vacía.
     private String estado(AsistenciaReporteRowDto f) {
-        String base = texto(f.getEstado());
+        String base = texto(f.getEstadoEtiqueta());
         return f.isJustificada() ? base + " (just.)" : base;
     }
 

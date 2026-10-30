@@ -155,6 +155,21 @@ public class AsistenciaReporteRowDto {
     }
 
     /**
+     * El método como lo lee una persona: "Cámara", "Manual", "Sistema".
+     *
+     * <p>Los campos guardan el valor del enum porque el CSV lo exporta así, que es el dato
+     * crudo con el que se trabaja. La pantalla y el PDF, que se leen, muestran la etiqueta.
+     */
+    public String getMetodoEtiqueta() {
+        return metodo == null ? null : MetodoAsistencia.valueOf(metodo).getEtiqueta();
+    }
+
+    /** El estado como lo lee una persona: "Presente", "Tarde", "Ausente". */
+    public String getEstadoEtiqueta() {
+        return estado == null ? null : EstadoAsistencia.valueOf(estado).getEtiqueta();
+    }
+
+    /**
      * Si la fila tiene letra chica para mostrar: el <b>porqué</b> de lo que dice.
      *
      * <p>Son los textos que el CSV viene trayendo desde siempre —{@code motivo_justificacion},

@@ -119,7 +119,7 @@ class HoraDeLlegadaIT {
 
         // 3. La generó el job al terminar la clase, con la hora de fin como marca de tiempo.
         asistencia(docente, ausente, LocalTime.of(12, 0), EstadoAsistencia.AUSENTE,
-                   MetodoAsistencia.AUTOMATICO, null);
+                   MetodoAsistencia.SISTEMA, null);
 
         // 4. La cámara no lo reconoció y un admin registró su entrada en el momento. Es MANUAL,
         //    pero tiene jornada: esa hora es la de llegada. El motivo lo exige
@@ -180,6 +180,38 @@ class HoraDeLlegadaIT {
             .doesNotContain("12:00:00")
             .contains("16:07:12")
             .doesNotContain("cargada 16:07");
+    }
+
+    @Test
+    @DisplayName("El filtro de método separa la cámara del job, y cada método sale con su nombre")
+    void elMetodoSeLeeYSeFiltra() throws Exception {
+        // Hasta V034 el job grababa sus ausencias como AUTOMATICO, igual que la cámara, y el
+        // filtro de la cámara traía también las clases a las que nadie vino.
+        String deLaCamara = pedir("/reportes?desde=2026-06-01&hasta=2026-06-30&metodo=AUTOMATICO");
+        assertThat(deLaCamara)
+            .contains("18:00-20:00")
+            .as("la ausencia del job no la registró la cámara")
+            .doesNotContain("10:00-12:00");
+
+        String delJob = pedir("/reportes?desde=2026-06-01&hasta=2026-06-30&metodo=SISTEMA");
+        assertThat(delJob)
+            .contains("10:00-12:00")
+            .doesNotContain("18:00-20:00");
+
+        // En la tabla va el nombre que lee una persona; el valor del enum queda para el CSV.
+        String todos = pedir("/reportes?desde=2026-06-01&hasta=2026-06-30");
+        assertThat(todos)
+            .contains("<span>Cámara</span>")
+            .contains("<span>Manual</span>")
+            .contains("<span>Sistema</span>")
+            .doesNotContain("<span>AUTOMATICO</span>")
+            .as("y también en las opciones del filtro")
+            .contains("Sistema</option>")
+            .contains("Ausente</option>")
+            .doesNotContain("SISTEMA</option>");
+        assertThat(pedir("/asistencias?fecha=2026-06-15"))
+            .contains("<span>Cámara</span>")
+            .contains("<span>Sistema</span>");
     }
 
     @Test

@@ -51,12 +51,12 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * <p><b>Y que los CHECK rechacen lo que deben.</b> H2 tampoco tiene ninguno de los CHECK de las
  * migraciones, así que uno mal escrito —o uno que dejara de existir— no lo notaría ningún otro
  * test. Acá están los de los bloques de presencia y el umbral de la institución (V019, V020,
- * V029 y V031), más el índice único que impide dos bloques abiertos del mismo docente. Hasta el
- * 2026-10-17 se probaban a mano.
+ * V029 y V031), los que atan el método de una asistencia a su estado (V034), y el índice único
+ * que impide dos bloques abiertos del mismo docente. Hasta el 2026-10-17 se probaban a mano.
  *
  * <p><b>Y que una migración que corrige datos toque solo lo que debe.</b> Sobre una base vacía
- * no corrige nada, así que pasaría en verde con cualquier criterio: V033 se prueba aparte, con
- * filas sembradas.
+ * no corrige nada, así que pasaría en verde con cualquier criterio: V033 y V034 se prueban
+ * aparte, con filas sembradas.
  *
  * <p><b>Por qué se saltea si no hay MariaDB.</b> Las migraciones están escritas en SQL de
  * MySQL/MariaDB —{@code MODIFY COLUMN}, {@code COMMENT}, tipos propios— así que no corren en
@@ -436,7 +436,22 @@ class MigracionesIT {
 
             // V031: el equipo de la salida solo existe si hubo salida.
             Arguments.of("ck_bloques_puesto_salida_con_salida", "un equipo de salida en un bloque abierto",
-                bloques, con(abierto(), "puesto_salida_id", 1)));
+                bloques, con(abierto(), "puesto_salida_id", 1)),
+
+            // V034: cada método dice una sola cosa, y queda atado al estado.
+            Arguments.of("ck_asistencias_metodo", "un método que no existe",
+                "asistencias", con(asistencia(1, null), "metodo", "CAMARA")),
+            Arguments.of("ck_asistencias_metodo_modelo", "una ausencia del job con modelo facial",
+                "asistencias", con(ausenciaDelJob(), "modelo_facial_id", 1)),
+            Arguments.of("ck_asistencias_metodo_modelo", "una carga a mano con confianza del rostro",
+                "asistencias", con(asistencia(1, null), "metodo", "MANUAL",
+                                   "confianza", new BigDecimal("0.9"))),
+            Arguments.of("ck_asistencias_sistema", "una presencia que dice haberla generado el job",
+                "asistencias", con(ausenciaDelJob(), "estado", "PRESENTE")),
+            Arguments.of("ck_asistencias_sistema", "una ausencia del job con jornada",
+                "asistencias", con(ausenciaDelJob(), "bloque_id", 1)),
+            Arguments.of("ck_asistencias_camara_presente", "una ausencia registrada por la cámara",
+                "asistencias", con(asistencia(1, null), "estado", "AUSENTE")));
     }
 
     /**
@@ -445,7 +460,7 @@ class MigracionesIT {
      */
     @ParameterizedTest(name = "{0}")
     @MethodSource("filasValidas")
-    @DisplayName("Las formas válidas de un bloque y de una institución entran")
+    @DisplayName("Las formas válidas de un bloque, una institución y una asistencia entran")
     void lasFormasValidasEntran(String caso, String tabla, Map<String, Object> fila) {
         exigirMotor();
         migrada();
@@ -476,7 +491,14 @@ class MigracionesIT {
             Arguments.of("un bloque cerrado, con el equipo de la salida",
                 bloques, con(cerrado(), "puesto_salida_id", 1)),
             Arguments.of("un umbral de cero minutos", "instituciones", institucion(0)),
-            Arguments.of("un umbral de cuatro horas justas", "instituciones", institucion(240)));
+            Arguments.of("un umbral de cuatro horas justas", "instituciones", institucion(240)),
+            Arguments.of("una ausencia del job", "asistencias", ausenciaDelJob()),
+            Arguments.of("una marca de la cámara, con su modelo", "asistencias",
+                con(asistencia(1, null), "modelo_facial_id", 1, "confianza", new BigDecimal("0.9100"))),
+            Arguments.of("una ausencia cargada a mano", "asistencias",
+                con(asistencia(1, null), "metodo", "MANUAL", "estado", "AUSENTE")),
+            Arguments.of("una entrada sin cámara, con su jornada", "asistencias",
+                con(asistencia(1, 1), "metodo", "MANUAL")));
     }
 
     /**
@@ -534,12 +556,13 @@ class MigracionesIT {
                 Object[] evidencia = {"modelo_facial_id", 7, "confianza", new BigDecimal("0.9100")};
                 insertarEn(c, "asistencias", asistencia(1, 101));
                 insertarEn(c, "asistencias", con(asistencia(2, 102), evidencia));
-                insertarEn(c, "asistencias", con(asistencia(3, null), "estado", "AUSENTE"));
+                insertarEn(c, "asistencias",
+                           con(asistencia(3, null), "estado", "AUSENTE", "metodo", "SISTEMA"));
                 insertarEn(c, "asistencias", con(asistencia(4, 101), evidencia));
                 insertarEn(c, "asistencias", asistencia(5, 103));
 
                 try (Statement st = c.createStatement()) {
-                    st.executeUpdate(sentenciaDe("V033__entrada_sin_camara_como_manual.sql"));
+                    st.executeUpdate(sentenciaDe("V033__entrada_sin_camara_como_manual.sql", "UPDATE"));
                 }
                 try (Statement st = c.createStatement();
                      ResultSet rs = st.executeQuery("SELECT id, metodo FROM asistencias ORDER BY id")) {
@@ -555,9 +578,69 @@ class MigracionesIT {
         assertThat(metodoDespues).containsExactly(
             Map.entry(1L, "MANUAL"),
             Map.entry(2L, "AUTOMATICO"),
-            Map.entry(3L, "AUTOMATICO"),
+            Map.entry(3L, "SISTEMA"),
             Map.entry(4L, "AUTOMATICO"),
             Map.entry(5L, "AUTOMATICO"));
+    }
+
+    /**
+     * V034 pasa a SISTEMA las ausencias que había generado el job, y ninguna otra fila.
+     *
+     * <p>El esquema migrado ya no admite el estado de antes —una ausencia AUTOMATICO la rechaza
+     * {@code ck_asistencias_camara_presente}—, así que las filas se siembran con los CHECK
+     * apagados en la sesión, y se prenden de nuevo antes de correr el UPDATE del archivo. Eso
+     * prueba dos cosas: qué filas toca, y que las que toca quedan cumpliendo los CHECK nuevos.
+     */
+    @Test
+    @DisplayName("V034 pasa a SISTEMA las ausencias del job, y ninguna otra")
+    void v034ReetiquetaSoloLasAusenciasDelJob() throws Exception {
+        exigirMotor();
+        migrada();
+        Map<Long, String> metodoDespues = new LinkedHashMap<>();
+
+        try (Connection c = DriverManager.getConnection(URL_BASE + BASE, USUARIO, CLAVE)) {
+            c.setAutoCommit(false);
+            try (Statement st = c.createStatement()) {
+                st.execute("SET SESSION foreign_key_checks = 0");
+                st.execute("SET SESSION check_constraint_checks = 0");
+            }
+            try {
+                // 1: una ausencia del job, como quedaba antes de V034.
+                insertarEn(c, "asistencias", con(asistencia(1, null), "estado", "AUSENTE"));
+                // 2: una marca de la cámara, con su evidencia.
+                insertarEn(c, "asistencias", con(asistencia(2, null), "modelo_facial_id", 7,
+                                                 "confianza", new BigDecimal("0.9100")));
+                // 3: una marca de la cámara cuyo modelo se suprimió (ARCO): AUTOMATICO sin modelo.
+                insertarEn(c, "asistencias", con(asistencia(3, null), "estado", "TARDE"));
+                // 4: una ausencia cargada a mano.
+                insertarEn(c, "asistencias",
+                           con(asistencia(4, null), "metodo", "MANUAL", "estado", "AUSENTE"));
+
+                try (Statement st = c.createStatement()) {
+                    st.execute("SET SESSION check_constraint_checks = 1");
+                    st.executeUpdate(sentenciaDe("V034__metodo_sistema_para_ausencias_del_job.sql", "UPDATE"));
+                }
+                try (Statement st = c.createStatement();
+                     ResultSet rs = st.executeQuery("SELECT id, metodo FROM asistencias ORDER BY id")) {
+                    while (rs.next()) {
+                        metodoDespues.put(rs.getLong(1), rs.getString(2));
+                    }
+                }
+            } finally {
+                c.rollback();
+            }
+        }
+
+        assertThat(metodoDespues).containsExactly(
+            Map.entry(1L, "SISTEMA"),
+            Map.entry(2L, "AUTOMATICO"),
+            Map.entry(3L, "AUTOMATICO"),
+            Map.entry(4L, "MANUAL"));
+    }
+
+    // Una ausencia como la genera el job desde V034: SISTEMA, sin jornada ni evidencia.
+    private static Map<String, Object> ausenciaDelJob() {
+        return con(asistencia(1, null), "estado", "AUSENTE", "metodo", "SISTEMA");
     }
 
     // Una asistencia por rostro de la institución 1, con el bloque que se pida o ninguno. El
@@ -579,18 +662,25 @@ class MigracionesIT {
         return fila;
     }
 
-    // La sentencia de una migración tal como está en el archivo, sin sus comentarios y con el
-    // esquema de esta base en lugar del placeholder.
-    private static String sentenciaDe(String archivo) throws Exception {
+    // La sentencia de una migración que empieza con lo que se pida, tal como está en el archivo:
+    // sin los comentarios y con el esquema de esta base en lugar del placeholder. Tiene que haber
+    // exactamente una, para que el test no corra otra sin darse cuenta.
+    private static String sentenciaDe(String archivo, String comienzo) throws Exception {
         try (InputStream in = MigracionesIT.class.getResourceAsStream("/db/migration/" + archivo)) {
             assertThat(in).as("no está la migración %s", archivo).isNotNull();
             String sql = new String(in.readAllBytes(), StandardCharsets.UTF_8)
                 .lines()
                 .filter(linea -> !linea.strip().startsWith("--"))
                 .collect(Collectors.joining("\n"))
-                .replace("${esquema}", BASE)
-                .strip();
-            return sql.endsWith(";") ? sql.substring(0, sql.length() - 1) : sql;
+                .replace("${esquema}", BASE);
+            List<String> candidatas = Stream.of(sql.split(";"))
+                .map(String::strip)
+                .filter(s -> s.startsWith(comienzo))
+                .toList();
+            assertThat(candidatas)
+                .as("%s tendría que tener una sola sentencia que empiece con %s", archivo, comienzo)
+                .hasSize(1);
+            return candidatas.get(0);
         }
     }
 

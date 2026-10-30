@@ -111,7 +111,7 @@ class DetalleDelReporteIT {
 
         // 2) Ausente y justificada: el motivo es lo que no se veía.
         Asistencia ausente = guardar(docente, comision, horario, LocalDate.of(2026, 9, 12),
-                EstadoAsistencia.AUSENTE, MetodoAsistencia.AUTOMATICO);
+                EstadoAsistencia.AUSENTE, MetodoAsistencia.SISTEMA);
         justificacionRepository.save(JustificacionAusencia.builder()
             .asistencia(ausente).usuario(secretaria)
             .motivo("Certificado médico presentado en secretaría el 14/09. "

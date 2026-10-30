@@ -78,7 +78,7 @@ class GeneradorAusenciasServiceTest {
         verify(asistenciaRepository).saveAndFlush(captor.capture());
         Asistencia ausencia = captor.getValue();
         assertThat(ausencia.getEstado()).isEqualTo(EstadoAsistencia.AUSENTE);
-        assertThat(ausencia.getMetodo()).isEqualTo(MetodoAsistencia.AUTOMATICO);
+        assertThat(ausencia.getMetodo()).isEqualTo(MetodoAsistencia.SISTEMA);
         assertThat(ausencia.getModeloFacial()).isNull();
         assertThat(ausencia.getConfianza()).isNull();
         // Convención: hora_registrada = hora_fin del horario

@@ -27,8 +27,8 @@ import java.util.Map;
  * Job programado que cierra el día: primero cierra los bloques de presencia que quedaron sin
  * marca de salida e imputa lo que cada docente cubrió (RF-79 a RF-81), y recién después
  * materializa las ausencias de los horarios que nadie marcó ni está cubriendo (RF-19), con
- * método AUTOMATICO y hora_registrada = hora_fin, de modo que se puedan justificar y entren
- * en los reportes.
+ * método SISTEMA y hora_registrada = hora_fin, de modo que se puedan justificar y entren en
+ * los reportes. Hasta V034 ese método era AUTOMATICO, el mismo de una marca de la cámara.
  * Como el scheduler no pasa por TenantInterceptor, itera las instituciones activas seteando
  * y limpiando el TenantContext a mano, y es idempotente: el UNIQUE de la base resuelve la
  * carrera contra un pase facial simultáneo y correrlo dos veces no duplica nada.
@@ -153,7 +153,7 @@ public class GeneradorAusenciasService {
                 .fecha(fecha)
                 .horaRegistrada(h.getHoraFin())
                 .estado(EstadoAsistencia.AUSENTE)
-                .metodo(MetodoAsistencia.AUTOMATICO)
+                .metodo(MetodoAsistencia.SISTEMA)
                 .build();
             ausencia.setInstitucionId(institucionId);
 
