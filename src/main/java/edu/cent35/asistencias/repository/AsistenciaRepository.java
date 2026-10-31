@@ -2,6 +2,7 @@ package edu.cent35.asistencias.repository;
 
 import edu.cent35.asistencias.model.asistencia.Asistencia;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,16 @@ import java.util.Optional;
  * sobre la raíz Asistencia ya aplican el filtro automáticamente.
  */
 public interface AsistenciaRepository extends JpaRepository<Asistencia, Long> {
+
+    // Saca la referencia a unos modelos que se van a suprimir (ARCO). La asistencia queda.
+    @Modifying
+    @Query("""
+        UPDATE Asistencia a SET a.modeloFacial = NULL
+        WHERE a.modeloFacial.id IN :modelos
+          AND a.institucionId = :tenantId
+    """)
+    int quitarModelosFaciales(@Param("modelos") Collection<Long> modelos,
+                              @Param("tenantId") Long tenantId);
 
     // Marca ya existente para (docente, horario, fecha); es la base de la idempotencia.
     Optional<Asistencia> findByDocenteIdAndHorarioIdAndFecha(

@@ -441,6 +441,31 @@ class MigracionesIT {
 
     /** Los roles no tienen CHECK sino un catálogo sembrado, y tiene que decir lo mismo que el enum. */
     @Test
+    @DisplayName("Ninguna foránea que MariaDB 10.6 rechazaba tiene ON DELETE SET NULL (TD-011, V038)")
+    void lasColumnasConCheckNoTienenSetNull() throws Exception {
+        exigirMotor();
+        Set<String> foraneas = Set.of(
+            "fk_asistencias_modelo_facial", "fk_bloques_modelo_entrada", "fk_bloques_modelo_salida",
+            "fk_bloques_cerrado_por", "fk_bloques_abierto_por");
+        try (Connection c = DriverManager.getConnection(URL_BASE, USUARIO, CLAVE);
+             PreparedStatement ps = c.prepareStatement(
+                 "SELECT CONSTRAINT_NAME, DELETE_RULE FROM information_schema.REFERENTIAL_CONSTRAINTS "
+                     + "WHERE CONSTRAINT_SCHEMA = ?")) {
+            ps.setString(1, BASE);
+            Map<String, String> reglas = new LinkedHashMap<>();
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    if (foraneas.contains(rs.getString(1))) {
+                        reglas.put(rs.getString(1), rs.getString(2));
+                    }
+                }
+            }
+            assertThat(reglas).hasSize(foraneas.size());
+            assertThat(reglas.values()).containsOnly("RESTRICT");
+        }
+    }
+
+    @Test
     @DisplayName("Los roles sembrados son los que el sistema entiende")
     void losRolesSembradosCoincidenConSuEnum() throws Exception {
         exigirMotor();

@@ -17,7 +17,7 @@ jobs:
 
     # MariaDB para que MigracionesIT corra acá y no solo en la máquina de desarrollo: el resto
     # de la suite usa H2 con el esquema que arma Hibernate, así que una migración desalineada
-    # de su entidad pasaría igual. 10.4 y no otra: el esquema solo aplica sobre esa (TD-011).
+    # de su entidad pasaría igual. 10.4 y no otra: V001 solo aplica sobre esa (TD-011).
     # La base es descartable y dura lo que el job, por eso va sin contraseña: no hay nada que
     # proteger, y así no queda ninguna clave escrita en un repositorio público.
     services:
@@ -29,6 +29,21 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+      # El motor del despliegue: BaseInicialIT carga ahi despliegue/base-inicial.sql y corre el
+      # sistema contra el. Sin este, una migracion que MariaDB 11.4 rechace pasaria el CI y romperia
+      # recien en produccion (ADR-0025). Sin ajustes de colacion a proposito: los de fabrica son
+      # el caso mas exigente. mariadb-admin porque desde 11.0 la imagen ya no trae mysqladmin.
+      mariadb-nueva:
+        image: mariadb:11.4
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h 127.0.0.1 --silent"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=30
@@ -86,6 +101,10 @@ jobs:
           # Acá el motor tiene que estar: si el servicio no levantó, MigracionesIT falla en vez
           # de saltearse y dejar el CI en verde sin haber aplicado una sola migración.
           MARIADB_OBLIGATORIA: si
+          # Con esta variable BaseInicialIT corre, y si el motor no responde falla: no se saltea.
+          MARIADB_NUEVA_PORT: "3307"
+          MARIADB_NUEVA_USER: root
+          MARIADB_NUEVA_PASSWORD: ""
 
       # El log de un job solo se lee con la sesión iniciada en GitHub; las anotaciones y el
       # resumen de la corrida los ve cualquiera. Este paso deja ahí qué falló --qué no compila,

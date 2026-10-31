@@ -5,6 +5,8 @@ import edu.cent35.asistencias.model.biometria.EstadoConsentimiento;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.repository.AsistenciaRepository;
+import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
@@ -36,6 +38,8 @@ public class ModeloFacialService {
     private static final String VERSION_OPENCV = "4.10.0";
 
     private final ModeloFacialRepository modeloFacialRepository;
+    private final AsistenciaRepository asistenciaRepository;
+    private final BloquePresenciaRepository bloquePresenciaRepository;
     private final DocenteRepository docenteRepository;
     private final UsuarioRepository usuarioRepository;
     private final ConsentimientoBiometricoService consentimientoService;
@@ -91,8 +95,8 @@ public class ModeloFacialService {
 
     // Borrado FÍSICO de todos los modelos del docente (derecho ARCO de cancelación, RNF-14).
     // Es la excepción a la baja lógica del sistema: una fila inactiva seguiría conteniendo el
-    // dato biométrico. Las asistencias se conservan porque la FK es ON DELETE SET NULL, y además
-    // se evicta el recognizer del cache para que no siga reconociendo desde memoria.
+    // dato biométrico. Las asistencias y las jornadas se conservan, sin la referencia al modelo,
+    // y además se evicta el modelo del cache para que no siga reconociendo desde memoria.
     @Transactional
     public int suprimirDatosBiometricos(Long docenteId, Long usuarioActualId) {
         Docente docente = obtenerDocenteValidado(docenteId);
@@ -107,8 +111,15 @@ public class ModeloFacialService {
         // 1) Evictar del cache ANTES de borrar (defensa en profundidad).
         modelos.forEach(m -> identificacionFacialService.evictarModelo(m.getId()));
 
-        // 2) DELETE físico. La FK de asistencias es ON DELETE SET NULL:
-        //    el historial administrativo se conserva.
+        // 2) El historial administrativo se conserva, sin la referencia. Esto lo hacía la base
+        //    con ON DELETE SET NULL hasta V038: de MariaDB 10.6 en adelante, una columna con
+        //    CHECK no puede tener esa acción (TD-011). Sin este paso, el DELETE falla.
+        List<Long> ids = modelos.stream().map(ModeloFacial::getId).toList();
+        asistenciaRepository.quitarModelosFaciales(ids, docente.getInstitucionId());
+        bloquePresenciaRepository.quitarModelosDeEntrada(ids, docente.getInstitucionId());
+        bloquePresenciaRepository.quitarModelosDeSalida(ids, docente.getInstitucionId());
+
+        // 3) DELETE físico.
         modeloFacialRepository.deleteAll(modelos);
         modeloFacialRepository.flush();
 

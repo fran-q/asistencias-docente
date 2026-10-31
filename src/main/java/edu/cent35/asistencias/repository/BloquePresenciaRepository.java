@@ -3,9 +3,11 @@ package edu.cent35.asistencias.repository;
 import edu.cent35.asistencias.model.asistencia.BloquePresencia;
 import edu.cent35.asistencias.model.asistencia.EstadoCierre;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,26 @@ import java.util.Optional;
  * {@code open-in-view=false} la pantalla explota al pedirlo fuera de la transacción.
  */
 public interface BloquePresenciaRepository extends JpaRepository<BloquePresencia, Long> {
+
+    // Saca la referencia a unos modelos que se van a suprimir (ARCO). La jornada queda.
+    @Modifying
+    @Query("""
+        UPDATE BloquePresencia b SET b.modeloFacialEntrada = NULL
+        WHERE b.modeloFacialEntrada.id IN :modelos
+          AND b.institucionId = :tenantId
+    """)
+    int quitarModelosDeEntrada(@Param("modelos") Collection<Long> modelos,
+                               @Param("tenantId") Long tenantId);
+
+    // Lo mismo para el modelo que reconoció la salida.
+    @Modifying
+    @Query("""
+        UPDATE BloquePresencia b SET b.modeloFacialSalida = NULL
+        WHERE b.modeloFacialSalida.id IN :modelos
+          AND b.institucionId = :tenantId
+    """)
+    int quitarModelosDeSalida(@Param("modelos") Collection<Long> modelos,
+                              @Param("tenantId") Long tenantId);
 
     /**
      * El bloque que el docente todavía no cerró, si tiene uno.

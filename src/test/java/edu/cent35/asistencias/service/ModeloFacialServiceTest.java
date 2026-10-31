@@ -6,6 +6,8 @@ import edu.cent35.asistencias.model.biometria.EstadoConsentimiento;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.institucion.Usuario;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.repository.AsistenciaRepository;
+import edu.cent35.asistencias.repository.BloquePresenciaRepository;
 import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
@@ -28,6 +30,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.inOrder;
@@ -48,6 +51,8 @@ class ModeloFacialServiceTest {
     private static final Long USUARIO_ACTUAL_ID = 100L;
 
     @Mock private ModeloFacialRepository modeloFacialRepository;
+    @Mock private AsistenciaRepository asistenciaRepository;
+    @Mock private BloquePresenciaRepository bloquePresenciaRepository;
     @Mock private DocenteRepository docenteRepository;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private ConsentimientoBiometricoService consentimientoService;
@@ -289,6 +294,13 @@ class ModeloFacialServiceTest {
         // Defensa en profundidad: el cache en memoria también se evicta.
         verify(identificacionFacialService).evictarModelo(10L);
         verify(identificacionFacialService).evictarModelo(9L);
+        // Las referencias se van antes que los modelos: sin ON DELETE SET NULL (V038), al revés
+        // el DELETE choca contra la clave foránea.
+        InOrder orden = inOrder(asistenciaRepository, bloquePresenciaRepository, modeloFacialRepository);
+        orden.verify(asistenciaRepository).quitarModelosFaciales(eq(List.of(10L, 9L)), any());
+        orden.verify(bloquePresenciaRepository).quitarModelosDeEntrada(eq(List.of(10L, 9L)), any());
+        orden.verify(bloquePresenciaRepository).quitarModelosDeSalida(eq(List.of(10L, 9L)), any());
+        orden.verify(modeloFacialRepository).deleteAll(List.of(activo, historico));
     }
 
     @Test

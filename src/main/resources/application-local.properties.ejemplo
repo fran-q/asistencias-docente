@@ -12,7 +12,7 @@
 # =============================================================================
 
 # ---- Base de datos ----
-# MariaDB 10.4: el esquema no aplica sobre 10.6 en adelante (TD-011). Las dos
+# MariaDB 10.4: V001 no aplica sobre 10.6 en adelante (TD-011). Las dos
 # bases --asistenciautomatica y asistenciautomatica_meta-- se crean a mano
 # antes del primer arranque; los comandos estan en el README.
 spring.datasource.url=jdbc:mariadb://localhost:3306/asistenciautomatica?useUnicode=true&characterEncoding=UTF-8
