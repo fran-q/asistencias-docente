@@ -12,7 +12,7 @@
 | Lenguaje | Java | 21 (toolchain) |
 | Framework | Spring Boot | 3.5.14 |
 | Build | Gradle (Groovy DSL) | wrapper incluido |
-| Base de datos | MariaDB (vía XAMPP en local) | 10.4+ |
+| Base de datos | MariaDB | 11.4 en el despliegue; 10.4 con XAMPP en desarrollo y en el instalable (ADR-0025) |
 | Driver | `org.mariadb.jdbc:mariadb-java-client` | nativo, no el de MySQL |
 | Persistencia | Spring Data JPA + Hibernate 6 | — |
 | Migraciones | Flyway (`flyway-core` + `flyway-mysql`) | — |
@@ -357,17 +357,19 @@ arrastra el módulo de ventanas de OpenCV, enlazado contra GTK 2, y sin él Open
 (ADR-0007, aprendizaje 9). Después corre `./gradlew build --continue --no-daemon`: compila,
 corre Checkstyle y las dos suites —unitarios e integración—, porque `check` depende de todo
 eso; ver `04-convenciones.md`. Con `--continue`, una tarea que falla no deja sin correr a las
-que no dependen de ella. Los tests van sobre H2, salvo `MigracionesIT`, que aplica las
+que no dependen de ella. Los tests van sobre H2, salvo dos. `MigracionesIT` aplica las
 migraciones contra un `mariadb:10.4` que levanta el propio workflow y prueba que los CHECK de
 los bloques de presencia rechacen lo que deben. Ahí el motor es
 obligatorio (`MARIADB_OBLIGATORIA=si`): si no levantó, el test falla en vez de saltearse.
+`BaseInicialIT` carga `despliegue/base-inicial.sql` en un `mariadb:11.4`, el motor del despliegue,
+y corre el sistema contra él: Flyway, Hibernate, las pantallas de gestión y la supresión ARCO.
 
 Si el build falla, `.github/scripts/resumir_falla.py` deja en la página de la corrida qué
 falló —qué no compila, qué marcó Checkstyle, qué tests y con qué mensaje—, porque el log solo
 se lee con la sesión iniciada en GitHub y las anotaciones las ve cualquiera. También se sube el
 reporte de tests.
 
-## Los 24 ADR
+## Los 25 ADR
 
 Viven en `Documentacion/4-arquitectura/adr/`. Un ADR dice **por qué** se decidió algo y
 qué se descartó.
@@ -398,3 +400,4 @@ qué se descartó.
 | 0022 | Instalación autónoma: instalador, servicio y primera cuenta sin correo | Vigente |
 | 0023 | Autoría de cada cambio y acciones sensibles | Propuesta |
 | 0024 | `model/` y `dto/` se dividen por dominio | Vigente |
+| 0025 | Una base nueva arranca de un volcado y no de V001 | Vigente |

@@ -24,7 +24,7 @@ va el resumen operativo.
 | TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | **Cerrada** el 2026-10-30 (`FrenoDeOrigenService`) |
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 | TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
-| TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy; **alta para el rumbo** | Abierta — bloquea mover el motor |
+| TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy | **Cerrada para el despliegue** (ADR-0025, V038). Abierta para el instalable, que sigue en 10.4 |
 
 **Cerradas:** TD-002 (driver MySQL reemplazado por el nativo de MariaDB), TD-007 (el
 aspecto multi-tenant había quedado inactivo tras la reorganización de paquetes) y TD-012
@@ -53,13 +53,12 @@ eso llega a doler.
 reporte sin paginación carga todo en memoria. Próximo paso definido: `Pageable` y streaming
 del CSV.
 
-**TD-011 es el hallazgo que más lejos llega.** `V001` no aplica sobre MariaDB 10.6 ni 10.11:
-rechazan que una columna esté a la vez en un `CHECK` y en una foránea con `ON DELETE SET NULL`,
-que es el caso de `asistencias.modelo_facial_id`. Comprobado con un caso mínimo en 10.6.21 y
-10.11.11, y las 18 migraciones aplican enteras sobre 10.4.34. Por eso el instalable lleva 10.4,
-que **no tiene soporte desde junio de 2024**. No es solo un problema del instalable: el punto 1
-del rumbo (nube) y el punto 2 (base más robusta) pasan por acá. El detalle y los dos caminos
-posibles están en `TECH_DEBT.md`.
+**TD-011 se cerró para el despliegue el 2026-10-30.** `V001` no aplica de MariaDB 10.6 en adelante:
+rechazan que una columna esté a la vez en un `CHECK` y en una foránea con `ON DELETE SET NULL`. Eran
+cinco; V038 les sacó la acción y conservó los `CHECK`. Como `V001` sigue sin aplicar y no se edita,
+una base nueva sobre 11.4 arranca de `despliegue/base-inicial.sql` (ADR-0025). **El instalable sigue
+en 10.4**, que no tiene soporte desde junio de 2024: acotado porque esa base escucha solo en la
+máquina, y pasarlo al mismo archivo es lo que queda.
 
 **TD-010 es la contracara de la clave de recuperación.** La clave destraba la cuenta
 INSTITUCION, que es la que, perdida, dejaría la instalación inservible. Para una cuenta ADMIN no
@@ -157,13 +156,13 @@ fija, control de arranque, freno por origen, proxy, cookies y encabezados, cierr
 cambiar la contraseña, interruptor del alta pública, y cache y comparación del reconocimiento. El
 perfil es `prod` (ver `02-arquitectura.md`, *Entornos*). **Falta, en este orden:**
 
-1. TD-011, el motor de base soportado. Es lo único que bloquea desplegar.
-2. El empaquetado: imagen con GTK 2, `docker-compose` con la aplicación, MariaDB y el proxy,
-   `/tmp` en memoria, límite de tamaño del pedido en el proxy.
-3. El servidor, el dominio y el correo con SPF, DKIM y DMARC.
-4. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
+1. El empaquetado: imagen con GTK 2, `docker-compose` con la aplicación, MariaDB 11.4 y el proxy,
+   `/tmp` en memoria, límite de tamaño del pedido en el proxy. La base se crea cargando
+   `despliegue/base-inicial.sql`, con la colación de `utf8mb4_unicode_ci` en el servidor.
+2. El servidor, el dominio y el correo con SPF, DKIM y DMARC.
+3. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
    real, carga con varias cámaras, y restaurar un respaldo de verdad.
-5. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que
+4. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que
    los datos no se comparten con terceros, y el proveedor del servidor es un encargado de
    tratamiento), política de privacidad, procedimiento ARCO, cuánto duran los respaldos (un dato
    suprimido sigue en las copias viejas), y la consulta sobre la inscripción de la base ante la
@@ -207,9 +206,8 @@ Salir a internet arrastra además:
 
 ### 2. Base de datos más robusta
 
-**Ahora hay un motivo concreto y medido, además del pedido del cliente: TD-011.** El esquema no
-aplica sobre ninguna versión soportada de MariaDB, así que "base más robusta" dejó de ser una
-mejora deseable y pasó a ser la condición para correr sobre un motor con parches.
+El motivo concreto y medido que había, TD-011, se resolvió con ADR-0025: el despliegue corre sobre
+MariaDB 11.4, con parches. Lo que siga bajo este punto ya es una mejora y no una condición.
 
 El cliente lo pidió explícitamente. Todavía **sin definir el alcance**: puede ir desde
 normalización e índices hasta cambio de motor. Si se evalúa PostgreSQL, tener en cuenta

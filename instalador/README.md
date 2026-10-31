@@ -38,7 +38,8 @@ asistencias/vendor/
   10.6 ni sobre 10.11: esas versiones rechazan que una columna esté a la vez en un `CHECK` y en
   una foránea con `ON DELETE SET NULL`, que es el caso de `asistencias.modelo_facial_id`. Está
   medido y documentado en **TD-011**. La 10.4 **no tiene soporte desde junio de 2024**: se usa
-  porque es la única sobre la que el esquema corre, y mover el motor es trabajo de TD-011, no
+  porque el instalable todavía crea la base desde V001, que solo aplica ahí. Pasarlo a
+  `despliegue/base-inicial.sql` (ADR-0025) es lo que resta de TD-011, no
   de este README.
 
 - **WinSW 2.12.0**, licencia MIT, archivo `WinSW.NET4.exe` de su página de releases en GitHub,

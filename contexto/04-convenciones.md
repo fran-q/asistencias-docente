@@ -251,6 +251,13 @@ migrar.
   de dependencias, más los catálogos de `roles` y `motivos_carga_manual`. Las quince
   migraciones originales se conservan sin cambios en `db/historico/`, fuera de
   `spring.flyway.locations`: son referencia, no se aplican.
+- **Una migración nueva tiene que aplicar en los dos motores** (ADR-0025): 10.4, donde corre el
+  desarrollo y el instalable, y 11.4, donde corre el despliegue. El CI prueba los dos. Lo que 10.6
+  en adelante rechaza y 10.4 no: una columna a la vez en un `CHECK` y en una foránea con
+  `ON DELETE SET NULL`.
+- **`despliegue/base-inicial.sql` no se edita ni se regenera por cada migración.** Trae el historial
+  de Flyway hasta V038, y lo posterior lo aplica Flyway como en cualquier base. Si se tocara una
+  migración ya aplicada, además de estar prohibido, `BaseInicialIT` falla por la huella.
 - **Una instalación ya migrada no debe aplicar el consolidado.** Se le borra la tabla
   `flyway_schema_history` y `spring.flyway.baseline-on-migrate=true` la marca en la versión
   1 al arrancar, sin tocar los datos. Verificado: 294 filas intactas después del baseline.

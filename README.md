@@ -48,7 +48,9 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 ## Stack
 
 - **Java 21** y **Spring Boot 3.5**, con **Gradle**
-- **MariaDB 10.4** — *solo 10.4*: el esquema no aplica sobre 10.6 en adelante (TD-011, en
+- **MariaDB**: 10.4 en desarrollo y en el instalable, porque la primera migración no aplica sobre
+  10.6 en adelante, y 11.4 en el despliegue, con la base creada desde
+  [`despliegue/base-inicial.sql`](despliegue/base-inicial.sql) (TD-011, en
   [`07-pendientes.md`](contexto/07-pendientes.md))
 - **Spring Data JPA**, **Hibernate** y **Flyway** para las migraciones
 - **Spring Security**, con sesión HTTP
@@ -91,6 +93,10 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 `MigracionesIT` aplica las migraciones contra un MariaDB real y prueba que los CHECK de los
 bloques de presencia rechacen lo que deben. Se saltea si no hay MariaDB en `localhost:3306`;
 en el CI corre siempre, porque el workflow levanta un `mariadb:10.4`.
+
+`BaseInicialIT` corre el sistema sobre el motor del despliegue, cargando esa base inicial. Solo
+corre con `MARIADB_NUEVA_PORT` definida, apuntando a un motor descartable: al terminar borra las
+bases. El CI levanta un `mariadb:11.4` para eso.
 
 Si el CI falla, la página de la corrida dice qué falló —qué no compila, qué marcó Checkstyle,
 qué tests y con qué mensaje—, sin necesidad de abrir el log.

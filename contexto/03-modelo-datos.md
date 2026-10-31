@@ -1,10 +1,13 @@
 # 03 — Modelo de datos
 
-> **Versión:** 1.7 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.8 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se agrega una migración Flyway.
 
-Motor: MariaDB 10.4, InnoDB, `utf8mb4` / `utf8mb4_unicode_ci`.
-Esquema gestionado exclusivamente por Flyway. Hibernate solo valida.
+Motor: MariaDB 11.4 en el despliegue y 10.4 en desarrollo y en el instalable (ADR-0025), InnoDB,
+`utf8mb4` / `utf8mb4_unicode_ci`. Esquema gestionado exclusivamente por Flyway. Hibernate solo valida.
+
+**Una base nueva sobre 11.4 se crea desde `despliegue/base-inicial.sql`**, que trae el esquema y el
+historial de Flyway hasta V038. `V001` no aplica de 10.6 en adelante y no se edita (TD-011).
 
 ---
 
@@ -77,8 +80,9 @@ contra MariaDB (ver *Enums* en `04-convenciones.md`).
   su hora sí es de llegada. Hasta el 2026-10-28 estas se grababan `AUTOMATICO`, y V033
   corrigió las ya grabadas.
 - `confianza` entre 0 y 1, `DECIMAL(5,4)`.
-- FK a `modelos_faciales` con `ON DELETE SET NULL`: si el docente ejerce ARCO y se borra
-  su modelo, **el historial de asistencias se conserva**.
+- FK a `modelos_faciales`, sin acción desde V038: si el docente ejerce ARCO y se borra su modelo,
+  **el historial de asistencias se conserva**, porque `suprimirDatosBiometricos` pone esta columna
+  en NULL antes de borrar. Sin ese paso, la FK rechaza el borrado.
 
 **`puestos_captura`** (V015, V022, V025, V030)
 - **Cuántos equipos puede tener habilitados una institución lo decide ella**, en
@@ -142,16 +146,12 @@ su esquema sale de las entidades y no de las migraciones.
 Antes se verificaban a mano contra MariaDB 10.4.32, aplicando cada migración sobre una copia
 estructural de la base real. De esa verificación queda lo que el test no cubre:
 
-- **V019** (2026-09-01): el `ON DELETE SET NULL` conserva el bloque tras borrar el modelo
-  facial.
 - **V025** (2026-09-06): `ck_puestos_kiosco_fechado` rechaza habilitar el kiosco sin fecha;
   deshabilitar conserva el rastro; el `RESTRICT` impide borrar un puesto que originó marcas y
   la baja lógica sí lo permite; suprimir la cuenta que habilitó el kiosco deja
   `kiosco_habilitado_por` en NULL sin romper la fila.
 - **V029** (2026-09-19): aplica limpia sobre la tabla ya poblada —las filas existentes son
-  todas `AUTOMATICO` con las columnas nuevas en NULL, que es la rama permitida—, y el
-  `ON DELETE SET NULL` deja el bloque en pie, con su motivo, después de suprimir la cuenta que
-  lo cargó.
+  todas `AUTOMATICO` con las columnas nuevas en NULL, que es la rama permitida.
 
 **Eso sigue siendo a mano: hay que repetirlo si se toca el esquema de estas tablas.**
 
@@ -311,6 +311,7 @@ recognizer del cache, para que no siga reconociendo desde memoria.
 | `V034__metodo_sistema_para_ausencias_del_job` | `asistencias.metodo` suma `SISTEMA`: las ausencias del job dejan de compartir `AUTOMATICO` con la cámara, y las ya grabadas se reetiquetan. Dos CHECK nuevos atan el método al estado. `MigracionesIT` prueba la conversión con filas sembradas |
 | `V035__consentimiento_sin_metodo_digital` | `ck_consentimientos_metodo` deja de admitir `DIGITAL`, reservado para un login del docente que quedó fuera del alcance. Nada lo escribió nunca |
 | `V036__cambios_identidad_en_mayusculas` | `cambios_identidad.campo` pasa a mayúsculas, como los demás enums, ahora que `campo` y `origen` son enums en Java (`CampoIdentidad`, `OrigenCambioIdentidad`) |
+| `V038__sin_set_null_en_columnas_con_check` | Cinco foráneas pierden `ON DELETE SET NULL`: MariaDB 10.6 en adelante rechaza esa acción sobre una columna con CHECK (TD-011). Los CHECK se conservan, y la supresión ARCO pone en NULL las referencias a los modelos antes de borrarlos (`SupresionArcoIT`). Ver ADR-0025 |
 | `V037__estados_atados_en_la_base` | Lo que sostenía solo el código: la salida de un bloque coherente, `vigente` con `fecha_revocacion`, `activo` con `fecha_baja` en diez tablas, y un solo consentimiento vigente, modelo activo y ciclo activo. Completa la fecha de las cuentas dadas de baja sin ella. Ver *Estados y transiciones* |
 
 ### Invariantes que agregó V028

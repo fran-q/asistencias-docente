@@ -431,7 +431,7 @@ la hora a la que se corren.
 | RNF-11 | Ley 25.326 | ✅ | ADR-0005, `Documentacion/3-legal/` |
 | RNF-12 | Resolución AAIP 255/2022 | ✅ | Ídem |
 | RNF-13 | Consentimiento informado | ✅ | `TextoConsentimiento` versionado, `ConsentimientoBiometricoService` |
-| RNF-14 | Derechos ARCO | ✅ | `ModeloFacialService.suprimirDatosBiometricos` (DELETE físico) + `ConstanciaArcoService` (constancia en PDF). Los cuatro derechos se ejercen en `/docentes/{id}/editar`: acceso con la constancia, rectificación en los datos, oposición revocando el consentimiento y cancelación suprimiendo el modelo |
+| RNF-14 | Derechos ARCO | ✅ | `ModeloFacialService.suprimirDatosBiometricos` (DELETE físico, y desde V038 pone en NULL las referencias: lo prueba `SupresionArcoIT`) + `ConstanciaArcoService` (constancia en PDF). Los cuatro derechos se ejercen en `/docentes/{id}/editar`: acceso con la constancia, rectificación en los datos, oposición revocando el consentimiento y cancelación suprimiendo el modelo |
 
 ### Tecnología y arquitectura
 
@@ -473,7 +473,7 @@ la hora a la que se corren.
 |---|---|---|
 | RNF-25 | Desarrollo incremental | ✅ Seis sprints con tag de cierre + etapa de revisión |
 | RNF-26 | Código documentado | ✅ Convención de comentarios unificada en 181 archivos |
-| RNF-27 | Despliegue local, migrable a la nube | 🟡 Corre en local sobre XAMPP. La migración a la nube es objetivo del producto final |
+| RNF-27 | Despliegue local, migrable a la nube | 🟡 Corre en local sobre XAMPP. El perfil `prod` arranca sobre MariaDB 11.4 (ADR-0025), probado con el JAR real. Falta el empaquetado y el servidor |
 
 ---
 

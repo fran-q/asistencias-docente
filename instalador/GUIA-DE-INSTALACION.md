@@ -243,9 +243,9 @@ Cosas que conviene saber antes de usarlo, no después:
   recuperarla.** La clave de recuperación destraba únicamente la cuenta institucional. Para el
   resto, la salida es que la institución cree una cuenta nueva y dé de baja la anterior. Está
   anotado como TD-010.
-- **La base que trae el paquete es MariaDB 10.4, que ya no recibe actualizaciones.** Es la única
-  versión sobre la que el esquema del sistema corre hoy. El riesgo está acotado —la base solo
+- **La base que trae el paquete es MariaDB 10.4, que ya no recibe actualizaciones.** Es la versión
+  sobre la que el paquete sabe crear la base hoy. El riesgo está acotado —la base solo
   escucha desde esta misma computadora, que no está expuesta a internet— pero está anotado como
-  TD-011 y hay que resolverlo antes de mover el sistema a un servidor.
+  TD-011. El despliegue en un servidor ya usa una versión con soporte; el paquete todavía no.
 - **Una instalación atiende a una institución.** No se pueden cargar dos.
 - **Todo depende de esta computadora.** Por eso el punto 6 no es opcional.
