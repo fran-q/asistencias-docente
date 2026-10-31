@@ -44,6 +44,7 @@
             </div>
         </div>
 
+        <div class="table-wrap">
         <table class="table table--tarjetas" role="table">
             <thead role="rowgroup">
                 <tr role="row">
@@ -71,7 +72,7 @@
                     </td>
                     <td role="cell" data-label="Confirmar salida">
                         <form th:action="@{/asistencias/bloques/{id}/cerrar(id=${b.id})}"
-                              method="post" novalidate class="form-inline">
+                              method="post" novalidate class="cierre-salida">
                             <input type="time" name="horaSalida" required
                                    aria-label="Hora de salida"
                                    th:value="${#temporals.format(b.horaSalida, 'HH:mm')}">
@@ -93,6 +94,7 @@
                 </tr>
             </tbody>
         </table>
+        </div>
 
     </section>
 </body>

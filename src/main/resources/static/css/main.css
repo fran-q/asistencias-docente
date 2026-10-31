@@ -990,6 +990,18 @@ input, select, button, textarea { font-family: inherit; }
 
 .form-inline, .inline-form { display: inline-flex; margin: 0; }
 
+/* Confirmar una salida pendiente. Son cuatro controles en una celda: en una sola fila
+   empujaban la tabla más allá de la pantalla, incluso en escritorio. */
+.cierre-salida { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); margin: 0; }
+.cierre-salida input, .cierre-salida select { flex: 1 1 9rem; width: auto; min-width: 0; }
+.cierre-salida .btn { flex: 0 0 auto; }
+/* Sin el ancho mínimo de .table-wrap: con la barra lateral no hay 760px, y el botón quedaba
+   cortado adentro de la tabla. Lo que sostiene el formulario es el mínimo de su celda. */
+@media (min-width: 761px) {
+    .bloques-pendientes .table-wrap .table { min-width: 0; }
+    .bloques-pendientes .table--tarjetas td:last-child { min-width: 18rem; }
+}
+
 /* Grupo de botones al pie de un formulario. */
 .form-actions {
     display: flex; gap: 10px; flex-wrap: wrap;
@@ -2557,8 +2569,9 @@ input[type="password"]::-webkit-strong-password-auto-fill-button {
    queden fuera de la vista. Va al final para ganarle por cascada a las reglas
    de una sola columna de más arriba. */
 @media (max-width: 900px) {
-    .pase__acciones, .captura__acciones { flex-direction: row; }
-    .pase__acciones .btn, .captura__acciones .btn { flex: 1; width: auto; }
+    /* flex-wrap: con los tres botones visibles, en un teléfono no entran en una fila. */
+    .pase__acciones, .captura__acciones { flex-direction: row; flex-wrap: wrap; }
+    .pase__acciones .btn, .captura__acciones .btn { flex: 1 1 auto; width: auto; white-space: normal; }
 }
 
 /* ---- Captura guiada del rostro ---- */
