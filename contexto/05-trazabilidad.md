@@ -1,6 +1,6 @@
 # 05 — Trazabilidad de requerimientos
 
-> **Versión:** 1.8 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.9 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se implementa, se modifica o se descarta un requerimiento.
 >
 > Fuente de los requerimientos: `Requerimientos.docx` (abril 2026),
@@ -36,7 +36,7 @@
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
 | RF-01 | Inicio de sesión | ✅ | `config/SecurityConfig`, `seguridad/CargadorDeUsuarios`, `HomeController` → `/login`. Con el usuario o con el correo: se distinguen por la "@", que un usuario no puede llevar (`UsuarioValido`). Una cuenta se usa en un equipo por vez: entrar desde otro muestra qué se va a cerrar y lo decide quien entra (`SesionesActivasService`, ADR-0020) |
-| RF-02 | Gestión de contraseñas | ✅ | `CuentaController` → `/mi-cuenta/password`; `RecuperacionController` → `/recuperar/codigo` |
+| RF-02 | Gestión de contraseñas | ✅ | `CuentaController` → `/mi-cuenta/password`; `RecuperacionController` → `/recuperar/codigo`. De 10 a 64 caracteres desde 2026-10-30, y cambiarla cierra las demás sesiones de la cuenta (`SesionUnicaIT`) |
 | RF-03 | Control de acceso por rol | ✅ | `SecurityConfig`, `model/institucion/Rol`, `seguridad/UsuarioAutenticado` |
 | RF-04 | Aislamiento multi-tenant | ✅ | `TenantContext`, `TenantInterceptor`, `TenantFilterAspect`, `BaseTenantEntity` |
 
@@ -44,7 +44,7 @@
 
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
-| RF-05 | Alta de institución | ✅ | `AltaInstitucionController`, `AltaInstitucionService` (ADR-0010) |
+| RF-05 | Alta de institución | ✅ | `AltaInstitucionController`, `AltaInstitucionService` (ADR-0010). La abre `app.alta.publica`: cerrada en el perfil de producción (`AltaPublicaCerradaIT`) |
 | RF-06 | CRUD de administradores | ✅ | `UsuarioController` → `/usuarios`, `UsuarioService`. Nombre y apellido con mayúscula inicial (`model/persona/NombrePropio`). Cada cuenta corrige su usuario, su nombre y su correo desde Mi cuenta (`DatosCuentaController`): el correo cambia recién con un código al actual y otro al nuevo. La baja de una cuenta es una acción con confirmación (`UsuarioService.darDeBaja` / `reactivar`), no una casilla del formulario de datos |
 
 ## Gestión de docentes
@@ -78,7 +78,7 @@ en ADR-0007.
 | ID | Requerimiento | Estado | Dónde vive |
 |---|---|---|---|
 | RF-15 | Captura de video en vivo | ✅ | `static/js/facial/pase-asistencia.js`, `facial/registro-facial.js` (`getUserMedia`) |
-| RF-16 | Detección e identificación facial | ✅ | `DeteccionRostroService`, `IdentificacionFacialService`, `MotorLbphService` |
+| RF-16 | Detección e identificación facial | ✅ | `DeteccionRostroService`, `IdentificacionFacialService`, `MotorLbphService`. Desde 2026-10-30 compara por histogramas, con la misma distancia que `predict` (`MotorLbphServiceTest`), y el cache ya no le descarta los modelos a otra institución |
 | RF-17 | Registro automático de asistencia | ✅ | `PaseAsistenciaController` → `POST /asistencia/pase/marcar`, `PaseAsistenciaService` |
 | RF-18 | Determinación automática de materia y horario | ✅ | `PaseAsistenciaService` |
 | RF-19 | Clasificación del estado | ✅ | `AsistenciaService.calcularEstado`, `Horario.llegadaEnHora`, `GeneradorAusenciasService`. Segundo desvío cerrado por ADR-0018. Desde V034 las ausencias del job tienen método `SISTEMA`: compartían `AUTOMATICO` con la cámara, y el filtro de método mezclaba las dos |
@@ -411,7 +411,7 @@ la hora a la que se corren.
 
 | ID | Requerimiento | Estado | Nota |
 |---|---|---|---|
-| RNF-04 | 200-400 docentes por institución | 🟡 | Soportado por diseño. No probado a esa escala con datos reales |
+| RNF-04 | 200-400 docentes por institución | 🟡 | **No lo soportaba:** con 400 docentes, comparar un cuadro tardaba 3,7 s y movía todos los modelos cifrados. Corregido el 2026-10-30 y medido con imágenes sintéticas en la máquina de desarrollo. Falta la prueba con varias cámaras y datos reales |
 | RNF-05 | Multi-tenancy sin instancias separadas | ✅ | Discriminador por `institucion_id` (ADR-0002) |
 
 ### Seguridad
@@ -421,7 +421,7 @@ la hora a la que se corren.
 | RNF-06 | Cifrado de contraseñas | ✅ | BCrypt vía Spring Security |
 | RNF-07 | Protección de datos biométricos | ✅ | AES-256-GCM (Spring Security Crypto), gzip previo |
 | RNF-08 | No almacenamiento de imágenes | ✅ | Los frames se descartan tras el entrenamiento |
-| RNF-09 | Sesiones seguras | ✅ | Timeout 30 min configurable, CSRF activo y testeado |
+| RNF-09 | Sesiones seguras | ✅ | Timeout 30 min configurable, CSRF activo y testeado. Detrás del proxy, cookies `Secure` y HSTS (`DetrasDeProxyIT`), y freno de intentos de login (`FrenoDeOrigenIT`) |
 | RNF-10 | Aislamiento de datos | ✅ | Cuatro capas de defensa. Test de integración con dos tenants |
 
 ### Cumplimiento legal
@@ -488,6 +488,9 @@ formalmente al alcance acordado.
 | Recuperación de contraseña por mail | `RecuperacionController`, `NotificadorEmailService` | Antes, si el superadmin olvidaba la clave, la institución quedaba sin acceso |
 | Bloqueo de cuenta hasta verificar el correo | `VerificacionInterceptor` | ADR-0010 |
 | Límite de envío de códigos | `FrenoDeEnviosService` | Cinco por hora y por cuenta (TD-008) |
+| Freno de intentos por origen | `FrenoDeOrigenService`, `FrenoDeOrigenFilter` | Cierra TD-008. Antes el login no tenía ningún tope, aunque el comentario de `PasswordSegura` diera por hecho que sí |
+| Control de arranque | `ControlDeArranqueConfig` | Sin él, un despliegue sin la variable de entorno cifraba con la clave escrita en el repositorio público |
+| Encabezados de seguridad y política de contenido | `SecurityConfig.encabezados`, `PoliticaDeContenidoFilter` | Salir a internet |
 | Constancia ARCO en PDF | `ConstanciaArcoService` | Ejercer un derecho y no poder demostrarlo es casi no poder ejercerlo |
 | Supresión física del dato biométrico | `ModeloFacialService.suprimirDatosBiometricos` | Derecho de cancelación |
 | Generación automática de ausencias | `GeneradorAusenciasService` (cron) | Las ausencias no se marcan, se derivan |

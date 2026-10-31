@@ -1,6 +1,6 @@
 # 07 — Pendientes y rumbo
 
-> **Versión:** 1.5 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.6 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se cierra una deuda, aparece una nueva, o cambia el rumbo.
 >
 > ⚠ **No hay fechas de entrega definidas.** El horizonte del producto final es marzo de
@@ -21,7 +21,7 @@ va el resumen operativo.
 | TD-004 | Conversión lineal distancia LBPH → confianza | Baja | Aceptada |
 | TD-005 | Cache de modelos LBPH sin TTL ni límite de memoria | Baja en prototipo, media en producción | **Cerrada** — ver abajo |
 | TD-006 | Reportes sin paginación | Baja en prototipo, media en producción | Abierta, mitigada con tope de filas |
-| TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | Abierta |
+| TD-008 | Límite de códigos por cuenta, no por origen | Baja en local, media expuesto a internet | **Cerrada** el 2026-10-30 (`FrenoDeOrigenService`) |
 | TD-009 | La recuperación de contraseña depende de que haya SMTP | Media | **Cerrada en la instalación autónoma** (ADR-0022, V032); abierta para un despliegue con correo |
 | TD-010 | En instalación autónoma, un ADMIN que olvida su contraseña queda afuera | Media (solo instalable) | Aceptada como limitación de la versión instalable |
 | TD-011 | El esquema solo aplica sobre MariaDB 10.4 | Baja hoy; **alta para el rumbo** | Abierta — bloquea mover el motor |
@@ -70,9 +70,9 @@ versión instalable: cerrarlo obliga a reintroducir eso mismo que se quitó, y e
 cuando el instalable esté en uso y se sepa cuánto molesta. Mientras tanto, la salida es crear una
 cuenta nueva y dar de baja la anterior.
 
-**TD-008 y TD-009** son deudas de exposición: hoy no molestan porque el despliegue es
-local y dentro de la red de la institución. **El día que el sistema esté en internet, se
-vuelven urgentes.** TD-008 necesita límite por IP además del límite por cuenta. **TD-009 quedó
+**TD-009** es una deuda de exposición: hoy no molesta porque el despliegue es local y dentro
+de la red de la institución. **El día que el sistema esté en internet, se vuelve urgente.**
+TD-008 era la otra: se cerró con un freno por dirección, además del de cuenta. **TD-009 quedó
 cerrada del lado de la instalación autónoma**, donde la recuperación va por la clave que genera
 la configuración inicial (ADR-0022): lo que sigue sin respuesta es el mismo problema en un
 despliegue con correo, donde TD-009
@@ -150,17 +150,60 @@ Definido por el cliente. **El orden de esta lista no implica prioridad ni cronog
 ### 1. Despliegue en la nube
 
 Es el cambio de mayor impacto. Hoy el sistema corre en local sobre XAMPP (RNF-27
-contemplaba la migración desde el principio). Salir a internet arrastra:
+contemplaba la migración desde el principio).
 
-- TD-008 y TD-009 pasan de teóricas a urgentes.
-- Gestión de secretos: hoy las credenciales viven en `application-local.properties`.
+**Auditado el 2026-10-30. Las correcciones de código ya están hechas** (2026-10-30): zona horaria
+fija, control de arranque, freno por origen, proxy, cookies y encabezados, cierre de sesiones al
+cambiar la contraseña, interruptor del alta pública, y cache y comparación del reconocimiento. El
+perfil es `prod` (ver `02-arquitectura.md`, *Entornos*). **Falta, en este orden:**
+
+1. TD-011, el motor de base soportado. Es lo único que bloquea desplegar.
+2. El empaquetado: imagen con GTK 2, `docker-compose` con la aplicación, MariaDB y el proxy,
+   `/tmp` en memoria, límite de tamaño del pedido en el proxy.
+3. El servidor, el dominio y el correo con SPF, DKIM y DMARC.
+4. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
+   real, carga con varias cámaras, y restaurar un respaldo de verdad.
+5. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que
+   los datos no se comparten con terceros, y el proveedor del servidor es un encargado de
+   tratamiento), política de privacidad, procedimiento ARCO, cuánto duran los respaldos (un dato
+   suprimido sigue en las copias viejas), y la consulta sobre la inscripción de la base ante la
+   AAIP, que no se pudo confirmar. Si el servidor queda fuera de los países adecuados, además
+   cláusulas modelo o consentimiento expreso (Ley 25.326, art. 12).
+
+**Queda abierto de la auditoría, sin bloquear la puesta a prueba:**
+
+- **El kiosco ya no está acotado por la red.** Su cookie sirve desde cualquier lugar, y quien la
+  tenga puede mandar una foto en lugar de usar la cámara. RF-38 (vivacidad) sigue fuera de alcance
+  y su motivo vale para el pase atendido; para el kiosco falta poder restringir cada equipo a la
+  red de la institución.
+- **Se puede saber si una cuenta existe midiendo el tiempo de `/recuperar`:** con cuenta manda un
+  correo, sin cuenta no. La respuesta es idéntica y la demora no. Se resuelve mandando el correo
+  por fuera del pedido.
+- **El JSON de la cámara no tiene tope de tamaño** y `imdecode` no limita las dimensiones. Solo se
+  alcanza con sesión o con la credencial de un equipo; el proxy pone el primer límite.
+- **El alta con la pública cerrada es a mano:** se abre `ALTA_PUBLICA`, se crea y se vuelve a
+  cerrar. Una invitación por institución es el paso siguiente si llegan a ser varias.
+- **No hay forma de rotar la clave biométrica.** Cambiarla deja los modelos ilegibles y obliga a
+  registrar los rostros de nuevo.
+- **Objetivos táctiles chicos.** Casi todas las pantallas tienen algún control de menos de 32 px
+  de alto; falta revisarlos en un teléfono real.
+- **Carga real de identificación.** Medido con imágenes sintéticas; falta repetirlo con varias
+  cámaras y rostros reales, en el servidor. La detección con Haar comparte un solo clasificador
+  entre hilos: 210 detecciones simultáneas no dieron error, pero sin rostros en la imagen.
+
+Salir a internet arrastra además:
+
+- TD-009 pasa de teórica a urgente.
 - La cámara requiere HTTPS: `getUserMedia` solo funciona en contexto seguro.
 - Un servidor Linux necesita GTK 2 (`libgtk2.0-0t64` en Ubuntu 24.04) aunque no tenga
   pantalla: el reconocedor LBPH carga el módulo de ventanas de OpenCV, enlazado contra GTK 2,
   y sin él el reconocimiento facial no arranca. El CI ya lo instala; la imagen del servidor
   o del contenedor tiene que traerlo (ADR-0007, aprendizaje 9).
 - Backups y retención — hoy no hay política definida, y los datos son biométricos.
-- Revisión del cifrado en tránsito y de dónde vive la clave AES.
+- Dónde vive la clave AES: separada de los respaldos, o una copia alcanza para leerlo todo.
+- **Una sola instancia, por diseño.** Las sesiones, los frenos y los modelos viven en memoria, así
+  que el sistema escala hacia arriba y no hacia los costados. Reiniciar cierra las sesiones: los
+  despliegues van fuera del horario de clases.
 
 ### 2. Base de datos más robusta
 

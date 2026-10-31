@@ -1,6 +1,6 @@
 # 04 — Convenciones
 
-> **Versión:** 1.14 · **Actualizado:** 2026-10-30 · **Estado:** vigente
+> **Versión:** 1.15 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se adopta o se abandona una convención.
 
 Este es el archivo que hay que leer antes de escribir una línea de código.
@@ -279,6 +279,11 @@ En español, plural, minúscula. Las acciones destructivas siempre por `POST`, n
 ## Frontend
 
 - Thymeleaf server-side. El JavaScript es puntual, no hay framework.
+- **Nada de código en el HTML, salvo con nonce.** La política de contenido no deja correr un
+  `onclick` ni un `onchange`: el botón se ve bien y no hace nada. Va en un `.js`
+  (`form-al-cambiar.js` tiene los combos que mandan su formulario). Un `<script>` escrito en la
+  página lleva `th:nonce="${cspNonce}"`, o el navegador lo ignora sin decir nada. Lo vigila
+  `PlantillasTest`, y un archivo de `static/js/` no necesita nada de esto.
 - Un solo `main.css`. Modo oscuro por defecto y claro conmutable (`tema.js`).
 - El JS está agrupado en tres carpetas bajo `static/js/`: `comun/` (los transversales),
   `academico/` y `facial/` (los dos que manejan cámara). `SecurityConfig` autoriza

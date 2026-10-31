@@ -1,6 +1,6 @@
 # 02 — Arquitectura
 
-> **Versión:** 1.10 · **Actualizado:** 2026-10-28 · **Estado:** vigente
+> **Versión:** 1.11 · **Actualizado:** 2026-10-30 · **Estado:** vigente
 > **Se actualiza cuando:** se toma una decisión de diseño (y se escribe su ADR).
 
 ---
@@ -130,8 +130,24 @@ paquetes. Un aspecto que no matchea no falla: no hace nada.
 
 ## Autenticación
 
-Sesión HTTP con cookie clásica, no JWT (ADR-0003). Contraseñas con BCrypt.
-`spring.jpa.open-in-view=false`. Timeout de sesión: 30 minutos, configurable.
+Sesión HTTP con cookie clásica, no JWT (ADR-0003). Contraseñas con BCrypt, de 10 a 64 caracteres.
+`spring.jpa.open-in-view=false`. Timeout de sesión: 30 minutos, configurable. Cambiar o recuperar
+la contraseña cierra las demás sesiones abiertas de esa cuenta.
+
+**Freno de intentos** (`FrenoDeOrigenService`, TD-008). Corre como un filtro antes de comparar la
+contraseña, así que un intento frenado no gasta un BCrypt. Tres topes de fallos de login en una
+ventana: por cuenta y dirección (el común), por cuenta (más alto, porque es el único con el que un
+tercero puede dejar afuera al dueño) y por dirección. Las pantallas públicas que mandan correo o
+prueban códigos tienen su propio tope por hora y por dirección. La respuesta no depende de que la
+cuenta exista.
+
+**La IP es `getRemoteAddr()`, nunca `X-Forwarded-For`.** Ese encabezado lo escribe cualquiera, y
+tomar su primer valor dejaba falsificar la evidencia legal del consentimiento. Con
+`server.forward-headers-strategy=native`, Tomcat lee solo lo que agregaron los proxies confiables.
+
+**Encabezados.** Política de contenido con un nonce por pedido (`PoliticaDeContenidoFilter`): el
+navegador solo ejecuta los archivos propios y los scripts que traen ese nonce. Permissions-Policy
+deja la cámara al propio sitio. HSTS sale solo en una conexión HTTPS.
 
 Verificación de correo y recuperación de contraseña por código de un solo uso enviado
 por mail (ADR-0009), con bloqueo de la cuenta hasta verificar (ADR-0010). Antes de eso,
@@ -167,7 +183,11 @@ Está documentado como desvío en `05-trazabilidad.md`.
 
 1. El navegador manda fotogramas por `getUserMedia`.
 2. `DeteccionRostroService` localiza el rostro.
-3. `MotorLbphService` compara contra los modelos cacheados en memoria.
+3. `MotorLbphService` calcula el histograma del rostro **una vez** y lo compara contra los
+   histogramas cacheados de cada modelo. Es la misma cuenta de `predict` (`MotorLbphServiceTest` lo
+   sostiene), así que el umbral y el margen no cambian. `predict` no se usa porque recalcula el
+   histograma del rostro por cada modelo: con 400 docentes tardaba 3,7 s por cuadro contra menos de
+   uno, medido con imágenes sintéticas en la máquina de desarrollo.
 4. Se exige superar el umbral **y** un margen mínimo contra el segundo candidato
    (ADR-0014) — que una cara se parezca a alguien no alcanza si se parece casi igual a
    otro.
@@ -257,17 +277,29 @@ del horario, que es la misma que decide PRESENTE o TARDE. La permanencia que cae
 franja se cuenta **una sola vez por jornada**, contra su primera y su última clase: entre dos
 clases seguidas no hay tiempo de más, hay otra clase.
 
-**Cache:** `ConcurrentHashMap<Long, LBPHFaceRecognizer>` en memoria, con **barrido por
+**Cache:** los histogramas de cada modelo en un `ConcurrentHashMap`, con **barrido por
 inactividad**: `descartarModelosInactivos` es un `@Scheduled` que suelta los modelos que
 nadie usó en `app.biometria.cache-minutos-inactividad` (30 por defecto). No alcanzaba con
 limpiar dentro de `sincronizarCache`, que corre cuando alguien identifica: el momento en
 que hay que soltar la memoria es justamente cuando ya nadie identifica.
 
 No es solo una cuestión de memoria. Un modelo cacheado está **descifrado**, así que cada
-minuto de más en el cache es un minuto más en que ese dato biométrico existe en claro.
+minuto de más en el cache es un minuto más en que ese dato biométrico existe en claro. Ocupa
+alrededor de 1 MB de memoria nativa por docente, fuera del heap de Java.
 
 `sincronizarCache` sigue corriendo en cada identificación, así que un docente dado de baja
-—o uno que revocó su consentimiento— se evicta en segundos.
+—o uno que revocó su consentimiento— se evicta en segundos. Tres cosas que no son obvias:
+
+- **El cache es de todas las instituciones, y cada sincronización toca solo las entradas de la
+  que identifica.** Antes descartaba todo lo que no estuviera en su lista: con dos cámaras de
+  instituciones distintas, cada cuadro de una le vaciaba los modelos a la otra.
+- **Cada cuadro consulta `ModeloActivo`, sin el dato cifrado.** El modelo cifrado se pide solo para
+  los que faltan cargar; la entidad lo trae siempre, y consultarla en cada cuadro movía todos los
+  modelos de la institución una vez por segundo.
+- **Liberar espera a los que están comparando** (`usoDeHistogramas`). Son memoria nativa: comparar
+  unos histogramas ya liberados no da una excepción. Puede dar una distancia inventada sin ningún
+  aviso, o voltear la JVM con todas las instituciones adentro. Lo fija un test con los dos hilos
+  sincronizados, y no una corrida con OpenCV real: sacando el candado, esa sigue pasando.
 
 ## Ausencias
 
@@ -288,6 +320,17 @@ y la imputación chocaría contra el UNIQUE, dejando como ausente una clase que 
 | (base) | Común a todos | `application.properties` — versionado, sin secretos |
 | `local` | Desarrollo | `application-local.properties` — **gitignored**, credenciales de XAMPP. Lo activa `./gradlew bootRun` |
 | `test` | Tests y CI | `src/test/resources/application-test.properties` — H2 en memoria |
+| `prod` | Internet, con correo y detrás de un proxy con HTTPS | `application-prod.properties` — versionado y sin secretos. Sale todo de variables de entorno, sin valor por defecto: si falta una, no arranca |
+| `instalacion` | La instalación autónoma | `application-instalacion.properties` (ADR-0022) |
+
+**Fuera de `local` y `test`, el sistema se niega a arrancar con la configuración de desarrollo**
+(`ControlDeArranqueConfig`): la clave o el salt biométricos que están escritos en el repositorio,
+el correo por consola, o la instalación autónoma en el perfil de internet. Corta por omisión y al
+arrancar, porque el error que hay que evitar es olvidarse de configurar algo. También vale sin
+ningún perfil activo.
+
+**El alta pública de instituciones** la abre `app.alta.publica`: abierta por defecto en desarrollo,
+cerrada en `prod`, y nunca abierta en la instalación autónoma (`ModalidadInstalacion`).
 
 **Instalación autónoma: una modalidad, no un perfil.** `app.instalacion.autonoma` enciende lo
 que necesita la máquina de la institución —el asistente de primer arranque, la recuperación por
@@ -297,7 +340,16 @@ que el desarrollo y cualquier despliegue con correo no se enteran. **No confundi
 comparten nombre (ADR-0022).
 
 `spring.jpa.hibernate.ddl-auto=validate`: el esquema lo maneja Flyway, Hibernate solo
-verifica que las entidades coincidan. Zona horaria fijada en `America/Argentina/Ushuaia`.
+verifica que las entidades coincidan.
+
+**Zona horaria: `America/Argentina/Ushuaia`, en toda la JVM.** La fija `AsistenciasApplication`
+antes de arrancar Spring. Hasta el 2026-10-30 solo la tenía Hibernate, y todo lo que decide según
+la hora sale de `Clock.systemDefaultZone()`: en un servidor en UTC, el sistema habría andado tres
+horas adelantado sin ningún error a la vista. No alcanza con hacerlo en un bean: cada servicio
+guarda su reloj al crearse, y ese reloj ya no cambia de zona. La hora de la base es aparte:
+`DEFAULT CURRENT_TIMESTAMP` usa la del servidor de MariaDB, que hay que fijar igual.
+
+`/actuator/health` no cuenta el correo: un corte del SMTP no es una caída del sistema.
 
 **CI:** GitHub Actions sobre `push` y `pull_request` a `main`, en `ubuntu-24.04` con JDK 21
 Temurin. Antes del build instala GTK 2 (`libgtk2.0-0t64`): en Linux, el reconocedor LBPH
