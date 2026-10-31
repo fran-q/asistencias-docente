@@ -1,0 +1,20 @@
+# Lo que no entra a la imagen ni a la construccion. Lo que importa es lo de abajo: credenciales.
+.git
+.github
+.gradle
+.idea
+build
+logs
+vendor
+instalador
+contexto
+despliegue
+*.md
+
+# Credenciales del entorno local. build.gradle ya las saca del JAR; esto evita que lleguen
+# siquiera a la maquina que construye.
+**/.env
+**/.env.*
+**/application-local.*
+credenciales*
+datos-de-prueba*

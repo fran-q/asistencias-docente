@@ -1,0 +1,26 @@
+# El proxy de Visum: HTTPS con certificado automatico, y lo unico que da a internet.
+#
+# Caddy descarta el X-Forwarded-For que manda el cliente y escribe el suyo con la direccion real:
+# no le confia a nadie mientras no se configure trusted_proxies. La aplicacion lee solo ese.
+# HSTS y la politica de contenido los pone la aplicacion, y no se repiten aca.
+{
+	email {$CORREO_ACME}
+}
+
+{$DOMINIO} {
+	# Afuera solo se ve si esta viva. El resto del actuator no tiene nada que hacer en internet.
+	@interno {
+		path /actuator /actuator/*
+		not path /actuator/health
+	}
+	respond @interno 404
+
+	# El registro del rostro manda unos 20 cuadros en base64. El JSON de la camara no tiene tope en
+	# la aplicacion (server.tomcat.max-http-form-post-size solo alcanza a los formularios).
+	request_body {
+		max_size 25MB
+	}
+
+	encode gzip
+	reverse_proxy app:8080
+}

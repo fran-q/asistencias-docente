@@ -120,3 +120,18 @@ jobs:
           name: reports
           path: build/reports/
           retention-days: 7
+
+  # El despliegue tal como corre en el servidor: construye la imagen, levanta la aplicacion, la base
+  # y el proxy, y comprueba lo que tiene que cumplir, incluido un respaldo y su restauracion. Es lo
+  # unico que prueba que OpenCV carga adentro de la imagen, que no trae lo que el runner ya tiene.
+  # Las fallas quedan como anotaciones de la corrida, que se leen sin iniciar sesion.
+  imagen:
+    name: Imagen y despliegue
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Levantar el despliegue completo y comprobarlo
+        run: bash despliegue/probar-imagen.sh

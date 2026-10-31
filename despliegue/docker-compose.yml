@@ -1,0 +1,108 @@
+# =============================================================================
+#  Visum en un solo servidor: la aplicacion, la base y el proxy con HTTPS (ADR-0026).
+#  Los valores salen de .env, que no se versiona: ver .env.ejemplo y README.md.
+#
+#  Solo Caddy publica puertos. La base esta en una red sin salida, y a la aplicacion
+#  se llega unicamente a traves de Caddy: es lo que hace valido confiar en los
+#  encabezados X-Forwarded-* que Tomcat lee (server.forward-headers-strategy).
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: despliegue/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DB_URL: jdbc:mariadb://db:3306/asistenciautomatica
+      DB_USUARIO: visum
+      DB_PASSWORD: ${DB_PASSWORD:?falta en .env}
+      BIOMETRIA_CLAVE: ${BIOMETRIA_CLAVE:?falta en .env}
+      BIOMETRIA_SALT: ${BIOMETRIA_SALT:?falta en .env}
+      MAIL_HOST: ${MAIL_HOST:?falta en .env}
+      MAIL_PORT: ${MAIL_PORT:?falta en .env}
+      MAIL_USER: ${MAIL_USER:?falta en .env}
+      MAIL_PASS: ${MAIL_PASS:?falta en .env}
+      MAIL_FROM: ${MAIL_FROM:?falta en .env}
+      ALTA_PUBLICA: ${ALTA_PUBLICA:-false}
+    expose:
+      - "8080"
+    # En memoria: al identificar, el modelo descifrado pasa un instante por un archivo temporal
+    # porque OpenCV solo lee de disco (MotorLbphService). Asi nunca llega a tocar el disco.
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    mem_limit: ${MEMORIA_APP:-5g}
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Le da tiempo a server.shutdown=graceful de terminar lo que esta en curso.
+    stop_grace_period: 40s
+    networks:
+      - interna
+      - publica
+
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?falta en .env}
+      # Se crea sin permisos: se los da 02-permisos.sql, solo sobre las dos bases del sistema.
+      MARIADB_USER: visum
+      MARIADB_PASSWORD: ${DB_PASSWORD:?falta en .env}
+      # DEFAULT CURRENT_TIMESTAMP usa la hora de este servidor, no la de la aplicacion.
+      TZ: America/Argentina/Ushuaia
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # El modelo facial cifrado entra en una sola fila.
+      - --max-allowed-packet=64M
+    volumes:
+      - datos:/var/lib/mysql
+      # Corren una sola vez, la primera vez que arranca con el volumen vacio (ADR-0025).
+      - ./base-inicial.sql:/docker-entrypoint-initdb.d/01-base-inicial.sql:ro
+      - ./permisos.sql:/docker-entrypoint-initdb.d/02-permisos.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    mem_limit: ${MEMORIA_DB:-1g}
+    networks:
+      - interna
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMINIO: ${DOMINIO:?falta en .env}
+      CORREO_ACME: ${CORREO_ACME:?falta en .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+      - caddy_config:/config
+    networks:
+      - publica
+
+networks:
+  # internal: sin salida a internet ni entrada desde afuera. Solo la aplicacion ve a la base.
+  interna:
+    internal: true
+  # La aplicacion sale por aca para mandar correo, y Caddy llega a ella.
+  publica:
+
+volumes:
+  datos:
+  caddy_datos:
+  caddy_config:

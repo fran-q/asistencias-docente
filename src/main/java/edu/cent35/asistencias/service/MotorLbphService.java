@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.bytedeco.opencv.opencv_core.MatVector;
@@ -38,6 +39,20 @@ public class MotorLbphService {
     // Etiqueta fija de entrenamiento: cada modelo es de un solo docente, así que lo que importa
     // de predict() es la distancia y no el label.
     public static final int LABEL_DOCENTE = 1;
+
+    /**
+     * Carga el reconocedor al arrancar, para que una biblioteca faltante frene el sistema acá.
+     *
+     * <p>Sin esto OpenCV carga el módulo recién con la primera identificación. En un servidor sin
+     * GTK 2 (ADR-0007, aprendizaje 9) el sistema arrancaba, la salud daba bien, y la falla aparecía
+     * con el primer docente frente a la cámara. Un despliegue roto tiene que romper al desplegarlo.
+     */
+    @PostConstruct
+    void comprobarQueOpenCvCarga() {
+        try (LBPHFaceRecognizer recognizer = LBPHFaceRecognizer.create()) {
+            log.info("Biblioteca de reconocimiento lista: LBPH con radio {}.", recognizer.getRadius());
+        }
+    }
 
     // Entrena un modelo LBPH con los rostros normalizados y lo devuelve ya serializado.
     public byte[] entrenar(List<Mat> rostros) {
