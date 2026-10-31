@@ -29,6 +29,7 @@ services:
       MAIL_PASS: ${MAIL_PASS:?falta en .env}
       MAIL_FROM: ${MAIL_FROM:?falta en .env}
       ALTA_PUBLICA: ${ALTA_PUBLICA:-false}
+      JAVA_TOOL_OPTIONS: ${JAVA_OPCIONES:-}
     expose:
       - "8080"
     # En memoria: al identificar, el modelo descifrado pasa un instante por un archivo temporal

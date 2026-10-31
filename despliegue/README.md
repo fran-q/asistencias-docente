@@ -18,10 +18,31 @@ decisión está en ADR-0025 y ADR-0026.
 ## Qué hace falta
 
 - **Un servidor Linux** con Ubuntu 24.04 y 8 GB de RAM, para 400 docentes. Con pocos docentes
-  alcanza con 4 GB. x86-64: la imagen no está probada sobre ARM.
+  alcanza con 4 GB. x86-64 o ARM: el CI prueba la imagen en las dos.
 - **Un dominio**, con un registro A apuntando a la IP del servidor.
 - **Un servicio de correo** con SMTP, y SPF y DKIM configurados en el dominio. Sin eso los códigos
   de verificación terminan en spam.
+
+## Sin gastar: Oracle Always Free
+
+El servidor gratis con más memoria: 2 OCPU ARM, 12 GB y 200 GB de disco. Se elige al crear la cuenta,
+y estas tres cosas **no se pueden arreglar después**:
+
+- **La región de inicio es para siempre**, y los recursos gratis solo existen ahí. Tiene que ser de
+  la Unión Europea: la AAIP le reconoce nivel adecuado, y a Brasil, Chile o Estados Unidos no. Probá
+  otra región europea si una da "out of host capacity".
+- **Pide tarjeta y teléfono**, para verificar. Oracle indica que no cobra salvo que se pase la cuenta
+  a pago. No la pases: en una cuenta gratis, lo que excede el cupo no se puede crear.
+- **Crear la instancia en la forma `VM.Standard.A1.Flex`, con 2 OCPU y 12 GB, y Ubuntu 24.04.** Es la
+  que dice "Always Free-eligible". Otra forma cobra.
+
+Después de crearla, en **Networking > Virtual Cloud Networks > Security Lists**, abrir los puertos 80
+y 443 de entrada: el firewall de Oracle es aparte del de la máquina. En `.env` usar los valores de
+memoria que indica `.env.ejemplo` para Oracle.
+
+⚠ **No es un servicio con garantías.** En junio de 2026 Oracle bajó este plan a la mitad, sin
+anunciarlo, y apagó las instancias que quedaron por encima. Por eso las copias van afuera de Oracle
+(paso 6): con una copia, las claves y otro servidor, el sistema vuelve a estar en pie.
 
 ## Puesta en marcha
 
