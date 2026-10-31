@@ -156,13 +156,11 @@ fija, control de arranque, freno por origen, proxy, cookies y encabezados, cierr
 cambiar la contraseña, interruptor del alta pública, y cache y comparación del reconocimiento. El
 perfil es `prod` (ver `02-arquitectura.md`, *Entornos*). **Falta, en este orden:**
 
-1. El empaquetado: imagen con GTK 2, `docker-compose` con la aplicación, MariaDB 11.4 y el proxy,
-   `/tmp` en memoria, límite de tamaño del pedido en el proxy. La base se crea cargando
-   `despliegue/base-inicial.sql`, con la colación de `utf8mb4_unicode_ci` en el servidor.
-2. El servidor, el dominio y el correo con SPF, DKIM y DMARC.
-3. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
+1. El servidor, el dominio y el correo con SPF, DKIM y DMARC. El empaquetado ya está, en
+   `despliegue/` (ADR-0026), con su paso a paso.
+2. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
    real, carga con varias cámaras, y restaurar un respaldo de verdad.
-4. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que
+3. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que
    los datos no se comparten con terceros, y el proveedor del servidor es un encargado de
    tratamiento), política de privacidad, procedimiento ARCO, cuánto duran los respaldos (un dato
    suprimido sigue en las copias viejas), y la consulta sobre la inscripción de la base ante la
@@ -178,8 +176,9 @@ perfil es `prod` (ver `02-arquitectura.md`, *Entornos*). **Falta, en este orden:
 - **Se puede saber si una cuenta existe midiendo el tiempo de `/recuperar`:** con cuenta manda un
   correo, sin cuenta no. La respuesta es idéntica y la demora no. Se resuelve mandando el correo
   por fuera del pedido.
-- **El JSON de la cámara no tiene tope de tamaño** y `imdecode` no limita las dimensiones. Solo se
-  alcanza con sesión o con la credencial de un equipo; el proxy pone el primer límite.
+- **`imdecode` no limita las dimensiones de la imagen**, y en la aplicación el JSON de la cámara no
+  tiene tope de tamaño. Solo se alcanza con sesión o con la credencial de un equipo, y Caddy corta
+  en 25 MB.
 - **El alta con la pública cerrada es a mano:** se abre `ALTA_PUBLICA`, se crea y se vuelve a
   cerrar. Una invitación por institución es el paso siguiente si llegan a ser varias.
 - **No hay forma de rotar la clave biométrica.** Cambiarla deja los modelos ilegibles y obliga a

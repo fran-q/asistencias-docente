@@ -323,6 +323,10 @@ y la imputación chocaría contra el UNIQUE, dejando como ausente una clase que 
 | `prod` | Internet, con correo y detrás de un proxy con HTTPS | `application-prod.properties` — versionado y sin secretos. Sale todo de variables de entorno, sin valor por defecto: si falta una, no arranca |
 | `instalacion` | La instalación autónoma | `application-instalacion.properties` (ADR-0022) |
 
+**El despliegue en internet es un servidor con Docker Compose** (ADR-0026, `despliegue/`): la
+aplicación, MariaDB 11.4 y Caddy, que da el HTTPS. Solo Caddy publica puertos. El paso a paso está en
+`despliegue/README.md`, y `despliegue/probar-imagen.sh` lo levanta entero en el CI.
+
 **Fuera de `local` y `test`, el sistema se niega a arrancar con la configuración de desarrollo**
 (`ControlDeArranqueConfig`): la clave o el salt biométricos que están escritos en el repositorio,
 el correo por consola, o la instalación autónoma en el perfil de internet. Corta por omisión y al
@@ -369,7 +373,7 @@ falló —qué no compila, qué marcó Checkstyle, qué tests y con qué mensaje
 se lee con la sesión iniciada en GitHub y las anotaciones las ve cualquiera. También se sube el
 reporte de tests.
 
-## Los 25 ADR
+## Los 26 ADR
 
 Viven en `Documentacion/4-arquitectura/adr/`. Un ADR dice **por qué** se decidió algo y
 qué se descartó.
@@ -401,3 +405,4 @@ qué se descartó.
 | 0023 | Autoría de cada cambio y acciones sensibles | Propuesta |
 | 0024 | `model/` y `dto/` se dividen por dominio | Vigente |
 | 0025 | Una base nueva arranca de un volcado y no de V001 | Vigente |
+| 0026 | Un solo servidor, con Docker Compose y Caddy | Vigente |

@@ -57,6 +57,10 @@ Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en
 - **Thymeleaf** para las vistas; el CSS y el JavaScript son propios, sin librerías de terceros
 - **JavaCV / OpenCV** para el reconocimiento facial y **OpenPDF** para los reportes
 
+## Desplegar en un servidor
+
+Con Docker, siguiendo [`despliegue/README.md`](despliegue/README.md).
+
 ## Correr en local
 
 1. **MariaDB 10.4** (XAMPP sirve). Crear las dos bases: la primera guarda los datos y la segunda,
