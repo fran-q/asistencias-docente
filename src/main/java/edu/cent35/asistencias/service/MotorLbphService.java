@@ -18,6 +18,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static org.bytedeco.opencv.global.opencv_core.CV_32SC1;
+import static org.bytedeco.opencv.global.opencv_imgproc.HISTCMP_CHISQR_ALT;
+import static org.bytedeco.opencv.global.opencv_imgproc.compareHist;
 
 /**
  * Motor de reconocimiento facial basado en LBPH (Local Binary Patterns
@@ -26,9 +28,8 @@ import static org.bytedeco.opencv.global.opencv_core.CV_32SC1;
  * <p>
  * Diseño "un modelo por docente" (ADR-0007): cada modelo se entrena solo
  * con las capturas de una persona. Por eso todas las imágenes de
- * entrenamiento llevan la misma etiqueta {@link #LABEL_DOCENTE}: en la
- * predicción lo que importa no es la etiqueta sino la distancia de
- * confianza.
+ * entrenamiento llevan la misma etiqueta {@link #LABEL_DOCENTE}: al comparar
+ * lo que importa no es la etiqueta sino la distancia.
  */
 @Service
 @Slf4j
@@ -79,6 +80,83 @@ public class MotorLbphService {
             throw new UncheckedIOException("No se pudo deserializar el modelo LBPH.", e);
         } finally {
             borrarTemporal(tmp);
+        }
+    }
+
+    /**
+     * Los histogramas de un modelo guardado, que es lo único que hace falta para comparar contra él.
+     *
+     * <p>El reconocedor se cierra enseguida: los histogramas quedan vivos en el vector, porque
+     * OpenCV cuenta las referencias de sus matrices.
+     */
+    public Histogramas cargarHistogramas(byte[] modeloComprimido) {
+        try (LBPHFaceRecognizer recognizer = deserializar(modeloComprimido)) {
+            return new Histogramas(recognizer.getHistograms());
+        }
+    }
+
+    /**
+     * El histograma de un rostro, calculado igual que lo calcula {@code predict}.
+     *
+     * <p>Se calcula <b>una vez por cuadro</b>. Es la razón de que exista este método y de que no
+     * se llame a {@code predict} de cada modelo: {@code predict} vuelve a calcular el histograma
+     * del rostro cada vez, y eso era lo más caro de identificar. Medido con 400 docentes: 3,7 s
+     * por cuadro con un {@code predict} por modelo, menos de un segundo así. El reconocedor de
+     * paso es la única forma de pedírselo a OpenCV con los mismos parámetros.
+     */
+    public Mat histogramaDe(Mat rostro) {
+        try (LBPHFaceRecognizer recognizer = LBPHFaceRecognizer.create();
+             MatVector imagenes = new MatVector(1);
+             Mat labels = new Mat(1, 1, CV_32SC1)) {
+            imagenes.put(0, rostro);
+            labels.<IntBuffer>createBuffer().put(0, LABEL_DOCENTE);
+            recognizer.train(imagenes, labels);
+            try (MatVector histogramas = recognizer.getHistograms();
+                 Mat histograma = histogramas.get(0)) {
+                return histograma.clone();
+            }
+        }
+    }
+
+    /**
+     * La distancia de un rostro a un modelo: la menor contra cada una de sus capturas.
+     *
+     * <p>Es exactamente la cuenta de {@code predict} (chi-cuadrado alternativo, y se queda con el
+     * mínimo), así que el umbral y el margen calibrados siguen valiendo. Lo sostiene
+     * {@code MotorLbphServiceTest}, que compara las dos contra el mismo modelo.
+     */
+    public double distancia(Histogramas modelo, Mat histogramaDelRostro) {
+        double menor = Double.MAX_VALUE;
+        for (Mat histograma : modelo.matrices) {
+            menor = Math.min(menor, compareHist(histograma, histogramaDelRostro, HISTCMP_CHISQR_ALT));
+        }
+        return menor;
+    }
+
+    /**
+     * Los histogramas de un modelo, en memoria nativa y <b>en claro</b>: con ellos se puede
+     * reconocer a la persona. Hay que cerrarlos cuando dejan de usarse.
+     */
+    public static final class Histogramas implements AutoCloseable {
+
+        private final MatVector vector;
+        private final Mat[] matrices;
+
+        private Histogramas(MatVector vector) {
+            this.vector = vector;
+            this.matrices = new Mat[(int) vector.size()];
+            for (int i = 0; i < matrices.length; i++) {
+                matrices[i] = vector.get(i);
+            }
+        }
+
+        // Libera la memoria nativa de las matrices y del vector.
+        @Override
+        public void close() {
+            for (Mat matriz : matrices) {
+                matriz.close();
+            }
+            vector.close();
         }
     }
 

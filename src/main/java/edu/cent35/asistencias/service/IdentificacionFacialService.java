@@ -2,39 +2,43 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.biometria.IdentificacionResultadoDto;
+import edu.cent35.asistencias.dto.biometria.ModeloActivo;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bytedeco.javacpp.DoublePointer;
-import org.bytedeco.javacpp.IntPointer;
-import org.bytedeco.opencv.opencv_face.LBPHFaceRecognizer;
+import org.bytedeco.opencv.opencv_core.Mat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 /**
  * Identifica a un docente a partir de una imagen, comparándola contra los
  * modelos faciales activos del tenant (Sprint 4 Fase D).
  * <p>
- * Mantiene un <b>cache en memoria</b> de los recognizers LBPH ya cargados.
+ * Mantiene un <b>cache en memoria</b> de los histogramas de cada modelo.
  * Sin cache, cada identificación tendría que descifrar + descomprimir +
  * deserializar TODOS los modelos del tenant, lo que mata el rendimiento del
  * loop de identificación continua (varias llamadas por segundo).
  * <p>
  * El cache se sincroniza en cada llamada: si aparecen nuevos modelos activos
  * los carga, y si algunos dejaron de estar activos (por re-registro o baja
- * del docente) los descarta automáticamente.
+ * del docente) los descarta automáticamente. Es uno solo para todas las
+ * instituciones, así que cada sincronización toca únicamente las entradas de
+ * la institución que está identificando.
  */
 @Service
 @RequiredArgsConstructor
@@ -42,6 +46,7 @@ import java.util.stream.Collectors;
 public class IdentificacionFacialService {
 
     private final ModeloFacialRepository modeloFacialRepository;
+    private final DocenteRepository docenteRepository;
     private final DeteccionRostroService deteccionRostroService;
     private final MotorLbphService motorLbph;
     private final CifradoBiometricoService cifradoService;
@@ -55,11 +60,25 @@ public class IdentificacionFacialService {
     @Value("${app.biometria.umbral-confianza}")
     private double umbralConfianza;
 
-    // Cache: modeloFacialId → recognizer ya cargado y listo para predict.
-    private final ConcurrentHashMap<Long, LBPHFaceRecognizer> cache = new ConcurrentHashMap<>();
+    // Una entrada del cache, con su institución para no tocar nunca las de otra.
+    private record ModeloEnMemoria(Long institucionId, MotorLbphService.Histogramas histogramas) { }
+
+    // Cache: modeloFacialId → histogramas ya cargados y listos para comparar.
+    private final ConcurrentHashMap<Long, ModeloEnMemoria> cache = new ConcurrentHashMap<>();
 
     // Cuando se uso por última vez cada entrada del cache.
     private final ConcurrentHashMap<Long, Long> ultimoUso = new ConcurrentHashMap<>();
+
+    /**
+     * Para que nadie libere unos histogramas mientras otro hilo los está comparando.
+     *
+     * <p>Son memoria nativa: compararlos después de liberarlos no da una excepción. Puede dar una
+     * distancia inventada sin ningún aviso, o voltear la JVM con todas las instituciones adentro.
+     * Comparar toma el candado de lectura, así que
+     * varias cámaras comparan a la vez; liberar toma el de escritura y espera a que terminen.
+     * Liberar es raro: una baja, una revocación, un modelo que dejó de usarse.
+     */
+    private final ReadWriteLock usoDeHistogramas = new ReentrantReadWriteLock();
 
     // Cuántos minutos puede quedar un modelo descifrado en memoria sin que nadie lo use.
     @Value("${app.biometria.cache-minutos-inactividad}")
@@ -92,30 +111,31 @@ public class IdentificacionFacialService {
         long finDeteccionNs = System.nanoTime();
 
         try {
-            List<ModeloFacial> modelos = modeloFacialRepository.findActivosDelTenant(tenantId);
+            List<ModeloActivo> modelos = modeloFacialRepository.activosDelTenant(tenantId);
             if (modelos.isEmpty()) {
                 return IdentificacionResultadoDto.noHayModelos(
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }
-            sincronizarCache(modelos);
+            sincronizarCache(tenantId, modelos);
 
             // Se guarda el mejor Y el segundo mejor. La diferencia entre ambos es el MARGEN, y
             // es lo único que permite ver si el sistema estuvo cerca de confundir a dos
             // docentes: un acierto con margen de 3 puntos esta a un frame de convertirse en un
             // falso positivo, y mirando solo la mejor distancia eso no se nota.
             double mejorDistancia = Double.MAX_VALUE;
-            ModeloFacial mejorMatch = null;
+            ModeloActivo mejorMatch = null;
             double segundaDistancia = Double.MAX_VALUE;
-            ModeloFacial segundoMatch = null;
+            ModeloActivo segundoMatch = null;
 
-            for (ModeloFacial m : modelos) {
-                LBPHFaceRecognizer recognizer = cache.get(m.getId());
-                if (recognizer == null) continue;
+            // Sincronizar va antes del candado y no adentro: puede liberar modelos, y eso espera a
+            // los que están comparando. Este hilo no puede estar de los dos lados.
+            usoDeHistogramas.readLock().lock();
+            try (Mat histogramaDelRostro = motorLbph.histogramaDe(extraido.rostro())) {
+                for (ModeloActivo m : modelos) {
+                    ModeloEnMemoria enMemoria = cache.get(m.modeloId());
+                    if (enMemoria == null) continue;
 
-                try (IntPointer label = new IntPointer(1);
-                     DoublePointer confidence = new DoublePointer(1)) {
-                    recognizer.predict(extraido.rostro(), label, confidence);
-                    double distancia = confidence.get(0);
+                    double distancia = motorLbph.distancia(enMemoria.histogramas(), histogramaDelRostro);
                     if (distancia < mejorDistancia) {
                         segundaDistancia = mejorDistancia;
                         segundoMatch = mejorMatch;
@@ -126,6 +146,8 @@ public class IdentificacionFacialService {
                         segundoMatch = m;
                     }
                 }
+            } finally {
+                usoDeHistogramas.readLock().unlock();
             }
 
             long finComparacionNs = System.nanoTime();
@@ -149,19 +171,22 @@ public class IdentificacionFacialService {
                      + "segundoDocente={} segundaDistancia={} margen={} "
                      + "umbral={} modelosComparados={} msDeteccion={} msComparacion={} msTotal={}",
                      reconocido,
-                     mejorMatch == null ? "-" : mejorMatch.getDocente().getId(),
+                     mejorMatch == null ? "-" : mejorMatch.docenteId(),
                      mejorMatch == null ? "-" : String.format("%.1f", mejorDistancia),
-                     segundoMatch == null ? "-" : segundoMatch.getDocente().getId(),
+                     segundoMatch == null ? "-" : segundoMatch.docenteId(),
                      segundoMatch == null ? "-" : String.format("%.1f", segundaDistancia),
                      margen,
                      umbralConfianza, modelos.size(),
                      msDeteccion, msComparacion, msTotal);
 
             if (reconocido) {
-                Docente d = mejorMatch.getDocente();
+                // Recién acá se busca a la persona: en la mayoría de los cuadros no hay nadie que
+                // nombrar. Con su institución, igual que la lista de modelos.
+                Docente d = docenteRepository.buscarDelTenant(tenantId, mejorMatch.docenteId())
+                    .orElseThrow();
                 return IdentificacionResultadoDto.match(
                     d.getId(), d.getNombreCompleto(), d.getApellido(),
-                    mejorMatch.getId(), mejorDistancia,
+                    mejorMatch.modeloId(), mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
             }
             // Se distingue por qué se rechazó: "no estás registrado" y "no puedo
@@ -169,8 +194,8 @@ public class IdentificacionFacialService {
             if (veredicto == Veredicto.AMBIGUO) {
                 log.warn("Identificacion ambigua: docentes {} y {} quedaron a {} de distancia "
                          + "entre si (minimo exigido {})",
-                         mejorMatch.getDocente().getId(),
-                         segundoMatch.getDocente().getId(),
+                         mejorMatch.docenteId(),
+                         segundoMatch.docenteId(),
                          String.format("%.1f", segundaDistancia - mejorDistancia), margenMinimo);
                 return IdentificacionResultadoDto.ambiguo(mejorDistancia,
                     extraido.x(), extraido.y(), extraido.ancho(), extraido.alto());
@@ -231,60 +256,85 @@ public class IdentificacionFacialService {
         long limite = clock.millis() - minutosInactividad * 60_000L;
         for (Map.Entry<Long, Long> e : ultimoUso.entrySet()) {
             if (e.getValue() > limite) continue;
-            LBPHFaceRecognizer rec = cache.remove(e.getKey());
-            ultimoUso.remove(e.getKey());
-            if (rec != null) {
-                rec.close();
+            if (soltar(e.getKey())) {
                 log.info("Modelo facial id={} descartado del cache tras {} min sin uso.",
                          e.getKey(), minutosInactividad);
             }
         }
     }
 
-    // Saca el recognizer del cache y libera su memoria nativa; sin esto, tras un borrado ARCO
+    // Saca el modelo del cache y libera su memoria nativa; sin esto, tras un borrado ARCO
     // una copia en memoria seguiría reconociendo al docente hasta el próximo reinicio.
     public void evictarModelo(Long modeloFacialId) {
-        ultimoUso.remove(modeloFacialId);
-        LBPHFaceRecognizer rec = cache.remove(modeloFacialId);
-        if (rec != null) {
-            rec.close();
+        if (soltar(modeloFacialId)) {
             log.info("Cache evict explicito del modelo facial id={} (supresion)", modeloFacialId);
         }
     }
 
-    // Deja en el cache exactamente los modelos activos: carga los nuevos y descarta los viejos.
-    private void sincronizarCache(List<ModeloFacial> modelosActivos) {
+    // Saca un modelo del cache y libera su memoria cuando nadie lo esté comparando. Dice si estaba.
+    private boolean soltar(Long modeloFacialId) {
+        ultimoUso.remove(modeloFacialId);
+        ModeloEnMemoria enMemoria = cache.remove(modeloFacialId);
+        if (enMemoria == null) {
+            return false;
+        }
+        usoDeHistogramas.writeLock().lock();
+        try {
+            enMemoria.histogramas().close();
+        } finally {
+            usoDeHistogramas.writeLock().unlock();
+        }
+        return true;
+    }
+
+    /**
+     * Deja en el cache exactamente los modelos activos de esta institución: carga los nuevos y
+     * descarta los viejos.
+     *
+     * <p><b>Mira solo las entradas de la institución que identifica.</b> El cache es de todas, y
+     * antes se descartaba todo lo que no estuviera en la lista de esta: con dos instituciones
+     * tomando asistencia a la vez, cada cuadro de una le vaciaba los modelos a la otra, que tenía
+     * que volver a descifrarlos, y hasta se los liberaba mientras los estaba usando.
+     *
+     * <p>El dato cifrado se pide solo para los que faltan. En régimen no hay ninguno, y esta
+     * consulta no corre.
+     */
+    private void sincronizarCache(Long tenantId, List<ModeloActivo> modelosActivos) {
         Set<Long> idsActivos = modelosActivos.stream()
-            .map(ModeloFacial::getId)
+            .map(ModeloActivo::modeloId)
             .collect(Collectors.toSet());
 
-        // Descartar los que ya no están activos.
-        Set<Long> aRemover = new HashSet<>(cache.keySet());
-        aRemover.removeAll(idsActivos);
-        for (Long id : aRemover) {
-            ultimoUso.remove(id);
-            LBPHFaceRecognizer viejo = cache.remove(id);
-            if (viejo != null) {
-                viejo.close();
+        // Descartar los de esta institución que ya no están activos.
+        cache.forEach((id, enMemoria) -> {
+            if (tenantId.equals(enMemoria.institucionId()) && !idsActivos.contains(id)) {
+                soltar(id);
                 log.debug("Cache evict modelo facial id={}", id);
+            }
+        });
+
+        List<Long> faltantes = new ArrayList<>();
+        for (Long id : idsActivos) {
+            if (!cache.containsKey(id)) faltantes.add(id);
+        }
+        if (!faltantes.isEmpty()) {
+            for (ModeloFacial m : modeloFacialRepository.findAllById(faltantes)) {
+                cache.computeIfAbsent(m.getId(), id -> cargar(tenantId, m));
             }
         }
 
-        // Cargar los nuevos y marcar a todos como usados recién: si están sincronizados es
-        // porque alguien acaba de identificar contra ellos.
+        // Marcar a todos como usados recién: si están sincronizados es porque alguien acaba de
+        // identificar contra ellos.
         long ahora = clock.millis();
-        for (ModeloFacial m : modelosActivos) {
-            cache.computeIfAbsent(m.getId(), id -> cargar(m));
-            ultimoUso.put(m.getId(), ahora);
+        for (Long id : idsActivos) {
+            ultimoUso.put(id, ahora);
         }
     }
 
-    // Descifra el modelo guardado y lo deserializa a un recognizer listo para comparar.
-    private LBPHFaceRecognizer cargar(ModeloFacial m) {
+    // Descifra el modelo guardado y se queda con sus histogramas, listos para comparar.
+    private ModeloEnMemoria cargar(Long tenantId, ModeloFacial m) {
         byte[] descifrado = cifradoService.descifrar(m.getEmbeddingCifrado());
-        LBPHFaceRecognizer rec = motorLbph.deserializar(descifrado);
-        log.info("Modelo facial cargado en cache: id={}, docente_id={}",
-                 m.getId(), m.getDocente().getId());
-        return rec;
+        MotorLbphService.Histogramas histogramas = motorLbph.cargarHistogramas(descifrado);
+        log.info("Modelo facial cargado en cache: id={}, institucion_id={}", m.getId(), tenantId);
+        return new ModeloEnMemoria(tenantId, histogramas);
     }
 }

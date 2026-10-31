@@ -11,7 +11,7 @@ import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.academico.Materia;
 import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
-import edu.cent35.asistencias.model.biometria.ModeloFacial;
+import edu.cent35.asistencias.dto.biometria.ModeloActivo;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.CicloLectivoRepository;
@@ -88,7 +88,7 @@ class PanelInicioServiceTest {
         when(docenteRepository.listarVigentesDelTenant(any())).thenReturn(List.of());
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of());
-        when(modeloFacialRepository.findActivosDelTenant(anyLong())).thenReturn(List.of());
+        when(modeloFacialRepository.activosDelTenant(anyLong())).thenReturn(List.of());
         when(comisionRepository.findActivasEnFecha(any(), anyLong())).thenReturn(List.of());
         when(horarioRepository.findActivosDelDiaConDocente(any(), any(), anyLong())).thenReturn(List.of());
         when(asistenciaRepository.findDelDia(any(), any())).thenReturn(List.of());
@@ -313,8 +313,8 @@ class PanelInicioServiceTest {
             .thenReturn(List.of(completo));
         when(consentimientoRepository.findUltimoEstadoPorDocenteEnTenant(anyLong()))
             .thenReturn(List.of(vista(1L, true)));
-        when(modeloFacialRepository.findActivosDelTenant(anyLong()))
-            .thenReturn(List.of(ModeloFacial.builder().id(1L).docente(completo).activo(true).build()));
+        when(modeloFacialRepository.activosDelTenant(anyLong()))
+            .thenReturn(List.of(new ModeloActivo(1L, completo.getId())));
 
         assertThat(service.armar().todoEnOrden()).isTrue();
     }

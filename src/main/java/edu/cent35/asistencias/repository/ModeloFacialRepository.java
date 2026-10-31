@@ -1,5 +1,6 @@
 package edu.cent35.asistencias.repository;
 
+import edu.cent35.asistencias.dto.biometria.ModeloActivo;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -23,13 +24,15 @@ public interface ModeloFacialRepository extends JpaRepository<ModeloFacial, Long
     // Historial completo de modelos del docente, del más nuevo al más viejo.
     List<ModeloFacial> findByDocenteIdOrderByFechaRegistroDescIdDesc(Long docenteId);
 
-    // Modelos activos del tenant: es el universo contra el que se compara cada rostro.
+    // Modelos activos del tenant: es el universo contra el que se compara cada rostro. Corre una
+    // vez por cuadro, así que no trae el dato cifrado: eso se pide solo para los que falten cargar.
     @Query("""
-        SELECT m FROM ModeloFacial m
-        JOIN FETCH m.docente d
+        SELECT new edu.cent35.asistencias.dto.biometria.ModeloActivo(m.id, d.id)
+        FROM ModeloFacial m
+        JOIN m.docente d
         WHERE m.activo = true
           AND d.activo = true
           AND d.institucionId = :tenantId
     """)
-    List<ModeloFacial> findActivosDelTenant(@Param("tenantId") Long tenantId);
+    List<ModeloActivo> activosDelTenant(@Param("tenantId") Long tenantId);
 }

@@ -2,6 +2,7 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.PanelInicioDto;
+import edu.cent35.asistencias.dto.biometria.ModeloActivo;
 import edu.cent35.asistencias.dto.asistencia.ClasesDeAhoraDto;
 import edu.cent35.asistencias.model.academico.CicloLectivo;
 import edu.cent35.asistencias.model.academico.Comision;
@@ -10,7 +11,6 @@ import edu.cent35.asistencias.model.academico.EstadoCiclo;
 import edu.cent35.asistencias.model.academico.Horario;
 import edu.cent35.asistencias.model.asistencia.Asistencia;
 import edu.cent35.asistencias.model.asistencia.EstadoAsistencia;
-import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.persona.Docente;
 import edu.cent35.asistencias.repository.AsistenciaRepository;
 import edu.cent35.asistencias.repository.BloquePresenciaRepository;
@@ -437,8 +437,8 @@ public class PanelInicioService {
         });
 
         Set<Long> conModelo = new HashSet<>();
-        for (ModeloFacial m : modeloFacialRepository.findActivosDelTenant(tenantId)) {
-            conModelo.add(m.getDocente().getId());
+        for (ModeloActivo m : modeloFacialRepository.activosDelTenant(tenantId)) {
+            conModelo.add(m.docenteId());
         }
 
         List<Docente> sinConsentimiento = activos.stream()

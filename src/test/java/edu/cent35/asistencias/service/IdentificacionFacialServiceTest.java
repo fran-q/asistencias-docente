@@ -2,8 +2,10 @@ package edu.cent35.asistencias.service;
 
 import edu.cent35.asistencias.config.TenantContext;
 import edu.cent35.asistencias.dto.biometria.IdentificacionResultadoDto;
+import edu.cent35.asistencias.dto.biometria.ModeloActivo;
 import edu.cent35.asistencias.model.biometria.ModeloFacial;
 import edu.cent35.asistencias.model.persona.Docente;
+import edu.cent35.asistencias.repository.DocenteRepository;
 import edu.cent35.asistencias.repository.ModeloFacialRepository;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.junit.jupiter.api.AfterEach;
@@ -17,10 +19,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -33,8 +44,12 @@ import static org.mockito.Mockito.when;
 class IdentificacionFacialServiceTest {
 
     private static final Long TENANT_A = 1L;
+    private static final Long TENANT_B = 2L;
+    // Para los casos que miran el cache: nadie queda reconocido y no hay a quién ir a buscar.
+    private static final double LEJOS_DEL_UMBRAL = 100.0;
 
     @Mock private ModeloFacialRepository modeloFacialRepository;
+    @Mock private DocenteRepository docenteRepository;
     @Mock private DeteccionRostroService deteccionRostroService;
     @Mock private MotorLbphService motorLbph;
     @Mock private CifradoBiometricoService cifradoService;
@@ -70,7 +85,7 @@ class IdentificacionFacialServiceTest {
     void identificar_sinModelos() {
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
             .thenReturn(unRostro());
-        when(modeloFacialRepository.findActivosDelTenant(TENANT_A)).thenReturn(List.of());
+        when(modeloFacialRepository.activosDelTenant(TENANT_A)).thenReturn(List.of());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
 
@@ -88,7 +103,7 @@ class IdentificacionFacialServiceTest {
     void identificar_incluyeBbox() {
         when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
             .thenReturn(unRostro());
-        when(modeloFacialRepository.findActivosDelTenant(TENANT_A)).thenReturn(List.of());
+        when(modeloFacialRepository.activosDelTenant(TENANT_A)).thenReturn(List.of());
 
         IdentificacionResultadoDto r = service.identificar(new byte[]{1, 2, 3});
 
@@ -127,6 +142,155 @@ class IdentificacionFacialServiceTest {
         assertThat(r.mensaje()).contains("2 personas en cuadro");
         // Sin recuadro a propósito: pintar a una de las dos sugeriría que el sistema la eligió.
         assertThat(r.x()).isNull();
+    }
+
+    // ========================================================================
+    //  El cache con varias instituciones
+    // ========================================================================
+
+    @Test
+    @DisplayName("Identificar en una institución no le saca los modelos a otra")
+    void unaInstitucionNoLeVaciaElCacheALaOtra() {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenAnswer(i -> unRostro());
+        when(cifradoService.descifrar(any())).thenReturn(new byte[]{9});
+        when(motorLbph.distancia(any(), any())).thenReturn(LEJOS_DEL_UMBRAL);
+        MotorLbphService.Histogramas deA = mock(MotorLbphService.Histogramas.class);
+        MotorLbphService.Histogramas deB = mock(MotorLbphService.Histogramas.class);
+        when(motorLbph.cargarHistogramas(any())).thenReturn(deA, deB);
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(10L, 100L)));
+        when(modeloFacialRepository.activosDelTenant(TENANT_B))
+            .thenReturn(List.of(new ModeloActivo(20L, 200L)));
+        when(modeloFacialRepository.findAllById(List.of(10L))).thenReturn(List.of(cifrado(10L)));
+        when(modeloFacialRepository.findAllById(List.of(20L))).thenReturn(List.of(cifrado(20L)));
+
+        // Dos cámaras turnándose, una por institución: es lo que pasa a las seis de la tarde.
+        service.identificar(new byte[]{1});
+        TenantContext.set(TENANT_B);
+        service.identificar(new byte[]{1});
+        TenantContext.set(TENANT_A);
+        service.identificar(new byte[]{1});
+        TenantContext.set(TENANT_B);
+        service.identificar(new byte[]{1});
+
+        verify(motorLbph, times(2)).cargarHistogramas(any());
+        verify(deA, never()).close();
+        verify(deB, never()).close();
+    }
+
+    @Test
+    @DisplayName("Un modelo que dejó de estar activo en esa institución se libera")
+    void elModeloInactivoSeLibera() {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenAnswer(i -> unRostro());
+        when(cifradoService.descifrar(any())).thenReturn(new byte[]{9});
+        when(motorLbph.distancia(any(), any())).thenReturn(LEJOS_DEL_UMBRAL);
+        MotorLbphService.Histogramas viejo = mock(MotorLbphService.Histogramas.class);
+        when(motorLbph.cargarHistogramas(any())).thenReturn(viejo);
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(10L, 100L)));
+        when(modeloFacialRepository.findAllById(List.of(10L))).thenReturn(List.of(cifrado(10L)));
+
+        service.identificar(new byte[]{1});
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(11L, 100L)));
+        when(modeloFacialRepository.findAllById(List.of(11L))).thenReturn(List.of(cifrado(11L)));
+        service.identificar(new byte[]{1});
+
+        verify(viejo).close();
+    }
+
+    @Test
+    @DisplayName("El dato cifrado se pide una sola vez: los cuadros siguientes no lo mueven")
+    void elDatoCifradoNoSePideEnCadaCuadro() {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenAnswer(i -> unRostro());
+        when(cifradoService.descifrar(any())).thenReturn(new byte[]{9});
+        when(motorLbph.distancia(any(), any())).thenReturn(LEJOS_DEL_UMBRAL);
+        when(motorLbph.cargarHistogramas(any())).thenReturn(mock(MotorLbphService.Histogramas.class));
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(10L, 100L)));
+        when(modeloFacialRepository.findAllById(List.of(10L))).thenReturn(List.of(cifrado(10L)));
+
+        for (int cuadro = 0; cuadro < 5; cuadro++) {
+            service.identificar(new byte[]{1});
+        }
+
+        verify(modeloFacialRepository, times(1)).findAllById(any());
+    }
+
+    @Test
+    @DisplayName("Liberar un modelo espera a que termine de compararse: es memoria nativa")
+    void liberarEsperaALosQueComparan() throws Exception {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenAnswer(i -> unRostro());
+        when(cifradoService.descifrar(any())).thenReturn(new byte[]{9});
+        MotorLbphService.Histogramas histogramas = mock(MotorLbphService.Histogramas.class);
+        when(motorLbph.cargarHistogramas(any())).thenReturn(histogramas);
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(10L, 100L)));
+        when(modeloFacialRepository.findAllById(List.of(10L))).thenReturn(List.of(cifrado(10L)));
+
+        CountDownLatch comparando = new CountDownLatch(1);
+        CountDownLatch terminar = new CountDownLatch(1);
+        when(motorLbph.distancia(any(), any())).thenAnswer(i -> {
+            comparando.countDown();
+            terminar.await(5, TimeUnit.SECONDS);
+            return LEJOS_DEL_UMBRAL;
+        });
+
+        ExecutorService hilos = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> camara = hilos.submit(() -> {
+                TenantContext.set(TENANT_A);
+                try {
+                    service.identificar(new byte[]{1});
+                } finally {
+                    TenantContext.clear();
+                }
+            });
+            assertThat(comparando.await(5, TimeUnit.SECONDS)).isTrue();
+
+            Future<?> baja = hilos.submit(() -> service.evictarModelo(10L));
+            Thread.sleep(200);
+            verify(histogramas, never()).close();
+
+            terminar.countDown();
+            camara.get(5, TimeUnit.SECONDS);
+            baja.get(5, TimeUnit.SECONDS);
+            verify(histogramas).close();
+        } finally {
+            terminar.countDown();
+            hilos.shutdownNow();
+        }
+    }
+
+    @Test
+    @DisplayName("Se acepta al mejor candidato con margen, y recién ahí se busca a la persona")
+    void aceptaAlMejorConMargen() {
+        when(deteccionRostroService.extraerRostroNormalizado(any(), anyInt()))
+            .thenAnswer(i -> unRostro());
+        when(cifradoService.descifrar(any())).thenReturn(new byte[]{9});
+        MotorLbphService.Histogramas cerca = mock(MotorLbphService.Histogramas.class);
+        MotorLbphService.Histogramas lejos = mock(MotorLbphService.Histogramas.class);
+        when(motorLbph.cargarHistogramas(any())).thenReturn(cerca, lejos);
+        when(motorLbph.distancia(org.mockito.ArgumentMatchers.eq(cerca), any())).thenReturn(40.0);
+        when(motorLbph.distancia(org.mockito.ArgumentMatchers.eq(lejos), any())).thenReturn(60.0);
+        when(modeloFacialRepository.activosDelTenant(TENANT_A))
+            .thenReturn(List.of(new ModeloActivo(10L, 100L), new ModeloActivo(20L, 200L)));
+        when(modeloFacialRepository.findAllById(any()))
+            .thenReturn(List.of(cifrado(10L), cifrado(20L)));
+        Docente docente = mock(Docente.class);
+        when(docente.getId()).thenReturn(100L);
+        when(docenteRepository.buscarDelTenant(TENANT_A, 100L))
+            .thenReturn(java.util.Optional.of(docente));
+
+        IdentificacionResultadoDto r = service.identificar(new byte[]{1});
+
+        assertThat(r.reconocido()).isTrue();
+        assertThat(r.docenteId()).isEqualTo(100L);
+        assertThat(r.modeloFacialId()).isEqualTo(10L);
     }
 
     // ========================================================================
@@ -214,6 +378,11 @@ class IdentificacionFacialServiceTest {
     // Extracción sin ningún rostro en el cuadro.
     private DeteccionRostroService.Extraccion sinRostro() {
         return new DeteccionRostroService.Extraccion(0, null);
+    }
+
+    // Un modelo tal como vuelve de la base, con su dato cifrado.
+    private ModeloFacial cifrado(Long id) {
+        return ModeloFacial.builder().id(id).embeddingCifrado(new byte[]{1}).build();
     }
 
     // Modelo facial activo del docente indicado.
