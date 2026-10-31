@@ -15,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sesión abierta en otro equipo - Visum</title>
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var t = null;
             try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }

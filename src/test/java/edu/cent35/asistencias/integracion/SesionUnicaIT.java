@@ -2,13 +2,18 @@ package edu.cent35.asistencias.integracion;
 
 import edu.cent35.asistencias.DatosDePrueba;
 import edu.cent35.asistencias.config.TenantContext;
+import edu.cent35.asistencias.config.SecurityConfig;
 import edu.cent35.asistencias.model.institucion.Institucion;
+import edu.cent35.asistencias.model.institucion.PropositoCodigo;
 import edu.cent35.asistencias.model.institucion.Rol;
 import edu.cent35.asistencias.model.institucion.Usuario;
+import edu.cent35.asistencias.repository.CodigoVerificacionRepository;
 import edu.cent35.asistencias.repository.InstitucionRepository;
 import edu.cent35.asistencias.repository.RolRepository;
 import edu.cent35.asistencias.repository.UsuarioRepository;
+import edu.cent35.asistencias.service.CodigoVerificacionService;
 import edu.cent35.asistencias.service.UsuarioService;
+import edu.cent35.asistencias.service.VerificacionCuentaService;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.junit.jupiter.api.AfterEach;
@@ -59,6 +64,9 @@ class SesionUnicaIT {
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private UsuarioService usuarioService;
     @Autowired private SessionRegistry sessionRegistry;
+    @Autowired private CodigoVerificacionService codigoService;
+    @Autowired private CodigoVerificacionRepository codigoRepository;
+    @Autowired private VerificacionCuentaService verificacionService;
 
     private Long institucionId;
     private Long usuarioId;
@@ -87,6 +95,7 @@ class SesionUnicaIT {
     @AfterEach
     void limpiar() {
         vaciarElRegistroDeSesiones();
+        codigoRepository.deleteAll();
         usuarioRepository.deleteById(usuarioId);
         institucionRepository.deleteById(institucionId);
         TenantContext.clear();
@@ -212,6 +221,41 @@ class SesionUnicaIT {
         // Sin esto seguiría operando media hora con una cuenta dada de baja.
         mockMvc.perform(get("/").session(equipo))
             .andExpect(redirectedUrl("/login?desplazada"));
+    }
+
+    @Test
+    @DisplayName("Recuperar la contraseña cierra las sesiones abiertas: quien la robó queda afuera")
+    void recuperarLaContrasenaCierraLasSesiones() throws Exception {
+        MockHttpSession equipo = new MockHttpSession();
+        entrar(equipo);
+
+        Usuario cuenta = usuarioRepository.findById(usuarioId).orElseThrow();
+        String codigo = codigoService.emitir(cuenta, PropositoCodigo.RECUPERACION_PASSWORD,
+            cuenta.getEmail(), "127.0.0.1");
+        verificacionService.completarRecuperacion(usuarioId, codigo, "OtraClave12345");
+
+        mockMvc.perform(get("/").session(equipo)).andExpect(redirectedUrl("/login?desplazada"));
+    }
+
+    @Test
+    @DisplayName("Cambiar la contraseña desde Mi cuenta cierra las otras sesiones, no la propia")
+    void cambiarLaContrasenaCierraLasOtrasSesiones() throws Exception {
+        MockHttpSession otroEquipo = new MockHttpSession();
+        entrar(otroEquipo);
+        MockHttpSession esteEquipo = new MockHttpSession();
+        entrar(esteEquipo);
+
+        Usuario cuenta = usuarioRepository.findById(usuarioId).orElseThrow();
+        esteEquipo.removeAttribute(SecurityConfig.SESION_POR_CONFIRMAR);
+        esteEquipo.setAttribute("cambioPasswordAutorizadoPara", cuenta.getId());
+        esteEquipo.setAttribute("cambioPasswordVence", LocalDateTime.now().plusMinutes(5));
+
+        mockMvc.perform(post("/mi-cuenta/password").session(esteEquipo).with(csrf())
+                .param("nuevaPassword", "OtraClave12345").param("confirmacion", "OtraClave12345"))
+            .andExpect(redirectedUrl("/mi-cuenta"));
+
+        mockMvc.perform(get("/").session(esteEquipo)).andExpect(status().isOk());
+        mockMvc.perform(get("/").session(otroEquipo)).andExpect(redirectedUrl("/login?desplazada"));
     }
 
     private org.springframework.test.web.servlet.ResultActions entrar(MockHttpSession sesion)

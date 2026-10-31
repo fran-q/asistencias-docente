@@ -44,10 +44,10 @@ class PasswordSeguraTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "Visum2026",        // el caso típico
-        "Abc123",           // justo el mínimo: 6
-        "Aa1bbbbbbbbbbbbbbbbb",   // justo el máximo: 20 caracteres
-        "aB3xyz",
+        "Visum2026xy",      // el caso típico
+        "Abcdefg123",       // justo el mínimo: 10
+        "Aa1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",   // justo el máximo: 64
+        "aB3xyzwvut",
     })
     @DisplayName("acepta las que cumplen largo y las tres clases de carácter")
     void aceptaLasValidas(String password) {
@@ -59,7 +59,9 @@ class PasswordSeguraTest {
     @ParameterizedTest
     @ValueSource(strings = {
         "Ab1",                      // corta
-        "Aa1234567890123456789",    // 21: se pasa por uno
+        "Aa1bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", // 65: se pasa por uno
+        "Abc123",                   // las 6 de antes ya no alcanzan
+        "Aa1🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂", // entra en 64 caracteres y se pasa de los 72 bytes de BCrypt
         "visum2026",                // sin mayúscula
         "VISUM2026",                // sin minúscula
         "VisumVisum",               // sin número
@@ -80,7 +82,7 @@ class PasswordSeguraTest {
         assertThat(mensajeDe("VisumVisum")).contains("un número");
         assertThat(mensajeDe("VISUM2026")).contains("una minúscula");
         assertThat(mensajeDe("Ab1")).contains("muy corta");
-        assertThat(mensajeDe("Aa1234567890123456789")).contains("muy larga");
+        assertThat(mensajeDe("Aa1" + "b".repeat(62))).contains("muy larga");
 
         // Y cuando falta más de una cosa, las nombra todas.
         assertThat(mensajeDe("abc")).contains("muy corta").contains("una mayúscula").contains("un número");
@@ -101,7 +103,7 @@ class PasswordSeguraTest {
     @Test
     @DisplayName("alta de institución, alta de usuario, recuperación y cambio: la misma regla")
     void losCuatroFormulariosCoinciden() {
-        String valida   = "Visum2026";
+        String valida   = "Visum2026xy";
         String invalida = "visum";      // corta, sin mayúscula y sin número
 
         // Alta de institución
@@ -118,7 +120,7 @@ class PasswordSeguraTest {
         cambio.setNuevaPassword(valida);
         cambio.setConfirmacion(valida);
         assertThat(erroresDeCampo(cambio, "nuevaPassword"))
-            .as("antes exigia 10 caracteres y rechazaba una de 9 que los demas aceptaban")
+            .as("antes exigia otro largo y rechazaba una que los demas aceptaban")
             .isEmpty();
 
         // Recuperación desde afuera

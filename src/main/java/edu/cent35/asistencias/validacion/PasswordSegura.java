@@ -23,10 +23,12 @@ import java.lang.annotation.Target;
  * contraseña la toma anotándose con {@code @PasswordSegura}: si mañana cambia, cambia en un
  * archivo y en todas las pantallas a la vez.
  *
- * <p><b>La regla.</b> Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un
- * número. El mínimo de 6 es el piso razonable para un sistema con tope de intentos; el máximo
- * de 20 evita que alguien pegue un texto entero por accidente. Las tres clases de carácter
- * obligan a salir de las contraseñas que se adivinan solas.
+ * <p><b>La regla.</b> Entre 10 y 64 caracteres, con al menos una minúscula, una mayúscula y un
+ * número. El mínimo subió de 6 a 10 al preparar la salida a internet: lo que más alarga el tiempo
+ * de adivinar una clave es su largo, y seis caracteres se recorren enteros aun con el tope de
+ * intentos del login. El máximo deja espacio para una frase, y queda por debajo de los 72 bytes
+ * que acepta BCrypt salvo con caracteres raros, que el validador también controla. Las tres
+ * clases de carácter obligan a salir de las contraseñas que se adivinan solas.
  *
  * <p><b>No exige símbolos.</b> Agregan poco frente a las tres clases ya pedidas y en cambio
  * generan la contraseña anotada en un papel al lado del teclado, que es un problema peor.
@@ -38,13 +40,13 @@ import java.lang.annotation.Target;
 public @interface PasswordSegura {
 
     /** Mínimo de caracteres. */
-    int MIN = 6;
+    int MIN = 10;
 
     /** Máximo de caracteres. */
-    int MAX = 20;
+    int MAX = 64;
 
     /** Texto para las pantallas, para no repetirlo en cada plantilla. */
-    String AYUDA = "Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.";
+    String AYUDA = "Entre 10 y 64 caracteres, con al menos una minúscula, una mayúscula y un número.";
 
     String message() default "La contraseña no cumple los requisitos";
 

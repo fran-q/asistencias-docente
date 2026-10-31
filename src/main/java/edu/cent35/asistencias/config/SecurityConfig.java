@@ -13,8 +13,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.HeaderWriterFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import edu.cent35.asistencias.seguridad.FrenoDeOrigenFilter;
+import edu.cent35.asistencias.seguridad.PoliticaDeContenidoFilter;
 import edu.cent35.asistencias.seguridad.SesionesActivasService;
+import edu.cent35.asistencias.service.FrenoDeOrigenService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -76,9 +84,32 @@ public class SecurityConfig {
         http
             .securityMatcher("/kiosco", "/kiosco/**")
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            .csrf(csrf -> csrf.csrfTokenRepository(
-                CookieCsrfTokenRepository.withHttpOnlyFalse()));
+            .addFilterBefore(new PoliticaDeContenidoFilter(), HeaderWriterFilter.class)
+            .headers(SecurityConfig::encabezados)
+            .csrf(csrf -> csrf.csrfTokenRepository(repositorioCsrf()));
         return http.build();
+    }
+
+    /**
+     * Los encabezados de seguridad que no vienen por defecto, comunes a las dos cadenas.
+     *
+     * <p>HSTS y {@code X-Frame-Options} los pone Spring Security, y HSTS solo en una conexión
+     * HTTPS: por eso depende de {@code server.forward-headers-strategy}. La cámara se permite solo
+     * al propio sitio, y lo demás que el sistema no usa queda apagado.
+     */
+    private static void encabezados(HeadersConfigurer<HttpSecurity> encabezados) {
+        encabezados
+            .referrerPolicy(r -> r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.SAME_ORIGIN))
+            .addHeaderWriter(new StaticHeadersWriter("Permissions-Policy",
+                "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"));
+    }
+
+    // El token CSRF en cookie, legible por los scripts que hacen fetch y sin viajar desde otro sitio.
+    // Secure lo decide el repositorio según cómo llegó la conexión.
+    private static CookieCsrfTokenRepository repositorioCsrf() {
+        CookieCsrfTokenRepository repositorio = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repositorio.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+        return repositorio;
     }
 
     // Arma la cadena de filtros: qué es público, cómo se entra y cómo se sale.
@@ -86,8 +117,14 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http,
                                           SessionRegistry sessionRegistry,
-                                          SesionesActivasService sesionesActivas) throws Exception {
+                                          SesionesActivasService sesionesActivas,
+                                          FrenoDeOrigenService freno) throws Exception {
         http
+            .addFilterBefore(new PoliticaDeContenidoFilter(), HeaderWriterFilter.class)
+            .headers(SecurityConfig::encabezados)
+            // Después del CSRF y antes del que compara la contraseña: un intento bloqueado no
+            // llega a gastar un BCrypt, y un POST sin token no llega a contar como intento.
+            .addFilterBefore(new FrenoDeOrigenFilter(freno), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
                 // /recuperar/** va abierto por necesidad: quien perdió la contraseña no puede
                 // autenticarse para pedirla. El flujo se protege con el código de un solo uso.
@@ -117,13 +154,14 @@ public class SecurityConfig {
             )
             .formLogin(form -> form
                 .loginPage("/login")
-                .successHandler(despuesDeEntrar(sesionesActivas))
+                .successHandler(despuesDeEntrar(sesionesActivas, freno))
                 // Tras un login fallido preservamos SOLO el usuario intentado
                 // (nunca la contrasenia) para reponerlo en el formulario. Mejora
                 // la usabilidad (RNF-21/24) sin exponer credenciales: la
                 // contrasenia se vuelve a escribir.
                 .failureHandler((request, response, exception) -> {
                     String usuario = request.getParameter("username");
+                    freno.anotarLoginFallido(usuario, request.getRemoteAddr());
                     if (usuario != null && !usuario.isBlank()) {
                         request.getSession().setAttribute("ULTIMO_USUARIO_LOGIN", usuario);
                     }
@@ -145,8 +183,7 @@ public class SecurityConfig {
             // que la entrada de autenticación llegara a ver la ruta original. Medido: el
             // matcher recibía /error. En cookie el token sobrevive, el filtro de CSRF deja
             // pasar y recién entonces se evalúa la sesión, que es lo que falta de verdad.
-            .csrf(csrf -> csrf.csrfTokenRepository(
-                CookieCsrfTokenRepository.withHttpOnlyFalse()))
+            .csrf(csrf -> csrf.csrfTokenRepository(repositorioCsrf()))
             // Sin esto, una sesión vencida contesta el POST de fetch con la redirección al
             // login. Ver el javadoc de sesionVencidaEnApi.
             .exceptionHandling(ex -> ex.authenticationEntryPoint(entradaDeAutenticacion()))
@@ -319,8 +356,10 @@ public class SecurityConfig {
      * <p>La marca va en la sesión y no en la base: describe a esta sesión, no a la cuenta, y
      * muere con ella. Si el navegador se cierra antes de decidir, no queda nada que limpiar.
      */
-    private static AuthenticationSuccessHandler despuesDeEntrar(SesionesActivasService sesiones) {
+    private static AuthenticationSuccessHandler despuesDeEntrar(SesionesActivasService sesiones,
+                                                                FrenoDeOrigenService freno) {
         return (request, response, autenticacion) -> {
+            freno.anotarLoginCorrecto(request.getParameter("username"), request.getRemoteAddr());
             String actual = request.getSession().getId();
             boolean hayOtras = !sesiones.otrasDe(autenticacion.getName(), actual).isEmpty();
             if (hayOtras) {

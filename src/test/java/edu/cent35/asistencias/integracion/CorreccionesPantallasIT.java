@@ -203,8 +203,8 @@ class CorreccionesPantallasIT {
                 .param("email", "puntos@x.test")
                 .param("nombre", "Tres")
                 .param("apellido", "Puntos")
-                .param("password", "Clave123")
-                .param("confirmacion", "Clave123"))
+                .param("password", "ClaveLarga123")
+                .param("confirmacion", "ClaveLarga123"))
             .andExpect(status().isOk())
             .andExpect(content().string(containsString("Tiene que tener al menos 3 letras.")));
 
@@ -423,8 +423,8 @@ class CorreccionesPantallasIT {
                 .param("email", username + "@x.test")
                 .param("nombre", "  ronald  ")
                 .param("apellido", "McDonald")
-                .param("password", "Clave123")
-                .param("confirmacion", "Clave123"))
+                .param("password", "ClaveLarga123")
+                .param("confirmacion", "ClaveLarga123"))
             .andExpect(status().is3xxRedirection());
 
         Usuario creado = usuarioRepository.findAll().stream()

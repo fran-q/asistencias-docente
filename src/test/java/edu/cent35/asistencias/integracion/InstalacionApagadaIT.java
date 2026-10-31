@@ -56,8 +56,8 @@ class InstalacionApagadaIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().isNotFound());
     }
 
@@ -76,8 +76,8 @@ class InstalacionApagadaIT {
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
                 .param("clave", "ABCDE-ABCDE-ABCDE-ABCDE")
-                .param("nuevaPassword", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("nuevaPassword", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().isNotFound());
     }
 

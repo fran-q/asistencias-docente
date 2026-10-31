@@ -22,7 +22,7 @@
     <meta name="_csrf_header" th:content="${_csrf?.headerName}">
     <title>Registro de asistencia - Visum</title>
 
-    <script>
+    <script th:nonce="${cspNonce}">
         // Mismo criterio que el layout: se aplica antes de la hoja de estilos para que la
         // pantalla no alcance a pintarse de un color y saltar al otro.
         (function () {

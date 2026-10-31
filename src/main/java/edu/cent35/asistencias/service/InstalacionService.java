@@ -57,6 +57,11 @@ public class InstalacionService {
         return modalidad.esAutonoma();
     }
 
+    /** Si está abierta el alta pública de instituciones. */
+    public boolean altaPublicaAbierta() {
+        return modalidad.altaPublicaAbierta();
+    }
+
     /** Si corresponde mostrar el asistente. Falso en desarrollo, y falso apenas hay datos. */
     public boolean disponible() {
         if (!modalidad.esAutonoma() || yaHayInstitucion) {

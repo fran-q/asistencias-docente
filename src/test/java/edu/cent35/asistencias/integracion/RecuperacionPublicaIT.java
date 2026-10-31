@@ -299,7 +299,9 @@ class RecuperacionPublicaIT {
 
         // El token CSRF es distinto en cada sesión por definición, así que se normaliza: de
         // lo contrario las dos páginas nunca serían iguales y el test no probaría nada.
-        return html.replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\" value=\"TOKEN\"");
+        // El nonce de la política de contenido, igual: cambia en cada pedido.
+        return html.replaceAll("name=\"_csrf\" value=\"[^\"]*\"", "name=\"_csrf\" value=\"TOKEN\"")
+                   .replaceAll("nonce=\"[^\"]*\"", "nonce=\"NONCE\"");
     }
 
     private void limpiar() {

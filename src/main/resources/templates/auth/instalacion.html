@@ -16,7 +16,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración inicial - Visum</title>
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var t = null;
             try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
@@ -146,7 +146,7 @@
                                  que pida algo distinto de lo que el servidor exige manda a
                                  escribir una contraseña que después va a rechazar. -->
                             <span class="form-hint">
-                                Entre 6 y 20, con minúscula, mayúscula y número.
+                                Entre 10 y 64, con minúscula, mayúscula y número.
                             </span>
                             <span class="form-error" th:if="${#fields.hasErrors('password')}"
                                   th:errors="*{password}">Error</span>

@@ -85,12 +85,12 @@ class ClaveRecuperacionIT {
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
                 .param("clave", clave)
-                .param("nuevaPassword", "Nueva456")
-                .param("confirmacion", "Nueva456"))
+                .param("nuevaPassword", "NuevaClave456")
+                .param("confirmacion", "NuevaClave456"))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login"));
 
-        assertThat(passwordEncoder.matches("Nueva456", cuenta().getPasswordHash())).isTrue();
+        assertThat(passwordEncoder.matches("NuevaClave456", cuenta().getPasswordHash())).isTrue();
     }
 
     @Test
@@ -102,11 +102,11 @@ class ClaveRecuperacionIT {
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
                 .param("clave", comoLaCopiaron)
-                .param("nuevaPassword", "Nueva456")
-                .param("confirmacion", "Nueva456"))
+                .param("nuevaPassword", "NuevaClave456")
+                .param("confirmacion", "NuevaClave456"))
             .andExpect(redirectedUrl("/login"));
 
-        assertThat(passwordEncoder.matches("Nueva456", cuenta().getPasswordHash())).isTrue();
+        assertThat(passwordEncoder.matches("NuevaClave456", cuenta().getPasswordHash())).isTrue();
     }
 
     @Test
@@ -118,8 +118,8 @@ class ClaveRecuperacionIT {
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
                 .param("clave", "ZZZZZ-ZZZZZ-ZZZZZ-ZZZZZ")
-                .param("nuevaPassword", "Nueva456")
-                .param("confirmacion", "Nueva456"))
+                .param("nuevaPassword", "NuevaClave456")
+                .param("confirmacion", "NuevaClave456"))
             .andExpect(status().isOk());
 
         assertThat(cuenta().getPasswordHash()).isEqualTo(hashOriginal);
@@ -139,11 +139,11 @@ class ClaveRecuperacionIT {
         mvc.perform(post("/recuperar/clave").with(csrf())
                 .param("username", "instituto")
                 .param("clave", vieja)
-                .param("nuevaPassword", "Nueva456")
-                .param("confirmacion", "Nueva456"))
+                .param("nuevaPassword", "NuevaClave456")
+                .param("confirmacion", "NuevaClave456"))
             .andExpect(status().isOk());
 
-        assertThat(passwordEncoder.matches("Nueva456", cuenta().getPasswordHash())).isFalse();
+        assertThat(passwordEncoder.matches("NuevaClave456", cuenta().getPasswordHash())).isFalse();
     }
 
     @Test
@@ -162,8 +162,8 @@ class ClaveRecuperacionIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().is3xxRedirection())
             .andReturn();
 

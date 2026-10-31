@@ -44,7 +44,7 @@
                 <label for="anio">Año</label>
                 <input type="number" id="anio" name="anio" min="2000" max="2200"
                        th:value="${anioSeleccionado}"
-                       onchange="this.form.submit()">
+                       data-enviar-al-cambiar>
             </form>
             <th:block th:unless="${#lists.isEmpty(dias)}">
                 <div class="filtro__buscador">

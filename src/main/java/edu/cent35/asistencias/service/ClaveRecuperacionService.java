@@ -122,6 +122,8 @@ public class ClaveRecuperacionService {
         usuario.setPasswordHash(passwordEncoder.encode(passwordNueva));
         usuarioService.sellarCambioDePassword(usuario);
         usuarioRepository.save(usuario);
+        // Igual que al recuperar por correo: quien tuviera una sesión abierta queda afuera.
+        usuarioService.cerrarOtrasSesiones(usuario.getUsername(), null);
         log.info("Contrasena restablecida con la clave de recuperacion: usuario_id={}",
                  usuario.getId());
         return Resultado.OK;

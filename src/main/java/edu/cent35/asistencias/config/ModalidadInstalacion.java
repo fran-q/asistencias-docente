@@ -20,12 +20,26 @@ import org.springframework.stereotype.Component;
 public class ModalidadInstalacion {
 
     private final boolean autonoma;
+    private final boolean altaPublica;
 
-    public ModalidadInstalacion(@Value("${app.instalacion.autonoma:false}") boolean autonoma) {
+    public ModalidadInstalacion(@Value("${app.instalacion.autonoma:false}") boolean autonoma,
+                                @Value("${app.alta.publica:true}") boolean altaPublica) {
         this.autonoma = autonoma;
+        this.altaPublica = altaPublica;
     }
 
     public boolean esAutonoma() {
         return autonoma;
+    }
+
+    /**
+     * Si cualquiera puede registrar una institución desde el login.
+     *
+     * <p>En una instalación autónoma no, porque atiende a una sola. En internet lo decide
+     * {@code app.alta.publica}, que el perfil de producción deja cerrada: abierta, cualquiera crea
+     * instituciones y usa el correo del sistema para escribirle a direcciones ajenas.
+     */
+    public boolean altaPublicaAbierta() {
+        return !autonoma && altaPublica;
     }
 }

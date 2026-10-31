@@ -94,8 +94,8 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().is3xxRedirection())
             // A la clave de recuperación y no al login: es lo único que se muestra una sola vez.
             .andExpect(redirectedUrl("/instalacion/clave"));
@@ -121,7 +121,7 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
+                .param("password", "PruebaClave123")
                 .param("confirmacion", "Prueba124"))
             .andExpect(status().isOk())
             .andExpect(view().name("auth/instalacion"));
@@ -137,8 +137,8 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().is3xxRedirection());
 
         // 404 y no 403: una pantalla que ya no corresponde no tiene por qué admitir que existió.
@@ -148,8 +148,8 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "segunda")
                 .param("email", "otra@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().isNotFound());
 
         assertThat(institucionRepository.count()).isEqualTo(1);
@@ -167,8 +167,8 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().is3xxRedirection());
 
         mvc.perform(get("/alta-institucion")).andExpect(status().isNotFound());
@@ -182,15 +182,15 @@ class InstalacionInicialIT {
                 .param("cuit", "")
                 .param("username", "instituto")
                 .param("email", "instalacion@ejemplo.test")
-                .param("password", "Prueba123")
-                .param("confirmacion", "Prueba123"))
+                .param("password", "PruebaClave123")
+                .param("confirmacion", "PruebaClave123"))
             .andExpect(status().is3xxRedirection());
 
         Long tenantId = institucionRepository.findAll().get(0).getId();
         TenantContext.set(tenantId);
         try {
             Usuario nuevo = usuarioService.crear("secretaria", "secretaria@ejemplo.test",
-                                                 "Prueba123", "Ana", "Gómez");
+                                                 "PruebaClave123", "Ana", "Gómez");
             // Sin esto la cuenta se crea bien, entra al login bien, y recién ahí se descubre que
             // VerificacionInterceptor la manda a /mi-cuenta a esperar un código que no llega.
             assertThat(nuevo.getEmailVerificadoEn()).isNotNull();

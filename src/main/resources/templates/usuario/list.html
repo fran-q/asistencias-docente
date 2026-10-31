@@ -101,10 +101,11 @@
                                class="btn btn--ghost btn--sm">Editar</a>
                             <form th:if="${u.cambioPasswordBloqueado}"
                                   th:action="@{/usuarios/{id}/habilitar-cambio-password(id=${u.id})}"
-                                  method="post" class="inline-form">
+                                  method="post" class="inline-form"
+                                  data-confirm="¿Habilitar un cambio de contraseña para esta cuenta?"
+                                  data-confirm-action="Habilitar cambio">
                                 <button type="submit" class="btn btn--ghost btn--sm btn--success"
-                                        title="Esta cuenta cambió su contraseña hace menos de 24 horas. Habilitarle un cambio no te muestra ni te deja elegir su contraseña: solo le permite volver a recuperarla por correo."
-                                        onclick="return confirm('Habilitar un cambio de contraseña para esta cuenta?')">
+                                        title="Esta cuenta cambió su contraseña hace menos de 24 horas. Habilitarle un cambio no te muestra ni te deja elegir su contraseña: solo le permite volver a recuperarla por correo.">
                                     Habilitar cambio
                                 </button>
                             </form>

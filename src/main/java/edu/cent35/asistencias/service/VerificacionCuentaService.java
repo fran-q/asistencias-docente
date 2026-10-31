@@ -303,6 +303,8 @@ public class VerificacionCuentaService {
             usuario.setPasswordHash(passwordEncoder.encode(passwordNueva));
             usuarioService.sellarCambioDePassword(usuario);
             usuarioRepository.save(usuario);
+            // Recuperar la clave no sirve de nada si quien la robó sigue adentro.
+            usuarioService.cerrarOtrasSesiones(usuario.getUsername(), null);
             log.info("Contrasena recuperada por el propio usuario: {}", usuarioId);
         }
         return resultado;

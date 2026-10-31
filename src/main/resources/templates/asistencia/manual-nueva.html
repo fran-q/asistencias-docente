@@ -137,7 +137,7 @@
       revalida igual, porque el formulario se puede armar a mano y porque entre que se
       dibuja la pantalla y se envía, otra persona puede haber reasignado la comisión.
     -->
-    <script th:inline="javascript">
+    <script th:nonce="${cspNonce}" th:inline="javascript">
     /*<![CDATA[*/
     (function () {
         'use strict';

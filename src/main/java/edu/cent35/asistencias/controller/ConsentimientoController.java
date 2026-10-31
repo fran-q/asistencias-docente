@@ -103,7 +103,7 @@ public class ConsentimientoController {
                 docenteId,
                 MetodoConsentimiento.ESCRITO,
                 null,
-                extraerIp(request),
+                CuentaController.ipDe(request),
                 request.getHeader("User-Agent"),
                 null, // documentoUrl - opcional, se podra cargar después
                 principal.getUsuarioId()
@@ -171,7 +171,7 @@ public class ConsentimientoController {
             consentimientoService.revocar(
                 docenteId,
                 form.getMotivo(),
-                extraerIp(request),
+                CuentaController.ipDe(request),
                 request.getHeader("User-Agent"),
                 principal.getUsuarioId()
             );
@@ -193,15 +193,5 @@ public class ConsentimientoController {
     public String handleNotFound(EntityNotFoundException ex, RedirectAttributes redirect) {
         redirect.addFlashAttribute("flashError", "El docente solicitado no existe.");
         return "redirect:/docentes";
-    }
-
-    // Saca la IP real del cliente, mirando X-Forwarded-For por si hay un proxy reverso delante.
-    private static String extraerIp(HttpServletRequest request) {
-        String xff = request.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) {
-            // X-Forwarded-For puede ser "client, proxy1, proxy2" -> usar el primero
-            return xff.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
     }
 }

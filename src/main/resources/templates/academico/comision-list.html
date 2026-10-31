@@ -56,7 +56,7 @@
                  select oculto, así que el onchange sirve igual con el desplegable propio. -->
             <form th:action="@{/comisiones}" method="get" class="filtro__ciclo">
                 <select name="ciclo" data-menu aria-label="Filtrar por ciclo lectivo"
-                        onchange="this.form.submit()">
+                        data-enviar-al-cambiar>
                     <option value="">Todos los años</option>
                     <option th:each="cl : ${ciclos}" th:value="${cl.id}"
                             th:selected="${cl.id == cicloElegido}"

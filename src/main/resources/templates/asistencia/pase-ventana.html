@@ -23,7 +23,7 @@
     <!-- El tema, antes de la hoja de estilos, igual que en el layout: si no, la ventana
          aparece clara un instante y salta a oscura. Acá solo se aplica; cambiarlo se sigue
          haciendo desde la ventana principal. -->
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var tema;
             try { tema = localStorage.getItem('tema'); } catch (e) { tema = null; }

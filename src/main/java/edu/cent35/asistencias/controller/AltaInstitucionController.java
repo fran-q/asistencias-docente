@@ -43,12 +43,15 @@ public class AltaInstitucionController {
      * sola institución, la creó la configuración inicial, y el alta manda un código por un
      * correo que ahí no hay. Dejarla abierta sería ofrecer un trámite que no puede terminar.
      *
+     * <p>En internet también se cierra, salvo que el despliegue la abra (ver
+     * {@code ModalidadInstalacion.altaPublicaAbierta}).
+     *
      * <p>Se cierra acá y no solo escondiendo el enlace del login: un enlace que no se ve sigue
      * siendo una ruta que responde.
      */
     @ModelAttribute
     void exigirQueElAltaCorresponda() {
-        if (instalacion.autonoma()) {
+        if (!instalacion.altaPublicaAbierta()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND);
         }
     }

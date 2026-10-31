@@ -212,10 +212,10 @@
                         <label for="nuevaPassword">Contraseña nueva <span class="required">*</span></label>
                         <div class="password-input">
                             <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}" required
-                                   minlength="6" maxlength="20" autocomplete="new-password"
+                                   minlength="10" maxlength="64" autocomplete="new-password"
                                    th:classappend="${#fields.hasErrors('nuevaPassword')} ? 'is-invalid'">
                         </div>
-                        <small class="form-hint">Entre 6 y 20 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
+                        <small class="form-hint">Entre 10 y 64 caracteres, con al menos una minúscula, una mayúscula y un número.</small>
                         <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"
                               th:errors="*{nuevaPassword}">err</span>
                     </div>

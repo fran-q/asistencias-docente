@@ -15,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ingresar el código - Visum</title>
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var t = null;
             try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
@@ -100,7 +100,7 @@
                             <label for="nuevaPassword">Contraseña nueva</label>
                             <div class="password-input">
                                 <input type="password" id="nuevaPassword" th:field="*{nuevaPassword}"
-                                       required minlength="6" maxlength="20"
+                                       required minlength="10" maxlength="64"
                                        autocomplete="new-password"
                                        th:errorclass="is-invalid">
                                 <button type="button" class="password-toggle"
@@ -110,7 +110,7 @@
                                  que pida algo distinto de lo que el servidor exige manda a
                                  escribir una contraseña que después va a rechazar. -->
                             <span class="form-hint">
-                                Entre 6 y 20 caracteres, con al menos una minúscula, una
+                                Entre 10 y 64 caracteres, con al menos una minúscula, una
                                 mayúscula y un número.
                             </span>
                             <span class="form-error" th:if="${#fields.hasErrors('nuevaPassword')}"

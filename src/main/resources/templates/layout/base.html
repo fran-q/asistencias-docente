@@ -28,7 +28,7 @@
       resuelven por media query, así que no hay ninguna carrera contra el paint
       como la que había con navbar.js.
     -->
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var raiz = document.documentElement;
             function leer(clave) {
@@ -320,6 +320,7 @@
     <script th:src="@{/js/comun/table-scroll.js}" defer></script>
     <script th:src="@{/js/comun/confirm-modal.js}" defer></script>
     <script th:src="@{/js/comun/filtro-tabla.js}" defer></script>
+    <script th:src="@{/js/comun/form-al-cambiar.js}" defer></script>
 <script th:src="@{/js/comun/select-menu.js}" defer></script>
 </body>
 </html>

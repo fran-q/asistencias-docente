@@ -95,7 +95,7 @@ class PuestoCapturaServiceTest {
     // dependencias: se arma real en vez de mockearla.
     private PuestoCapturaService servicio(boolean autonoma) {
         return new PuestoCapturaService(puestoRepository, institucionRepository, codigoService,
-                                        notificador, new ModalidadInstalacion(autonoma));
+                                        notificador, new ModalidadInstalacion(autonoma, true));
     }
 
     private Usuario usuario() {

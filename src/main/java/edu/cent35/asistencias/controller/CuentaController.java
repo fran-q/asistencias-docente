@@ -127,12 +127,15 @@ public class CuentaController {
         };
     }
 
-    // IP real del cliente, mirando X-Forwarded-For por si hay un proxy reverso delante.
+    /**
+     * La IP del cliente, que queda como evidencia en el consentimiento y en los códigos.
+     *
+     * <p>No lee {@code X-Forwarded-For}: ese encabezado lo escribe cualquiera, y tomar su primer
+     * valor dejaba falsificar la evidencia con solo mandarlo. Detrás del proxy, Tomcat ya lo
+     * resolvió mirando únicamente lo que agregaron los proxies confiables
+     * ({@code server.forward-headers-strategy}), así que acá llega la dirección real.
+     */
     static String ipDe(HttpServletRequest request) {
-        String reenviada = request.getHeader("X-Forwarded-For");
-        if (reenviada != null && !reenviada.isBlank()) {
-            return reenviada.split(",")[0].trim();
-        }
         return request.getRemoteAddr();
     }
 
@@ -247,6 +250,10 @@ public class CuentaController {
             redirect.addFlashAttribute("pasoPassword", "nueva");
             return "redirect:/mi-cuenta";
         }
+
+        // Quien cambia la clave suele hacerlo porque cree que alguien más la tiene: esa persona
+        // no puede seguir adentro con la sesión que ya abrió. La de este equipo sigue.
+        usuarioService.cerrarOtrasSesiones(principal.getUsername(), sesion.getId());
 
         // La autorización se consume: sirvio para un cambio y para uno solo.
         sesion.removeAttribute(AUTORIZACION);

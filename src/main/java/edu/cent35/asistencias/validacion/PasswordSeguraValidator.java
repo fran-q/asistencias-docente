@@ -3,6 +3,7 @@ package edu.cent35.asistencias.validacion;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,8 @@ import java.util.List;
  */
 public class PasswordSeguraValidator implements ConstraintValidator<PasswordSegura, String> {
 
+    private static final int BYTES_MAXIMOS_DE_BCRYPT = 72;
+
     @Override
     public boolean isValid(String valor, ConstraintValidatorContext contexto) {
         // El campo vacío lo reporta @NotBlank. Si acá también se quejara, la persona vería
@@ -31,8 +34,10 @@ public class PasswordSeguraValidator implements ConstraintValidator<PasswordSegu
         if (valor.chars().noneMatch(Character::isUpperCase)) faltantes.add("una mayúscula");
         if (valor.chars().noneMatch(Character::isDigit))     faltantes.add("un número");
 
+        // BCrypt rechaza más de 72 bytes, y una letra con tilde o un emoji ocupan más de uno.
         boolean largoOk = valor.length() >= PasswordSegura.MIN
-                       && valor.length() <= PasswordSegura.MAX;
+                       && valor.length() <= PasswordSegura.MAX
+                       && valor.getBytes(StandardCharsets.UTF_8).length <= BYTES_MAXIMOS_DE_BCRYPT;
 
         if (largoOk && faltantes.isEmpty()) {
             return true;
@@ -51,7 +56,8 @@ public class PasswordSeguraValidator implements ConstraintValidator<PasswordSegu
         if (!largoOk) {
             sb.append(valor.length() < PasswordSegura.MIN
                 ? "Es muy corta: tiene que tener al menos " + PasswordSegura.MIN + " caracteres"
-                : "Es muy larga: el máximo son " + PasswordSegura.MAX + " caracteres");
+                : "Es muy larga: el máximo son " + PasswordSegura.MAX
+                    + " caracteres, y menos si lleva símbolos poco comunes");
         }
 
         if (!faltantes.isEmpty()) {

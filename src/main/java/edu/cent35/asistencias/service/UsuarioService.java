@@ -420,6 +420,16 @@ public class UsuarioService {
         log.info("Password cambiada por el propio usuario: id={}", usuarioId);
     }
 
+    /**
+     * Cierra las sesiones abiertas de una cuenta después de cambiarle la contraseña.
+     *
+     * @param sesionQueSigue la de quien hizo el cambio, o null si no hay ninguna: la recuperación
+     *                       ocurre sin haber entrado
+     */
+    public void cerrarOtrasSesiones(String username, String sesionQueSigue) {
+        sesionesActivas.desplazarOtras(username, sesionQueSigue);
+    }
+
     // ========================================================================
     //  Límite de un cambio de contraseña cada 24 horas
     // ========================================================================

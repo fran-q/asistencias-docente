@@ -27,4 +27,10 @@ public class InstalacionAdvice {
     public boolean instalacionAutonoma() {
         return instalacion.autonoma();
     }
+
+    // Si el login ofrece registrar una institución: no se ofrece un trámite que no se atiende.
+    @ModelAttribute("altaPublicaAbierta")
+    public boolean altaPublicaAbierta() {
+        return instalacion.altaPublicaAbierta();
+    }
 }

@@ -154,7 +154,8 @@
                     <div class="form-group">
                         <label for="destinoId">Hacia</label>
                         <select id="destinoId" required
-                                onchange="document.getElementById('form-copiar').action = '/ciclos/' + this.value + '/copiar-desde';">
+                                data-accion-de="form-copiar"
+                                th:attr="data-accion-plantilla=@{/ciclos/{id}/copiar-desde}">
                             <option th:each="c : ${ciclos}" th:value="${c.id}"
                                     th:text="${c.anio}"
                                     th:disabled="${c.estado.name() == 'CERRADO'}">2027</option>

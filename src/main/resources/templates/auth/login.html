@@ -20,7 +20,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar sesión - Visum</title>
-    <script>
+    <script th:nonce="${cspNonce}">
         (function () {
             var t = null;
             try { t = localStorage.getItem('tema'); } catch (e) { /* modo privado */ }
@@ -86,6 +86,13 @@
                     Si este equipo estaba tomando asistencia, el pase dejó de registrar.
                 </div>
 
+                <!-- Lo manda FrenoDeOrigenFilter. No dice si la cuenta existe ni qué tope saltó:
+                     alcanza con que la persona sepa que no es su contraseña y que tiene que
+                     esperar. -->
+                <div th:if="${param.bloqueado}" class="alert alert--warning" role="status">
+                    Hubo demasiados intentos. Esperá unos minutos antes de volver a probar.
+                </div>
+
                 <form th:action="@{/login}" method="post">
                     <!-- Viaja con el intento: si falla, el login vuelve con la misma vuelta al
                          kiosco (SecurityConfig, failureHandler). -->
@@ -137,7 +144,7 @@
                 <!-- En una instalación autónoma no se ofrece: esa instalación atiende a una sola
                      institución, ya creada por la configuración inicial, y el alta manda un
                      código por un correo que no existe (ADR-0022). -->
-                <div class="auth__pie" th:unless="${instalacionAutonoma}">
+                <div class="auth__pie" th:if="${altaPublicaAbierta}">
                     <p>
                         ¿Tu institución todavía no está en Visum?
                         <a th:href="@{/alta-institucion}">Registrala</a>

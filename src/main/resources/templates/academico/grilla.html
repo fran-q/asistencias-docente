@@ -22,7 +22,7 @@
              th:unless="${#lists.isEmpty(carreras)}">
             <form method="get" th:action="@{/grilla}" class="grilla-selector">
                 <label for="carreraId">Carrera:</label>
-                <select id="carreraId" name="carreraId" onchange="this.form.submit()">
+                <select id="carreraId" name="carreraId" data-enviar-al-cambiar>
                     <option th:each="c : ${carreras}"
                             th:value="${c.id}"
                             th:selected="${c.id == carreraIdSeleccionada}"
@@ -42,7 +42,7 @@
                   tecnicatura de tres es invitar a un filtro que no puede devolver nada.
                 -->
                 <label for="anio" class="aire-izquierda">Año:</label>
-                <select id="anio" name="anio" onchange="this.form.submit()">
+                <select id="anio" name="anio" data-enviar-al-cambiar>
                     <option th:each="n : ${#numbers.sequence(1, grilla != null ? grilla.duracionAnios : 1)}"
                             th:value="${n}"
                             th:selected="${anioSeleccionado != null and anioSeleccionado == n}"
