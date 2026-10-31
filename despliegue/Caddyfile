@@ -17,6 +17,14 @@
 
 	# El registro del rostro manda unos 20 cuadros en base64. El JSON de la camara no tiene tope en
 	# la aplicacion (server.tomcat.max-http-form-post-size solo alcanza a los formularios).
+	#
+	# Son dos controles porque request_body solo actua cuando alguien lee el cuerpo: si la aplicacion
+	# contesta sin leerlo, como un POST sin token CSRF, el envio pasa entero hasta ella. Comprobado en
+	# el CI. Por eso lo que declara 26 MB o mas se corta aca, y request_body cubre al que no declara
+	# su tamano. La expresion es: de 26 a 99 millones de bytes, o nueve digitos o mas.
+	@demasiado_grande header_regexp Content-Length ^((2[6-9]|[3-9][0-9])[0-9]{6}|[0-9]{9,})$
+	respond @demasiado_grande 413
+
 	request_body {
 		max_size 25MB
 	}
