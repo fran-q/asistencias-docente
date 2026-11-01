@@ -1,167 +1,126 @@
 # Visum
 
+Asistencia docente por reconocimiento facial, para institutos y universidades.
+
 [![CI](https://github.com/fran-q/asistencias-docente/actions/workflows/ci.yml/badge.svg)](https://github.com/fran-q/asistencias-docente/actions/workflows/ci.yml)
+![Java 21](https://img.shields.io/badge/Java-21-007396)
+![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F)
+![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)
 
-Registro de asistencia **docente** por reconocimiento facial, para institutos terciarios y
-universidades de Tierra del Fuego. Reemplaza la planilla de papel con firma.
+<!-- ===================================================================
+     CAPTURAS — pendientes de agregar.
+     Poné los archivos en docs/img/ y borrá este comentario junto con los
+     marcadores <!-- --> de las dos líneas de abajo.
 
-> Proyecto académico — Prácticas Profesionalizantes III, CENT 35. Se trabaja y se documenta
-> como un producto para un cliente real: el equipo administrativo de la institución.
+       docs/img/pase.png      el pase tomando asistencia
+       docs/img/reporte.png   un reporte con sus gráficos
 
-**Sobre el nombre.** El producto se llama Visum; el repositorio, el paquete Java
-(`edu.cent35.asistencias`) y la aplicación todavía dicen "asistencias". Es una inconsistencia
-conocida y pendiente de unificar.
+     Usá datos de ejemplo, no los de una institución real.
+====================================================================== -->
+<!-- ![El pase de asistencia reconociendo a un docente](docs/img/pase.png) -->
+<!-- ![Reporte de asistencia con sus gráficos](docs/img/reporte.png) -->
 
-## Estado
+---
 
-Prototipo funcional completo, con instalador para la máquina de la institución que funciona
-sin internet ni servidor de correo. El horizonte de producto final es marzo de 2027; qué falta
-y en qué orden está en [`contexto/07-pendientes.md`](contexto/07-pendientes.md).
+## El problema
 
-## Por dónde empezar
+La asistencia docente se controla con una planilla de papel donde cada uno firma al llegar.
+Depende de la buena fe, se puede firmar por otro, y para saber cuántas clases se dictaron el mes
+pasado hay que sentarse a digitalizar planillas.
 
-Por **[`contexto/`](contexto/)**. Es la documentación de trabajo y responde, en este orden:
-
-| Archivo | Qué responde |
-|---|---|
-| [`01-proyecto.md`](contexto/01-proyecto.md) | Qué es, para quién, qué queda dentro y fuera del alcance |
-| [`02-arquitectura.md`](contexto/02-arquitectura.md) | Stack, capas, multi-tenancy, reconocimiento facial y el índice de los ADR |
-| [`03-modelo-datos.md`](contexto/03-modelo-datos.md) | Las tablas vigentes, sus invariantes y el historial de migraciones |
-| [`04-convenciones.md`](contexto/04-convenciones.md) | Cómo se escribe código acá. **Leer antes de tocar nada** |
-| [`05-trazabilidad.md`](contexto/05-trazabilidad.md) | Cada requerimiento, su estado real y dónde vive en el código |
-| [`06-glosario.md`](contexto/06-glosario.md) | El vocabulario del dominio |
-| [`07-pendientes.md`](contexto/07-pendientes.md) | Deuda técnica, brechas y rumbo hacia el producto final |
+Visum reemplaza esa planilla. Una cámara en secretaría, el docente se para enfrente dos segundos,
+y el sistema lo identifica, cruza la hora con los horarios cargados, determina qué clase le
+corresponde y registra la marca. El dato queda disponible en el momento.
 
 ## Qué hace
 
-- **Varias instituciones en una misma instalación**, aisladas entre sí.
-- **Reconocimiento facial** con LBPH (JavaCV/OpenCV). Nunca se guarda una fotografía: solo el
-  modelo derivado, comprimido y cifrado.
-- **Consentimiento biométrico** según la Ley 25.326 y la Resolución AAIP 255/2022, con registro
-  de quién lo otorgó y quién lo revocó.
-- **Entrada y salida** de cada jornada, desde la cámara de secretaría o desde un kiosco por
-  puerta, con varios equipos por institución.
-- **Ausencias generadas solas** al terminar cada clase, carga manual con motivo y
-  justificaciones.
-- **Reportes** en pantalla, PDF, CSV y gráficos.
+- **Toma asistencia por reconocimiento facial.** El docente no usa el sistema: se para frente a
+  la cámara y sigue de largo.
+- **Registra entrada y salida.** No solo si vino: cuánto de la clase estuvo.
+- **Genera las ausencias solo.** Un proceso cierra el día y asienta lo que nadie marcó.
+- **Admite corregir a mano.** Cuando el reconocimiento no acierta, un administrador carga la
+  marca indicando el motivo, y queda registrado quién la cargó.
+- **Modo desatendido.** El equipo puede tomar asistencia sin que haya nadie con sesión abierta.
+- **Reportes.** Minutos dictados sobre programados, filtros por docente, materia, carrera y
+  período, con gráficos y exportación a CSV y PDF.
+- **Varias instituciones sobre una instalación**, con aislamiento total entre ellas.
 
-## Stack
+## Privacidad y datos biométricos
 
-- **Java 21** y **Spring Boot 3.5**, con **Gradle**
-- **MariaDB**: 10.4 en desarrollo y en el instalable, porque la primera migración no aplica sobre
-  10.6 en adelante, y 11.4 en el despliegue, con la base creada desde
-  [`despliegue/base-inicial.sql`](despliegue/base-inicial.sql) (TD-011, en
-  [`07-pendientes.md`](contexto/07-pendientes.md))
-- **Spring Data JPA**, **Hibernate** y **Flyway** para las migraciones
-- **Spring Security**, con sesión HTTP
-- **Thymeleaf** para las vistas; el CSS y el JavaScript son propios, sin librerías de terceros
-- **JavaCV / OpenCV** para el reconocimiento facial y **OpenPDF** para los reportes
+El sistema procesa rostros, que son datos sensibles. Esto es lo que hace al respecto:
 
-## Desplegar en un servidor
+- **No se almacenan fotografías.** Solo el modelo biométrico derivado, comprimido y cifrado con
+  AES-256-GCM. Los cuadros que llegan de la cámara se descartan apenas se entrena el modelo.
+- **Consentimiento previo, versionado y revocable.** Sin consentimiento vigente no se registra ni
+  se usa un rostro. Revocarlo da de baja el modelo y lo expulsa de la memoria en el acto.
+- **Derecho de supresión.** El docente puede pedir el borrado de su dato biométrico y llevarse
+  una constancia en PDF de qué se borró, cuándo y quién lo hizo. El borrado es físico: una fila
+  inactiva seguiría conteniendo el dato.
+- **La captura ocurre en equipos conocidos.** Tomar asistencia y registrar un rostro solo funciona
+  desde una computadora que la institución autorizó expresamente.
 
-Con Docker, siguiendo [`despliegue/README.md`](despliegue/README.md).
+Rige la Ley argentina N° 25.326 de Protección de Datos Personales y la Resolución AAIP N° 255/2022,
+que incluye a los datos biométricos entre los datos sensibles.
 
-## Correr en local
+## Probarlo
 
-1. **MariaDB 10.4** (XAMPP sirve). Crear las dos bases: la primera guarda los datos y la segunda,
-   el historial de Flyway.
+Hace falta Java 21 y una base MariaDB.
 
-   ```sql
-   CREATE DATABASE asistenciautomatica      CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-   CREATE DATABASE asistenciautomatica_meta CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-   ```
+```bash
+git clone https://github.com/fran-q/asistencias-docente.git
+cd asistencias-docente
+./gradlew bootRun
+```
 
-2. **La configuración local.** Copiar
-   `src/main/resources/application-local.properties.ejemplo` a
-   `src/main/resources/application-local.properties` y completar el usuario y la contraseña de
-   la base. El archivo real está en `.gitignore` y nunca se sube.
+Arranca en `http://localhost:8080` con el perfil `local`, que espera las credenciales de la base
+en `src/main/resources/application-local.properties` (no versionado). Flyway crea el esquema en
+el primer arranque.
 
-3. **Arrancar.** `bootRun` activa solo el perfil `local`, y Flyway arma las tablas al arrancar.
+Para correr las pruebas, que no necesitan base porque usan H2 en memoria:
 
-   ```bash
-   ./gradlew bootRun
-   ```
+```bash
+./gradlew test
+```
 
-4. **La primera cuenta.** Entrar a `http://localhost:8080/alta-institucion` y dar de alta una
-   institución. Con `app.mail.canal=consola`, el código de verificación sale impreso en la
-   terminal en lugar de mandarse por correo.
+## Cómo está hecho
 
-## Tests
-
-| Comando | Qué corre |
+| | |
 |---|---|
-| `./gradlew test` | Los unitarios. Corren en segundos y no necesitan MariaDB |
-| `./gradlew integrationTest` | Los de integración (`src/test/java/.../integracion/`), que levantan la aplicación entera |
-| `./gradlew build` | Las dos cosas, más Checkstyle (`config/checkstyle/`). Es lo que corre el CI en cada push y en cada pull request |
+| Backend | Java 21 · Spring Boot 3.5 · Spring Security |
+| Vistas | Thymeleaf renderizado en el servidor |
+| Base | MariaDB · Flyway para el esquema |
+| Visión | JavaCV 1.5.11 · OpenCV 4.10 · reconocedor LBPH |
+| Build | Gradle · GitHub Actions |
 
-`MigracionesIT` aplica las migraciones contra un MariaDB real y prueba que los CHECK de los
-bloques de presencia rechacen lo que deben. Se saltea si no hay MariaDB en `localhost:3306`;
-en el CI corre siempre, porque el workflow levanta un `mariadb:10.4`.
+Es un monolito modular organizado por capas. El multi-tenancy se resuelve con un discriminador
+por columna y cuatro capas de aislamiento, no con una base por institución.
 
-`BaseInicialIT` corre el sistema sobre el motor del despliegue, cargando esa base inicial. Solo
-corre con `MARIADB_NUEVA_PORT` definida, apuntando a un motor descartable: al terminar borra las
-bases. El CI levanta un `mariadb:11.4` para eso.
+El reconocimiento usa LBPH y no embeddings de aprendizaje profundo: corre sin GPU, sin servicios
+externos y sin enviar ningún rostro fuera de la máquina. Para aceptar una identificación exige
+dos condiciones a la vez — distancia por debajo de un umbral calibrado, y una diferencia mínima
+contra el segundo candidato — porque el reconocedor siempre devuelve el más parecido aunque el
+parecido sea malo.
 
-Si el CI falla, la página de la corrida dice qué falló —qué no compila, qué marcó Checkstyle,
-qué tests y con qué mensaje—, sin necesidad de abrir el log.
+Todo el stack es software libre, sin costo de licencia.
 
-## Estructura
+## Desplegar
 
-```
-asistencias/
-├── contexto/              La documentación de trabajo. Empezar acá.
-├── instalador/            Instalación en la máquina de la institución: .msi, scripts y guía
-├── src/main/java/edu/cent35/asistencias/
-│   ├── controller/        Pantallas y endpoints
-│   ├── service/           Lógica de negocio
-│   ├── repository/        Acceso a datos (Spring Data JPA)
-│   ├── model/             Entidades JPA y enums, por dominio: academico/, asistencia/,
-│   │                      biometria/, institucion/, persona/ (ADR-0024)
-│   ├── dto/               Formularios, filas de pantalla y estado de la sesión, con los
-│   │                      mismos cinco dominios
-│   ├── validacion/        Validaciones propias de Bean Validation
-│   ├── seguridad/         Autenticación, sesiones y la credencial del equipo de captura
-│   ├── interceptor/       Controles por petición: institución, equipo autorizado, verificación
-│   └── config/            Configuración de Spring y el contexto de institución
-├── src/main/resources/
-│   ├── db/migration/      Migraciones de Flyway. Las ya aplicadas no se editan nunca.
-│   ├── templates/         Vistas Thymeleaf, una carpeta por área
-│   └── static/            CSS y JavaScript
-├── src/test/java/         Unitarios por capa, y de integración en integracion/
-└── CHANGELOG.md           Qué cambió y por qué, en orden cronológico inverso
+**En un servidor.** Docker Compose levanta la aplicación, MariaDB y Caddy, que resuelve el
+certificado solo:
+
+```bash
+cd despliegue
+./generar-secretos.sh
+docker compose up -d
 ```
 
-El código está organizado **por capas**. La organización original era por *feature*; se migró
-a pedido de la cátedra, y el porqué, lo que se gana, lo que se pierde y cómo volver atrás están
-en el ADR-0006.
+La cámara necesita HTTPS: `getUserMedia` solo funciona en un contexto seguro.
 
-## Documentación extensa
+**En la institución, sin internet.** Hay un instalador de Windows que lleva todo adentro —la
+aplicación, Java y la base— y la deja corriendo como servicio. En esa modalidad el sistema no
+envía correos: la primera cuenta se crea en un asistente de primer arranque y la contraseña se
+recupera con una clave que entrega la instalación. Los scripts están en `instalador/`.
 
-Los ADR, los requerimientos, el marco legal y el material de la defensa viven en
-`Documentacion/`, **fuera de este repositorio**, un nivel arriba del proyecto. Se sacaron a
-propósito: el push dejaba de arrastrar documentos de Word y PDF que cambian enteros en cada
-guardada aunque se toque una coma. El historial anterior a agosto de 2026 los conserva.
-Desde octubre de 2026 se versionan aparte, en un repositorio privado.
+## Licencia
 
-```
-Documentacion/
-├── 1-catedra/          La consigna original de la cátedra
-├── 2-requerimientos/   Requerimientos, alcance, casos de uso y DER
-├── 3-legal/            Consentimiento biométrico y Ley 25.326
-├── 4-arquitectura/     Los ADR, la referencia técnica y la deuda técnica
-├── 5-informes/         Calibración del umbral, revisión de UI/UX y bitácoras
-└── 6-defensa/          Dossier, preguntas del tribunal y guiones
-```
-
-Su índice es `Documentacion/README.md`.
-
-## Marco legal
-
-El sistema trata datos biométricos, que la ley considera sensibles. Cumple con:
-
-- la **Ley Nacional 25.326** de Protección de Datos Personales;
-- la **Resolución AAIP 255/2022** sobre datos biométricos.
-
-## Autor
-
-Francisco Quiroga — CENT 35, Tierra del Fuego, Argentina.
+MIT. Ver [LICENSE](LICENSE).
