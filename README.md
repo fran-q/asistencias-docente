@@ -7,18 +7,11 @@ Asistencia docente por reconocimiento facial, para institutos y universidades.
 ![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F)
 ![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)
 
-<!-- ===================================================================
-     CAPTURAS — pendientes de agregar.
-     Poné los archivos en docs/img/ y borrá este comentario junto con los
-     marcadores <!-- --> de las dos líneas de abajo.
+![Panel de inicio de Visum: qué está pasando ahora, el día en números y qué requiere atención](.github/img/panel.jpg)
 
-       docs/img/pase.png      el pase tomando asistencia
-       docs/img/reporte.png   un reporte con sus gráficos
+![Gráficos del reporte: dictado sobre programado semana a semana, y el reparto entre presentes, tarde y ausentes](.github/img/reporte.jpg)
 
-     Usá datos de ejemplo, no los de una institución real.
-====================================================================== -->
-<!-- ![El pase de asistencia reconociendo a un docente](docs/img/pase.png) -->
-<!-- ![Reporte de asistencia con sus gráficos](docs/img/reporte.png) -->
+<sub>Capturas de la aplicación con datos de ejemplo.</sub>
 
 ---
 
