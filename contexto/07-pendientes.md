@@ -156,8 +156,8 @@ fija, control de arranque, freno por origen, proxy, cookies y encabezados, cierr
 cambiar la contraseña, interruptor del alta pública, y cache y comparación del reconocimiento. El
 perfil es `prod` (ver `02-arquitectura.md`, *Entornos*). **Falta, en este orden:**
 
-1. El servidor, el dominio y el correo con SPF, DKIM y DMARC. El empaquetado ya está, en
-   `despliegue/` (ADR-0026), con su paso a paso.
+1. El servidor (DonWeb, en Argentina), el dominio `.com.ar` y el correo con SPF, DKIM y DMARC. El
+   empaquetado ya está, en `despliegue/` (ADR-0026), con su paso a paso.
 2. Una puesta a prueba **solo con datos ficticios**: dos instituciones, teléfonos reales, webcam
    real, carga con varias cámaras, y restaurar un respaldo de verdad.
 3. **Antes de cargar un rostro real:** una versión nueva del consentimiento (la vigente dice que

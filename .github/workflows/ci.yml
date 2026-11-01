@@ -125,18 +125,10 @@ jobs:
   # y el proxy, y comprueba lo que tiene que cumplir, incluido un respaldo y su restauracion. Es lo
   # unico que prueba que OpenCV carga adentro de la imagen, que no trae lo que el runner ya tiene.
   # Las fallas quedan como anotaciones de la corrida, que se leen sin iniciar sesion.
-  #
-  # En las dos arquitecturas: el servidor gratuito de Oracle es ARM, y los binarios de OpenCV son
-  # otros. Lo que anda en x86 no dice nada sobre si cargan ahi. Los runners ARM son gratis en un
-  # repositorio publico. fail-fast en false: que falle una no tiene que tapar el resultado de la otra.
   imagen:
-    name: Imagen y despliegue (${{ matrix.maquina }})
+    name: Imagen y despliegue
     needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        maquina: [ubuntu-24.04, ubuntu-24.04-arm]
-    runs-on: ${{ matrix.maquina }}
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
