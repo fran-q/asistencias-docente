@@ -63,6 +63,12 @@ codigo=$(curl -ks -o /dev/null -w '%{http_code}' "$base/alta-institucion")
 codigo=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost/login")
 [ "$codigo" = "308" ] && ok "HTTP redirige a HTTPS" || mal "http://localhost/login respondio $codigo"
 
+destino=$(curl -ks --resolve www.localhost:443:127.0.0.1 -o /dev/null -w '%{http_code} %{redirect_url}' "https://www.localhost/login?x=1")
+[ "$destino" = "301 https://localhost/login?x=1" ] && ok "www redirige al dominio" || mal "www.localhost respondio $destino"
+
+ubicacion=$(curl -ks -D - -o /dev/null "$base/alta-institucion" | tr -d '\r' | grep -i '^location:')
+echo "$ubicacion" | grep -qi jsessionid && mal "La sesion quedo en la direccion: $ubicacion" || ok "la sesion no viaja en la direccion"
+
 # 26 MB de un solo envio, contra un tope de 25.
 codigo=$(head -c 27262976 /dev/zero | curl -ks -o /dev/null -w '%{http_code}' -X POST --data-binary @- "$base/login")
 [ "$codigo" = "413" ] && ok "el proxy corta los envios gigantes" || mal "Un envio de 26 MB respondio $codigo"

@@ -32,3 +32,9 @@
 	encode gzip
 	reverse_proxy app:8080
 }
+
+# Quien escribe www llega al mismo sitio. Caddy saca un certificado tambien para este nombre, asi que
+# el registro www del DNS tiene que apuntar a este servidor.
+www.{$DOMINIO} {
+	redir https://{$DOMINIO}{uri} permanent
+}

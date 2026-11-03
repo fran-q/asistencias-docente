@@ -29,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
     "server.forward-headers-strategy=native",
     "server.servlet.session.cookie.secure=true",
+    "app.alta.publica=false",
     "app.seguridad.login.max-por-cuenta-e-ip=3",
     "app.seguridad.login.max-por-cuenta=100",
     "app.seguridad.login.max-por-ip=100"
@@ -67,6 +68,26 @@ class DetrasDeProxyIT {
 
         HttpResponse<String> frenado = intentarLogin("198.51.100.99, " + ipReal);
         assertThat(frenado.headers().firstValue("Location").orElseThrow()).endsWith("/login?bloqueado");
+    }
+
+    @Test
+    @DisplayName("La sesión viaja solo en la cookie: la primera visita no la escribe en la dirección")
+    void laSesionNoQuedaEnLaDireccion() throws Exception {
+        // Sin cookie todavía, Tomcat no sabe si el navegador las acepta: si la respuesta abre una sesión,
+        // por defecto agrega ;jsessionid= a la redirección y a los enlaces de la página. Así el
+        // identificador queda en el historial y en los registros. El alta cerrada lo hacía: su 404 pasa
+        // por /error, que pide login y guarda la página pedida en una sesión nueva. MockMvc no reescribe
+        // direcciones, así que hay que verlo en Tomcat.
+        HttpResponse<String> redireccion = cliente.send(
+            HttpRequest.newBuilder(URI.create("http://localhost:" + puerto + "/alta-institucion"))
+                .header("X-Forwarded-Proto", "https")
+                .GET().build(),
+            HttpResponse.BodyHandlers.ofString());
+        assertThat(redireccion.headers().firstValue("Location").orElseThrow())
+            .endsWith("/login")
+            .doesNotContainIgnoringCase("jsessionid");
+
+        assertThat(pedirLogin("203.0.113.9", "https").body()).doesNotContainIgnoringCase("jsessionid");
     }
 
     private HttpResponse<String> pedirLogin(String reenviadoPor, String protocolo) throws Exception {
